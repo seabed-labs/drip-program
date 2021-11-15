@@ -1,0 +1,38 @@
+FROM node:16.13.0-slim
+
+# Update default packages
+RUN apt-get update
+
+# Install Ubuntu packages
+RUN apt-get install -y \
+    build-essential \
+    curl
+
+# Install Rust
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH /root/.cargo/bin:$PATH
+RUN rustup component add rustfmt
+
+# Install Solana CLI
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
+ENV PATH /root/.local/share/solana/install/active_release/bin:$PATH
+RUN yes | solana-keygen new
+
+WORKDIR /solana-programs
+
+# Install Anchor CLI
+RUN npm i -g @project-serum/anchor-cli
+
+# Install app dependencies
+RUN npm i -g typescript
+RUN npm i -g ts-mocha
+COPY package.json .
+RUN yarn install 
+
+# Build Project
+COPY Cargo.lock .
+COPY Cargo.toml .
+COPY programs/ ./programs
+RUN cargo build
+COPY . .
+RUN anchor build
