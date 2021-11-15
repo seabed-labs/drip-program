@@ -40,7 +40,7 @@ jobs:
       run: docker-compose --file ./build/githubactions/docker-compose.yaml up -d --build
 
     - name: Run unit tests
-      run: docker exec githubactions_test_1 bash ./scripts/githubactions_test.sh
+      run: docker exec githubactions_test_1 bash ./scripts/test.sh
 
     - name: Stop Docker
       run: docker-compose --file ./build/githubactions/docker-compose.yaml down

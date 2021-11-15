@@ -1,9 +1,9 @@
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { assert } from 'chai';
 import { DcaVault } from '../target/types/dca_vault';
 
 describe('dca-vault', () => {
+  
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
 
