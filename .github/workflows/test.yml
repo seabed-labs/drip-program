@@ -1,0 +1,46 @@
+name: Test
+on:
+  pull_request:
+  push: { branches: master }
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    # TODO(mocha): Setup caching
+    # - name: Set up Docker Buildx
+    #   id: buildx        
+    #   uses: docker/setup-buildx-action@master
+
+    # - name: Cache Docker layers
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: /tmp/.buildx-cache
+    #     key: ${{ runner.os }}-buildx-step1-${{ github.sha }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-buildx-
+
+    # - name: Build and push images
+    #   uses: docker/build-push-action@v2
+    #   with:
+    #     push: false
+    #     load: true
+    #     tags: githubactions_integration-test,githubactions_unit-test
+    #     builder: ${{ steps.buildx.outputs.name }}
+    #     file: ./build/githubactions/dockerfile
+    #     context: .
+    #     cache-from: type=local,src=/tmp/.buildx-cache
+    #     cache-to: type=local,dest=/tmp/.buildx-cache
+
+    - name: Build and run docker images
+      run: docker-compose --file ./build/githubactions/docker-compose.yaml up -d --build
+
+    - name: Run unit tests
+      run: docker exec githubactions_test_1 bash ./scripts/test.sh
+
+    - name: Stop Docker
+      run: docker-compose --file ./build/githubactions/docker-compose.yaml down
