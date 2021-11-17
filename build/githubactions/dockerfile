@@ -26,7 +26,9 @@ RUN npm i -g @project-serum/anchor-cli
 # Install app dependencies
 RUN npm i -g typescript
 RUN npm i -g ts-mocha
+COPY tsconfig.json .
 COPY package.json .
+COPY yarn.lock . 
 RUN yarn install 
 
 # Build Project
@@ -34,5 +36,10 @@ COPY Cargo.lock .
 COPY Cargo.toml .
 COPY programs/ ./programs
 RUN cargo build
-COPY . .
+
+COPY Anchor.toml .
+COPY migrations/ ./migrations
+COPY tests/ ./tests
 RUN anchor build
+
+COPY . .
