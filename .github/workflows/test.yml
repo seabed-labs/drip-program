@@ -46,17 +46,10 @@ jobs:
 
     - name: Run unit tests
       run: docker run --rm ${{ steps.prep.outputs.tagged_image }} bash ./scripts/test.sh
-
+    
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
     - name: Move cache
       run: |
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-    # - name: Build and run docker images
-    #   run: docker-compose --file ./build/githubactions/docker-compose.yaml up -d --build
-
-    # - name: Run unit tests
-    #   run: docker exec githubactions_test_1 bash ./scripts/test.sh
-
-    # - name: Stop Docker
-    #   run: docker-compose --file ./build/githubactions/docker-compose.yaml down
