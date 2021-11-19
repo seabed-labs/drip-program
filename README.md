@@ -1,4 +1,5 @@
 # solana-programs
+[![Test](https://github.com/Dcaf-Protocol/solana-programs/actions/workflows/test.yml/badge.svg)](https://github.com/Dcaf-Protocol/solana-programs/actions/workflows/test.yml)
 
 ## Setup Instructions
 
