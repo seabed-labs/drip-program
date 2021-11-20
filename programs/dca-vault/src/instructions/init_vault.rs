@@ -5,20 +5,20 @@ use anchor_spl::token::Mint;
 #[derive(Accounts)]
 #[instruction(granularity: u64, bump: u8)]
 pub struct InitializeVault<'info> {
-    #[account(
-        init,
-        seeds = [
-            b"dca-vault-v1".as_ref(),
-            // TODO(matcha): Maybe include the vault program ID as one of the seeds?
-            token_a_mint.key().as_ref(),
-            token_b_mint.key().as_ref(),
-            granularity.to_le_bytes().as_ref(),
-        ],
-        bump = bump,
-        payer = creator,
-        space = 72
-    )]
-    pub vault: Account<'info, Vault>,
+    // #[account(
+    //     init,
+    //     seeds = [
+    //         b"dca-vault-v1".as_ref(),
+    //         // TODO(matcha): Maybe include the vault program ID as one of the seeds?
+    //         token_a_mint.key().as_ref(),
+    //         token_b_mint.key().as_ref(),
+    //         granularity.to_le_bytes().as_ref(),
+    //     ],
+    //     bump = bump,
+    //     payer = creator,
+    //     space = 72
+    // )]
+    // pub vault: Account<'info, Vault>,
     pub token_a_mint: Account<'info, Mint>,
     pub token_b_mint: Account<'info, Mint>,
     pub creator: Signer<'info>,
@@ -27,10 +27,10 @@ pub struct InitializeVault<'info> {
 }
 
 pub fn handler(ctx: Context<InitializeVault>, granularity: u64, _bump: u8) -> ProgramResult {
-    let vault = &mut ctx.accounts.vault;
-    vault.token_a_mint = ctx.accounts.token_a_mint.key();
-    vault.token_b_mint = ctx.accounts.token_b_mint.key();
-    vault.granularity = granularity;
+    // let vault = &mut ctx.accounts.vault;
+    // vault.token_a_mint = ctx.accounts.token_a_mint.key();
+    // vault.token_b_mint = ctx.accounts.token_b_mint.key();
+    // vault.granularity = granularity;
 
     msg!("Initialized Vault");
     Ok(())
