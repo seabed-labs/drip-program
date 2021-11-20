@@ -13,7 +13,9 @@ describe('dca-vault', () => {
   it('Is initialized!', async () => {
 
     const provider = anchor.Provider.local();
+    anchor.setProvider(provider)
     const keypair = anchor.web3.Keypair.generate();
+    const vaultProtoConfig = anchor.web3.Keypair.generate();
 
     const fundTx = new anchor.web3.Transaction({
       feePayer: provider.wallet.publicKey,
@@ -24,25 +26,35 @@ describe('dca-vault', () => {
         toPubkey: keypair.publicKey,
         lamports: 1e10,
       })
-    ); 
+    );
 
     const signedTx = await provider.wallet.signTransaction(fundTx);
 
     await anchor.web3.sendAndConfirmRawTransaction(provider.connection, signedTx.serialize());
 
+    await program.rpc.initVaultProtoConfig(new anchor.BN(86400000), {
+      accounts: {
+        vaultProtoConfig: vaultProtoConfig.publicKey,
+        creator: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      signers: [vaultProtoConfig]
+    });
+
     const tokenA = await Token.createMint(provider.connection, keypair, provider.wallet.publicKey, provider.wallet.publicKey, 6, TOKEN_PROGRAM_ID);
     const tokenB = await Token.createMint(provider.connection, keypair, provider.wallet.publicKey, provider.wallet.publicKey, 6, TOKEN_PROGRAM_ID);
 
-    const [vaultAddress, bump] = findProgramAddressSync([Buffer.from("dca-vault-v1"), tokenA.publicKey.toBuffer(), tokenB.publicKey.toBuffer(), new Buffer("00 5C 26 05", "utf-8")], program.programId);
+    const [vaultAddress, bump] = findProgramAddressSync([Buffer.from("dca-vault-v1"), tokenA.publicKey.toBytes(), tokenB.publicKey.toBytes(), vaultProtoConfig.publicKey.toBytes()], program.programId);
 
-    const tx = await program.rpc.initVault(new anchor.BN(86400000), new anchor.BN(bump), {
-        accounts: {
-            // vault: vaultAddress,
-            tokenAMint: tokenA.publicKey,
-            tokenBMint: tokenB.publicKey,
-            creator: anchor.getProvider().wallet.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-        },
+    const tx = await program.rpc.initVault(bump, {
+      accounts: {
+        vault: vaultAddress,
+        vaultProtoConfig: vaultProtoConfig.publicKey,
+        tokenAMint: tokenA.publicKey,
+        tokenBMint: tokenB.publicKey,
+        creator: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
     });
     console.log("Your transaction signature", tx);
   });

@@ -7,6 +7,6 @@ use anchor_lang::prelude::*;
 pub struct Vault {
     pub token_a_mint: Pubkey, // A
     pub token_b_mint: Pubkey, // B
-    pub granularity: u64,     // G in milliseconds
+    pub proto_config: Pubkey,
                               // TODO(matcha): Flesh this out more
 }
