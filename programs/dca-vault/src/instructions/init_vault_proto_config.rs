@@ -1,5 +1,5 @@
-use crate::state::vault_proto_config::VaultProtoConfig;
 use anchor_lang::prelude::*;
+use crate::state::{VaultProtoConfig, ByteSized};
 
 #[derive(Accounts)]
 #[instruction(bump: u8)]
@@ -7,7 +7,7 @@ pub struct InitializeVaultProtoConfig<'info> {
     #[account(
         init,
         payer = creator,
-        space = 8 + 8
+        space = 8 + VaultProtoConfig::byte_size()
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
     pub creator: Signer<'info>,

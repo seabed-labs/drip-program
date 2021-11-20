@@ -1,6 +1,6 @@
-use crate::state::{VaultProtoConfig, vault::Vault};
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
+use crate::state::{VaultProtoConfig, Vault, ByteSized};
 
 #[derive(Accounts)]
 #[instruction(bump: u8)]
@@ -15,7 +15,7 @@ pub struct InitializeVault<'info> {
         ],
         bump = bump,
         payer = creator,
-        space = 8 + 96
+        space = 8 + Vault::byte_size()
     )]
     pub vault: Account<'info, Vault>,
     pub token_a_mint: Account<'info, Mint>,
