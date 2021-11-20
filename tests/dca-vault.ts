@@ -2,60 +2,86 @@ import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
 import { findProgramAddressSync } from '@project-serum/anchor/dist/cjs/utils/pubkey';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { expect } from 'chai';
 import { DcaVault } from '../target/types/dca_vault';
+import { createTokenMint, fundAccount, generateNewKeypair, makeNewTx } from './utils';
 
 describe('dca-vault', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.local());
-
+  const provider = anchor.getProvider();
   const program = anchor.workspace.DcaVault as Program<DcaVault>;
+  const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
 
-  it('Is initialized!', async () => {
+  describe('#initVaultProtoConfig', () => {
+    it('initializes the vault proto config account', async () => {
+      const vaultProtoConfig = generateNewKeypair();
+      const granularity = new anchor.BN(MILLISECONDS_IN_A_DAY);
 
-    const provider = anchor.Provider.local();
-    anchor.setProvider(provider)
-    const keypair = anchor.web3.Keypair.generate();
-    const vaultProtoConfig = anchor.web3.Keypair.generate();
+      await program.rpc.initVaultProtoConfig(granularity, {
+        accounts: {
+          vaultProtoConfig: vaultProtoConfig.publicKey,
+          creator: provider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [vaultProtoConfig]
+      });
 
-    const fundTx = new anchor.web3.Transaction({
-      feePayer: provider.wallet.publicKey,
-      recentBlockhash: (await provider.connection.getRecentBlockhash()).blockhash,
-    }).add(
-      anchor.web3.SystemProgram.transfer({
-        fromPubkey: provider.wallet.publicKey,
-        toPubkey: keypair.publicKey,
-        lamports: 1e10,
-      })
-    );
+      const vaultProtoConfigAccount = await program.account.vaultProtoConfig.fetch(vaultProtoConfig.publicKey);
 
-    const signedTx = await provider.wallet.signTransaction(fundTx);
+      expect(vaultProtoConfigAccount.granularity.toString()).to.be.equal(granularity.toString());
+    });
+  });
 
-    await anchor.web3.sendAndConfirmRawTransaction(provider.connection, signedTx.serialize());
+  describe('#initVault', () => {
+    let vaultProtoConfigAccount: anchor.web3.PublicKey;
 
-    await program.rpc.initVaultProtoConfig(new anchor.BN(86400000), {
-      accounts: {
-        vaultProtoConfig: vaultProtoConfig.publicKey,
-        creator: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
-      signers: [vaultProtoConfig]
+    beforeEach(async () => {
+      const vaultProtoConfig = generateNewKeypair();
+      const granularity = new anchor.BN(MILLISECONDS_IN_A_DAY);
+
+      await program.rpc.initVaultProtoConfig(granularity, {
+        accounts: {
+          vaultProtoConfig: vaultProtoConfig.publicKey,
+          creator: provider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [vaultProtoConfig]
+      });
+
+      vaultProtoConfigAccount = vaultProtoConfig.publicKey;
     });
 
-    const tokenA = await Token.createMint(provider.connection, keypair, provider.wallet.publicKey, provider.wallet.publicKey, 6, TOKEN_PROGRAM_ID);
-    const tokenB = await Token.createMint(provider.connection, keypair, provider.wallet.publicKey, provider.wallet.publicKey, 6, TOKEN_PROGRAM_ID);
+    it('initializes the vault account', async () => {
+      const tokenA = await createTokenMint(provider, 6);
+      const tokenB = await createTokenMint(provider, 6);
 
-    const [vaultAddress, bump] = findProgramAddressSync([Buffer.from("dca-vault-v1"), tokenA.publicKey.toBytes(), tokenB.publicKey.toBytes(), vaultProtoConfig.publicKey.toBytes()], program.programId);
+      const [vaultAddress, bump] = findProgramAddressSync(
+        [
+          Buffer.from("dca-vault-v1"),
+          tokenA.publicKey.toBytes(),
+          tokenB.publicKey.toBytes(),
+          vaultProtoConfigAccount.toBytes(),
+        ],
+        program.programId
+      );
 
-    const tx = await program.rpc.initVault(bump, {
-      accounts: {
-        vault: vaultAddress,
-        vaultProtoConfig: vaultProtoConfig.publicKey,
-        tokenAMint: tokenA.publicKey,
-        tokenBMint: tokenB.publicKey,
-        creator: provider.wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      },
+      await program.rpc.initVault(bump, {
+        accounts: {
+          vault: vaultAddress,
+          vaultProtoConfig: vaultProtoConfigAccount,
+          tokenAMint: tokenA.publicKey,
+          tokenBMint: tokenB.publicKey,
+          creator: provider.wallet.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+      });
+
+      const vaultAccount = await program.account.vault.fetch(vaultAddress);
+
+      expect(vaultAccount.protoConfig.toBase58()).to.be.equal(vaultProtoConfigAccount.toBase58());
+      expect(vaultAccount.tokenAMint.toBase58()).to.be.equal(tokenA.publicKey.toBase58());
+      expect(vaultAccount.tokenBMint.toBase58()).to.be.equal(tokenB.publicKey.toBase58());
     });
-    console.log("Your transaction signature", tx);
   });
 });

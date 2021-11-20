@@ -19,15 +19,3 @@ pub mod dca_vault {
         instructions::init_vault::handler(ctx, bump)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
-
-// This is just an example unit test, once we have proper unit tests in other files, this can be removed.
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
