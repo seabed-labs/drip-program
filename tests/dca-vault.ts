@@ -9,7 +9,7 @@ import { ProgramUtils } from './utils/ProgramUtils';
 import { TokenUtils } from './utils/TokenUtils';
 import { VaultProtoConfig, VaultUtils } from './utils/VaultUtils';
 
-describe('dca-vault', () => {
+describe('DCA Vault Program', () => {
   const DEFAULT_VAULT_PROTO_CONFIG: VaultProtoConfig = {
     granularity: Granularity.DAILY,
   };
