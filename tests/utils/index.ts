@@ -1,5 +1,5 @@
-import { web3, Provider } from '@project-serum/anchor';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { web3, Provider, Program } from '@project-serum/anchor';
+import { AccountInfo, AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export function generateNewKeypair(): web3.Keypair {
   return web3.Keypair.generate();
@@ -40,4 +40,13 @@ export async function createTokenMint(
     decimals,
     TOKEN_PROGRAM_ID
   );
+}
+
+export async function fetchTokenAccount(provider: Provider, pubKey: web3.PublicKey): Promise<{mint: web3.PublicKey, owner: web3.PublicKey}> {
+  const rawTokenAccount = await provider.connection.getAccountInfo(pubKey);
+  const tokenAccountData = AccountLayout.decode(rawTokenAccount.data);
+  return {
+    mint: new web3.PublicKey(tokenAccountData.mint),
+    owner: new web3.PublicKey(tokenAccountData.owner),
+  }
 }

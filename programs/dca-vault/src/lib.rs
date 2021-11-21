@@ -15,7 +15,7 @@ pub mod dca_vault {
         instructions::init_vault_proto_config::handler(ctx, granularity)
     }
 
-    pub fn init_vault(ctx: Context<InitializeVault>, bump: u8) -> ProgramResult {
+    pub fn init_vault(ctx: Context<InitializeVault>, bump: InitializeVaultBumps) -> ProgramResult {
         instructions::init_vault::handler(ctx, bump)
     }
 }
