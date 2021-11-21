@@ -15,7 +15,7 @@ describe('dca-vault', () => {
   };
 
   describe('#initVaultProtoConfig', () => {
-    it('initializes the vault proto config account', async () => {
+    it('initializes the vault proto config account correctly', async () => {
       const vaultProtoConfigKeypair = KeypairUtils.generatePair();
       await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, DEFAULT_VAULT_PROTO_CONFIG);
       const vaultProtoConfigAccount = await AccountUtils.fetchVaultProtoConfigAccount(vaultProtoConfigKeypair.publicKey);
@@ -33,7 +33,7 @@ describe('dca-vault', () => {
       vaultProtoConfigAccount = vaultProtoConfigKeypair.publicKey;
     });
 
-    it('initializes the vault account', async () => {
+    it('initializes the vault account correctly', async () => {
       const [tokenA, tokenB] = await Promise.all([
         TokenUtils.createMockUSDCMint(),
         TokenUtils.createMockBTCMint(),
