@@ -43,7 +43,7 @@ describe('dca-vault', () => {
         tokenA.publicKey,
         tokenB.publicKey,
         vaultProtoConfigAccount,
-      )
+      );
 
       const [vaultTokenAAccountPDA, vaultTokenBAccountPDA] = await Promise.all([
         PDAUtils.getTokenAccountPDA(
@@ -67,7 +67,7 @@ describe('dca-vault', () => {
         tokenB.publicKey,
         vaultTokenAAccountPDA,
         vaultTokenBAccountPDA,
-      )
+      );
 
       const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPDA.pubkey);
 
