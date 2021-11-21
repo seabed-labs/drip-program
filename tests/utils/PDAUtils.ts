@@ -7,7 +7,7 @@ export type PDA = {
   bump: number;
 }
 
-const CONSTANT_SEEDS = {
+export const CONSTANT_SEEDS = {
   vault: "dca-vault-v1",
   tokenAAccount: "token_a_account",
   tokenBAccount: "token_b_account",
@@ -32,19 +32,16 @@ export class PDAUtils extends TestUtil {
     ]);
   }
 
-  static async getTokenAPDA(vault: web3.PublicKey, tokenA: web3.PublicKey): Promise<PDA> {
-    return await this.findPDA(ProgramUtils.vaultProgram.programId, [
-      Buffer.from(CONSTANT_SEEDS.tokenAAccount),
-      vault.toBuffer(),
-      tokenA.toBuffer(),
-    ]);
-  }
-
-  static async getTokenBPDA(vault: web3.PublicKey, tokenB: web3.PublicKey): Promise<PDA> {
-    return await this.findPDA(ProgramUtils.vaultProgram.programId, [
-      Buffer.from(CONSTANT_SEEDS.tokenBAccount),
-      vault.toBuffer(),
-      tokenB.toBuffer(),
+  static async getTokenAccountPDA(
+    programId: web3.PublicKey,
+    constantSeed: string, 
+    owner: web3.PublicKey, 
+    mint: web3.PublicKey
+  ): Promise<PDA> {
+    return await this.findPDA(programId, [
+      Buffer.from(constantSeed),
+      owner.toBuffer(),
+      mint.toBuffer(),
     ]);
   }
 }
