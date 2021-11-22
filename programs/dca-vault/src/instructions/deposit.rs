@@ -1,22 +1,21 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount};
+use crate::state::Vault;
+use anchor_spl::token::Mint;
+use anchor_spl::token::Token;
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
+#[instruction(deposit_amount: u64, total_duration_millis: u64)]
 pub struct DepositA<'info> {
     // User Account
     pub depositor: Signer<'info>,
 
-    pub amount: u64,
-    pub granularity: u8,
-    // For a month, or a year (size)
-    pub total_duration_millis: u8,
-
-    // The vault where the token will be deposited
+    // // The vault where the token will be deposited
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
 
-    // Need to add some macros for validation
-    // No need to add init or pay for it since these accounts are already created
+    // // Need to add some macros for validation
+    // // No need to add init or pay for it since these accounts are already created
     #[account(mut)]
     pub depositor_token_a_account: Account<'info, TokenAccount>,
 
@@ -30,7 +29,7 @@ pub struct DepositA<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handler(ctx: Context<DepositA>, deposit_amount: u64, total_duration_millis: u8) -> ProgramResult {
+pub fn handler(ctx: Context<DepositA>, deposit_amount: u64, total_duration_millis: u64) -> ProgramResult {
     msg!("Deposited A");
     Ok(())
 }

@@ -5,7 +5,6 @@ import { ExpectUtils } from './utils/ExpectUtils';
 import { Granularity } from './utils/Granularity';
 import { KeypairUtils } from './utils/KeypairUtils';
 import { CONSTANT_SEEDS, PDAUtils } from './utils/PDAUtils';
-import { FUtils } from './utils/ProgramUtils';
 import { ProgramUtils } from './utils/ProgramUtils';
 import { TokenUtils } from './utils/TokenUtils';
 import { VaultProtoConfig, VaultUtils } from './utils/VaultUtils';
