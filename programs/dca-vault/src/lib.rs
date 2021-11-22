@@ -31,11 +31,11 @@ pub mod dca_vault {
         instructions::withdraw_b::handler(ctx, position_id, amount)
     }
 
-    pub fn check_vault_balance_a(ctx: Context<CheckBalanceA>) -> ProgramResult {
+    pub fn check_vault_balance_a(ctx: Context<CheckVaultBalanceA>) -> ProgramResult {
         instructions::check_vault_balance_a::handler(ctx)
     }
 
-    pub fn check_vault_balance_b(ctx: Context<CheckBalanceB>) -> ProgramResult {
+    pub fn check_vault_balance_b(ctx: Context<CheckVaultBalanceB>) -> ProgramResult {
         instructions::check_vault_balance_b::handler(ctx)
     }
 

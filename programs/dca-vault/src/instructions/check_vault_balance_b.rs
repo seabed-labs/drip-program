@@ -5,7 +5,7 @@ use crate::state::Vault;
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
-pub struct CheckBalanceB<'info> {
+pub struct CheckVaultBalanceB<'info> {
     // User Account
     pub user: Signer<'info>,
 
@@ -17,6 +17,6 @@ pub struct CheckBalanceB<'info> {
     // TODO (cappucino): Flesh out other accounts needed
 }
 
-pub fn handler(ctx: Context<CheckBalanceB>) -> ProgramResult {
+pub fn handler(ctx: Context<CheckVaultBalanceB>) -> ProgramResult {
     Ok(())
 }
