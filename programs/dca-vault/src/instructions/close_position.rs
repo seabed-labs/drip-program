@@ -4,22 +4,22 @@ use crate::state::Vault;
 
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
-pub struct DrippedAmountA<'info> {
-    // User Account
-    pub user: Signer<'info>,
+pub struct ClosePosition<'info> {
+    pub client: Signer<'info>,
 
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
 
+    #[account(mut)]
     pub depositor_token_a_account: Account<'info, TokenAccount>,
     pub token_a_mint: Account<'info, Mint>,
 
+    #[account(mut)]
     pub depositor_token_b_account: Account<'info, TokenAccount>,
     pub token_b_mint: Account<'info, Mint>,
-
-    // TODO (cappucino): Flesh out other accounts needed
 }
 
-pub fn handler(ctx: Context<DrippedAmountA>) -> ProgramResult {
+pub fn handler(ctx: Context<ClosePosition>) -> ProgramResult {
+    msg!("Position closed");
     Ok(())
 }

@@ -20,7 +20,7 @@ pub struct WithdrawB<'info> {
     // TODO (cappucino): Flesh out other accounts needed
 }
 
-pub fn handler(ctx: Context<WithdrawB>, amount: u64) -> ProgramResult {
+pub fn handler(ctx: Context<WithdrawB>, position_id: u8, amount: u64) -> ProgramResult {
     msg!("Withdrawed B");
     Ok(())
 }

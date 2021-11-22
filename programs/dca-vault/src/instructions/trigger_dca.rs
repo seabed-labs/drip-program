@@ -7,7 +7,6 @@ use crate::state::Vault;
 pub struct TriggerDCA<'info> {
     pub client: Signer<'info>,
 
-    // The vault where the token A will be withdrawn from
     #[account(mut)]
     pub vault: Account<'info, Vault>,
 }

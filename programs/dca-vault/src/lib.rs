@@ -23,24 +23,20 @@ pub mod dca_vault {
         instructions::deposit_a::handler(ctx, amount, total_duration_millis)
     }
 
-    pub fn withdraw_a(ctx: Context<WithdrawA>, amount: u64) -> ProgramResult {
-        instructions::withdraw_a::handler(ctx, amount)
+    pub fn withdraw_a(ctx: Context<WithdrawA>, position_id: u8, amount: u64) -> ProgramResult {
+        instructions::withdraw_a::handler(ctx, position_id, amount)
     }
 
-    pub fn withdraw_b(ctx: Context<WithdrawB>, amount: u64) -> ProgramResult {
-        instructions::withdraw_b::handler(ctx, amount)
+    pub fn withdraw_b(ctx: Context<WithdrawB>, position_id: u8, amount: u64) -> ProgramResult {
+        instructions::withdraw_b::handler(ctx, position_id, amount)
     }
 
-    pub fn check_balance_a(ctx: Context<CheckBalanceA>) -> ProgramResult {
-        instructions::check_balance_a::handler(ctx)
+    pub fn check_vault_balance_a(ctx: Context<CheckBalanceA>) -> ProgramResult {
+        instructions::check_vault_balance_a::handler(ctx)
     }
 
-    pub fn check_balance_b(ctx: Context<CheckBalanceB>) -> ProgramResult {
-        instructions::check_balance_b::handler(ctx)
-    }
-
-    pub fn get_dripped_amount_a(ctx: Context<DrippedAmountA>) -> ProgramResult {
-        instructions::get_dripped_amount_a::handler(ctx)
+    pub fn check_vault_balance_b(ctx: Context<CheckBalanceB>) -> ProgramResult {
+        instructions::check_vault_balance_b::handler(ctx)
     }
 
     pub fn trigger_dca(ctx: Context<TriggerDCA>) -> ProgramResult {
