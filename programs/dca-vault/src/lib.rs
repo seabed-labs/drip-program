@@ -18,4 +18,8 @@ pub mod dca_vault {
     pub fn init_vault(ctx: Context<InitializeVault>, bump: InitializeVaultBumps) -> ProgramResult {
         instructions::init_vault::handler(ctx, bump)
     }
+
+    pub fn deposit(ctx: Context<DepositA>, amount: u64, total_duration_millis: u8) -> ProgramResult {
+        instructions::deposit::handler(ctx, amount, total_duration_millis)
+    }
 }
