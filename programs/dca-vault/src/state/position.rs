@@ -16,6 +16,8 @@ pub struct Position {
     pub vault: Pubkey,
 
     pub deposit_amount_token_a: u32,
+
+    // Will be updated after every swap
     pub balance_token_a: u32,
     pub dripped_amount_token_b: u32,
 
@@ -31,7 +33,7 @@ pub struct Position {
     // deposit_amount_token_a / number_of_swaps
     pub swap_amount_per_period: u32, 
 
-    // Will need to update these accounts after every DCA period
+    // Will need to update these accounts after every swap
     pub user_token_a_account: Pubkey,
     pub user_token_b_account: Pubkey,
 
