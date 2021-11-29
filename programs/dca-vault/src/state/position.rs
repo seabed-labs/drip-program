@@ -18,20 +18,17 @@ pub struct Position {
     pub dripped_amount_token_b: u32,
 
     // The date when position was initiated by the user
-    pub deposit_date: u64,
+    pub deposit_date_millis: u128,
 
     // The date till user wants to DCA
-    pub expiry_date: u64, 
+    pub expiry_date_millis: u128,
 
-    // (expiry_date - deposit_date) / granularity
+    // (expiry_date_millis - deposit_date_millis) / granularity
     pub number_of_swaps: u32, 
-
-    // deposit_amount_token_a / number_of_swaps
-    pub swap_amount_per_period: u32, 
+    pub amount_per_period: u32,
 
     // Will need to update these accounts after every swap
     pub user_token_a_account: Pubkey,
-    pub user_token_b_account: Pubkey,
 }
 
 impl ByteSized for Position {}

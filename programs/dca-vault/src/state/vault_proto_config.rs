@@ -5,7 +5,7 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct VaultProtoConfig {
-    pub granularity: u64,
+    pub granularity: u128,
     // TODO(matcha): Add more stuff here if needed
 }
 

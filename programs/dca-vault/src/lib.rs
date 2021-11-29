@@ -11,7 +11,7 @@ declare_id!("6rCWVjanBs1gx5jhpUAXoDqLwwURaNxKoGUxczjG6hFX");
 pub mod dca_vault {
     use super::*;
 
-    pub fn init_vault_proto_config(ctx: Context<InitializeVaultProtoConfig>, granularity: u64) -> ProgramResult {
+    pub fn init_vault_proto_config(ctx: Context<InitializeVaultProtoConfig>, granularity: u128) -> ProgramResult {
         instructions::init_vault_proto_config::handler(ctx, granularity)
     }
 
@@ -19,8 +19,8 @@ pub mod dca_vault {
         instructions::init_vault::handler(ctx, bump)
     }
 
-    pub fn deposit_a(ctx: Context<DepositA>, amount: u64, total_duration_millis: u64) -> ProgramResult {
-        instructions::deposit_a::handler(ctx, amount, total_duration_millis)
+    pub fn deposit_a(ctx: Context<DepositA>, amount: u32, expiry_date_millis: u128) -> ProgramResult {
+        instructions::deposit_a::handler(ctx, amount, expiry_date_millis)
     }
 
     pub fn withdraw_a(ctx: Context<WithdrawA>, position_id: u8, amount: u64) -> ProgramResult {

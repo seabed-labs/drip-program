@@ -69,11 +69,12 @@ pub struct InitializeVault<'info> {
 
 pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> ProgramResult {
     let vault = &mut ctx.accounts.vault;
-    vault.proto_config = ctx.accounts.vault_proto_config.key();
+    vault.vault_proto_config = ctx.accounts.vault_proto_config.key();
     vault.token_a_mint = ctx.accounts.token_a_mint.key();
     vault.token_b_mint = ctx.accounts.token_b_mint.key();
     vault.token_a_account = ctx.accounts.token_a_account.key();
     vault.token_b_account = ctx.accounts.token_b_account.key();
+    vault.drip_amount = 0;
 
     msg!("Initialized Vault");
     Ok(())

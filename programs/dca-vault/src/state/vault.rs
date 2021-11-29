@@ -7,12 +7,19 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct Vault {
-    pub proto_config: Pubkey,
+    pub vault_proto_config: Pubkey,
     pub token_a_mint: Pubkey, // A
     pub token_b_mint: Pubkey, // B
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
-                              // TODO(matcha): Flesh this out more
+
+    // This is the amount of token A that needs to be dripped into token B every period of size G
+    pub drip_amount: u32, 
+
+    // The last period for which the DCA has run successfully
+    latest_dca_period_id: u64,
+
+    // TODO (matcha), TWAP[] and dripAmountToReduce[]
 }
 
 impl ByteSized for Vault {}
