@@ -30,6 +30,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 160);
+        assert_eq!(Vault::byte_size(), 176);
     }
 }

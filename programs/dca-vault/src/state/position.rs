@@ -38,6 +38,6 @@ mod test {
     use super::*;
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 160); 
+        assert_eq!(Position::byte_size(), 144); 
     }
 }
