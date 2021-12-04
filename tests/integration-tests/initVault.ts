@@ -63,7 +63,7 @@ export function testInitVault() {
     ]);
 
     ExpectUtils.batchExpectPubkeysToBeEqual(
-      [vaultAccount.protoConfig, vaultProtoConfigAccount],
+      [vaultAccount.vaultProtoConfig, vaultProtoConfigAccount],
       [vaultAccount.tokenAMint, tokenA.publicKey],
       [vaultAccount.tokenBMint, tokenB.publicKey],
       [vaultAccount.tokenAAccount, vaultTokenAAccountPDA.pubkey],

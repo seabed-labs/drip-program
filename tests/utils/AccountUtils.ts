@@ -26,11 +26,13 @@ export class AccountUtils extends TestUtil {
   ): Promise<
        Pick<
          AsyncReturnType<typeof ProgramUtils.vaultProgram.account.vault.fetch>,
-         'protoConfig' |
+         'vaultProtoConfig' |
          'tokenAMint' |
          'tokenBMint' |
          'tokenAAccount' |
-         'tokenBAccount'
+         'tokenBAccount' |
+         'dripAmount' |
+         'latestDcaPeriodId'
        >
      > 
   {
