@@ -17,6 +17,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(VaultProtoConfig::byte_size(), 8);
+        assert_eq!(VaultProtoConfig::byte_size(), 16);
     }
 }
