@@ -1,13 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cargo fmt -- --check | true
-#result=$?
-#
-#if [[ $result -ne 0  ]] ; then
-#  echo $diff
-#  echo 'There are some code style issues, run `cargo fmt` first.'
-#  exit $result
-#fi
-#
-#exit 0
+echo "Run 'cargo fmt' if this check fails"
+cargo fmt -- --check
