@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::state::{VaultProtoConfig, Vault, ByteSized};
+use crate::state::{VaultProtoConfig, Vault};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultBumps {
@@ -22,7 +22,6 @@ pub struct InitializeVault<'info> {
         ],
         bump = bumps.vault,
         payer = creator,
-        space = 8 + Vault::byte_size()
     )]
     pub vault: Account<'info, Vault>,
 
@@ -74,6 +73,8 @@ pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> Pr
     vault.token_b_mint = ctx.accounts.token_b_mint.key();
     vault.token_a_account = ctx.accounts.token_a_account.key();
     vault.token_b_account = ctx.accounts.token_b_account.key();
+    vault.last_dca_period = 0;
+    vault.drip_amount = 0;
 
     msg!("Initialized Vault");
     Ok(())
