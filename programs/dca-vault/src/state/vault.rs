@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
 
+
 #[account]
 #[derive(Default)]
 pub struct Vault {
