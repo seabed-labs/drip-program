@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{TokenAccount};
 use crate::state::Vault;
+use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
+use anchor_spl::token::TokenAccount;
 
 #[derive(Accounts)]
 #[instruction(deposit_amount: u64, total_duration_millis: u64)]
@@ -29,7 +29,11 @@ pub struct DepositA<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handler(ctx: Context<DepositA>, deposit_amount: u64, total_duration_millis: u64) -> ProgramResult {
+pub fn handler(
+    ctx: Context<DepositA>,
+    deposit_amount: u64,
+    total_duration_millis: u64,
+) -> ProgramResult {
     msg!("Deposited A");
     Ok(())
 }

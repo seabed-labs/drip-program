@@ -12,7 +12,7 @@ pub struct Vault {
     pub token_b_mint: Pubkey, // B
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
-                              // TODO(matcha): Flesh this out more
+    // TODO(matcha): Flesh this out more
 }
 
 impl ByteSized for Vault {}

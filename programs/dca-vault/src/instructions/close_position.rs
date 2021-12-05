@@ -1,7 +1,6 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{ TokenAccount, Mint };
 use crate::state::Vault;
-
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
 
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
