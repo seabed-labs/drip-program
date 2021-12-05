@@ -9,7 +9,7 @@ pub struct VaultProtoConfig {
     // TODO(matcha): Add more stuff here if needed
 }
 
-impl ByteSized for VaultProtoConfig {} 
+impl ByteSized for VaultProtoConfig {}
 
 #[cfg(test)]
 mod test {

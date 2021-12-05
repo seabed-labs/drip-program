@@ -1,7 +1,6 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{ TokenAccount, Mint };
 use crate::state::Vault;
-
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
 
 #[derive(Accounts)]
 #[instruction(amount: u64)]
@@ -16,7 +15,6 @@ pub struct WithdrawA<'info> {
     #[account(mut)]
     pub depositor_token_a_account: Account<'info, TokenAccount>,
     pub token_a_mint: Account<'info, Mint>,
-
     // TODO (cappucino): Flesh out other accounts needed
 }
 
