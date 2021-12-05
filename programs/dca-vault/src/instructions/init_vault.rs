@@ -1,4 +1,4 @@
-use crate::state::{ByteSized, Vault, VaultProtoConfig};
+use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 

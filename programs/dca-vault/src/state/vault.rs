@@ -2,13 +2,6 @@ use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
 
-// #[zero_copy]
-// #[derive(Default)]
-// pub struct PeriodicState {
-//     pub twap: u64, // Time weighted average price of asset A expressed in asset B from period 1 to this period
-//     pub dar: u64, // Drip amount to reduce at this period
-// }
-
 #[account]
 #[derive(Default)]
 pub struct Vault {
