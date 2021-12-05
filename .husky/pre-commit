@@ -1,7 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cargo fmt -- --check || true
+cargo fmt -- --check | true
 #result=$?
 #
 #if [[ $result -ne 0  ]] ; then
