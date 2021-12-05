@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
 
-
 // #[zero_copy]
 // #[derive(Default)]
 // pub struct PeriodicState {

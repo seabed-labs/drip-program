@@ -1,5 +1,5 @@
+use crate::state::{ByteSized, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use crate::state::{VaultProtoConfig, ByteSized};
 
 #[derive(Accounts)]
 #[instruction(bump: u8)]

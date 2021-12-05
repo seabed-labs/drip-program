@@ -1,6 +1,6 @@
+use crate::state::{ByteSized, Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::state::{VaultProtoConfig, Vault};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultBumps {
@@ -61,9 +61,7 @@ pub struct InitializeVault<'info> {
     #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>
-
-    // TODO(matcha): Add remaining accounts here, if any
+    pub rent: Sysvar<'info, Rent>, // TODO(matcha): Add remaining accounts here, if any
 }
 
 pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> ProgramResult {
