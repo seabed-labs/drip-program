@@ -1,11 +1,12 @@
 import random
 import string
+from collections import defaultdict
 
 random.seed(1)
 letters = string.ascii_lowercase
 
 # b quoted against a
-prices= [random.uniform(0.1, 10.0) for _ in range(1000)]
+prices = [random.uniform(0.1, 10.0) for _ in range(1000)]
 
 class User:
     address = ""
@@ -16,29 +17,29 @@ class User:
         self.a_balance = random.choice([10,20,30,40,50])
 
 class Vault:
-    a_balance =0
-    b_balance=0
+    a_balance = 0
+    b_balance = 0
 
-    twap={0:0}
-    last_dca_period=0
+    twap = {0:0}
+    last_dca_period = 0
 
     drip_amount = 0
-    dar={0:0}
+    dar = defaultdict(lambda: 0)
     
     # address -> start_period, dca_periods, deposited_a, withdrawn_b
     position = {}
     
     def deposit(self, user: User, deposit_a, periods):
         self.__update_position_deposit(user, deposit_a, periods)
-        self.a_balance = deposit_a
-        drip = deposit_a/ periods
+        self.a_balance += deposit_a
+        drip = deposit_a / periods
         self.drip_amount += drip
-        self.dar[self.last_dca_period + periods] = drip
+        self.dar[self.last_dca_period + periods] += drip
     
     def dca(self):
         i = self.last_dca_period + 1
         price = self.__swap_a_for_b(i)
-        if price <=0 :
+        if price <= 0 :
             raise Exception("can't swap a for b")
         self.twap[i] = (self.twap[i-1]*(i-1)+price)/i
         self.last_dca_period = i
@@ -61,7 +62,7 @@ class Vault:
         if self.a_balance <= 0 or prices[period] <= 0:
             return 0
         price = prices[period]
-        self.b_balance = price * self.drip_amount
+        self.b_balance += price * self.drip_amount
         self.a_balance -= self.drip_amount
         return price
 
@@ -85,8 +86,9 @@ dca(vault, 5)
 
 vault.deposit(user2, user2.a_balance/2, 13)
 print(f"user2 balance after deposit ".ljust(40) + f"a:{round(user2.a_balance, 10)}".ljust(20) + f"b:{round(user2.b_balance,10)}".ljust(20))
+print(f"vault balance after user2 deposit ".ljust(40) + f"a:{round(vault.a_balance,10)}".ljust(20) + f"b:{round(vault.b_balance,10)}".ljust(20))
 
 dca(vault, 6)
 dca(vault, 4)
-dca(vault, 5)
+dca(vault, 3)
 
