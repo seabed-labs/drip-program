@@ -8,7 +8,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializePositionBumps {
     position: u8,
-    vault: u8,
     depositor_token_a_account: u8,
     token_a_account: u8,
 }
@@ -20,14 +19,15 @@ pub struct DepositA<'info> {
     pub depositor: Signer<'info>,
 
     // The vault where the token will be deposited
-    #[account(mut, 
+    #[account(mut,
+        has_one = vault_proto_config,
         seeds = [
             b"dca-vault-v1".as_ref(),
             token_a_mint.key().as_ref(),
             token_b_mint.key().as_ref(),
             vault_proto_config.key().as_ref(),
         ],
-        bump = bumps.vault)]
+        bump = vault.__nonce)]
     pub vault: Account<'info, Vault>,
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
@@ -38,7 +38,7 @@ pub struct DepositA<'info> {
         seeds = [
             b"position".as_ref(),
             vault.key().as_ref(),
-            depositor_token_a_account.key().as_ref(),
+            depositor.key().as_ref(),
         ],
         bump = bumps.position,
         payer = depositor,
@@ -72,7 +72,7 @@ pub struct DepositA<'info> {
     pub rent: Sysvar<'info, Rent>
 }
 
-pub fn handler(ctx: Context<DepositA>, deposit_amount: u32, expiry_date_millis: u128) -> ProgramResult {
+pub fn handler(ctx: Context<DepositA>, bumps: InitializePositionBumps, deposit_amount: u32, expiry_date_millis: u128) -> ProgramResult {
     let position = &mut ctx.accounts.position;
     let vault = &mut ctx.accounts.vault;
 
@@ -80,15 +80,18 @@ pub fn handler(ctx: Context<DepositA>, deposit_amount: u32, expiry_date_millis: 
     position.deposit_amount_token_a = deposit_amount;
     position.expiry_date_millis = expiry_date_millis;
     position.dripped_amount_token_b = 0;
-    position.user_token_a_account = ctx.accounts.depositor_token_a_account.key();
+    position.is_closed = false;
 
     let start = SystemTime::now();
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH).expect("Ok");
     position.deposit_date_millis = since_the_epoch.as_millis();
 
+    // TODO: Finalize how we want to define the timestamps throughout the project
     let dca_duration = expiry_date_millis - since_the_epoch.as_millis();
     let granulairity = ctx.accounts.vault_proto_config.granularity;
+
+    // TODO: We'll need to do safe math that accounts for underflow and overflow
     position.number_of_swaps = (dca_duration / granulairity) as u32;
     position.amount_per_period = deposit_amount / position.number_of_swaps;
 

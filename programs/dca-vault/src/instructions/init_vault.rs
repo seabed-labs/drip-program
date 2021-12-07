@@ -75,6 +75,8 @@ pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> Pr
     vault.token_a_account = ctx.accounts.token_a_account.key();
     vault.token_b_account = ctx.accounts.token_b_account.key();
     vault.drip_amount = 0;
+    vault.latest_dca_period_id = 0;
+    vault.__nonce = _bump.vault;
 
     msg!("Initialized Vault");
     Ok(())

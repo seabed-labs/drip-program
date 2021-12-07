@@ -27,8 +27,10 @@ pub struct Position {
     pub number_of_swaps: u32, 
     pub amount_per_period: u32,
 
-    // Will need to update these accounts after every swap
-    pub user_token_a_account: Pubkey,
+    // Will need to update these accounts after every withdraw of B
+    pub withdrawn_token_amount_b: Pubkey,
+    pub is_closed: bool,
+    pub __nonce: u8,
 }
 
 impl ByteSized for Position {}
@@ -38,6 +40,6 @@ mod test {
     use super::*;
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 144); 
+        assert_eq!(Position::byte_size(), 152); 
     }
 }

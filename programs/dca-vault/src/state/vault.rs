@@ -17,9 +17,11 @@ pub struct Vault {
     pub drip_amount: u32, 
 
     // The last period for which the DCA has run successfully
-    latest_dca_period_id: u64,
+    pub latest_dca_period_id: u64,
 
     // TODO (matcha), TWAP[] and dripAmountToReduce[]
+
+    pub __nonce: u8,
 }
 
 impl ByteSized for Vault {}

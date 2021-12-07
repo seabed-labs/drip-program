@@ -19,8 +19,8 @@ pub mod dca_vault {
         instructions::init_vault::handler(ctx, bump)
     }
 
-    pub fn deposit_a(ctx: Context<DepositA>, amount: u32, expiry_date_millis: u128) -> ProgramResult {
-        instructions::deposit_a::handler(ctx, amount, expiry_date_millis)
+    pub fn deposit_a(ctx: Context<DepositA>, bumps: InitializePositionBumps, amount: u32, expiry_date_millis: u128) -> ProgramResult {
+        instructions::deposit_a::handler(ctx, bumps, amount, expiry_date_millis)
     }
 
     pub fn withdraw_a(ctx: Context<WithdrawA>, position_id: u8, amount: u64) -> ProgramResult {
