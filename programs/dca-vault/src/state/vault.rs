@@ -2,17 +2,19 @@ use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
 
-// This is a skeleton, not the final thing
-
 #[account]
 #[derive(Default)]
 pub struct Vault {
+    // Account relations
     pub proto_config: Pubkey,
-    pub token_a_mint: Pubkey, // A
-    pub token_b_mint: Pubkey, // B
+    pub token_a_mint: Pubkey,
+    pub token_b_mint: Pubkey,
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
-    // TODO(matcha): Flesh this out more
+
+    // Data
+    pub last_dca_period: u64, // 1 to N
+    pub drip_amount: u64,
 }
 
 impl ByteSized for Vault {}
@@ -23,6 +25,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 160);
+        assert_eq!(Vault::byte_size(), 176);
     }
 }

@@ -21,28 +21,4 @@ pub mod dca_vault {
     pub fn init_vault(ctx: Context<InitializeVault>, bump: InitializeVaultBumps) -> ProgramResult {
         instructions::init_vault::handler(ctx, bump)
     }
-
-    pub fn deposit_a(
-        ctx: Context<DepositA>,
-        amount: u64,
-        total_duration_millis: u64,
-    ) -> ProgramResult {
-        instructions::deposit_a::handler(ctx, amount, total_duration_millis)
-    }
-
-    pub fn withdraw_a(ctx: Context<WithdrawA>, position_id: u8, amount: u64) -> ProgramResult {
-        instructions::withdraw_a::handler(ctx, position_id, amount)
-    }
-
-    pub fn withdraw_b(ctx: Context<WithdrawB>, position_id: u8, amount: u64) -> ProgramResult {
-        instructions::withdraw_b::handler(ctx, position_id, amount)
-    }
-
-    pub fn trigger_dca(ctx: Context<TriggerDCA>) -> ProgramResult {
-        instructions::trigger_dca::handler(ctx)
-    }
-
-    pub fn close_position(ctx: Context<ClosePosition>) -> ProgramResult {
-        instructions::close_position::handler(ctx)
-    }
 }
