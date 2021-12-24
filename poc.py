@@ -24,7 +24,7 @@ class Vault:
     last_dca_period = 0
 
     drip_amount = 0
-    dar = defaultdict(lambda: 0)
+    drip_amount_reduction = defaultdict(lambda: 0)
     
     # address -> start_period, dca_periods, deposited_a, withdrawn_b
     position = {}
@@ -34,7 +34,7 @@ class Vault:
         self.a_balance += deposit_a
         drip = deposit_a / periods
         self.drip_amount += drip
-        self.dar[self.last_dca_period + periods] += drip
+        self.drip_amount_reduction[self.last_dca_period + periods] += drip
     
     def dca(self):
         i = self.last_dca_period + 1
@@ -43,7 +43,7 @@ class Vault:
             raise Exception("can't swap a for b")
         self.twap[i] = (self.twap[i-1]*(i-1)+price)/i
         self.last_dca_period = i
-        self.drip_amount -= self.dar[i]
+        self.drip_amount -= self.drip_amount_reduction[i]
 
     def __update_position_deposit(self, user: User, deposit_a, periods):
         if deposit_a > user.a_balance:
