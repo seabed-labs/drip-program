@@ -9,6 +9,12 @@ pub struct Position {
     // This will later be an NFT that the user will hold
     pub position_authority: Pubkey,
 
+    // Total deposited
+    pub deposited_token_a_amount: u64,
+
+    // Total withdrawn B
+    pub withdrawn_token_b_amount: u64,
+
     // The A/B/G vault the position belongs to
     pub vault: Pubkey,
 
@@ -22,12 +28,6 @@ pub struct Position {
 
     // deposit_amount_token_a / number_of_swaps
     pub periodic_drip_amount: u64,
-
-    // Total deposited
-    pub deposited_token_a_amount: u64,
-
-    // Total withdrawn B
-    pub withdrawn_token_b_amount: u64,
 
     pub is_closed: bool,
 }
