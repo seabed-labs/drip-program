@@ -46,7 +46,6 @@ export function testInitVault() {
       )
     ]); 
 
-    const now = new Date();
     await VaultUtils.initVault(
       vaultPDA,
       vaultProtoConfigAccount,
