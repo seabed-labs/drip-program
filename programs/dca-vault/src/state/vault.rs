@@ -15,6 +15,7 @@ pub struct Vault {
     // Data
     pub last_dca_period: u64, // 1 to N
     pub drip_amount: u64,
+    pub dca_activation_timestamp: i64,
 }
 
 impl ByteSized for Vault {}
@@ -25,6 +26,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 176);
+        assert_eq!(Vault::byte_size(), 184);
     }
 }

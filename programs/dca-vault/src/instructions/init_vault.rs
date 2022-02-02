@@ -74,6 +74,11 @@ pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> Pr
     vault.last_dca_period = 0;
     vault.drip_amount = 0;
 
+    let now = Clock::get().unwrap().unix_timestamp;
+    // TODO(matcha): Abstract away this date flooring math and add unit tests
+    // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
+    vault.dca_activation_timestamp = now - now % ctx.accounts.vault_proto_config.granularity;
+
     msg!("Initialized Vault");
     Ok(())
 }

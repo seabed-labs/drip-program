@@ -13,7 +13,7 @@ pub mod dca_vault {
 
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfig>,
-        granularity: u64,
+        granularity: i64,
     ) -> ProgramResult {
         instructions::init_vault_proto_config::handler(ctx, granularity)
     }

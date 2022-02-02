@@ -1,4 +1,4 @@
-import { web3 } from "@project-serum/anchor";
+import { BN, web3 } from "@project-serum/anchor";
 import { AccountUtils } from "../utils/AccountUtils";
 import { ExpectUtils } from "../utils/ExpectUtils";
 import { Granularity } from "../utils/Granularity";
@@ -61,6 +61,12 @@ export function testInitVault() {
       TokenUtils.fetchTokenAccountInfo(vaultAccount.tokenAAccount),
       TokenUtils.fetchTokenAccountInfo(vaultAccount.tokenBAccount),
     ]);
+
+    // TODO(matcha): Somehow test vaultAccount.dcaActivationTimestamp
+    ExpectUtils.expectBNToEqual(vaultAccount.lastDcaPeriod, "0");
+    ExpectUtils.expectBNToEqual(vaultAccount.dripAmount, "0");
+
+    web3.SYSVAR_CLOCK_PUBKEY
 
     ExpectUtils.batchExpectPubkeysToBeEqual(
       [vaultAccount.protoConfig, vaultProtoConfigAccount],

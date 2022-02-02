@@ -12,6 +12,7 @@ export function testInitVaultProtoConfig() {
     });
     const vaultProtoConfigAccount = await AccountUtils.fetchVaultProtoConfigAccount(vaultProtoConfigKeypair.publicKey);
 
-    ExpectUtils.expectBNToEqual(vaultProtoConfigAccount.granularity, 86400000);
+    // Make sure the granularity is actually 1 day (24 hours) in seconds
+    ExpectUtils.expectBNToEqual(vaultProtoConfigAccount.granularity, 86400);
   });
 }
