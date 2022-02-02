@@ -9,29 +9,27 @@ pub struct Position {
     // This will later be an NFT that the user will hold
     pub position_authority: Pubkey,
 
+    // Total deposited
+    pub deposited_token_a_amount: u64,
+
+    // Total withdrawn B
+    pub withdrawn_token_b_amount: u64,
+
     // The A/B/G vault the position belongs to
     pub vault: Pubkey,
 
-    pub deposit_amount_token_a: u32,
+    pub deposit_timestamp: i64,
 
-    // Will be updated after every swap
-    pub dripped_amount_token_b: u32,
+    // The DCA period ID of the vault that happened prior to the user opening this position
+    pub dca_period_id_before_deposit: u64,
 
-    // The date when position was initiated by the user
-    pub deposit_date: u64,
-
-    // The date till user wants to DCA
-    pub expiry_date: u64,
-
-    // (expiry_date - deposit_date) / granularity
-    pub number_of_swaps: u32,
+    // Number of DCAs/Swaps that this position will be a part of
+    pub number_of_swaps: u64,
 
     // deposit_amount_token_a / number_of_swaps
-    pub swap_amount_per_period: u32,
+    pub periodic_drip_amount: u64,
 
-    // Will need to update these accounts after every swap
-    pub user_token_a_account: Pubkey,
-    pub user_token_b_account: Pubkey,
+    pub is_closed: bool,
 }
 
 impl ByteSized for Position {}
@@ -41,6 +39,6 @@ mod test {
     use super::*;
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 160);
+        assert_eq!(Position::byte_size(), 120);
     }
 }
