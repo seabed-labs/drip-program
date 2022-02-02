@@ -8,7 +8,8 @@ pub struct VaultPeriod {
     pub vault: Pubkey,
 
     // Data
-    pub index: u64, // The period index/offset from the genesis period of the vault (0, 1, ...)
+    pub complete: bool,
+    pub period_id: u64, // The period index/offset from the genesis period of the vault (0, 1, ...)
     pub twap: u64, // Time weighted average price of asset A expressed in asset B from period 1 to this period
     pub dar: u64,  // Drip amount to reduce at this period
 }
@@ -21,6 +22,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(VaultPeriod::byte_size(), 56);
+        assert_eq!(VaultPeriod::byte_size(), 64);
     }
 }

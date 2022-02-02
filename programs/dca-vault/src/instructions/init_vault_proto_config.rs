@@ -14,7 +14,7 @@ pub struct InitializeVaultProtoConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: u64) -> ProgramResult {
+pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: i64) -> ProgramResult {
     let config = &mut ctx.accounts.vault_proto_config;
     config.granularity = granularity;
 

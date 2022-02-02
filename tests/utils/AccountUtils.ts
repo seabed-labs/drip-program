@@ -30,7 +30,10 @@ export class AccountUtils extends TestUtil {
          'tokenAMint' |
          'tokenBMint' |
          'tokenAAccount' |
-         'tokenBAccount'
+         'tokenBAccount' |
+         'lastDcaPeriod' |
+         'dripAmount' |
+         'startTimestamp'
        >
      > 
   {
