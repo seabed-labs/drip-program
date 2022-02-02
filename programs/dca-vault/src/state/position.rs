@@ -12,11 +12,6 @@ pub struct Position {
     // The A/B/G vault the position belongs to
     pub vault: Pubkey,
 
-    pub deposit_amount_token_a: u64,
-
-    // Will be updated after every swap
-    pub dripped_amount_token_b: u64,
-
     pub deposit_timestamp: i64,
 
     // The DCA period ID of the vault that happened prior to the user opening this position
@@ -44,6 +39,6 @@ mod test {
     use super::*;
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 136);
+        assert_eq!(Position::byte_size(), 120);
     }
 }
