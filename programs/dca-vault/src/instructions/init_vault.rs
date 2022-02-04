@@ -64,7 +64,7 @@ pub struct InitializeVault<'info> {
     pub rent: Sysvar<'info, Rent>, // TODO(matcha): Add remaining accounts here, if any
 }
 
-pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> ProgramResult {
+pub fn handler(ctx: Context<InitializeVault>, _bumps: InitializeVaultBumps) -> ProgramResult {
     let vault = &mut ctx.accounts.vault;
     vault.proto_config = ctx.accounts.vault_proto_config.key();
     vault.token_a_mint = ctx.accounts.token_a_mint.key();
