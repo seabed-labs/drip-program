@@ -30,8 +30,8 @@ pub struct Deposit<'info> {
     pub user_token_a_account: Account<'info, TokenAccount>,
     #[account(init, payer = depositor)]
     pub user_position: Account<'info, Position>,
-    pub user_position_mint: Account<'info, Mint>,
-    pub user_position_token_account: Account<'info, TokenAccount>,
+    pub user_position_nft_mint: Account<'info, Mint>,
+    pub user_position_nft_account: Account<'info, TokenAccount>,
     pub depositor: Signer<'info>,
 
     pub system_program: Program<'info, System>,
@@ -49,7 +49,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
 
     vault_period_end.dar += params.token_a_deposit_amount;
     vault.drip_amount += periodic_drip_amount;
-    position.position_authority = ctx.accounts.user_position_mint.key();
+    position.position_authority = ctx.accounts.user_position_nft_mint.key();
     position.deposited_token_a_amount = params.token_a_deposit_amount;
     position.withdrawn_token_b_amount = 0;
     position.vault = vault.key();
@@ -67,8 +67,8 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
     );
 
     mint_position_nft(
-        ctx.accounts.user_position_mint.key(),
-        ctx.accounts.user_position_token_account.key(),
+        ctx.accounts.user_position_nft_mint.key(),
+        ctx.accounts.user_position_nft_account.key(),
     );
 
     Ok(())
