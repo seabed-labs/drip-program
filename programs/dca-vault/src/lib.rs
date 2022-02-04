@@ -21,4 +21,8 @@ pub mod dca_vault {
     pub fn init_vault(ctx: Context<InitializeVault>, bump: InitializeVaultBumps) -> ProgramResult {
         instructions::init_vault::handler(ctx, bump)
     }
+
+    pub fn trigger_dca(ctx: Context<TriggerDCA>) -> ProgramResult {
+        instructions::trigger_dca::handler(ctx)
+    }
 }
