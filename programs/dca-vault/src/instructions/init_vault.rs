@@ -79,8 +79,6 @@ pub fn handler(ctx: Context<InitializeVault>, _bump: InitializeVaultBumps) -> Pr
     // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
     vault.dca_activation_timestamp = now - now % ctx.accounts.vault_proto_config.granularity;
 
-    
-
     msg!("Initialized Vault");
     Ok(())
 }
