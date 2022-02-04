@@ -18,8 +18,8 @@ pub struct TriggerDCA<'info> {
 
     // TODO: make sure this is derived using period ID = vault.last_dca_period + 1
     // to avoid duplicate DCAs
-    current_vault_period: Account<'info, VaultPeriod>,
-    last_vault_period: Account<'info, VaultPeriod>,
+    current_vault_period_account: Account<'info, VaultPeriod>,
+    last_vault_period_account: Account<'info, VaultPeriod>,
 
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
@@ -28,8 +28,8 @@ pub struct TriggerDCA<'info> {
 pub fn handler(ctx: Context<TriggerDCA>) -> ProgramResult {
 
     let vault = &mut ctx.accounts.vault;
-    let current_vault_period_account = &mut ctx.accounts.current_vault_period;
-    let last_vault_period_account = &mut ctx.accounts.last_vault_period;
+    let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
+    let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
 
     let now = Clock::get().unwrap().unix_timestamp;
 
