@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultProtoConfig, VaultPeriod};
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token_swap::state::SwapV1;
@@ -6,11 +6,9 @@ use std::str::FromStr;
 
 use crate::errors::ErrorCode;
 
-
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
     // TODO (capp) Add constraints for everything
-
     pub vault: Account<'info, Vault>,
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
@@ -45,16 +43,14 @@ pub struct TriggerDCA<'info> {
 }
 
 pub fn handler(ctx: Context<TriggerDCA>) -> ProgramResult {
-
-    let vault = &mut ctx.accounts.vault;
-    let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
-    let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
-
     let now = Clock::get().unwrap().unix_timestamp;
 
-    if !dca_allowed(vault.dca_activation_timestamp, now, 
-        ctx.accounts.vault_proto_config.granularity) {
-            return Err(ErrorCode::DuplicateDCAError.into());
+    if !dca_allowed(
+        ctx.accounts.vault.dca_activation_timestamp,
+        now,
+        ctx.accounts.vault_proto_config.granularity,
+    ) {
+        return Err(ErrorCode::DuplicateDCAError.into());
     }
 
     // TODO: Figure out how to "freeze" an exchange rate; so that this value is exactly
@@ -62,14 +58,19 @@ pub fn handler(ctx: Context<TriggerDCA>) -> ProgramResult {
     let exchange_rate: u64 = get_exchange_rate();
 
     swap_tokens(
-        vault.drip_amount,
-        ctx.accounts.vault_token_a_account.key(),
-        ctx.accounts.vault_token_b_account.key()
+        &ctx,
+        // vault.drip_amount,
+        // ctx.accounts.vault_token_a_account.key(),
+        // ctx.accounts.vault_token_b_account.key(),
     );
-    
+
+    let vault = &mut ctx.accounts.vault;
+    let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
+    let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
+
     let prev_twap = last_vault_period_account.twap;
     let current_period_id = current_vault_period_account.period_id;
-    
+
     let new_twap = (prev_twap * (current_period_id - 1) + exchange_rate) / current_period_id;
     current_vault_period_account.twap = new_twap;
 
@@ -85,7 +86,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> ProgramResult {
 Checks if a DCA has already been trigerred within that granularity
 by comapring the current time and last_dca_activation_timetamp
 */
-fn dca_allowed(last_dca_activation_timetamp: i64, current_dca_trigger_time: i64, granularity: i64) -> bool {
+fn dca_allowed(
+    last_dca_activation_timetamp: i64,
+    current_dca_trigger_time: i64,
+    granularity: i64,
+) -> bool {
     true
 }
 
@@ -93,24 +98,26 @@ fn dca_allowed(last_dca_activation_timetamp: i64, current_dca_trigger_time: i64,
 Invokes CPI to SPL's swap IX / Serum's Dex
 swap ix requires lot other authority accounts for verification; add them later
 */
-fn swap_tokens(ctx: Context<TriggerDCA>) {
-    solana_program::program::invoke(spl_token_swap::instruction::swap(
-        &ctx.accounts.token_swap_program.key(),
-        &ctx.accounts.token_program.key(),
-        &ctx.accounts.swap_liquidity_pool.key(),
-        &ctx.accounts.swap_authority.key(),
-        user_transfer_authority_pubkey,
-        source_pubkey,
-        swap_source_pubkey,
-        swap_destination_pubkey,
-        destination_pubkey,
-        pool_mint_pubkey,
-        pool_fee_pubkey,
-        host_fee_pubkey,
-        instruction
-    ));
+fn swap_tokens(ctx: &Context<TriggerDCA>) {
+    // TODO(capp): Call approve here
+
+    // solana_program::program::invoke(spl_token_swap::instruction::swap(
+    //     &ctx.accounts.token_swap_program.key(),
+    //     &ctx.accounts.token_program.key(),
+    //     &ctx.accounts.swap_liquidity_pool.key(),
+    //     &ctx.accounts.swap_authority.key(),
+    //     &ctx.accounts.swap_liquidity_pool.key(), // TODO(capp): Invoke token.approve with this account as the delegate first (delegated_amount should be drip_amount)
+    //     source_pubkey,                           // Vault's token A account
+    //     swap_source_pubkey,                      // Swap's token A account
+    //     swap_destination_pubkey,                 // Swap's token B account
+    //     destination_pubkey,                      // Vault's token B account
+    //     pool_mint_pubkey, // swap.pool_mint (might need to pass in pool mint as well IFF we need to send the pool mint account to swap)
+    //     pool_fee_pubkey,
+    //     host_fee_pubkey,
+    //     instruction,
+    // ));
 }
 
-fn get_exchange_rate() -> u64{
+fn get_exchange_rate() -> u64 {
     return 1; // fake value for now
 }
