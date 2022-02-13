@@ -1,7 +1,7 @@
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Token, TokenAccount};
-use spl_token_swap::state::SwapV1;
+use spl_token_swap::state::{SwapState};
 use std::str::FromStr;
 
 use crate::errors::ErrorCode;
@@ -19,6 +19,9 @@ pub struct TriggerDCA<'info> {
     pub vault_token_a_account: Account<'info, TokenAccount>,
     pub vault_token_b_account: Account<'info, TokenAccount>,
 
+    pub swap_token_a_account: Account<'info, TokenAccount>,
+    pub swap_token_b_account: Account<'info, TokenAccount>,
+
     // TODO: make sure this is derived using period ID = vault.last_dca_period + 1
     // to avoid duplicate DCAs
     pub current_vault_period_account: Account<'info, VaultPeriod>,
@@ -27,6 +30,11 @@ pub struct TriggerDCA<'info> {
     // TODO: Thsi will likely be SwapV1, but requires Serialization/Deserialization to be
     // implemented
     pub swap_liquidity_pool: AccountInfo<'info>,
+
+    // TODO: These are temp, should be able to use it 
+    // via swap_liquidity_pool.pool_mint / swap_liquidity_pool.pool_fee
+    pub swap_liquidity_pool_mint: AccountInfo<'info>,
+    pub swap_liquidity_pool_fee: AccountInfo<'info>,
 
     // TODO: Generate Authority ID defined in processor.rs. / authority_id
     pub swap_authority: AccountInfo<'info>,
@@ -59,9 +67,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> ProgramResult {
 
     swap_tokens(
         &ctx,
-        // vault.drip_amount,
-        // ctx.accounts.vault_token_a_account.key(),
-        // ctx.accounts.vault_token_b_account.key(),
+        ctx.accounts.vault.drip_amount,
     );
 
     let vault = &mut ctx.accounts.vault;
@@ -98,26 +104,47 @@ fn dca_allowed(
 Invokes CPI to SPL's swap IX / Serum's Dex
 swap ix requires lot other authority accounts for verification; add them later
 */
-fn swap_tokens(ctx: &Context<TriggerDCA>) {
+fn swap_tokens(ctx: &Context<TriggerDCA>, swap_amount: u64) -> ProgramResult {
     // TODO(capp): Call approve here
 
-    // solana_program::program::invoke(spl_token_swap::instruction::swap(
-    //     &ctx.accounts.token_swap_program.key(),
-    //     &ctx.accounts.token_program.key(),
-    //     &ctx.accounts.swap_liquidity_pool.key(),
-    //     &ctx.accounts.swap_authority.key(),
-    //     &ctx.accounts.swap_liquidity_pool.key(), // TODO(capp): Invoke token.approve with this account as the delegate first (delegated_amount should be drip_amount)
-    //     source_pubkey,                           // Vault's token A account
-    //     swap_source_pubkey,                      // Swap's token A account
-    //     swap_destination_pubkey,                 // Swap's token B account
-    //     destination_pubkey,                      // Vault's token B account
-    //     pool_mint_pubkey, // swap.pool_mint (might need to pass in pool mint as well IFF we need to send the pool mint account to swap)
-    //     pool_fee_pubkey,
-    //     host_fee_pubkey,
-    //     instruction,
-    // ));
+    let min_slippage_amt = get_minimum_slippage_amount();
+
+    let ix = spl_token_swap::instruction::swap(
+        ctx.accounts.token_swap_program.key,
+        ctx.accounts.token_program.key,
+        ctx.accounts.swap_liquidity_pool.key,
+        ctx.accounts.swap_authority.key,
+        ctx.accounts.swap_liquidity_pool.key, // TODO(capp): Invoke token.approve with this account as the delegate first (delegated_amount should be drip_amount)
+        &ctx.accounts.vault_token_a_account.key(),
+        &ctx.accounts.swap_token_a_account.key(),
+        &ctx.accounts.swap_token_b_account.key(),
+        &ctx.accounts.vault_token_b_account.key(),
+        ctx.accounts.swap_liquidity_pool_fee.key, // swap.pool_mint (might need to pass in pool mint as well IFF we need to send the pool mint account to swap)
+        ctx.accounts.swap_liquidity_pool_fee.key,
+        None,
+        spl_token_swap::instruction::Swap { amount_in: swap_amount, minimum_amount_out: min_slippage_amt },
+    )?;
+
+    // TODO (capp): Likely need to call invoke signed, figure out the seeds for it
+    solana_program::program::invoke(&ix,
+    &[
+        ctx.accounts.token_swap_program.clone(),
+        ctx.accounts.token_program.to_account_info().clone(),
+        ctx.accounts.swap_liquidity_pool.clone(),
+        ctx.accounts.swap_authority.clone(),
+        ctx.accounts.vault_token_a_account.to_account_info().clone(),
+        ctx.accounts.vault_token_b_account.to_account_info().clone(),
+        ctx.accounts.swap_token_a_account.to_account_info().clone(),
+        ctx.accounts.swap_token_b_account.to_account_info().clone(),
+    ])
 }
 
+// TODO: Check the account balance difference of vault token b account before and after
 fn get_exchange_rate() -> u64 {
+    return 1; // fake value for now
+}
+
+// TODO (matcha) Do the math
+fn get_minimum_slippage_amount() -> u64 {
     return 1; // fake value for now
 }
