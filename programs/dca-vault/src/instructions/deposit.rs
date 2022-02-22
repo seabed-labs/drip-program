@@ -16,6 +16,8 @@ pub struct DepositParams {
     dca_cycles: u64,
 }
 
+// TODO(matcha): Add all eDSL access control and other constraints here
+
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
@@ -30,6 +32,7 @@ pub struct Deposit<'info> {
     pub user_token_a_account: Account<'info, TokenAccount>,
     #[account(init, payer = depositor)]
     pub user_position: Account<'info, Position>,
+    // TODO(matcha): Add eDSL to initialize the mint and token account
     pub user_position_nft_mint: Account<'info, Mint>,
     pub user_position_nft_account: Account<'info, TokenAccount>,
     pub depositor: Signer<'info>,
