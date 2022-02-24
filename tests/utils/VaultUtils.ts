@@ -1,8 +1,9 @@
-import { web3, BN } from "@project-serum/anchor";
+import { BN, web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
 import { PDA } from "./PDAUtils";
+import { Signer } from "@solana/web3.js";
 
 export type VaultProtoConfig = {
   granularity: Granularity,
@@ -13,13 +14,13 @@ export class VaultUtils extends TestUtil {
     vaultProtoConfigKeypair: web3.Signer,
     vaultProtoConfig: VaultProtoConfig, 
   ): Promise<void> {
-    await ProgramUtils.vaultProgram.rpc.initVaultProtoConfig(new BN(vaultProtoConfig.granularity.toString()), {
+    await ProgramUtils.vaultProgram.rpc.initVaultProtoConfig(new BN(vaultProtoConfig.granularity), {
       accounts: {
-        vaultProtoConfig: vaultProtoConfigKeypair.publicKey,
-        creator: this.provider.wallet.publicKey,
-        systemProgram: ProgramUtils.systemProgram.programId,
+        vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),
+        creator: this.provider.wallet.publicKey.toString(),
+        systemProgram: ProgramUtils.systemProgram.programId.toString(),
       },
-      signers: [vaultProtoConfigKeypair]
+      signers: [vaultProtoConfigKeypair as Signer]
     })
   }
 
@@ -37,15 +38,15 @@ export class VaultUtils extends TestUtil {
       tokenBAccount: tokenBAccountPDA.bump,
     }, {
       accounts: {
-        vault: vaultPDA.pubkey,
-        vaultProtoConfig: vaultProtoConfigAccount,
-        tokenAMint,
-        tokenBMint,
-        tokenAAccount: tokenAAccountPDA.pubkey,
-        tokenBAccount: tokenBAccountPDA.pubkey,
-        creator: this.provider.wallet.publicKey,
-        systemProgram: ProgramUtils.systemProgram.programId,
-        tokenProgram: ProgramUtils.tokenProgram.programId,
+        vault: vaultPDA.pubkey.toString(),
+        vaultProtoConfig: vaultProtoConfigAccount.toString(),
+        tokenAMint: tokenAMint.toString(),
+        tokenBMint: tokenBMint.toString(),
+        tokenAAccount: tokenAAccountPDA.pubkey.toString(),
+        tokenBAccount: tokenBAccountPDA.pubkey.toString(),
+        creator: this.provider.wallet.publicKey.toString(),
+        systemProgram: ProgramUtils.systemProgram.programId.toString(),
+        tokenProgram: ProgramUtils.tokenProgram.programId.toString(),
         rent: web3.SYSVAR_RENT_PUBKEY,
       },
     });

@@ -1,3 +1,4 @@
+use crate::common::ErrorCode;
 use crate::state::{ByteSized, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
@@ -17,7 +18,9 @@ pub struct InitializeVaultProtoConfig<'info> {
 pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: i64) -> ProgramResult {
     let config = &mut ctx.accounts.vault_proto_config;
     config.granularity = granularity;
-
+    if granularity <= 0 {
+        return Err(ErrorCode::InvalidGranularity.into());
+    }
     msg!("Initialized Vault Proto Config");
     Ok(())
 }
