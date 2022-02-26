@@ -1,5 +1,6 @@
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
+use crate::ErrorCode;
 use anchor_lang::prelude::*;
 use anchor_spl::token;
 use anchor_spl::token::{Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
@@ -127,6 +128,10 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
 
     let periodic_drip_amount =
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.dca_cycles);
+
+    if periodic_drip_amount == 0 {
+        return Err(ErrorCode::PeriodicDripAmountIsZero.into());
+    }
 
     // Make account modifications
     vault.increase_drip_amount(periodic_drip_amount);
