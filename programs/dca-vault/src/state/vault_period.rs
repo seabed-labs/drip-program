@@ -13,6 +13,12 @@ pub struct VaultPeriod {
     pub dar: u64,  // Drip amount to reduce at this period
 }
 
+impl VaultPeriod {
+    pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
+        self.dar += extra_drip;
+    }
+}
+
 impl ByteSized for VaultPeriod {}
 
 #[cfg(test)]

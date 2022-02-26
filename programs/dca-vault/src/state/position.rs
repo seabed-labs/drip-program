@@ -32,6 +32,28 @@ pub struct Position {
     pub is_closed: bool,
 }
 
+impl Position {
+    pub fn init(
+        &mut self,
+        vault: Pubkey,
+        position_nft: Pubkey,
+        deposited_amount: u64,
+        last_dca_period: u64,
+        dca_cycles: u64,
+        periodic_drip_amount: u64,
+    ) {
+        self.vault = vault;
+        self.position_authority = position_nft;
+        self.deposited_token_a_amount = deposited_amount;
+        self.withdrawn_token_b_amount = 0;
+        self.deposit_timestamp = Clock::get().unwrap().unix_timestamp;
+        self.dca_period_id_before_deposit = last_dca_period;
+        self.number_of_swaps = dca_cycles;
+        self.periodic_drip_amount = periodic_drip_amount;
+        self.is_closed = false;
+    }
+}
+
 impl ByteSized for Position {}
 
 #[cfg(test)]

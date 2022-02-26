@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 pub mod instructions;
+pub mod math;
 pub mod state;
 
 use instructions::*;
@@ -18,7 +19,11 @@ pub mod dca_vault {
         instructions::init_vault_proto_config::handler(ctx, granularity)
     }
 
-    pub fn init_vault(ctx: Context<InitializeVault>, bump: InitializeVaultBumps) -> ProgramResult {
-        instructions::init_vault::handler(ctx, bump)
+    pub fn init_vault(ctx: Context<InitializeVault>, bumps: InitializeVaultBumps) -> ProgramResult {
+        instructions::init_vault::handler(ctx, bumps)
+    }
+
+    pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
+        instructions::deposit::handler(ctx, params)
     }
 }

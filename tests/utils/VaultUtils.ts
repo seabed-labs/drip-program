@@ -21,7 +21,7 @@ export class VaultUtils extends TestUtil {
         systemProgram: ProgramUtils.systemProgram.programId.toString(),
       },
       signers: [vaultProtoConfigKeypair as Signer]
-    })
+    });
   }
 
   static async initVault(

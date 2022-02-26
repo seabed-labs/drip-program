@@ -16,6 +16,22 @@ pub struct Vault {
     pub last_dca_period: u64, // 1 to N
     pub drip_amount: u64,
     pub dca_activation_timestamp: i64,
+    pub seed_bump: u8,
+}
+
+impl Vault {
+    pub fn increase_drip_amount(&mut self, extra_drip: u64) {
+        self.drip_amount += extra_drip;
+    }
+
+    pub fn seeds(&self) -> [&[u8]; 4] {
+        [
+            b"dca-vault-v1".as_ref(),
+            self.token_a_mint.as_ref(),
+            self.token_b_mint.as_ref(),
+            self.proto_config.as_ref(),
+        ]
+    }
 }
 
 impl ByteSized for Vault {}
@@ -26,6 +42,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 184);
+        assert_eq!(Vault::byte_size(), 192);
     }
 }
