@@ -15,15 +15,15 @@ pub mod dca_vault {
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfig>,
         granularity: i64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::init_vault_proto_config::handler(ctx, granularity)
     }
 
-    pub fn init_vault(ctx: Context<InitializeVault>, bumps: InitializeVaultBumps) -> ProgramResult {
-        instructions::init_vault::handler(ctx, bumps)
+    pub fn init_vault(ctx: Context<InitializeVault>) -> Result<()> {
+        instructions::init_vault::handler(ctx)
     }
 
-    pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
+    pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         instructions::deposit::handler(ctx, params)
     }
 }

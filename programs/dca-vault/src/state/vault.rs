@@ -16,7 +16,7 @@ pub struct Vault {
     pub last_dca_period: u64, // 1 to N
     pub drip_amount: u64,
     pub dca_activation_timestamp: i64,
-    pub seed_bump: u8,
+    pub bump: u8,
 }
 
 impl Vault {

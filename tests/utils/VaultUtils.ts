@@ -29,26 +29,24 @@ export class VaultUtils extends TestUtil {
     vaultProtoConfigAccount: web3.PublicKey,
     tokenAMint: web3.PublicKey,
     tokenBMint: web3.PublicKey,
-    tokenAAccountPDA: PDA,
-    tokenBAccountPDA: PDA,
+    tokenA_ATA: web3.PublicKey,
+    tokenB_ATA: web3.PublicKey,
   ): Promise<void> {
-    await ProgramUtils.vaultProgram.rpc.initVault({
-      vault: vaultPDA.bump,
-      tokenAAccount: tokenAAccountPDA.bump,
-      tokenBAccount: tokenBAccountPDA.bump,
-    }, {
-      accounts: {
-        vault: vaultPDA.pubkey.toString(),
-        vaultProtoConfig: vaultProtoConfigAccount.toString(),
-        tokenAMint: tokenAMint.toString(),
-        tokenBMint: tokenBMint.toString(),
-        tokenAAccount: tokenAAccountPDA.pubkey.toString(),
-        tokenBAccount: tokenBAccountPDA.pubkey.toString(),
-        creator: this.provider.wallet.publicKey.toString(),
-        systemProgram: ProgramUtils.systemProgram.programId.toString(),
-        tokenProgram: ProgramUtils.tokenProgram.programId.toString(),
-        rent: web3.SYSVAR_RENT_PUBKEY,
-      },
+    const accounts = {
+      vault: vaultPDA.pubkey.toString(),
+      vaultProtoConfig: vaultProtoConfigAccount.toString(),
+      tokenAMint: tokenAMint.toString(),
+      tokenBMint: tokenBMint.toString(),
+      tokenAAccount: tokenA_ATA.toString(),
+      tokenBAccount: tokenB_ATA.toString(),
+      creator: this.provider.wallet.publicKey.toString(),
+      systemProgram: ProgramUtils.systemProgram.programId.toString(),
+      tokenProgram: ProgramUtils.tokenProgram.programId.toString(),
+      associatedTokenProgram: ProgramUtils.associatedTokenProgram.programId.toString(),
+      rent: web3.SYSVAR_RENT_PUBKEY,
+    };
+    await ProgramUtils.vaultProgram.rpc.initVault( {
+      accounts: accounts,
     });
   }
 }

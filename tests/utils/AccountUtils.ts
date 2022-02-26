@@ -2,10 +2,11 @@ import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { AsyncReturnType } from "./types";
+import { PublicKey } from "@solana/web3.js"
 
 export class AccountUtils extends TestUtil {
   static async fetchAccountData(pubkey: web3.PublicKey): Promise<Buffer> {
-    const account = await this.provider.connection.getAccountInfo(pubkey);
+    const account = await this.provider.connection.getAccountInfo(pubkey as PublicKey);
     return account.data;
   }
 
@@ -18,7 +19,7 @@ export class AccountUtils extends TestUtil {
        >
      > 
   {
-    return await ProgramUtils.vaultProgram.account.vaultProtoConfig.fetch(pubkey);
+    return await ProgramUtils.vaultProgram.account.vaultProtoConfig.fetch(pubkey as PublicKey);
   }
 
   static async fetchVaultAccount(
@@ -33,7 +34,7 @@ export class AccountUtils extends TestUtil {
          'tokenBAccount' |
          'lastDcaPeriod' |
          'dripAmount' |
-         'seedBump'
+         'bump'
        >
      > 
   {
