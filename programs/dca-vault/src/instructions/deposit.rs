@@ -80,8 +80,14 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
 
 fn send_tokens(mint: Pubkey, from: Pubkey, to: Pubkey, amount: u64) {
     // TODO(matcha)
+    msg!(format!(
+        "transferring {} units of {} token from {} to {}",
+        amount, mint, from, to
+    )
+    .as_str())
 }
 
 fn mint_position_nft(mint: Pubkey, to: Pubkey) {
     // TODO(matcha)
+    msg!(format!("transferring position NFT {} to {}", mint, to).as_str())
 }
