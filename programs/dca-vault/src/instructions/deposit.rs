@@ -92,7 +92,8 @@ pub struct Deposit<'info> {
             user_token_a_account.mint == vault.token_a_mint &&
             user_token_a_account.owner == depositor.key() &&
             user_token_a_account.delegate.contains(&vault.key()) &&
-            user_token_a_account.delegated_amount == params.token_a_deposit_amount
+            user_token_a_account.delegated_amount == params.token_a_deposit_amount &&
+            params.token_a_deposit_amount > 0
         }
     )]
     pub user_token_a_account: Account<'info, TokenAccount>,
