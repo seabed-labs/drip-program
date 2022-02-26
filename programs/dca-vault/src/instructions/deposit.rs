@@ -53,7 +53,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
 
     // Make account modifications
     vault.increaase_drip_amount(periodic_drip_amount);
-    vault_period_end.increase_drip_amount_to_reduce(params.token_a_deposit_amount);
+    vault_period_end.increase_drip_amount_to_reduce(periodic_drip_amount);
     position.init(
         vault.key(),
         ctx.accounts.user_position_nft_mint.key(),

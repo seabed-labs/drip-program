@@ -14,8 +14,8 @@ pub struct VaultPeriod {
 }
 
 impl VaultPeriod {
-    pub fn increase_drip_amount_to_reduce(&mut self, new_deposit: u64) {
-        self.dar += new_deposit;
+    pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
+        self.dar += extra_drip;
     }
 }
 
