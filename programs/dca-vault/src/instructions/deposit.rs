@@ -32,11 +32,16 @@ pub struct Deposit<'info> {
         bump = vault.seed_bump
     )]
     pub vault: Account<'info, Vault>,
+
     // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
     #[account(
         mut,
         has_one = vault,
-        constraint = vault_period_end.period_id == vault.last_dca_period + params.dca_cycles
+        constraint = {
+            params.dca_cycles > 0 &&
+            vault_period_end.period_id > 0 &&
+            vault_period_end.period_id == vault.last_dca_period + params.dca_cycles
+        }
     )]
     pub vault_period_end: Account<'info, VaultPeriod>,
 
@@ -54,7 +59,7 @@ pub struct Deposit<'info> {
 
     // Token mints
     #[account(
-        owner = token::ID,
+        owner = Token::id(),
         constraint = token_a_mint.key() == vault.token_a_mint,
     )]
     pub token_a_mint: Account<'info, Mint>,
@@ -63,7 +68,7 @@ pub struct Deposit<'info> {
         init,
         mint::authority = vault,
         mint::decimals = 0,
-        owner = token::ID,
+        owner = Token::id(),
         payer = depositor
     )]
     pub user_position_nft_mint: Account<'info, Mint>,
@@ -71,7 +76,7 @@ pub struct Deposit<'info> {
     // Token accounts
     #[account(
         mut,
-        owner = token::ID,
+        owner = Token::id(),
         constraint = {
             vault_token_a_account.mint == vault.token_a_mint &&
             vault_token_a_account.owner == vault.key()
@@ -82,7 +87,7 @@ pub struct Deposit<'info> {
     // TODO(matcha): Revisit this and make sure this constraint makes sense
     #[account(
         mut,
-        owner = token::ID,
+        owner = Token::id(),
         constraint = {
             user_token_a_account.mint == vault.token_a_mint &&
             user_token_a_account.owner == depositor.key() &&
@@ -94,7 +99,7 @@ pub struct Deposit<'info> {
 
     #[account(
         init,
-        owner = token::ID,
+        owner = Token::id(),
         token::mint = user_position_nft_mint,
         token::authority = depositor,
         payer = depositor
@@ -104,9 +109,10 @@ pub struct Deposit<'info> {
     // Other
     pub depositor: Signer<'info>,
 
-    #[account(address = token::ID)]
+    #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
+    #[account(address = System::id())]
     pub system_program: Program<'info, System>,
 }
 
