@@ -42,7 +42,7 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
     try {
       await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
-        granularity: "1o" as number,
+        granularity: "1o" as any as number,
       });
     } catch (err) {
       assert.equal(err.toString(), "Error: Invalid character");
