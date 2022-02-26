@@ -204,7 +204,7 @@ fn mint_position_nft<'info>(
         1,
     )?;
 
-    // Set the mint authority for this position NFT mint to 0 so that new tokens cannot be minted
+    // Set the mint authority for this position NFT mint to None so that new tokens cannot be minted
     token::set_authority(
         CpiContext::new_with_signer(
             token_program.to_account_info().clone(),
