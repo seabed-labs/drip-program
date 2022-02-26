@@ -18,6 +18,12 @@ pub struct Vault {
     pub dca_activation_timestamp: i64,
 }
 
+impl Vault {
+    pub fn increaase_drip_amount(&mut self, extra_drip: u64) {
+        self.drip_amount += extra_drip;
+    }
+}
+
 impl ByteSized for Vault {}
 
 #[cfg(test)]
