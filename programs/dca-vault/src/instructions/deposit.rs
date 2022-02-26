@@ -1,7 +1,8 @@
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, TokenAccount};
+use anchor_spl::token;
+use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositBumps {
@@ -37,6 +38,7 @@ pub struct Deposit<'info> {
 
     // Other
     pub depositor: Signer<'info>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -64,11 +66,12 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
     );
 
     send_tokens(
-        ctx.accounts.token_a_mint.key(),
-        ctx.accounts.user_token_a_account.key(),
-        ctx.accounts.vault_token_a_account.key(),
+        &ctx.accounts.token_program,
+        &ctx.accounts.vault,
+        &ctx.accounts.user_token_a_account,
+        &ctx.accounts.vault_token_a_account,
         params.token_a_deposit_amount,
-    );
+    )?;
 
     mint_position_nft(
         ctx.accounts.user_position_nft_mint.key(),
@@ -78,13 +81,30 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
     Ok(())
 }
 
-fn send_tokens(mint: Pubkey, from: Pubkey, to: Pubkey, amount: u64) {
-    // TODO(matcha)
-    msg!(format!(
-        "transferring {} units of {} token from {} to {}",
-        amount, mint, from, to
+fn send_tokens<'info>(
+    token_program: &Program<'info, Token>,
+    vault: &Account<'info, Vault>,
+    from: &Account<'info, TokenAccount>,
+    to: &Account<'info, TokenAccount>,
+    amount: u64,
+) -> ProgramResult {
+    token::transfer(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            Transfer {
+                from: from.to_account_info().clone(),
+                to: to.to_account_info().clone(),
+                authority: vault.to_account_info().clone(),
+            },
+            &[&[
+                b"dca-vault-v1".as_ref(),
+                vault.token_a_mint.as_ref(),
+                vault.token_b_mint.as_ref(),
+                vault.proto_config.as_ref(),
+            ]],
+        ),
+        amount,
     )
-    .as_str())
 }
 
 fn mint_position_nft(mint: Pubkey, to: Pubkey) {
