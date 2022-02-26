@@ -2,7 +2,8 @@ use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::token;
-use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
+use spl_token::instruction::AuthorityType;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositBumps {
@@ -25,10 +26,16 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub vault_period_end: Account<'info, VaultPeriod>,
     #[account(init, payer = depositor)]
-    pub user_position: Account<'info, Position>,
+    pub user_position: Account<'info, Position>, // TODO(matcha): PDA
 
     // Token mints
     pub token_a_mint: Account<'info, Mint>,
+    #[account(
+        init,
+        mint::authority = vault,
+        mint::decimals = 0,
+        payer = depositor
+    )]
     pub user_position_nft_mint: Account<'info, Mint>,
 
     // Token accounts
@@ -38,7 +45,9 @@ pub struct Deposit<'info> {
 
     // Other
     pub depositor: Signer<'info>,
+    #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 }
 
@@ -74,9 +83,11 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
     )?;
 
     mint_position_nft(
-        ctx.accounts.user_position_nft_mint.key(),
-        ctx.accounts.user_position_nft_account.key(),
-    );
+        &ctx.accounts.token_program,
+        &ctx.accounts.vault,
+        &ctx.accounts.user_position_nft_mint,
+        &ctx.accounts.user_position_nft_account,
+    )?;
 
     Ok(())
 }
@@ -96,18 +107,43 @@ fn send_tokens<'info>(
                 to: to.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[&[
-                b"dca-vault-v1".as_ref(),
-                vault.token_a_mint.as_ref(),
-                vault.token_b_mint.as_ref(),
-                vault.proto_config.as_ref(),
-            ]],
+            &[&vault.seeds()],
         ),
         amount,
     )
 }
 
-fn mint_position_nft(mint: Pubkey, to: Pubkey) {
-    // TODO(matcha)
-    msg!(format!("transferring position NFT {} to {}", mint, to).as_str())
+fn mint_position_nft<'info>(
+    token_program: &Program<'info, Token>,
+    vault: &Account<'info, Vault>,
+    mint: &Account<'info, Mint>,
+    to: &Account<'info, TokenAccount>,
+) -> ProgramResult {
+    // Mint NFT to user
+    token::mint_to(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            MintTo {
+                mint: mint.to_account_info().clone(),
+                to: to.to_account_info().clone(),
+                authority: vault.to_account_info().clone(),
+            },
+            &[&vault.seeds()],
+        ),
+        1,
+    )?;
+
+    // Set the mint authority for this position NFT mint to 0 so that new tokens cannot be minted
+    token::set_authority(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            SetAuthority {
+                current_authority: vault.to_account_info().clone(),
+                account_or_mint: mint.to_account_info().clone(),
+            },
+            &[&vault.seeds()],
+        ),
+        AuthorityType::MintTokens, // MintTokens
+        None,
+    )
 }

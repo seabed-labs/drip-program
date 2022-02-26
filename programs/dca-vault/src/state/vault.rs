@@ -23,6 +23,15 @@ impl Vault {
     pub fn increaase_drip_amount(&mut self, extra_drip: u64) {
         self.drip_amount += extra_drip;
     }
+
+    pub fn seeds(&self) -> [&[u8]; 4] {
+        [
+            b"dca-vault-v1".as_ref(),
+            self.token_a_mint.as_ref(),
+            self.token_b_mint.as_ref(),
+            self.proto_config.as_ref(),
+        ]
+    }
 }
 
 impl ByteSized for Vault {}
