@@ -73,7 +73,6 @@ pub fn handler(ctx: Context<InitializeVault>, bumps: InitializeVaultBumps) -> Pr
     vault.token_b_account = ctx.accounts.token_b_account.key();
     vault.last_dca_period = 0;
     vault.drip_amount = 0;
-    // TODO(matcha): Add this check to the tests
     vault.seed_bump = bumps.vault;
 
     let now = Clock::get().unwrap().unix_timestamp;
