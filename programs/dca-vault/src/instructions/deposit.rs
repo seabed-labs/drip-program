@@ -63,7 +63,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> ProgramResult {
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.dca_cycles);
 
     // Make account modifications
-    vault.increaase_drip_amount(periodic_drip_amount);
+    vault.increase_drip_amount(periodic_drip_amount);
     vault_period_end.increase_drip_amount_to_reduce(periodic_drip_amount);
     position.init(
         vault.key(),

@@ -20,7 +20,7 @@ pub struct Vault {
 }
 
 impl Vault {
-    pub fn increaase_drip_amount(&mut self, extra_drip: u64) {
+    pub fn increase_drip_amount(&mut self, extra_drip: u64) {
         self.drip_amount += extra_drip;
     }
 
