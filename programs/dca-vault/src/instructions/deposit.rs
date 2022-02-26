@@ -7,7 +7,7 @@ use spl_token::instruction::AuthorityType;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositBumps {
-    position: u8,
+    position_mint: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -23,12 +23,29 @@ pub struct Deposit<'info> {
     // Dcaf accounts
     #[account(mut)]
     pub vault: Account<'info, Vault>,
-    #[account(mut)]
+    // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
+    #[account(
+        mut,
+        has_one = vault,
+        constraint = vault_period_end.period_id == vault.last_dca_period + params.dca_cycles
+    )]
     pub vault_period_end: Account<'info, VaultPeriod>,
-    #[account(init, payer = depositor)]
-    pub user_position: Account<'info, Position>, // TODO(matcha): PDA
+    #[account(
+        init,
+        seeds = [
+            b"position".as_ref(),
+            vault.key().as_ref(),
+            user_position_nft_mint.key().as_ref()
+        ],
+        bump = params.bumps.position_mint,
+        payer = depositor
+    )]
+    pub user_position: Account<'info, Position>,
 
     // Token mints
+    #[account(
+        constraint = token_a_mint.key() == vault.token_a_mint,
+    )]
     pub token_a_mint: Account<'info, Mint>,
     #[account(
         init,
@@ -39,8 +56,31 @@ pub struct Deposit<'info> {
     pub user_position_nft_mint: Account<'info, Mint>,
 
     // Token accounts
+    #[account(
+        mut,
+        constraint = {
+            vault_token_a_account.mint == vault.token_a_mint &&
+            vault_token_a_account.owner == vault.key()
+        },
+    )]
     pub vault_token_a_account: Account<'info, TokenAccount>,
+    // TODO(matcha): Revisit this and make sure this constraint makes sense
+    #[account(
+        mut,
+        constraint = {
+            user_token_a_account.mint == vault.token_a_mint &&
+            user_token_a_account.owner == depositor.key() &&
+            user_token_a_account.delegate.contains(&vault.key()) &&
+            user_token_a_account.delegated_amount == params.token_a_deposit_amount
+        }
+    )]
     pub user_token_a_account: Account<'info, TokenAccount>,
+    #[account(
+        init,
+        token::mint = user_position_nft_mint,
+        token::authority = depositor,
+        payer = depositor
+    )]
     pub user_position_nft_account: Account<'info, TokenAccount>,
 
     // Other
