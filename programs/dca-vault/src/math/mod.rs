@@ -10,6 +10,7 @@ mod test {
     #[test_case(0, 10, 0; "Works when amount is 0")]
     #[test_case(10, 10, 1; "Works when drip amount is 1")]
     #[test_case(10, 100, 0; "Works when drip amount is 0 due to underflow")]
+    #[test_case(3, 2, 1; "Rounding case")]
     #[test_case(160, 20, 8; "Normal case")]
     fn calculate_periodic_drip_tests(
         total_amount: u64,
