@@ -6,7 +6,6 @@ use super::traits::ByteSized;
 #[derive(Default)]
 pub struct VaultProtoConfig {
     pub granularity: i64,
-    // TODO(matcha): Add more stuff here if needed
 }
 
 impl ByteSized for VaultProtoConfig {}
