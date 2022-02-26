@@ -7,6 +7,7 @@ import { CONSTANT_SEEDS, PDAUtils } from "../utils/PDAUtils";
 import { ProgramUtils } from "../utils/ProgramUtils";
 import { TokenUtils } from "../utils/TokenUtils";
 import { VaultUtils } from "../utils/VaultUtils";
+import { expect } from "chai";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: web3.PublicKey;
@@ -66,7 +67,7 @@ export function testInitVault() {
     ExpectUtils.expectBNToEqual(vaultAccount.lastDcaPeriod, "0");
     ExpectUtils.expectBNToEqual(vaultAccount.dripAmount, "0");
 
-    web3.SYSVAR_CLOCK_PUBKEY
+    // web3.SYSVAR_CLOCK_PUBKEY
 
     ExpectUtils.batchExpectPubkeysToBeEqual(
       [vaultAccount.protoConfig, vaultProtoConfigAccount],
@@ -79,5 +80,7 @@ export function testInitVault() {
       [vaultTokenAAccount.owner, vaultPDA.pubkey],
       [vaultTokenBAccount.owner, vaultPDA.pubkey],
     );
+
+    expect(vaultAccount.seedBump.toString()).to.equal(vaultPDA.bump.toString());
   });
 }
