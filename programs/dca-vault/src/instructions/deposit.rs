@@ -42,7 +42,7 @@ pub struct Deposit<'info> {
     #[account(
         init,
         seeds = [
-            b"position".as_ref(),
+            b"user_position".as_ref(),
             vault.key().as_ref(),
             user_position_nft_mint.key().as_ref()
         ],
