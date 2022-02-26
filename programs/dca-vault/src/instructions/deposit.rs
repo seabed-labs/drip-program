@@ -21,7 +21,16 @@ pub struct DepositParams {
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
     // Dcaf accounts
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [
+            b"dca-vault-v1".as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
+            vault.proto_config.as_ref()
+        ],
+        bump = vault.seed_bump
+    )]
     pub vault: Account<'info, Vault>,
     // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
     #[account(
