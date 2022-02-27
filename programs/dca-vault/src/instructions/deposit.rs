@@ -55,7 +55,6 @@ pub struct Deposit<'info> {
     // Token mints
     #[account(
         constraint = {
-            token_a_mint.to_account_info().owner == &Token::id() &&
             token_a_mint.key() == vault.token_a_mint
         },
     )]
@@ -73,7 +72,6 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         constraint = {
-            vault_token_a_account.to_account_info().owner == &Token::id() &&
             vault_token_a_account.mint == vault.token_a_mint &&
             vault_token_a_account.owner == vault.key()
         },
@@ -84,7 +82,6 @@ pub struct Deposit<'info> {
     #[account(
         mut,
         constraint = {
-            user_token_a_account.to_account_info().owner == &Token::id() &&
             user_token_a_account.mint == vault.token_a_mint &&
             user_token_a_account.owner == depositor.key() &&
             user_token_a_account.delegate.contains(&vault.key()) &&

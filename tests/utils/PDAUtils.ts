@@ -12,6 +12,7 @@ export const CONSTANT_SEEDS = {
   vault: "dca-vault-v1",
   tokenAAccount: "token_a_account",
   tokenBAccount: "token_b_account",
+  vaultPeriod: "vault_period",
 };
 
 export class PDAUtils extends TestUtil {
@@ -59,16 +60,14 @@ export class PDAUtils extends TestUtil {
     ]);
   }
 
-  static async getTokenAccountPDA(
-    programId: web3.PublicKey,
-    constantSeed: string,
-    owner: web3.PublicKey,
-    mint: web3.PublicKey
+  static async getVaultPeriodPDA(
+    vault: PublicKey,
+    periodId: number
   ): Promise<PDA> {
-    return await this.findPDA(programId, [
-      Buffer.from(constantSeed),
-      owner.toBuffer(),
-      mint.toBuffer(),
+    return await this.findPDA(ProgramUtils.vaultProgram.programId, [
+      Buffer.from(CONSTANT_SEEDS.vaultPeriod),
+      vault.toBuffer(),
+      Buffer.from(periodId.toString()),
     ]);
   }
 }
