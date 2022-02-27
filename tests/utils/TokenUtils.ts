@@ -37,11 +37,11 @@ export class TokenUtils extends TestUtil {
     );
   }
 
-  static async createMockUSDCMint(minter: PublicKey): Promise<Token> {
+  static async createMockUSDCMint(minter: PublicKey = this.provider.wallet.publicKey): Promise<Token> {
     return await this.createMint(minter, DECIMALS.USDC);
   }
 
-  static async createMockBTCMint(minter: PublicKey): Promise<Token> {
+  static async createMockBTCMint(minter: PublicKey = this.provider.wallet.publicKey): Promise<Token> {
     return await this.createMint(minter, DECIMALS.BTC);
   }
 
