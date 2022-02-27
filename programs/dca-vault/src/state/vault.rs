@@ -1,5 +1,6 @@
-use crate::common::ErrorCode::CannotGetVaultBump;
 use anchor_lang::prelude::*;
+
+use crate::common::ErrorCode::CannotGetVaultBump;
 
 use super::traits::ByteSized;
 
@@ -28,7 +29,7 @@ impl Vault {
         token_b_mint: Pubkey,
         token_a_account: Pubkey,
         token_b_account: Pubkey,
-        granularity: i64,
+        granularity: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
         self.proto_config = proto_config;
@@ -42,7 +43,7 @@ impl Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-        self.dca_activation_timestamp = now - now % granularity;
+        self.dca_activation_timestamp = now - now % granularity as i64;
 
         match bump {
             Some(val) => {

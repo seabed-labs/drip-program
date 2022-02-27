@@ -1,7 +1,8 @@
-use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+
+use crate::state::{Vault, VaultProtoConfig};
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
@@ -38,6 +39,9 @@ pub struct InitializeVault<'info> {
 
     pub token_b_mint: Box<Account<'info, Mint>>,
 
+    #[account(
+        constraint = vault_proto_config.granularity != 0
+    )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     #[account(mut)]
@@ -62,7 +66,6 @@ pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;
-
     msg!("Initialized Vault");
     Ok(())
 }
