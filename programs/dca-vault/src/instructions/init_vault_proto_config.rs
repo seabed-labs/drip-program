@@ -28,7 +28,7 @@ pub fn handler(
     params: InitVaultProtoConfigParams,
 ) -> Result<()> {
     let vault_proto_config = &mut ctx.accounts.vault_proto_config;
-    if params.granularity <= 0 {
+    if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
     vault_proto_config.granularity = params.granularity;
