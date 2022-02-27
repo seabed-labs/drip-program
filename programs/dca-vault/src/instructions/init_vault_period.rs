@@ -1,6 +1,6 @@
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::token::Mint;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultPeriodParams {
@@ -35,7 +35,6 @@ pub struct InitializeVaultPeriod<'info> {
 
     #[account(
         constraint = {
-            token_a_mint.to_account_info().owner == &Token::id() &&
             token_a_mint.key() == vault.token_a_mint
         },
     )]
@@ -43,7 +42,6 @@ pub struct InitializeVaultPeriod<'info> {
 
     #[account(
         constraint = {
-            token_b_mint.to_account_info().owner == &Token::id() &&
             token_b_mint.key() == vault.token_b_mint
         },
     )]
