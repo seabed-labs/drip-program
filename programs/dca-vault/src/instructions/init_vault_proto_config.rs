@@ -3,7 +3,6 @@ use crate::state::{ByteSized, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-#[instruction(bump: u8)]
 pub struct InitializeVaultProtoConfig<'info> {
     #[account(
         init,
@@ -11,11 +10,14 @@ pub struct InitializeVaultProtoConfig<'info> {
         space = 8 + VaultProtoConfig::byte_size()
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    #[account(mut)]
     pub creator: Signer<'info>,
+
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: i64) -> ProgramResult {
+pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: i64) -> Result<()> {
     let config = &mut ctx.accounts.vault_proto_config;
     config.granularity = granularity;
     if granularity <= 0 {
