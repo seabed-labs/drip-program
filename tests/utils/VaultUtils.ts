@@ -29,7 +29,7 @@ export class VaultUtils extends TestUtil {
   }
 
   static async initVault(
-    vaultPDA: web3.PublicKey,
+    vaultPubkey: web3.PublicKey,
     vaultProtoConfigAccount: web3.PublicKey,
     tokenAMint: web3.PublicKey,
     tokenBMint: web3.PublicKey,
@@ -43,7 +43,7 @@ export class VaultUtils extends TestUtil {
     }
   ): Promise<void> {
     const accounts = {
-      vault: vaultPDA.toString(),
+      vault: vaultPubkey.toString(),
       vaultProtoConfig: vaultProtoConfigAccount.toString(),
       tokenAMint: tokenAMint.toString(),
       tokenBMint: tokenBMint.toString(),

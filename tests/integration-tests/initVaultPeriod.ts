@@ -45,7 +45,7 @@ export function testInitVaultPeriod() {
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA,
+      vaultPDA.pubkey,
       vaultProtoConfigPubkey,
       tokenA.publicKey,
       tokenB.publicKey,
@@ -56,7 +56,7 @@ export function testInitVaultPeriod() {
     vaultPubkey = vaultPDA.pubkey;
   });
 
-  it.only("initializes the vault period account correctly", async () => {
+  it("initializes the vault period account correctly", async () => {
     const { pubkey: vaultPeriodPubkey } = await PDAUtils.getVaultPeriodPDA(
       vaultPubkey,
       69
