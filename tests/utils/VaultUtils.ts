@@ -3,7 +3,7 @@ import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
 import { PDA } from "./PDAUtils";
-import { Signer } from "@solana/web3.js";
+import {PublicKey, Signer} from "@solana/web3.js";
 
 export type VaultProtoConfig = {
   granularity: Granularity,
