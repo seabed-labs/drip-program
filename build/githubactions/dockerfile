@@ -14,14 +14,14 @@ ENV PATH /root/.cargo/bin:$PATH
 RUN rustup component add rustfmt
 
 # Install Solana CLI
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.5/install)"
 ENV PATH /root/.local/share/solana/install/active_release/bin:$PATH
 RUN yes | solana-keygen new
 
 WORKDIR /solana-programs
 
 # Install Anchor CLI
-RUN npm i -g @project-serum/anchor-cli
+RUN npm i -g @project-serum/anchor-cli@0.22.0
 
 # Install app dependencies
 RUN npm i -g typescript

@@ -1,6 +1,7 @@
 import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
+import {PublicKey} from "@solana/web3.js";
 
 export type PDA = {
   pubkey: web3.PublicKey;
@@ -21,6 +22,20 @@ export class PDAUtils extends TestUtil {
       pubkey,
       bump
     }
+  }
+
+  static async findAssociatedTokenAddress(
+      walletAddress: PublicKey,
+      tokenMintAddress: PublicKey
+  ): Promise<web3.PublicKey> {
+    return (await PublicKey.findProgramAddress(
+        [
+          walletAddress.toBuffer(),
+          ProgramUtils.tokenProgram.programId.toBuffer(),
+          tokenMintAddress.toBuffer(),
+        ],
+        new PublicKey(ProgramUtils.associatedTokenProgram.programId),
+    ))[0];
   }
 
   static async getVaultPDA(tokenA: web3.PublicKey, tokenB: web3.PublicKey, protoConfig: web3.PublicKey): Promise<PDA> {

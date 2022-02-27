@@ -8,6 +8,7 @@ import { ProgramUtils } from "../utils/ProgramUtils";
 import { TokenUtils } from "../utils/TokenUtils";
 import { VaultUtils } from "../utils/VaultUtils";
 import { expect } from "chai";
+import {PublicKey} from "@solana/web3.js";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: web3.PublicKey;
@@ -32,55 +33,42 @@ export function testInitVault() {
       vaultProtoConfigAccount,
     );
 
-    const [vaultTokenAAccountPDA, vaultTokenBAccountPDA] = await Promise.all([
-      PDAUtils.getTokenAccountPDA(
-        ProgramUtils.vaultProgram.programId,
-        CONSTANT_SEEDS.tokenAAccount,
-        vaultPDA.pubkey,
-        tokenA.publicKey,
-      ),
-      PDAUtils.getTokenAccountPDA(
-        ProgramUtils.vaultProgram.programId,
-        CONSTANT_SEEDS.tokenBAccount,
-        vaultPDA.pubkey,
-        tokenB.publicKey,
-      )
-    ]); 
+    const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey as PublicKey, tokenA.publicKey),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey as PublicKey, tokenB.publicKey),
+    ]);
 
     await VaultUtils.initVault(
       vaultPDA,
       vaultProtoConfigAccount,
       tokenA.publicKey,
       tokenB.publicKey,
-      vaultTokenAAccountPDA,
-      vaultTokenBAccountPDA,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
     );
 
     const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPDA.pubkey);
-
     const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      TokenUtils.fetchTokenAccountInfo(vaultAccount.tokenAAccount),
-      TokenUtils.fetchTokenAccountInfo(vaultAccount.tokenBAccount),
+      TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
+      TokenUtils.fetchTokenAccountInfo(vaultTokenB_ATA),
     ]);
 
     // TODO(matcha): Somehow test vaultAccount.dcaActivationTimestamp
     ExpectUtils.expectBNToEqual(vaultAccount.lastDcaPeriod, "0");
     ExpectUtils.expectBNToEqual(vaultAccount.dripAmount, "0");
 
-    // web3.SYSVAR_CLOCK_PUBKEY
-
     ExpectUtils.batchExpectPubkeysToBeEqual(
       [vaultAccount.protoConfig, vaultProtoConfigAccount],
       [vaultAccount.tokenAMint, tokenA.publicKey],
       [vaultAccount.tokenBMint, tokenB.publicKey],
-      [vaultAccount.tokenAAccount, vaultTokenAAccountPDA.pubkey],
-      [vaultAccount.tokenBAccount, vaultTokenBAccountPDA.pubkey],
+      [vaultAccount.tokenAAccount, vaultTokenA_ATA],
+      [vaultAccount.tokenBAccount, vaultTokenB_ATA],
       [vaultTokenAAccount.mint, tokenA.publicKey],
       [vaultTokenBAccount.mint, tokenB.publicKey],
       [vaultTokenAAccount.owner, vaultPDA.pubkey],
       [vaultTokenBAccount.owner, vaultPDA.pubkey],
     );
 
-    expect(vaultAccount.seedBump.toString()).to.equal(vaultPDA.bump.toString());
+    expect(vaultAccount.bump.toString()).to.equal(vaultPDA.bump.toString());
   });
 }
