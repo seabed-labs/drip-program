@@ -1,8 +1,9 @@
-import { BN, web3 } from "@project-serum/anchor";
+import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
 import { Signer } from "@solana/web3.js";
+import { u64 } from "@solana/spl-token";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
@@ -14,7 +15,9 @@ export class VaultUtils extends TestUtil {
     vaultProtoConfig: VaultProtoConfig
   ): Promise<void> {
     await ProgramUtils.vaultProgram.rpc.initVaultProtoConfig(
-      new BN(vaultProtoConfig.granularity),
+      {
+        granularity: new u64(vaultProtoConfig.granularity),
+      },
       {
         accounts: {
           vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),

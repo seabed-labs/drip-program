@@ -28,11 +28,17 @@ export function testInitVaultProtoConfig() {
 
   it("errors when granularity is negative", async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
+
     await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: -10,
-    }).should.rejectedWith(
-      new RegExp(".*Granularity must be an integer larger than 0")
-    );
+    });
+
+    const vaultProtoConfigAccount =
+      await AccountUtils.fetchVaultProtoConfigAccount(
+        vaultProtoConfigKeypair.publicKey
+      );
+
+    vaultProtoConfigAccount.granularity.toString().should.equal("10");
   });
 
   it("errors when granularity is not a number", async () => {
