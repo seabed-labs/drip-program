@@ -1,8 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-echo "Checking formatting... Run 'cargo fmt' if this check fails"
+echo "Checking rust formatting... Run 'cargo fmt' if this check fails"
 cargo fmt -- --check
+
+echo "Checking typescript formatting... Run 'prettier --w ./' if this check fails"
+prettier --c ./
 
 echo "Running cargo tests"
 cargo test

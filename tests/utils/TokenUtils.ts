@@ -9,12 +9,15 @@ import { SolUtils } from "./SolUtils";
 const DECIMALS = {
   USDC: 6,
   BTC: 6,
-}
+};
 
 export class TokenUtils extends TestUtil {
   static async createMint(decimals: number): Promise<Token> {
     const funderKeypair = KeypairUtils.generatePair();
-    await SolUtils.fundAccount(funderKeypair.publicKey, SolUtils.solToLamports(10));
+    await SolUtils.fundAccount(
+      funderKeypair.publicKey,
+      SolUtils.solToLamports(10)
+    );
 
     return await Token.createMint(
       this.provider.connection,
@@ -34,13 +37,15 @@ export class TokenUtils extends TestUtil {
     return await this.createMint(DECIMALS.BTC);
   }
 
-  static async fetchTokenAccountInfo(pubkey: web3.PublicKey): Promise<{mint: web3.PublicKey, owner: web3.PublicKey}> {
+  static async fetchTokenAccountInfo(
+    pubkey: web3.PublicKey
+  ): Promise<{ mint: web3.PublicKey; owner: web3.PublicKey }> {
     const accountData = await AccountUtils.fetchAccountData(pubkey);
     const decodedData = AccountLayout.decode(accountData);
 
     return {
       mint: new web3.PublicKey(decodedData.mint),
       owner: new web3.PublicKey(decodedData.owner),
-    }
+    };
   }
 }
