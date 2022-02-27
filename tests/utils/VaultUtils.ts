@@ -29,26 +29,39 @@ export class VaultUtils extends TestUtil {
   }
 
   static async initVault(
-    vaultPDA: PDA,
+    vaultPDA: web3.PublicKey,
     vaultProtoConfigAccount: web3.PublicKey,
     tokenAMint: web3.PublicKey,
     tokenBMint: web3.PublicKey,
     tokenA_ATA: web3.PublicKey,
-    tokenB_ATA: web3.PublicKey
+    tokenB_ATA: web3.PublicKey,
+    programs?: {
+      systemProgram?: web3.PublicKey;
+      tokenProgram?: web3.PublicKey;
+      associatedTokenProgram?: web3.PublicKey;
+      rent?: web3.PublicKey;
+    }
   ): Promise<void> {
     const accounts = {
-      vault: vaultPDA.pubkey.toString(),
+      vault: vaultPDA.toString(),
       vaultProtoConfig: vaultProtoConfigAccount.toString(),
       tokenAMint: tokenAMint.toString(),
       tokenBMint: tokenBMint.toString(),
       tokenAAccount: tokenA_ATA.toString(),
       tokenBAccount: tokenB_ATA.toString(),
       creator: this.provider.wallet.publicKey.toString(),
-      systemProgram: ProgramUtils.systemProgram.programId.toString(),
-      tokenProgram: ProgramUtils.tokenProgram.programId.toString(),
+      systemProgram:
+        programs?.systemProgram?.toString() ??
+        ProgramUtils.systemProgram.programId.toString(),
+      tokenProgram:
+        programs?.tokenProgram?.toString() ??
+        ProgramUtils.tokenProgram.programId.toString(),
       associatedTokenProgram:
+        programs?.associatedTokenProgram?.toString() ??
         ProgramUtils.associatedTokenProgram.programId.toString(),
-      rent: web3.SYSVAR_RENT_PUBKEY,
+      rent:
+        programs?.rent?.toString() ??
+        ProgramUtils.rentProgram.programId.toString(),
     };
     await ProgramUtils.vaultProgram.rpc.initVault({
       accounts: accounts,

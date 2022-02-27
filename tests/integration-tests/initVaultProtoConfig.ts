@@ -21,38 +21,24 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
     await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: 0,
-    })
-      .should.rejected()
-      .catch((err) =>
-        err
-          .toString()
-          .should.equal("Granularity must be an integer larger than 0")
-      );
+    }).should.rejectedWith(
+      new RegExp(".*Granularity must be an integer larger than 0")
+    );
   });
 
   it("errors when granularity is negative", async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
     await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: -10,
-    })
-      .should.rejected()
-      .catch((err) =>
-        err
-          .toString()
-          .should.equal("Granularity must be an integer larger than 0")
-      );
+    }).should.rejectedWith(
+      new RegExp(".*Granularity must be an integer larger than 0")
+    );
   });
 
   it("errors when granularity is not a number", async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
     await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: "1o" as any as number,
-    })
-      .should.rejected()
-      .catch((err) =>
-        err
-          .toString()
-          .should.equal("Granularity must be an integer larger than 0")
-      );
+    }).should.rejectedWith(new RegExp(".*Invalid character"));
   });
 }

@@ -1,7 +1,7 @@
 import { Program, web3, workspace } from "@project-serum/anchor";
 import {
-  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { DcaVault } from "../../target/types/dca_vault";
 import { TestUtil } from "./config";
@@ -24,6 +24,12 @@ export class ProgramUtils extends TestUtil {
   static get associatedTokenProgram(): { programId: web3.PublicKey } {
     return {
       programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    };
+  }
+
+  static get rentProgram(): { programId: web3.PublicKey } {
+    return {
+      programId: web3.SYSVAR_RENT_PUBKEY,
     };
   }
 }

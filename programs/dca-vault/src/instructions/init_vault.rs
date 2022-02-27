@@ -53,7 +53,6 @@ pub struct InitializeVault<'info> {
 
 pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
-
     vault.init(
         ctx.accounts.vault_proto_config.key(),
         ctx.accounts.token_a_mint.key(),
