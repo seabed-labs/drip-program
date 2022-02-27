@@ -13,7 +13,7 @@ import {PublicKey} from "@solana/web3.js";
 export function testInitVault() {
   let vaultProtoConfigAccount: web3.PublicKey;
 
-  before(async () => {
+  beforeEach(async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
     await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,

@@ -6,4 +6,6 @@ pub enum ErrorCode {
     InvalidGranularity,
     #[msg("Periodic drip amount == 0")]
     PeriodicDripAmountIsZero,
+    #[msg("Cannot get vault bump")]
+    CannotGetVaultBump,
 }

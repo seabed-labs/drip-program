@@ -53,19 +53,16 @@ pub struct InitializeVault<'info> {
 
 pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
-    vault.proto_config = ctx.accounts.vault_proto_config.key();
-    vault.token_a_mint = ctx.accounts.token_a_mint.key();
-    vault.token_b_mint = ctx.accounts.token_b_mint.key();
-    vault.token_a_account = ctx.accounts.token_a_account.key();
-    vault.token_b_account = ctx.accounts.token_b_account.key();
-    vault.last_dca_period = 0;
-    vault.drip_amount = 0;
-    vault.bump = *ctx.bumps.get("vault")?;
 
-    let now = Clock::get().unwrap().unix_timestamp;
-    // TODO(matcha): Abstract away this date flooring math and add unit tests
-    // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-    vault.dca_activation_timestamp = now - now % ctx.accounts.vault_proto_config.granularity;
+    vault.init(
+        ctx.accounts.vault_proto_config.key(),
+        ctx.accounts.token_a_mint.key(),
+        ctx.accounts.token_b_mint.key(),
+        ctx.accounts.token_a_account.key(),
+        ctx.accounts.token_b_account.key(),
+        ctx.accounts.vault_proto_config.granularity,
+        ctx.bumps.get("vault"),
+    )?;
 
     msg!("Initialized Vault");
     Ok(())
