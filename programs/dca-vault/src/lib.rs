@@ -23,6 +23,10 @@ pub mod dca_vault {
         instructions::init_vault::handler(ctx)
     }
 
+    pub fn init_vault_period(ctx: Context<InitializeVaultPeriod>) -> Result<()> {
+        instructions::init_vault_period::handler(ctx)
+    }
+
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         instructions::deposit::handler(ctx, params)
     }
