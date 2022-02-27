@@ -44,4 +44,17 @@ export class AccountUtils extends TestUtil {
   > {
     return await ProgramUtils.vaultProgram.account.vault.fetch(pubkey);
   }
+
+  static async fetchVaultPeriodAccount(
+    pubkey: web3.PublicKey
+  ): Promise<
+    Pick<
+      AsyncReturnType<
+        typeof ProgramUtils.vaultProgram.account.vaultPeriod.fetch
+      >,
+      "vault" | "periodId" | "twap" | "dar"
+    >
+  > {
+    return await ProgramUtils.vaultProgram.account.vaultPeriod.fetch(pubkey);
+  }
 }

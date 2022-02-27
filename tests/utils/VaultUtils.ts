@@ -3,7 +3,8 @@ import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
 import { PDA } from "./PDAUtils";
-import { Signer } from "@solana/web3.js";
+import { PublicKey, Signer } from "@solana/web3.js";
+import { u64 } from "@solana/spl-token";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
@@ -52,5 +53,27 @@ export class VaultUtils extends TestUtil {
     await ProgramUtils.vaultProgram.rpc.initVault({
       accounts: accounts,
     });
+  }
+
+  static async initVaultPeriod(
+    vault: PublicKey,
+    vaultPeriod: PublicKey,
+    periodId: number
+  ): Promise<void> {
+    const accounts = {
+      vault: vault.toString(),
+      vaultPeriod: vaultPeriod.toString(),
+      creator: this.provider.wallet.publicKey.toString(),
+      systemProgram: ProgramUtils.systemProgram.programId.toString(),
+    };
+
+    await ProgramUtils.vaultProgram.rpc.initVaultPeriod(
+      {
+        periodId: new u64(periodId),
+      },
+      {
+        accounts: accounts,
+      }
+    );
   }
 }

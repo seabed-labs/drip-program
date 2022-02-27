@@ -14,6 +14,13 @@ pub struct VaultPeriod {
 }
 
 impl VaultPeriod {
+    pub fn init(&mut self, vault: Pubkey, period_id: u64) {
+        self.vault = vault;
+        self.period_id = period_id;
+        self.twap = 0;
+        self.dar = 0;
+    }
+
     pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
         self.dar += extra_drip;
     }
