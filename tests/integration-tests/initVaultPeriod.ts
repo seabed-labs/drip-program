@@ -10,6 +10,8 @@ import "should";
 export function testInitVaultPeriod() {
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
+  let tokenAMint: PublicKey;
+  let tokenBMint: PublicKey;
 
   beforeEach(async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();
@@ -22,6 +24,8 @@ export function testInitVaultPeriod() {
       TokenUtils.createMockUSDCMint(),
       TokenUtils.createMockBTCMint(),
     ]);
+
+    [tokenAMint, tokenBMint] = [tokenA.publicKey, tokenB.publicKey];
 
     const vaultPDA = await PDAUtils.getVaultPDA(
       tokenA.publicKey,
@@ -57,7 +61,16 @@ export function testInitVaultPeriod() {
       vaultPubkey,
       69
     );
-    await VaultUtils.initVaultPeriod(vaultPubkey, vaultPeriodPubkey, 69);
+
+    await VaultUtils.initVaultPeriod(
+      vaultPubkey,
+      vaultPeriodPubkey,
+      vaultProtoConfigPubkey,
+      tokenAMint,
+      tokenBMint,
+      69
+    );
+
     const vaultPeriodAccount = await AccountUtils.fetchVaultPeriodAccount(
       vaultPeriodPubkey
     );

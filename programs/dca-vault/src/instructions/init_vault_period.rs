@@ -1,5 +1,6 @@
-use crate::state::{Vault, VaultPeriod};
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultPeriodParams {
@@ -9,8 +10,6 @@ pub struct InitializeVaultPeriodParams {
 #[derive(Accounts)]
 #[instruction(params: InitializeVaultPeriodParams)]
 pub struct InitializeVaultPeriod<'info> {
-    vault: Account<'info, Vault>,
-
     #[account(
         init,
         seeds = [
@@ -22,6 +21,35 @@ pub struct InitializeVaultPeriod<'info> {
         payer = creator
     )]
     vault_period: Account<'info, VaultPeriod>,
+
+    #[account(
+        seeds = [
+            b"dca-vault-v1".as_ref(),
+            token_a_mint.key().as_ref(),
+            token_b_mint.key().as_ref(),
+            vault_proto_config.key().as_ref(),
+        ],
+        bump = vault.bump
+    )]
+    vault: Account<'info, Vault>,
+
+    #[account(
+        constraint = {
+            token_a_mint.to_account_info().owner == &Token::id() &&
+            token_a_mint.key() == vault.token_a_mint
+        },
+    )]
+    pub token_a_mint: Account<'info, Mint>,
+
+    #[account(
+        constraint = {
+            token_b_mint.to_account_info().owner == &Token::id() &&
+            token_b_mint.key() == vault.token_b_mint
+        },
+    )]
+    pub token_b_mint: Account<'info, Mint>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     #[account(mut)]
     pub creator: Signer<'info>,

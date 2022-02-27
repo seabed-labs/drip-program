@@ -58,11 +58,17 @@ export class VaultUtils extends TestUtil {
   static async initVaultPeriod(
     vault: PublicKey,
     vaultPeriod: PublicKey,
+    vaultProtoConfig: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
     periodId: number
   ): Promise<void> {
     const accounts = {
       vault: vault.toString(),
       vaultPeriod: vaultPeriod.toString(),
+      vaultProtoConfig: vaultProtoConfig.toString(),
+      tokenAMint: tokenAMint.toString(),
+      tokenBMint: tokenBMint.toString(),
       creator: this.provider.wallet.publicKey.toString(),
       systemProgram: ProgramUtils.systemProgram.programId.toString(),
     };
