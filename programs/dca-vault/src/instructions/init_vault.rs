@@ -60,7 +60,7 @@ pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
     vault.token_b_account = ctx.accounts.token_b_account.key();
     vault.last_dca_period = 0;
     vault.drip_amount = 0;
-    vault.bump = *ctx.bumps.get("vault").unwrap();
+    vault.bump = *ctx.bumps.get("vault")?;
 
     let now = Clock::get().unwrap().unix_timestamp;
     // TODO(matcha): Abstract away this date flooring math and add unit tests
