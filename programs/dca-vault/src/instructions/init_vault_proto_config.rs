@@ -1,6 +1,12 @@
+use anchor_lang::prelude::*;
+
 use crate::common::ErrorCode;
 use crate::state::{ByteSized, VaultProtoConfig};
-use anchor_lang::prelude::*;
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct InitVaultProtoConfigParams {
+    granularity: u64,
+}
 
 #[derive(Accounts)]
 pub struct InitializeVaultProtoConfig<'info> {
@@ -17,12 +23,14 @@ pub struct InitializeVaultProtoConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeVaultProtoConfig>, granularity: i64) -> Result<()> {
-    let config = &mut ctx.accounts.vault_proto_config;
-    config.granularity = granularity;
-    if granularity <= 0 {
+pub fn handler(
+    ctx: Context<InitializeVaultProtoConfig>,
+    params: InitVaultProtoConfigParams,
+) -> Result<()> {
+    let vault_proto_config = &mut ctx.accounts.vault_proto_config;
+    if params.granularity <= 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
-    msg!("Initialized Vault Proto Config");
+    vault_proto_config.granularity = params.granularity;
     Ok(())
 }
