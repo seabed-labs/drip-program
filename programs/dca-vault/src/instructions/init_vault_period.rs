@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::state::{Vault, VaultPeriod};
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct InitializeVaultPeriod<'info> {
