@@ -47,6 +47,9 @@ pub struct InitializeVaultPeriod<'info> {
     )]
     pub token_b_mint: Account<'info, Mint>,
 
+    #[account(
+        constraint = vault_proto_config.granularity != 0
+    )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     #[account(mut)]
@@ -60,7 +63,11 @@ pub fn handler(
 ) -> Result<()> {
     let vault_period = &mut ctx.accounts.vault_period;
 
-    vault_period.init(ctx.accounts.vault.key(), params.period_id);
+    vault_period.init(
+        ctx.accounts.vault.key(),
+        params.period_id,
+        ctx.bumps.get("vault_period"),
+    )?;
 
     msg!("Initialized VaultPeriod");
     Ok(())

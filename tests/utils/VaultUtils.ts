@@ -2,8 +2,7 @@ import { BN, web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
-import { PDA } from "./PDAUtils";
-import { PublicKey, Signer } from "@solana/web3.js";
+import { Signer } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 
 export type VaultProtoConfig = {
@@ -69,11 +68,11 @@ export class VaultUtils extends TestUtil {
   }
 
   static async initVaultPeriod(
-    vault: PublicKey,
-    vaultPeriod: PublicKey,
-    vaultProtoConfig: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey,
+    vault: web3.PublicKey,
+    vaultPeriod: web3.PublicKey,
+    vaultProtoConfig: web3.PublicKey,
+    tokenAMint: web3.PublicKey,
+    tokenBMint: web3.PublicKey,
     periodId: number
   ): Promise<void> {
     const accounts = {

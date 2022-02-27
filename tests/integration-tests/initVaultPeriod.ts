@@ -7,6 +7,8 @@ import { AccountUtils } from "../utils/AccountUtils";
 import { Granularity } from "../utils/Granularity";
 import "should";
 
+// TODO(matcha): More exhaustive tests
+
 export function testInitVaultPeriod() {
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
