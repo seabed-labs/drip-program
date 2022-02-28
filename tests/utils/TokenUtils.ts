@@ -152,9 +152,9 @@ export class TokenUtils extends TestUtil {
   ): Promise<u64> {
     const mintInfo = await token.getMintInfo();
     return new u64(
-      new u64(amount.toString()).mul(
-        new u64(10).pow(new u64(mintInfo.decimals))
-      )
+      new u64(amount.toString())
+        .mul(new u64(10).pow(new u64(mintInfo.decimals)))
+        .toString()
     );
   }
 
