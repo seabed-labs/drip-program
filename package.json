@@ -17,6 +17,7 @@
   },
   "scripts": {
     "prepare": "husky install",
+    "posinstall": "yarn build",
     "format": "cargo fmt && yarn run prettier --w .",
     "test": "cargo test && anchor test",
     "build": "anchor build && yarn run build-deps",
