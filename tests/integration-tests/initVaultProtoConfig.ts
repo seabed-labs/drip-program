@@ -1,7 +1,7 @@
-import {AccountUtils} from "../utils/AccountUtils";
-import {Granularity} from "../utils/Granularity";
-import {KeypairUtils} from "../utils/KeypairUtils";
-import {VaultUtils} from "../utils/VaultUtils";
+import { AccountUtils } from "../utils/AccountUtils";
+import { Granularity } from "../utils/Granularity";
+import { KeypairUtils } from "../utils/KeypairUtils";
+import { VaultUtils } from "../utils/VaultUtils";
 
 export function testInitVaultProtoConfig() {
   it("initializes the vault proto config account correctly", async () => {
@@ -23,9 +23,9 @@ export function testInitVaultProtoConfig() {
       granularity: -10,
     });
     const vaultProtoConfigAccount =
-        await AccountUtils.fetchVaultProtoConfigAccount(
-            vaultProtoConfigKeypair.publicKey
-        );
+      await AccountUtils.fetchVaultProtoConfigAccount(
+        vaultProtoConfigKeypair.publicKey
+      );
     vaultProtoConfigAccount.granularity.toString().should.equal("10");
   });
 
