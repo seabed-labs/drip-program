@@ -135,13 +135,13 @@ export class TokenUtils extends TestUtil {
 
     return {
       mintAuthority: decodedData.mintAuthority
-        ? new PublicKey(decodedData.mintAuthority.toString())
+        ? new PublicKey(decodedData.mintAuthority)
         : null,
-      supply: new u64(decodedData.supply),
+      supply: u64.fromBuffer(decodedData.supply),
       decimals: decodedData.decimals,
       isInitialized: decodedData.isInitialized,
       freezeAuthority: decodedData.freezeAuthority
-        ? new PublicKey(decodedData.freezeAuthority.toString())
+        ? new PublicKey(decodedData.freezeAuthority)
         : null,
     };
   }

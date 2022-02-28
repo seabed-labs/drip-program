@@ -138,6 +138,8 @@ export class VaultUtils extends TestUtil {
             input.accounts.userPositionNftAccount.toBase58(),
           depositor: input.accounts.depositor.toBase58(),
           tokenProgram: ProgramUtils.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtils.associatedTokenProgram.programId.toBase58(),
           rent: ProgramUtils.rentProgram.programId.toBase58(),
           systemProgram: ProgramUtils.systemProgram.programId.toBase58(),
         },
