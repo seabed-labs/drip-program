@@ -18,6 +18,9 @@
   "scripts": {
     "prepare": "husky install",
     "format": "cargo fmt && yarn run prettier --w .",
-    "test": "cargo test && anchor test"
+    "test": "cargo test && anchor test",
+    "build": "anchor build && yarn run build-deps",
+    "build-deps": "yarn run build-swap",
+    "build-swap": "cd deps/spl/token-swap/program && cargo build-bpf"
   }
 }

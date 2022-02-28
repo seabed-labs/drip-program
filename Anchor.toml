@@ -1,5 +1,5 @@
 [programs.localnet]
-dca_vault = "6rCWVjanBs1gx5jhpUAXoDqLwwURaNxKoGUxczjG6hFX"
+dca_vault = { address="6rCWVjanBs1gx5jhpUAXoDqLwwURaNxKoGUxczjG6hFX", idl="./target/idl/dca_vault.json" }
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -10,3 +10,8 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+# Load other programs into anchor
+[[test.genesis]]
+address = "SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8"
+program = "./deps/spl/target/deploy/spl_token_swap.so"

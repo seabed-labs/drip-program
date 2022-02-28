@@ -2,9 +2,15 @@ import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { AsyncReturnType } from "./types";
-import { PublicKey } from "@solana/web3.js";
+import { AccountInfo, PublicKey } from "@solana/web3.js";
 
 export class AccountUtils extends TestUtil {
+  static async fetchAccountInfo(
+    pubkey: web3.PublicKey
+  ): Promise<AccountInfo<unknown>> {
+    return await this.provider.connection.getAccountInfo(pubkey as PublicKey);
+  }
+
   static async fetchAccountData(pubkey: web3.PublicKey): Promise<Buffer> {
     const account = await this.provider.connection.getAccountInfo(
       pubkey as PublicKey
