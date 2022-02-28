@@ -238,24 +238,4 @@ fn mint_position_nft<'info>(
     )?;
 
     Ok(())
-
-    //
-    // token::set_authority(
-    //     CpiContext::new_with_signer(
-    //         token_program.to_account_info().clone(),
-    //         SetAuthority {
-    //             current_authority: vault.to_account_info().clone(),
-    //             account_or_mint: mint.to_account_info().clone(),
-    //         },
-    //         &[&[
-    //             b"dca-vault-v1".as_ref(),
-    //             vault.token_a_mint.as_ref(),
-    //             vault.token_b_mint.as_ref(),
-    //             vault.proto_config.as_ref(),
-    //             &[vault.bump],
-    //         ]],
-    //     ),
-    //     AuthorityType::MintTokens, // MintTokens
-    //     None,
-    // )
 }

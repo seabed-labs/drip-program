@@ -7,5 +7,5 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVaultProtoConfig", testInitVaultProtoConfig);
   describe("#initVault", testInitVault);
   describe("#initVaultPeriod", testInitVaultPeriod);
-  describe.only("#deposit", testDeposit);
+  describe("#deposit", testDeposit);
 });

@@ -107,19 +107,22 @@ export class TokenUtils extends TestUtil {
       mint: new web3.PublicKey(decodedData.mint),
       owner: new web3.PublicKey(decodedData.owner),
       balance: u64.fromBuffer(decodedData.amount),
-      delegate: decodedData.delegate
-        ? new PublicKey(decodedData.delegate)
-        : null,
+      delegate:
+        decodedData.delegateOption === 1
+          ? new PublicKey(decodedData.delegate)
+          : null,
       delegatedAmount: u64.fromBuffer(decodedData.delegatedAmount),
       isInitialized: decodedData.isInitialized,
       isFrozen: decodedData.isFrozen,
       isNative: decodedData.isNative,
-      rentExemptReserve: decodedData.rentExemptReserve
-        ? u64.fromBuffer(decodedData.rentExemptReserve)
-        : null,
-      closeAuthority: decodedData.closeAuthority
-        ? new PublicKey(decodedData.closeAuthority)
-        : null,
+      rentExemptReserve:
+        decodedData.rentExemptReserveOption === 1
+          ? u64.fromBuffer(decodedData.rentExemptReserve)
+          : null,
+      closeAuthority:
+        decodedData.closeAuthority === 1
+          ? new PublicKey(decodedData.closeAuthority)
+          : null,
     };
   }
 
@@ -134,15 +137,17 @@ export class TokenUtils extends TestUtil {
     const decodedData = MintLayout.decode(accountData);
 
     return {
-      mintAuthority: decodedData.mintAuthority
-        ? new PublicKey(decodedData.mintAuthority)
-        : null,
+      mintAuthority:
+        decodedData.mintAuthorityOption === 1
+          ? new PublicKey(decodedData.mintAuthority)
+          : null,
       supply: u64.fromBuffer(decodedData.supply),
       decimals: decodedData.decimals,
       isInitialized: decodedData.isInitialized,
-      freezeAuthority: decodedData.freezeAuthority
-        ? new PublicKey(decodedData.freezeAuthority)
-        : null,
+      freezeAuthority:
+        decodedData.freezeAuthorityOption === 1
+          ? new PublicKey(decodedData.freezeAuthority)
+          : null,
     };
   }
 
