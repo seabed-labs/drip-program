@@ -16,6 +16,7 @@ pub struct DepositParams {
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
     // Dcaf accounts
+    // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
         mut,
         seeds = [

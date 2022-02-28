@@ -57,4 +57,25 @@ export class AccountUtils extends TestUtil {
   > {
     return await ProgramUtils.vaultProgram.account.vaultPeriod.fetch(pubkey);
   }
+
+  static async fetchPositionAccount(
+    pubkey: web3.PublicKey
+  ): Promise<
+    Pick<
+      AsyncReturnType<
+        typeof ProgramUtils.vaultProgram.account.vaultPeriod.fetch
+      >,
+      | "positionAuthority"
+      | "depositedTokenAAmount"
+      | "withdrawnTokenBAmount"
+      | "vault"
+      | "depositTimestamp"
+      | "dcaPeriodIdBeforeDeposit"
+      | "numberOfSwaps"
+      | "periodicDripAmount"
+      | "isClosed"
+    >
+  > {
+    return await ProgramUtils.vaultProgram.account.position.fetch(pubkey);
+  }
 }
