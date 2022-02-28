@@ -11,4 +11,5 @@ echo "Running cargo tests"
 cargo test
 
 echo "Running anchor tests"
-! anchor test | tee /dev/stdout | grep failing > /dev/null
+anchor test | tee .anchor/test.logs
+! cat .anchor/test.logs | grep failing
