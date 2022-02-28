@@ -1,10 +1,13 @@
+use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program::invoke_signed;
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token;
+use anchor_spl::token::{Mint, MintTo, Token, TokenAccount, Transfer};
+use spl_token::instruction::AuthorityType;
+
 use crate::common::ErrorCode::PeriodicDripAmountIsZero;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
-use anchor_lang::prelude::*;
-use anchor_spl::token;
-use anchor_spl::token::{Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
-use spl_token::instruction::AuthorityType;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositParams {
@@ -16,6 +19,7 @@ pub struct DepositParams {
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
     // Dcaf accounts
+    // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
         mut,
         seeds = [
@@ -93,8 +97,8 @@ pub struct Deposit<'info> {
 
     #[account(
         init,
-        token::mint = user_position_nft_mint,
-        token::authority = depositor,
+        associated_token::mint = user_position_nft_mint,
+        associated_token::authority = depositor,
         payer = depositor
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
@@ -105,6 +109,8 @@ pub struct Deposit<'info> {
 
     #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
+    #[account(address = anchor_spl::associated_token::ID)]
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
     #[account(address = System::id())]
     pub system_program: Program<'info, System>,
@@ -138,7 +144,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     );
     send_tokens(
         &ctx.accounts.token_program,
-        &ctx.accounts.vault,
+        &mut ctx.accounts.vault,
         &ctx.accounts.user_token_a_account,
         &ctx.accounts.vault_token_a_account,
         params.token_a_deposit_amount,
@@ -146,7 +152,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
     mint_position_nft(
         &ctx.accounts.token_program,
-        &ctx.accounts.vault,
+        &mut ctx.accounts.vault,
         &ctx.accounts.user_position_nft_mint,
         &ctx.accounts.user_position_nft_account,
     )?;
@@ -156,7 +162,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
 fn send_tokens<'info>(
     token_program: &Program<'info, Token>,
-    vault: &Account<'info, Vault>,
+    vault: &mut Account<'info, Vault>,
     from: &Account<'info, TokenAccount>,
     to: &Account<'info, TokenAccount>,
     amount: u64,
@@ -169,7 +175,13 @@ fn send_tokens<'info>(
                 to: to.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[&vault.seeds()],
+            &[&[
+                b"dca-vault-v1".as_ref(),
+                vault.token_a_mint.as_ref(),
+                vault.token_b_mint.as_ref(),
+                vault.proto_config.as_ref(),
+                &[vault.bump],
+            ]],
         ),
         amount,
     )
@@ -177,7 +189,7 @@ fn send_tokens<'info>(
 
 fn mint_position_nft<'info>(
     token_program: &Program<'info, Token>,
-    vault: &Account<'info, Vault>,
+    vault: &mut Account<'info, Vault>,
     mint: &Account<'info, Mint>,
     to: &Account<'info, TokenAccount>,
 ) -> Result<()> {
@@ -190,22 +202,40 @@ fn mint_position_nft<'info>(
                 to: to.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[&vault.seeds()],
+            &[&[
+                b"dca-vault-v1".as_ref(),
+                vault.token_a_mint.as_ref(),
+                vault.token_b_mint.as_ref(),
+                vault.proto_config.as_ref(),
+                &[vault.bump],
+            ]],
         ),
         1,
     )?;
 
     // Set the mint authority for this position NFT mint to None so that new tokens cannot be minted
-    token::set_authority(
-        CpiContext::new_with_signer(
+    invoke_signed(
+        &spl_token::instruction::set_authority(
+            &token::ID,
+            mint.to_account_info().key,
+            None,
+            AuthorityType::MintTokens,
+            vault.to_account_info().key,
+            &[vault.to_account_info().key],
+        )?,
+        &[
+            mint.to_account_info().clone(),
+            vault.to_account_info().clone(),
             token_program.to_account_info().clone(),
-            SetAuthority {
-                current_authority: vault.to_account_info().clone(),
-                account_or_mint: mint.to_account_info().clone(),
-            },
-            &[&vault.seeds()],
-        ),
-        AuthorityType::MintTokens, // MintTokens
-        None,
-    )
+        ],
+        &[&[
+            b"dca-vault-v1".as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
+            vault.proto_config.as_ref(),
+            &[vault.bump],
+        ]],
+    )?;
+
+    Ok(())
 }

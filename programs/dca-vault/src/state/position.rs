@@ -5,8 +5,7 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct Position {
-    // Depositor i.e the user who starts a new position (for now)
-    // This will later be an NFT that the user will hold
+    // The position authority NFT mint
     pub position_authority: Pubkey,
 
     // Total deposited
@@ -59,6 +58,7 @@ impl ByteSized for Position {}
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
     fn sanity_check_byte_size() {
         assert_eq!(Position::byte_size(), 120);

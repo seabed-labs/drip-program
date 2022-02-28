@@ -2,12 +2,34 @@ import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
-import { Signer } from "@solana/web3.js";
+import { PublicKey, Signer } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
 };
+
+export interface DepositTxParams {
+  accounts: {
+    vault: PublicKey;
+    vaultPeriodEnd: PublicKey;
+    userPosition: PublicKey;
+    tokenAMint: PublicKey;
+    userPositionNftMint: PublicKey;
+    vaultTokenAAccount: PublicKey;
+    userTokenAAccount: PublicKey;
+    userPositionNftAccount: PublicKey;
+    depositor: PublicKey;
+  };
+  signers: {
+    depositor: Signer;
+    userPositionNftMint: Signer;
+  };
+  params: {
+    tokenADepositAmount: u64;
+    dcaCycles: u64;
+  };
+}
 
 export class VaultUtils extends TestUtil {
   static async initVaultProtoConfig(
@@ -93,6 +115,35 @@ export class VaultUtils extends TestUtil {
       },
       {
         accounts: accounts,
+      }
+    );
+  }
+
+  static async deposit(input: DepositTxParams): Promise<void> {
+    await ProgramUtils.vaultProgram.rpc.deposit(
+      {
+        tokenADepositAmount: input.params.tokenADepositAmount,
+        dcaCycles: input.params.dcaCycles,
+      },
+      {
+        accounts: {
+          vault: input.accounts.vault.toBase58(),
+          vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
+          userPosition: input.accounts.userPosition.toBase58(),
+          tokenAMint: input.accounts.tokenAMint.toBase58(),
+          userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
+          vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
+          userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
+          userPositionNftAccount:
+            input.accounts.userPositionNftAccount.toBase58(),
+          depositor: input.accounts.depositor.toBase58(),
+          tokenProgram: ProgramUtils.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtils.associatedTokenProgram.programId.toBase58(),
+          rent: ProgramUtils.rentProgram.programId.toBase58(),
+          systemProgram: ProgramUtils.systemProgram.programId.toBase58(),
+        },
+        signers: [input.signers.depositor, input.signers.userPositionNftMint],
       }
     );
   }

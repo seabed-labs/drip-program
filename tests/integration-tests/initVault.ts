@@ -7,11 +7,12 @@ import { TokenUtils } from "../utils/TokenUtils";
 import { VaultUtils } from "../utils/VaultUtils";
 import { PublicKey } from "@solana/web3.js";
 import "should";
+import { Token } from "@solana/spl-token";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: web3.PublicKey;
-  let tokenA: web3.PublicKey;
-  let tokenB: web3.PublicKey;
+  let tokenA: Token;
+  let tokenB: Token;
 
   beforeEach(async () => {
     const vaultProtoConfigKeypair = KeypairUtils.generatePair();

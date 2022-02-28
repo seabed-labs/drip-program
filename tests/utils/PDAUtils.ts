@@ -1,7 +1,6 @@
 import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
-import { PublicKey } from "@solana/web3.js";
 
 export type PDA = {
   pubkey: web3.PublicKey;
@@ -13,6 +12,7 @@ export const CONSTANT_SEEDS = {
   tokenAAccount: "token_a_account",
   tokenBAccount: "token_b_account",
   vaultPeriod: "vault_period",
+  userPosition: "user_position",
 };
 
 export class PDAUtils extends TestUtil {
@@ -32,17 +32,17 @@ export class PDAUtils extends TestUtil {
   }
 
   static async findAssociatedTokenAddress(
-    walletAddress: PublicKey,
-    tokenMintAddress: PublicKey
+    walletAddress: web3.PublicKey,
+    tokenMintAddress: web3.PublicKey
   ): Promise<web3.PublicKey> {
     return (
-      await PublicKey.findProgramAddress(
+      await web3.PublicKey.findProgramAddress(
         [
           walletAddress.toBuffer(),
           ProgramUtils.tokenProgram.programId.toBuffer(),
           tokenMintAddress.toBuffer(),
         ],
-        new PublicKey(ProgramUtils.associatedTokenProgram.programId)
+        new web3.PublicKey(ProgramUtils.associatedTokenProgram.programId)
       )
     )[0];
   }
@@ -61,13 +61,24 @@ export class PDAUtils extends TestUtil {
   }
 
   static async getVaultPeriodPDA(
-    vault: PublicKey,
+    vault: web3.PublicKey,
     periodId: number
   ): Promise<PDA> {
     return await this.findPDA(ProgramUtils.vaultProgram.programId, [
       Buffer.from(CONSTANT_SEEDS.vaultPeriod),
       vault.toBuffer(),
       Buffer.from(periodId.toString()),
+    ]);
+  }
+
+  static async getPositionPDA(
+    vault: web3.PublicKey,
+    positionNftMint: web3.PublicKey
+  ): Promise<PDA> {
+    return await this.findPDA(ProgramUtils.vaultProgram.programId, [
+      Buffer.from(CONSTANT_SEEDS.userPosition),
+      vault.toBuffer(),
+      positionNftMint.toBuffer(),
     ]);
   }
 }
