@@ -9,5 +9,5 @@ export async function deposit() {
   await TokenUtils.mintTo(usdc, usdcMinter, user.publicKey, new u64(1e9));
   await TokenUtils.mintTo(btc, btcMinter, user.publicKey, new u64(1e3));
 
-  it.skip('sanity check', async () => {});
+  it.skip("sanity check", async () => {});
 }

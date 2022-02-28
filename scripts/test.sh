@@ -1,6 +1,4 @@
 #!/bin/bash
 
 cargo test || exit $?
-anchor test || exit $?
-
-echo $?
+! anchor test | grep "failing"

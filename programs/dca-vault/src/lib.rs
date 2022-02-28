@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 
+use instructions::*;
+
 pub mod instructions;
 pub mod math;
 pub mod state;
-
-use instructions::*;
 
 declare_id!("6rCWVjanBs1gx5jhpUAXoDqLwwURaNxKoGUxczjG6hFX");
 
@@ -14,13 +14,20 @@ pub mod dca_vault {
 
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfig>,
-        granularity: i64,
+        params: InitVaultProtoConfigParams,
     ) -> Result<()> {
-        instructions::init_vault_proto_config::handler(ctx, granularity)
+        instructions::init_vault_proto_config::handler(ctx, params)
     }
 
     pub fn init_vault(ctx: Context<InitializeVault>) -> Result<()> {
         instructions::init_vault::handler(ctx)
+    }
+
+    pub fn init_vault_period(
+        ctx: Context<InitializeVaultPeriod>,
+        params: InitializeVaultPeriodParams,
+    ) -> Result<()> {
+        instructions::init_vault_period::handler(ctx, params)
     }
 
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {

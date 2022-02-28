@@ -10,12 +10,18 @@ import { PublicKey, Signer } from "@solana/web3.js";
 const DECIMALS = {
   USDC: 6,
   BTC: 6,
-}
+};
 
 export class TokenUtils extends TestUtil {
-  static async createMint(mintAuthority: PublicKey, decimals: number): Promise<Token> {
+  static async createMint(
+    mintAuthority: PublicKey,
+    decimals: number
+  ): Promise<Token> {
     const funderKeypair = KeypairUtils.generatePair();
-    await SolUtils.fundAccount(funderKeypair.publicKey, SolUtils.solToLamports(10));
+    await SolUtils.fundAccount(
+      funderKeypair.publicKey,
+      SolUtils.solToLamports(10)
+    );
 
     return await Token.createMint(
       this.provider.connection,
@@ -27,31 +33,37 @@ export class TokenUtils extends TestUtil {
     );
   }
 
-  static async mintTo(token: Token, minter: Signer, recipient: PublicKey, amount: u64): Promise<void> {
+  static async mintTo(
+    token: Token,
+    minter: Signer,
+    recipient: PublicKey,
+    amount: u64
+  ): Promise<void> {
     const ata = await token.createAssociatedTokenAccount(recipient);
-    await token.mintTo(
-      ata,
-      minter,
-      [minter],
-      new u64(1_000_000_000)
-    );
+    await token.mintTo(ata, minter, [minter], new u64(1_000_000_000));
   }
 
-  static async createMockUSDCMint(minter: PublicKey = this.provider.wallet.publicKey): Promise<Token> {
+  static async createMockUSDCMint(
+    minter: PublicKey = this.provider.wallet.publicKey
+  ): Promise<Token> {
     return await this.createMint(minter, DECIMALS.USDC);
   }
 
-  static async createMockBTCMint(minter: PublicKey = this.provider.wallet.publicKey): Promise<Token> {
+  static async createMockBTCMint(
+    minter: PublicKey = this.provider.wallet.publicKey
+  ): Promise<Token> {
     return await this.createMint(minter, DECIMALS.BTC);
   }
 
-  static async fetchTokenAccountInfo(pubkey: web3.PublicKey): Promise<{mint: web3.PublicKey, owner: web3.PublicKey}> {
+  static async fetchTokenAccountInfo(
+    pubkey: web3.PublicKey
+  ): Promise<{ mint: web3.PublicKey; owner: web3.PublicKey }> {
     const accountData = await AccountUtils.fetchAccountData(pubkey);
     const decodedData = AccountLayout.decode(accountData);
 
     return {
       mint: new web3.PublicKey(decodedData.mint),
       owner: new web3.PublicKey(decodedData.owner),
-    }
+    };
   }
 }
