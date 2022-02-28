@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
-use anchor_spl::token::{Mint, MintTo, SetAuthority, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Mint, MintTo, Token, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
-use spl_token::solana_program::program;
 
 use crate::common::ErrorCode::PeriodicDripAmountIsZero;
 use crate::math::calculate_periodic_drip_amount;
@@ -214,7 +214,7 @@ fn mint_position_nft<'info>(
     )?;
 
     // Set the mint authority for this position NFT mint to None so that new tokens cannot be minted
-    program::invoke_signed(
+    invoke_signed(
         &spl_token::instruction::set_authority(
             &token::ID,
             mint.to_account_info().key,
@@ -226,6 +226,7 @@ fn mint_position_nft<'info>(
         &[
             mint.to_account_info().clone(),
             vault.to_account_info().clone(),
+            token_program.to_account_info().clone(),
         ],
         &[&[
             b"dca-vault-v1".as_ref(),
@@ -237,6 +238,7 @@ fn mint_position_nft<'info>(
     )?;
 
     Ok(())
+
     //
     // token::set_authority(
     //     CpiContext::new_with_signer(
