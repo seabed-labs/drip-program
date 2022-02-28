@@ -33,4 +33,8 @@ pub mod dca_vault {
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         instructions::deposit::handler(ctx, params)
     }
+
+    pub fn trigger_dca(ctx: Context<TriggerDCA>) -> Result<()> {
+        instructions::trigger_dca::handler(ctx)
+    }
 }
