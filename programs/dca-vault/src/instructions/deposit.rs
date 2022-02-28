@@ -221,7 +221,7 @@ fn mint_position_nft<'info>(
             None,
             AuthorityType::MintTokens,
             vault.to_account_info().key,
-            &[vault.to_account_info().key]
+            &[vault.to_account_info().key],
         )?,
         &[
             mint.to_account_info().clone(),

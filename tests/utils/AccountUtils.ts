@@ -7,7 +7,8 @@ import { PublicKey } from "@solana/web3.js";
 export class AccountUtils extends TestUtil {
   static async fetchAccountData(pubkey: web3.PublicKey): Promise<Buffer> {
     const account = await this.provider.connection.getAccountInfo(
-      pubkey as PublicKey
+      pubkey as PublicKey,
+      "processed"
     );
     return account.data;
   }
