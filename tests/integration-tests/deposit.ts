@@ -1,14 +1,13 @@
-import { KeypairUtils } from "../utils/KeypairUtils";
-import { DECIMALS, TokenUtils } from "../utils/TokenUtils";
-import { amount, Denom } from "../utils/amount";
-import { PublicKey, Signer } from "@solana/web3.js";
-import { Token, u64 } from "@solana/spl-token";
-import { VaultUtils } from "../utils/VaultUtils";
-import { Granularity } from "../utils/Granularity";
-import { PDAUtils } from "../utils/PDAUtils";
-import { SolUtils } from "../utils/SolUtils";
-import { AccountUtils } from "../utils/AccountUtils";
-import should from "should";
+import {KeypairUtils} from "../utils/KeypairUtils";
+import {DECIMALS, TokenUtils} from "../utils/TokenUtils";
+import {amount, Denom} from "../utils/amount";
+import {PublicKey, Signer} from "@solana/web3.js";
+import {Token, u64} from "@solana/spl-token";
+import {VaultUtils} from "../utils/VaultUtils";
+import {Granularity} from "../utils/Granularity";
+import {PDAUtils} from "../utils/PDAUtils";
+import {SolUtils} from "../utils/SolUtils";
+import {AccountUtils} from "../utils/AccountUtils";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 
@@ -79,12 +78,12 @@ export async function testDeposit() {
     );
 
     [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey, tokenAMint()),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey, tokenBMint()),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenAMint(),
       tokenBMint(),
@@ -92,20 +91,20 @@ export async function testDeposit() {
       vaultTokenB_ATA
     );
 
-    vaultPubkey = vaultPDA.pubkey;
+    vaultPubkey = vaultPDA.publicKey;
 
     const vaultPeriodPDA = await PDAUtils.getVaultPeriodPDA(vaultPubkey, 69);
 
     await VaultUtils.initVaultPeriod(
       vaultPubkey,
-      vaultPeriodPDA.pubkey,
+      vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenAMint(),
       tokenBMint(),
       69
     );
 
-    vaultPeriodPubkey = vaultPeriodPDA.pubkey;
+    vaultPeriodPubkey = vaultPeriodPDA.publicKey;
   });
 
   it("happy path (first depositor, vault genesis)", async () => {
@@ -152,7 +151,7 @@ export async function testDeposit() {
       accounts: {
         vault: vaultPubkey,
         vaultPeriodEnd: vaultPeriodPubkey,
-        userPosition: positionPDA.pubkey,
+        userPosition: positionPDA.publicKey,
         tokenAMint: tokenAMint(),
         userPositionNftMint: positionNftMintKeypair.publicKey,
         vaultTokenAAccount: vaultTokenA_ATA,
@@ -162,16 +161,18 @@ export async function testDeposit() {
       },
       signers: {
         depositor: user,
-        userPositionNftMint: positionNftMintKeypair,
+        userPositionNftMint: positionNftMintKeypair as Signer,
       },
     });
 
-    const [vaultAccount, vaultPeriodEndAccount, positionAccount] =
-      await Promise.all([
-        AccountUtils.fetchVaultAccount(vaultPubkey),
-        AccountUtils.fetchVaultPeriodAccount(vaultPeriodPubkey),
-        AccountUtils.fetchPositionAccount(positionPDA.pubkey),
-      ]);
+    const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPubkey);
+    const vaultPeriodEndAccount = await AccountUtils.fetchVaultPeriodAccount(
+      vaultPeriodPubkey
+    );
+    const positionAccount = await AccountUtils.fetchPositionAccount(
+      positionPDA.publicKey
+    );
+
     vaultAccount.dripAmount.toString().should.equal("144927536");
     vaultPeriodEndAccount.dar.toString().should.equal("144927536");
     positionAccount.vault.toBase58().should.equal(vaultPubkey.toBase58());

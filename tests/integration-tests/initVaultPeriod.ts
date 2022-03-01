@@ -37,17 +37,17 @@ export function testInitVaultPeriod() {
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenA.publicKey
       ),
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenB.publicKey
       ),
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenA.publicKey,
       tokenB.publicKey,
@@ -55,11 +55,11 @@ export function testInitVaultPeriod() {
       vaultTokenB_ATA
     );
 
-    vaultPubkey = vaultPDA.pubkey;
+    vaultPubkey = vaultPDA.publicKey;
   });
 
   it("initializes the vault period account correctly", async () => {
-    const { pubkey: vaultPeriodPubkey } = await PDAUtils.getVaultPeriodPDA(
+    const { publicKey: vaultPeriodPubkey } = await PDAUtils.getVaultPeriodPDA(
       vaultPubkey,
       69
     );

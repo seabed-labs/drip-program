@@ -19,5 +19,5 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVault", testInitVault);
   describe("#initVaultPeriod", testInitVaultPeriod);
   describe("#deposit", testDeposit);
-  describe("#closePosition", testClosePosition);
+  describe("#close_position", testClosePosition);
 });

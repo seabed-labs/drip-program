@@ -1,11 +1,12 @@
-import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
+import { Transaction, TransactionInstruction } from "@solana/web3.js";
+import { web3 } from "@project-serum/anchor";
 
 export class TransactionUtils extends TestUtil {
   static async executeInstructions(
-    ...instructions: web3.TransactionInstruction[]
+    ...instructions: TransactionInstruction[]
   ): Promise<void> {
-    const tx = new web3.Transaction({
+    const tx = new Transaction({
       feePayer: this.provider.wallet.publicKey,
       recentBlockhash: (await this.provider.connection.getRecentBlockhash())
         .blockhash,

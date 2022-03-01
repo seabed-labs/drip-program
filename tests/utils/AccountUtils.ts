@@ -80,6 +80,7 @@ export class AccountUtils extends TestUtil {
       | "numberOfSwaps"
       | "periodicDripAmount"
       | "isClosed"
+      | "bump"
     >
   > {
     return await ProgramUtils.vaultProgram.account.position.fetch(pubkey);

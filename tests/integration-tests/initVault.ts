@@ -1,4 +1,3 @@
-import { web3 } from "@project-serum/anchor";
 import { AccountUtils } from "../utils/AccountUtils";
 import { Granularity } from "../utils/Granularity";
 import { KeypairUtils } from "../utils/KeypairUtils";
@@ -6,11 +5,10 @@ import { PDA, PDAUtils } from "../utils/PDAUtils";
 import { TokenUtils } from "../utils/TokenUtils";
 import { VaultUtils } from "../utils/VaultUtils";
 import { PublicKey } from "@solana/web3.js";
-import "should";
 import { Token } from "@solana/spl-token";
 
 export function testInitVault() {
-  let vaultProtoConfigAccount: web3.PublicKey;
+  let vaultProtoConfigAccount: PublicKey;
   let tokenA: Token;
   let tokenB: Token;
 
@@ -36,17 +34,17 @@ export function testInitVault() {
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenA.publicKey
       ),
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenB.publicKey
       ),
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
       tokenB.publicKey,
@@ -54,7 +52,9 @@ export function testInitVault() {
       vaultTokenB_ATA
     );
 
-    const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPDA.pubkey);
+    const vaultAccount = await AccountUtils.fetchVaultAccount(
+      vaultPDA.publicKey
+    );
     const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
       TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
       TokenUtils.fetchTokenAccountInfo(vaultTokenB_ATA),
@@ -91,10 +91,10 @@ export function testInitVault() {
 
     vaultTokenAAccount.owner
       .toString()
-      .should.equal(vaultPDA.pubkey.toString());
+      .should.equal(vaultPDA.publicKey.toString());
     vaultTokenBAccount.owner
       .toString()
-      .should.equal(vaultPDA.pubkey.toString());
+      .should.equal(vaultPDA.publicKey.toString());
 
     vaultAccount.bump.toString().should.equal(vaultPDA.bump.toString());
   });
@@ -109,17 +109,17 @@ export function testInitVault() {
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenA.publicKey
       ),
       PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.pubkey as PublicKey,
+        vaultPDA.publicKey as PublicKey,
         tokenB.publicKey
       ),
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
       tokenB.publicKey,
@@ -167,7 +167,7 @@ export function testInitVault() {
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
       tokenB.publicKey,
@@ -180,7 +180,7 @@ export function testInitVault() {
 
   describe("test invalid program id's", () => {
     let vaultPDA: PDA;
-    let vaultTokenA_ATA, vaultTokenB_ATA: web3.PublicKey;
+    let vaultTokenA_ATA, vaultTokenB_ATA: PublicKey;
 
     // Values the same for all tests, no need for a beforeEach
     before(async () => {
@@ -191,11 +191,11 @@ export function testInitVault() {
       );
       [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
         PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.pubkey as PublicKey,
+          vaultPDA.publicKey as PublicKey,
           tokenA.publicKey
         ),
         PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.pubkey as PublicKey,
+          vaultPDA.publicKey as PublicKey,
           tokenB.publicKey
         ),
       ]);
@@ -203,7 +203,7 @@ export function testInitVault() {
 
     it("should fail to initialize when system program is passed in", async () => {
       await VaultUtils.initVault(
-        vaultPDA.pubkey,
+        vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
@@ -215,7 +215,7 @@ export function testInitVault() {
 
     it("should fail to initialize when invalid token program is passed in", async () => {
       await VaultUtils.initVault(
-        vaultPDA.pubkey,
+        vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
@@ -227,7 +227,7 @@ export function testInitVault() {
 
     it("should fail to initialize when invalid associated token program is passed in", async () => {
       await VaultUtils.initVault(
-        vaultPDA.pubkey,
+        vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
@@ -239,7 +239,7 @@ export function testInitVault() {
 
     it("should fail to initialize when invalid rent program is passed in", async () => {
       await VaultUtils.initVault(
-        vaultPDA.pubkey,
+        vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
