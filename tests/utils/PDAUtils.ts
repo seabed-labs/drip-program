@@ -1,9 +1,9 @@
-import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
+import { PublicKey } from "@solana/web3.js";
 
 export type PDA = {
-  pubkey: web3.PublicKey;
+  publicKey: PublicKey;
   bump: number;
 };
 
@@ -17,32 +17,31 @@ export const CONSTANT_SEEDS = {
 
 export class PDAUtils extends TestUtil {
   static async findPDA(
-    programId: web3.PublicKey,
+    programId: PublicKey,
     seeds: (Uint8Array | Buffer)[]
   ): Promise<PDA> {
-    const [pubkey, bump] = await web3.PublicKey.findProgramAddress(
+    const [publicKey, bump] = await PublicKey.findProgramAddress(
       seeds,
       programId
     );
-
     return {
-      pubkey,
+      publicKey,
       bump,
     };
   }
 
   static async findAssociatedTokenAddress(
-    walletAddress: web3.PublicKey,
-    tokenMintAddress: web3.PublicKey
-  ): Promise<web3.PublicKey> {
+    walletAddress: PublicKey,
+    tokenMintAddress: PublicKey
+  ): Promise<PublicKey> {
     return (
-      await web3.PublicKey.findProgramAddress(
+      await PublicKey.findProgramAddress(
         [
           walletAddress.toBuffer(),
           ProgramUtils.tokenProgram.programId.toBuffer(),
           tokenMintAddress.toBuffer(),
         ],
-        new web3.PublicKey(ProgramUtils.associatedTokenProgram.programId)
+        new PublicKey(ProgramUtils.associatedTokenProgram.programId)
       )
     )[0];
   }
@@ -61,7 +60,7 @@ export class PDAUtils extends TestUtil {
   }
 
   static async getVaultPeriodPDA(
-    vault: web3.PublicKey,
+    vault: PublicKey,
     periodId: number
   ): Promise<PDA> {
     return await this.findPDA(ProgramUtils.vaultProgram.programId, [
@@ -72,8 +71,8 @@ export class PDAUtils extends TestUtil {
   }
 
   static async getPositionPDA(
-    vault: web3.PublicKey,
-    positionNftMint: web3.PublicKey
+    vault: PublicKey,
+    positionNftMint: PublicKey
   ): Promise<PDA> {
     return await this.findPDA(ProgramUtils.vaultProgram.programId, [
       Buffer.from(CONSTANT_SEEDS.userPosition),

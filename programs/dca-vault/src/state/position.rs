@@ -1,3 +1,4 @@
+use crate::common::ErrorCode::CannotGetVaultBump;
 use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
@@ -29,6 +30,8 @@ pub struct Position {
     pub periodic_drip_amount: u64,
 
     pub is_closed: bool,
+
+    pub bump: u8,
 }
 
 impl Position {
@@ -40,7 +43,8 @@ impl Position {
         last_dca_period: u64,
         dca_cycles: u64,
         periodic_drip_amount: u64,
-    ) {
+        bump: Option<&u8>,
+    ) -> Result<()> {
         self.vault = vault;
         self.position_authority = position_nft;
         self.deposited_token_a_amount = deposited_amount;
@@ -50,6 +54,13 @@ impl Position {
         self.number_of_swaps = dca_cycles;
         self.periodic_drip_amount = periodic_drip_amount;
         self.is_closed = false;
+        match bump {
+            Some(val) => {
+                self.bump = *val;
+                Ok(())
+            }
+            None => Err(CannotGetVaultBump.into()),
+        }
     }
 }
 

@@ -1,35 +1,36 @@
-import { Program, web3, workspace } from "@project-serum/anchor";
+import { Program, workspace } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { DcaVault } from "../../target/types/dca_vault";
 import { TestUtil } from "./config";
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 
 export class ProgramUtils extends TestUtil {
-  static get systemProgram(): typeof web3.SystemProgram {
-    return web3.SystemProgram;
+  static get systemProgram(): typeof SystemProgram {
+    return SystemProgram;
   }
 
   static get vaultProgram(): Program<DcaVault> {
     return workspace.DcaVault as Program<DcaVault>;
   }
 
-  static get tokenProgram(): { programId: web3.PublicKey } {
+  static get tokenProgram(): { programId: PublicKey } {
     return {
       programId: TOKEN_PROGRAM_ID,
     };
   }
 
-  static get associatedTokenProgram(): { programId: web3.PublicKey } {
+  static get associatedTokenProgram(): { programId: PublicKey } {
     return {
       programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     };
   }
 
-  static get rentProgram(): { programId: web3.PublicKey } {
+  static get rentProgram(): { programId: PublicKey } {
     return {
-      programId: web3.SYSVAR_RENT_PUBKEY,
+      programId: SYSVAR_RENT_PUBKEY,
     };
   }
 }

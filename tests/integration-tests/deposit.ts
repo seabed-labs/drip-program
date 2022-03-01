@@ -79,12 +79,12 @@ export async function testDeposit() {
     );
 
     [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey, tokenAMint()),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.pubkey, tokenBMint()),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
     ]);
 
     await VaultUtils.initVault(
-      vaultPDA.pubkey,
+      vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenAMint(),
       tokenBMint(),
@@ -92,20 +92,20 @@ export async function testDeposit() {
       vaultTokenB_ATA
     );
 
-    vaultPubkey = vaultPDA.pubkey;
+    vaultPubkey = vaultPDA.publicKey;
 
     const vaultPeriodPDA = await PDAUtils.getVaultPeriodPDA(vaultPubkey, 69);
 
     await VaultUtils.initVaultPeriod(
       vaultPubkey,
-      vaultPeriodPDA.pubkey,
+      vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenAMint(),
       tokenBMint(),
       69
     );
 
-    vaultPeriodPubkey = vaultPeriodPDA.pubkey;
+    vaultPeriodPubkey = vaultPeriodPDA.publicKey;
   });
 
   it("happy path (first depositor, vault genesis)", async () => {
@@ -115,18 +115,18 @@ export async function testDeposit() {
       positionNftMintKeypair.publicKey
     );
 
-    const userPositionNft_ATA = await PDAUtils.findAssociatedTokenAddress(
-      user.publicKey,
-      positionNftMintKeypair.publicKey
-    );
-
-    const vaultTokenAAccountBefore = await TokenUtils.fetchTokenAccountInfo(
-      vaultTokenA_ATA
-    );
-
-    const userTokenAAccountBefore = await TokenUtils.fetchTokenAccountInfo(
-      userTokenA_ATA()
-    );
+    const [
+      userPositionNft_ATA,
+      vaultTokenAAccountBefore,
+      userTokenAAccountBefore,
+    ] = await Promise.all([
+      PDAUtils.findAssociatedTokenAddress(
+        user.publicKey,
+        positionNftMintKeypair.publicKey
+      ),
+      TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
+      await TokenUtils.fetchTokenAccountInfo(userTokenA_ATA()),
+    ]);
 
     vaultTokenAAccountBefore.balance.toString().should.equal("0");
     userTokenAAccountBefore.balance.toString().should.equal("10000000000000");
@@ -152,7 +152,7 @@ export async function testDeposit() {
       accounts: {
         vault: vaultPubkey,
         vaultPeriodEnd: vaultPeriodPubkey,
-        userPosition: positionPDA.pubkey,
+        userPosition: positionPDA.publicKey,
         tokenAMint: tokenAMint(),
         userPositionNftMint: positionNftMintKeypair.publicKey,
         vaultTokenAAccount: vaultTokenA_ATA,
@@ -166,14 +166,18 @@ export async function testDeposit() {
       },
     });
 
-    const [vaultAccount, vaultPeriodEndAccount, positionAccount] =
-      await Promise.all([
-        AccountUtils.fetchVaultAccount(vaultPubkey),
-        AccountUtils.fetchVaultPeriodAccount(vaultPeriodPubkey),
-        AccountUtils.fetchPositionAccount(positionPDA.pubkey),
-      ]);
+    const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPubkey);
+    const vaultPeriodEndAccount = await AccountUtils.fetchVaultPeriodAccount(
+      vaultPeriodPubkey
+    );
+    const positionAccount = await AccountUtils.fetchPositionAccount(
+      positionPDA.publicKey
+    );
+
     vaultAccount.dripAmount.toString().should.equal("144927536");
     vaultPeriodEndAccount.dar.toString().should.equal("144927536");
+
+    positionAccount.bump.should.equal(positionPDA.bump);
     positionAccount.vault.toBase58().should.equal(vaultPubkey.toBase58());
     positionAccount.positionAuthority
       .toBase58()

@@ -6,15 +6,13 @@ import { AccountInfo, PublicKey } from "@solana/web3.js";
 
 export class AccountUtils extends TestUtil {
   static async fetchAccountInfo(
-    pubkey: web3.PublicKey
+    pubkey: PublicKey
   ): Promise<AccountInfo<unknown>> {
-    return await this.provider.connection.getAccountInfo(pubkey as PublicKey);
+    return await this.provider.connection.getAccountInfo(pubkey);
   }
 
   static async fetchAccountData(pubkey: web3.PublicKey): Promise<Buffer> {
-    const account = await this.provider.connection.getAccountInfo(
-      pubkey as PublicKey
-    );
+    const account = await this.provider.connection.getAccountInfo(pubkey);
     return account.data;
   }
 
@@ -29,7 +27,7 @@ export class AccountUtils extends TestUtil {
     >
   > {
     return await ProgramUtils.vaultProgram.account.vaultProtoConfig.fetch(
-      pubkey as PublicKey
+      pubkey
     );
   }
 
@@ -80,6 +78,7 @@ export class AccountUtils extends TestUtil {
       | "numberOfSwaps"
       | "periodicDripAmount"
       | "isClosed"
+      | "bump"
     >
   > {
     return await ProgramUtils.vaultProgram.account.position.fetch(pubkey);

@@ -1,4 +1,3 @@
-import { web3 } from "@project-serum/anchor";
 import {
   AccountLayout,
   MintLayout,
@@ -86,7 +85,7 @@ export class TokenUtils extends TestUtil {
     return await this.createMint(minter, DECIMALS.BTC);
   }
 
-  static async fetchTokenAccountInfo(pubkey: web3.PublicKey): Promise<{
+  static async fetchTokenAccountInfo(pubkey: PublicKey): Promise<{
     address: PublicKey;
     mint: PublicKey;
     owner: PublicKey;
@@ -100,12 +99,13 @@ export class TokenUtils extends TestUtil {
     closeAuthority: null | PublicKey;
   }> {
     const accountData = await AccountUtils.fetchAccountData(pubkey);
+    // TODO(Mocha): define module for decode
     const decodedData = AccountLayout.decode(accountData);
 
     return {
       address: new PublicKey(decodedData.address ?? pubkey.toBuffer()),
-      mint: new web3.PublicKey(decodedData.mint),
-      owner: new web3.PublicKey(decodedData.owner),
+      mint: new PublicKey(decodedData.mint),
+      owner: new PublicKey(decodedData.owner),
       balance: u64.fromBuffer(decodedData.amount),
       delegate:
         decodedData.delegateOption === 1
@@ -126,7 +126,7 @@ export class TokenUtils extends TestUtil {
     };
   }
 
-  static async fetchTokenMintInfo(pubkey: web3.PublicKey): Promise<{
+  static async fetchTokenMintInfo(pubkey: PublicKey): Promise<{
     mintAuthority: null | PublicKey;
     supply: u64;
     decimals: number;

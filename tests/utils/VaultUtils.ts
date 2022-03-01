@@ -1,4 +1,3 @@
-import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
 import { ProgramUtils } from "./ProgramUtils";
 import { Granularity } from "./Granularity";
@@ -33,7 +32,7 @@ export interface DepositTxParams {
 
 export class VaultUtils extends TestUtil {
   static async initVaultProtoConfig(
-    vaultProtoConfigKeypair: web3.Signer,
+    vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfig
   ): Promise<void> {
     await ProgramUtils.vaultProgram.rpc.initVaultProtoConfig(
@@ -46,23 +45,23 @@ export class VaultUtils extends TestUtil {
           creator: this.provider.wallet.publicKey.toString(),
           systemProgram: ProgramUtils.systemProgram.programId.toString(),
         },
-        signers: [vaultProtoConfigKeypair as Signer],
+        signers: [vaultProtoConfigKeypair],
       }
     );
   }
 
   static async initVault(
-    vaultPubkey: web3.PublicKey,
-    vaultProtoConfigAccount: web3.PublicKey,
-    tokenAMint: web3.PublicKey,
-    tokenBMint: web3.PublicKey,
-    tokenA_ATA: web3.PublicKey,
-    tokenB_ATA: web3.PublicKey,
+    vaultPubkey: PublicKey,
+    vaultProtoConfigAccount: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
+    tokenA_ATA: PublicKey,
+    tokenB_ATA: PublicKey,
     programs?: {
-      systemProgram?: web3.PublicKey;
-      tokenProgram?: web3.PublicKey;
-      associatedTokenProgram?: web3.PublicKey;
-      rent?: web3.PublicKey;
+      systemProgram?: PublicKey;
+      tokenProgram?: PublicKey;
+      associatedTokenProgram?: PublicKey;
+      rent?: PublicKey;
     }
   ): Promise<void> {
     const accounts = {
@@ -92,11 +91,11 @@ export class VaultUtils extends TestUtil {
   }
 
   static async initVaultPeriod(
-    vault: web3.PublicKey,
-    vaultPeriod: web3.PublicKey,
-    vaultProtoConfig: web3.PublicKey,
-    tokenAMint: web3.PublicKey,
-    tokenBMint: web3.PublicKey,
+    vault: PublicKey,
+    vaultPeriod: PublicKey,
+    vaultProtoConfig: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
     periodId: number
   ): Promise<void> {
     const accounts = {
