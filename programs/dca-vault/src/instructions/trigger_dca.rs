@@ -13,6 +13,17 @@ use crate::common::ErrorCode;
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
     pub dca_trigger_source: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [
+            b"dca-vault-v1".as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
+            vault.proto_config.as_ref()
+        ],
+        bump = vault.bump
+    )]
     pub vault: Account<'info, Vault>,
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
