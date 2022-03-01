@@ -82,7 +82,7 @@ pub struct TriggerDCA<'info> {
     pub swap_liquidity_pool: Box<Account<'info, DCASwap>>,
 
     #[account(
-        constraint = swap_liquidity_pool_mint == swap_liquidity_pool.mint
+        constraint = swap_liquidity_pool_mint.key() == swap_liquidity_pool.pool_mint
     )]
     pub swap_liquidity_pool_mint: AccountInfo<'info>,
     pub swap_liquidity_pool_fee: AccountInfo<'info>,
