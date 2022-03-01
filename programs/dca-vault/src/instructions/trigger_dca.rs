@@ -9,7 +9,13 @@ use std::str::FromStr;
 
 use crate::common::ErrorCode;
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct TriggerDCAParams {
+    period_id: u64,
+}
+
 #[derive(Accounts)]
+#[instruction(params: TriggerDCAParams)]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
     pub dca_trigger_source: Signer<'info>,
@@ -22,11 +28,23 @@ pub struct TriggerDCA<'info> {
             vault.token_b_mint.as_ref(),
             vault.proto_config.as_ref()
         ],
-        bump = vault.bump
+        bump = vault.bump,
     )]
     pub vault: Account<'info, Vault>,
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    #[account(
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            params.period_id.to_string().as_bytes().as_ref()
+        ],
+        bump = current_vault_period_account.bump
+    )]
+    pub current_vault_period_account: Account<'info, VaultPeriod>,
+
+    pub last_vault_period_account: Account<'info, VaultPeriod>,
 
     // Tokens will be swapped between these accounts
     #[account(
@@ -38,6 +56,8 @@ pub struct TriggerDCA<'info> {
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
+    // TODO: mint check
+    // TODO: Owner check
     #[account(
         mut,
         constraint = {
@@ -47,35 +67,35 @@ pub struct TriggerDCA<'info> {
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
+    // TODO: mint check
+    // TODO: Owner check
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
+    // TODO: mint check
+    // TODO: Owner check
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    pub current_vault_period_account: Account<'info, VaultPeriod>,
-
-    pub last_vault_period_account: Account<'info, VaultPeriod>,
-
-    /// CHECK: Fuck off
-    pub swap_liquidity_pool: AccountInfo<'info>,
-
     pub swap_liquidity_pool_mint: Account<'info, Mint>,
+
     pub swap_liquidity_pool_fee: Account<'info, TokenAccount>,
 
+    /// CHECK: do checks in handler
+    pub swap_liquidity_pool: AccountInfo<'info>,
+
     // TODO: Generate Authority ID defined in processor.rs. / authority_id
-    /// CHECK: Fuck off
+    /// CHECK: do checks in handler
     pub swap_authority: AccountInfo<'info>,
 
-    pub token_program: Program<'info, Token>,
-
     // TODO: Test this is actually the Token swap program; clean this
-    /// CHECK: Fuck off
+    /// CHECK: do checks in handler
     pub token_swap_program: AccountInfo<'info>,
 
-    pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
 }
 
-pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
+pub fn handler(ctx: Context<TriggerDCA>, params: TriggerDCAParams) -> Result<()> {
     let swap_account_info = &ctx.accounts.swap_liquidity_pool;
 
     let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
