@@ -1,38 +1,89 @@
-use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig, DCASwap};
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Token, TokenAccount};
-use spl_token_swap::state::SwapState;
+use spl_token_swap::state::{SwapState, SwapV1};
 use std::str::FromStr;
 
 use crate::common::ErrorCode;
 
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
-    // TODO (capp) Add constraints for everything
-    pub vault: Account<'info, Vault>,
-    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     // User that triggers the DCA
     pub dca_trigger_source: Signer<'info>,
 
+    #[account(
+        mut,
+        seeds = [
+            b"dca-vault-v1".as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
+            vault.proto_config.as_ref()
+        ],
+        bump = vault.bump
+    )]
+    pub vault: Account<'info, Vault>,
+
+    #[account(
+        constraint = vault_proto_config.granularity != 0
+    )]
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
     // Tokens will be swapped between these accounts
-    pub vault_token_a_account: Account<'info, TokenAccount>,
-    pub vault_token_b_account: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        constraint = {
+            vault_token_a_account.mint == vault.token_a_mint &&
+            vault_token_a_account.owner == vault.key()
+        },
+    )]
+    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    pub swap_token_a_account: Account<'info, TokenAccount>,
-    pub swap_token_b_account: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        constraint = {
+            vault_token_b_account.mint == vault.token_b_mint &&
+            vault_token_b_account.owner == vault.key()
+        },
+    )]
+    pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    // TODO: make sure this is derived using period ID = vault.last_dca_period + 1
-    // to avoid duplicate DCAs
+    #[account(
+        mut,
+        constraint = {
+            swap_token_a_account.mint == vault.token_a_mint &&
+            swap_token_a_account.owner == swap_liquidity_pool.key() &&
+            swap_token_a_account.mint ==  vault_token_a_account.mint
+        },
+    )]
+    pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = {
+            swap_token_b_account.mint == vault.token_b_mint &&
+            swap_token_b_account.owner == swap_liquidity_pool.key() &&
+            swap_token_b_account.mint ==  vault_token_b_account.mint
+        },
+    )]
+    pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        constraint = current_vault_period_account.period_id == vault.last_dca_period + 1
+    )]
     pub current_vault_period_account: Account<'info, VaultPeriod>,
+
+    #[account(
+        constraint = last_vault_period_account.period_id == vault.last_dca_period
+    )]
     pub last_vault_period_account: Account<'info, VaultPeriod>,
 
-    // TODO: Thsi will likely be SwapV1, but requires Serialization/Deserialization to be
-    // implemented
-    pub swap_liquidity_pool: AccountInfo<'info>,
 
-    // TODO: These are temp, should be able to use it
-    // via swap_liquidity_pool.pool_mint / swap_liquidity_pool.pool_fee
+    pub swap_liquidity_pool: Box<Account<'info, DCASwap>>,
+
+    #[account(
+        constraint = swap_liquidity_pool_mint == swap_liquidity_pool.mint
+    )]
     pub swap_liquidity_pool_mint: AccountInfo<'info>,
     pub swap_liquidity_pool_fee: AccountInfo<'info>,
 
@@ -113,9 +164,9 @@ fn swap_tokens<'info>(
     let ix = spl_token_swap::instruction::swap(
         ctx.accounts.token_swap_program.key,
         ctx.accounts.token_program.key,
-        ctx.accounts.swap_liquidity_pool.key,
+        &ctx.accounts.swap_liquidity_pool.key(),
         ctx.accounts.swap_authority.key,
-        ctx.accounts.swap_liquidity_pool.key, // TODO(capp): Invoke token.approve with this account as the delegate first (delegated_amount should be drip_amount)
+        &ctx.accounts.swap_liquidity_pool.key(), // TODO(capp): Invoke token.approve with this account as the delegate first (delegated_amount should be drip_amount)
         &ctx.accounts.vault_token_a_account.key(),
         &ctx.accounts.swap_token_a_account.key(),
         &ctx.accounts.swap_token_b_account.key(),
@@ -134,7 +185,7 @@ fn swap_tokens<'info>(
         &[
             ctx.accounts.token_swap_program.clone(),
             ctx.accounts.token_program.to_account_info().clone(),
-            ctx.accounts.swap_liquidity_pool.clone(),
+            ctx.accounts.swap_liquidity_pool.to_account_info().clone(),
             ctx.accounts.swap_authority.clone(),
             ctx.accounts.vault_token_a_account.to_account_info().clone(),
             ctx.accounts.vault_token_b_account.to_account_info().clone(),

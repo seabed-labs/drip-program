@@ -4,7 +4,7 @@
 echo "Checking rust formatting... Run 'cargo fmt' if this check fails"
 cargo fmt -- --check
 
-echo "Checking typescript formatting... Run 'prettier --w ./' if this check fails"
+echo "Checking typescript formatting... Run 'yarn run prettier --w ./' if this check fails"
 yarn run prettier --c ./
 
 echo "Running cargo tests"

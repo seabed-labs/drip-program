@@ -3,9 +3,11 @@ pub mod traits;
 pub mod vault;
 pub mod vault_period;
 pub mod vault_proto_config;
+pub mod swap;
 
 pub use position::*;
 pub use traits::ByteSized;
 pub use vault::*;
 pub use vault_period::*;
 pub use vault_proto_config::*;
+pub use swap::*;
