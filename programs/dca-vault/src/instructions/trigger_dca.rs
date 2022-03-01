@@ -1,8 +1,11 @@
-use crate::state::{Vault, VaultPeriod, VaultProtoConfig, DCASwap};
+use std::borrow::Borrow;
+use std::ops::Deref;
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::{prelude::*, solana_program};
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token_swap::state::{SwapState, SwapV1};
 use std::str::FromStr;
+use spl_token_swap::solana_program::program_pack::Pack;
 
 use crate::common::ErrorCode;
 
@@ -11,90 +14,36 @@ pub struct TriggerDCA<'info> {
 
     // User that triggers the DCA
     pub dca_trigger_source: Signer<'info>,
-
-    #[account(
-        mut,
-        seeds = [
-            b"dca-vault-v1".as_ref(),
-            vault.token_a_mint.as_ref(),
-            vault.token_b_mint.as_ref(),
-            vault.proto_config.as_ref()
-        ],
-        bump = vault.bump
-    )]
     pub vault: Account<'info, Vault>,
 
-    #[account(
-        constraint = vault_proto_config.granularity != 0
-    )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     // Tokens will be swapped between these accounts
-    #[account(
-        mut,
-        constraint = {
-            vault_token_a_account.mint == vault.token_a_mint &&
-            vault_token_a_account.owner == vault.key()
-        },
-    )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = {
-            vault_token_b_account.mint == vault.token_b_mint &&
-            vault_token_b_account.owner == vault.key()
-        },
-    )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = {
-            swap_token_a_account.mint == vault.token_a_mint &&
-            swap_token_a_account.owner == swap_liquidity_pool.key() &&
-            swap_token_a_account.mint ==  vault_token_a_account.mint
-        },
-    )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = {
-            swap_token_b_account.mint == vault.token_b_mint &&
-            swap_token_b_account.owner == swap_liquidity_pool.key() &&
-            swap_token_b_account.mint ==  vault_token_b_account.mint
-        },
-    )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        constraint = current_vault_period_account.period_id == vault.last_dca_period + 1
-    )]
     pub current_vault_period_account: Account<'info, VaultPeriod>,
 
-    #[account(
-        constraint = last_vault_period_account.period_id == vault.last_dca_period
-    )]
     pub last_vault_period_account: Account<'info, VaultPeriod>,
 
+    /// CHECK: Fuck off
+    pub swap_liquidity_pool: AccountInfo<'info>,
 
-    pub swap_liquidity_pool: Box<Account<'info, DCASwap>>,
-
-    #[account(
-        constraint = swap_liquidity_pool_mint.key() == swap_liquidity_pool.pool_mint
-    )]
-    pub swap_liquidity_pool_mint: AccountInfo<'info>,
-    pub swap_liquidity_pool_fee: AccountInfo<'info>,
+    pub swap_liquidity_pool_mint: Account<'info, Mint>,
+    pub swap_liquidity_pool_fee: Account<'info, TokenAccount>,
 
     // TODO: Generate Authority ID defined in processor.rs. / authority_id
+    /// CHECK: Fuck off
     pub swap_authority: AccountInfo<'info>,
 
-    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 
     // TODO: Test this is actually the Token swap program; clean this
-    #[account(address = Pubkey::from_str("SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8").unwrap())]
     pub token_swap_program: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
@@ -102,6 +51,9 @@ pub struct TriggerDCA<'info> {
 }
 
 pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
+    let swap_account_info = &ctx.accounts.swap_liquidity_pool;
+
+    let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
     let now = Clock::get().unwrap().unix_timestamp;
 
     if !dca_allowed(
@@ -171,8 +123,8 @@ fn swap_tokens<'info>(
         &ctx.accounts.swap_token_a_account.key(),
         &ctx.accounts.swap_token_b_account.key(),
         &ctx.accounts.vault_token_b_account.key(),
-        ctx.accounts.swap_liquidity_pool_fee.key, // swap.pool_mint (might need to pass in pool mint as well IFF we need to send the pool mint account to swap)
-        ctx.accounts.swap_liquidity_pool_fee.key,
+        &ctx.accounts.swap_liquidity_pool_fee.key(), // swap.pool_mint (might need to pass in pool mint as well IFF we need to send the pool mint account to swap)
+        &ctx.accounts.swap_liquidity_pool_fee.key(),
         None,
         spl_token_swap::instruction::Swap {
             amount_in: swap_amount,
