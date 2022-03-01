@@ -1,13 +1,13 @@
-import {KeypairUtils} from "../utils/KeypairUtils";
-import {DECIMALS, TokenUtils} from "../utils/TokenUtils";
-import {amount, Denom} from "../utils/amount";
-import {PublicKey, Signer} from "@solana/web3.js";
-import {Token, u64} from "@solana/spl-token";
-import {VaultUtils} from "../utils/VaultUtils";
-import {Granularity} from "../utils/Granularity";
-import {PDAUtils} from "../utils/PDAUtils";
-import {SolUtils} from "../utils/SolUtils";
-import {AccountUtils} from "../utils/AccountUtils";
+import { KeypairUtils } from "../utils/KeypairUtils";
+import { DECIMALS, TokenUtils } from "../utils/TokenUtils";
+import { amount, Denom } from "../utils/amount";
+import { PublicKey, Signer } from "@solana/web3.js";
+import { Token, u64 } from "@solana/spl-token";
+import { VaultUtils } from "../utils/VaultUtils";
+import { Granularity } from "../utils/Granularity";
+import { PDAUtils } from "../utils/PDAUtils";
+import { SolUtils } from "../utils/SolUtils";
+import { AccountUtils } from "../utils/AccountUtils";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 
@@ -175,6 +175,8 @@ export async function testDeposit() {
 
     vaultAccount.dripAmount.toString().should.equal("144927536");
     vaultPeriodEndAccount.dar.toString().should.equal("144927536");
+
+    positionAccount.bump.should.equal(positionPDA.bump);
     positionAccount.vault.toBase58().should.equal(vaultPubkey.toBase58());
     positionAccount.positionAuthority
       .toBase58()
