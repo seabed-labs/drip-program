@@ -33,4 +33,8 @@ pub mod dca_vault {
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         instructions::deposit::handler(ctx, params)
     }
+
+    pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
+        instructions::close_position::handler(ctx)
+    }
 }
