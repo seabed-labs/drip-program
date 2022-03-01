@@ -12,6 +12,7 @@ use crate::common::ErrorCode;
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct TriggerDCAParams {
     period_id: u64,
+    last_period_id: u64,
 }
 
 #[derive(Accounts)]
@@ -44,6 +45,15 @@ pub struct TriggerDCA<'info> {
     )]
     pub current_vault_period_account: Account<'info, VaultPeriod>,
 
+    #[account(
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            params.last_period_id.to_string().as_bytes().as_ref()
+        ],
+        bump = current_vault_period_account.bump,
+        constraint = params.last_period_id == vault.last_dca_period
+    )]
     pub last_vault_period_account: Account<'info, VaultPeriod>,
 
     // Tokens will be swapped between these accounts
