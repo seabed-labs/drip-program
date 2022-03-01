@@ -142,7 +142,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         params.dca_cycles,
         periodic_drip_amount,
         ctx.bumps.get("user_position"),
-    );
+    )?;
     send_tokens(
         &ctx.accounts.token_program,
         &mut ctx.accounts.vault,

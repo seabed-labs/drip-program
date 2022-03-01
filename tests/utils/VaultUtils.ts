@@ -45,7 +45,7 @@ export class VaultUtils extends TestUtil {
           creator: this.provider.wallet.publicKey.toString(),
           systemProgram: ProgramUtils.systemProgram.programId.toString(),
         },
-        signers: [vaultProtoConfigKeypair as Signer],
+        signers: [vaultProtoConfigKeypair],
       }
     );
   }

@@ -161,7 +161,7 @@ export async function testDeposit() {
       },
       signers: {
         depositor: user,
-        userPositionNftMint: positionNftMintKeypair as Signer,
+        userPositionNftMint: positionNftMintKeypair,
       },
     });
 
