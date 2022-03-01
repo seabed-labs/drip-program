@@ -33,14 +33,8 @@ export function testInitVault() {
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.publicKey as PublicKey,
-        tokenA.publicKey
-      ),
-      PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.publicKey as PublicKey,
-        tokenB.publicKey
-      ),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
     await VaultUtils.initVault(
@@ -108,14 +102,8 @@ export function testInitVault() {
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.publicKey as PublicKey,
-        tokenA.publicKey
-      ),
-      PDAUtils.findAssociatedTokenAddress(
-        vaultPDA.publicKey as PublicKey,
-        tokenB.publicKey
-      ),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
     await VaultUtils.initVault(
@@ -191,11 +179,11 @@ export function testInitVault() {
       );
       [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
         PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.publicKey as PublicKey,
+          vaultPDA.publicKey,
           tokenA.publicKey
         ),
         PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.publicKey as PublicKey,
+          vaultPDA.publicKey,
           tokenB.publicKey
         ),
       ]);

@@ -99,6 +99,7 @@ export class TokenUtils extends TestUtil {
     closeAuthority: null | PublicKey;
   }> {
     const accountData = await AccountUtils.fetchAccountData(pubkey);
+    // TODO(Mocha): define module for decode
     const decodedData = AccountLayout.decode(accountData);
 
     return {

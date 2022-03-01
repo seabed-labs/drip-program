@@ -8,6 +8,7 @@ import { Granularity } from "../utils/Granularity";
 import { PDAUtils } from "../utils/PDAUtils";
 import { SolUtils } from "../utils/SolUtils";
 import { AccountUtils } from "../utils/AccountUtils";
+import should from "should";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 
@@ -114,18 +115,18 @@ export async function testDeposit() {
       positionNftMintKeypair.publicKey
     );
 
-    const userPositionNft_ATA = await PDAUtils.findAssociatedTokenAddress(
-      user.publicKey,
-      positionNftMintKeypair.publicKey
-    );
-
-    const vaultTokenAAccountBefore = await TokenUtils.fetchTokenAccountInfo(
-      vaultTokenA_ATA
-    );
-
-    const userTokenAAccountBefore = await TokenUtils.fetchTokenAccountInfo(
-      userTokenA_ATA()
-    );
+    const [
+      userPositionNft_ATA,
+      vaultTokenAAccountBefore,
+      userTokenAAccountBefore,
+    ] = await Promise.all([
+      PDAUtils.findAssociatedTokenAddress(
+        user.publicKey,
+        positionNftMintKeypair.publicKey
+      ),
+      TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
+      await TokenUtils.fetchTokenAccountInfo(userTokenA_ATA()),
+    ]);
 
     vaultTokenAAccountBefore.balance.toString().should.equal("0");
     userTokenAAccountBefore.balance.toString().should.equal("10000000000000");
