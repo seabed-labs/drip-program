@@ -1,17 +1,16 @@
-use std::borrow::Borrow;
-use std::ops::Deref;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use spl_token_swap::state::{SwapState, SwapV1};
-use std::str::FromStr;
 use spl_token_swap::solana_program::program_pack::Pack;
+use spl_token_swap::state::{SwapState, SwapV1};
+use std::borrow::Borrow;
+use std::ops::Deref;
+use std::str::FromStr;
 
 use crate::common::ErrorCode;
 
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
-
     // User that triggers the DCA
     pub dca_trigger_source: Signer<'info>,
     pub vault: Account<'info, Vault>,
@@ -44,6 +43,7 @@ pub struct TriggerDCA<'info> {
     pub token_program: Program<'info, Token>,
 
     // TODO: Test this is actually the Token swap program; clean this
+    /// CHECK: Fuck off
     pub token_swap_program: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
