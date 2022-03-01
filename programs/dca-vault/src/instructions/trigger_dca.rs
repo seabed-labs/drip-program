@@ -29,7 +29,6 @@ pub struct TriggerDCA<'info> {
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     // Tokens will be swapped between these accounts
-    // Token accounts
     #[account(
         mut,
         constraint = {
@@ -39,6 +38,13 @@ pub struct TriggerDCA<'info> {
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        mut,
+        constraint = {
+            vault_token_b_account.mint == vault.token_b_mint &&
+            vault_token_b_account.owner == vault.key()
+        },
+    )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
