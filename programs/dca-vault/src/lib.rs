@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use instructions::*;
 
 pub mod instructions;
+pub mod macros;
 pub mod math;
 pub mod state;
 

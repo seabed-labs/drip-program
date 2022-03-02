@@ -1,11 +1,12 @@
 use crate::math::calculate_withdraw_token_b_amount;
+use crate::seeds;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-// TODO(mathca): Make sure the NFT account supply is one always
+// TODO(matcha): Make sure the NFT account supply is one always
 
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
@@ -86,7 +87,7 @@ pub struct WithdrawB<'info> {
     )]
     pub user_position_nft_mint: Account<'info, Mint>,
 
-    // TODO(mathca): Make sure this actually verifies that its an ATA
+    // TODO(matcha): Make sure this actually verifies that its an ATA
     // TODO(matcha): ALSO, make sure that this ATA verification happens in other places where an ATA is passed in
     #[account(
         mut,
@@ -105,6 +106,7 @@ pub struct WithdrawB<'info> {
         constraint = user_token_b_account.owner == user.key()
     )]
     pub user_token_b_account: Account<'info, TokenAccount>,
+    #[account(mut)]
     pub user: Signer<'info>,
     #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
@@ -156,13 +158,7 @@ fn send_tokens<'info>(
                 to: to.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[&[
-                b"dca-vault-v1".as_ref(),
-                vault.token_a_mint.as_ref(),
-                vault.token_b_mint.as_ref(),
-                vault.proto_config.as_ref(),
-                &[vault.bump],
-            ]],
+            &[seeds!(vault)],
         ),
         amount,
     )

@@ -73,6 +73,7 @@ pub struct Deposit<'info> {
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
 
+    // TODO(matcha): Verify that this is an ATA (and all other places too)
     // Token accounts
     #[account(
         mut,
