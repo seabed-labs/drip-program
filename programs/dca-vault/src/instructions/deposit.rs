@@ -33,6 +33,7 @@ pub struct Deposit<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
+    // TODO(matcha): Add PDA seed validation here
     #[account(
         mut,
         has_one = vault,
