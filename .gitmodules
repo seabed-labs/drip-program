@@ -1,3 +1,0 @@
-[submodule "deps/spl"]
-	path = deps/spl
-	url = https://github.com/solana-labs/solana-program-library

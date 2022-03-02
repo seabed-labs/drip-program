@@ -14,4 +14,4 @@ test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 # Load other programs into anchor
 [[test.genesis]]
 address = "SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8"
-program = "./deps/spl/target/deploy/spl_token_swap.so"
+program = "./deps/spl_token_swap/spl_token_swap.so"
