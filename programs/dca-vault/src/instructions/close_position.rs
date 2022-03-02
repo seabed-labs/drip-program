@@ -1,0 +1,261 @@
+use crate::math::{calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount};
+use crate::state::{Position, Vault, VaultPeriod};
+use anchor_lang::prelude::*;
+use anchor_lang::System;
+use anchor_spl::token::{burn, transfer, Burn, Mint, Token, TokenAccount, Transfer};
+
+#[derive(Accounts)]
+pub struct ClosePosition<'info> {
+    // Dcaf accounts
+    #[account(
+        mut,
+        seeds = [
+            b"dca-vault-v1".as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
+            vault.proto_config.as_ref()
+        ],
+        bump = vault.bump
+    )]
+    pub vault: Box<Account<'info, Vault>>,
+
+    #[account(
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            user_position.dca_period_id_before_deposit.to_string().as_bytes().as_ref(),
+        ],
+        bump = vault_period_i.bump,
+    )]
+    pub vault_period_i: Box<Account<'info, VaultPeriod>>,
+
+    #[account(
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            vault.last_dca_period.to_string().as_bytes().as_ref(),
+        ],
+        bump = vault_period_j.bump,
+    )]
+    pub vault_period_j: Box<Account<'info, VaultPeriod>>,
+
+    #[account(
+        mut,
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            (user_position.dca_period_id_before_deposit + user_position.number_of_swaps).to_string().as_bytes().as_ref(),
+        ],
+        bump = vault_period_user_expiry.bump,
+        constraint = {
+            vault_period_user_expiry.period_id == std::cmp::min(vault.last_dca_period, user_position.dca_period_id_before_deposit + user_position.number_of_swaps)
+        }
+    )]
+    pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
+
+    #[account(
+        mut,
+        seeds = [
+            b"user_position".as_ref(),
+            vault.key().as_ref(),
+            user_position_nft_mint.key().as_ref()
+        ],
+        bump,
+        constraint = user_position.is_closed == false
+    )]
+    pub user_position: Account<'info, Position>,
+
+    // Token Accounts
+    #[account(
+        mut,
+        associated_token::mint = token_a_mint,
+        associated_token::authority = vault,
+    )]
+    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = token_b_mint,
+        associated_token::authority = vault,
+    )]
+    pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = {
+            user_token_a_account.mint == vault.token_a_mint &&
+            user_token_a_account.owner == withdrawer.key()
+        }
+    )]
+    pub user_token_a_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = {
+            user_token_b_account.mint == vault.token_b_mint &&
+            user_token_b_account.owner == withdrawer.key()
+        }
+    )]
+    pub user_token_b_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = {
+            user_position_nft_account.mint == user_position.position_authority &&
+            user_position_nft_account.owner == withdrawer.key() &&
+            user_position_nft_account.amount == 1 &&
+            user_position_nft_account.delegate.contains(&vault.key()) &&
+            user_position_nft_account.delegated_amount == 1
+        }
+    )]
+    pub user_position_nft_account: Account<'info, TokenAccount>,
+
+    // Mints
+    #[account(
+        constraint = {
+            user_position_nft_mint.key() == user_position.position_authority &&
+            user_position_nft_mint.supply == 1 &&
+            user_position_nft_mint.decimals == 0 &&
+            user_position_nft_mint.is_initialized == true &&
+            user_position_nft_mint.mint_authority.is_none()
+        }
+    )]
+    pub user_position_nft_mint: Account<'info, Mint>,
+
+    #[account(
+        constraint = token_a_mint.key() == vault.token_a_mint
+    )]
+    pub token_a_mint: Account<'info, Mint>,
+
+    #[account(
+        constraint = token_b_mint.key() == vault.token_b_mint
+    )]
+    pub token_b_mint: Account<'info, Mint>,
+
+    // Other
+    #[account(mut)]
+    pub withdrawer: Signer<'info>,
+
+    #[account(address = Token::id())]
+    pub token_program: Program<'info, Token>,
+    #[account(address = System::id())]
+    pub system_program: Program<'info, System>,
+}
+
+pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
+    // transfer A and B
+    let i = ctx.accounts.user_position.dca_period_id_before_deposit;
+    let j = std::cmp::min(
+        ctx.accounts.vault_period_j.period_id,
+        ctx.accounts.vault_period_user_expiry.period_id,
+    );
+    let withdraw_a = calculate_withdraw_token_a_amount(
+        i,
+        j,
+        ctx.accounts.user_position.number_of_swaps,
+        ctx.accounts.user_position.periodic_drip_amount,
+    );
+
+    let withdraw_b = calculate_withdraw_token_b_amount(
+        i,
+        j,
+        ctx.accounts.vault_period_i.twap,
+        ctx.accounts.vault_period_j.twap,
+        ctx.accounts.user_position.periodic_drip_amount,
+    );
+
+    send_tokens(
+        &ctx.accounts.token_program,
+        &mut ctx.accounts.vault,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.user_token_a_account,
+        withdraw_a,
+    )?;
+
+    send_tokens(
+        &ctx.accounts.token_program,
+        &mut ctx.accounts.vault,
+        &ctx.accounts.vault_token_b_account,
+        &ctx.accounts.user_token_b_account,
+        withdraw_b,
+    )?;
+
+    burn_tokens(
+        &ctx.accounts.token_program,
+        &mut ctx.accounts.vault,
+        &ctx.accounts.user_position_nft_mint,
+        &ctx.accounts.user_position_nft_account,
+        1,
+    )?;
+
+    // Update state
+    let user_position = &mut ctx.accounts.user_position;
+    user_position.is_closed = true;
+
+    // Only reduce drip amount and dar if we haven't done so already
+    if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
+        let vault = &mut ctx.accounts.vault;
+        vault.drip_amount -= user_position.periodic_drip_amount;
+
+        let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
+        vault_period_user_expiry.dar -= ctx.accounts.user_position.periodic_drip_amount;
+    }
+
+    Ok(())
+}
+
+// TODO(mocha) | TODO(matcha): de-dupe this fn to a common file
+fn send_tokens<'info>(
+    token_program: &Program<'info, Token>,
+    vault: &mut Account<'info, Vault>,
+    from: &Account<'info, TokenAccount>,
+    to: &Account<'info, TokenAccount>,
+    amount: u64,
+) -> Result<()> {
+    transfer(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            Transfer {
+                from: from.to_account_info().clone(),
+                to: to.to_account_info().clone(),
+                authority: vault.to_account_info().clone(),
+            },
+            &[&[
+                b"dca-vault-v1".as_ref(),
+                vault.token_a_mint.as_ref(),
+                vault.token_b_mint.as_ref(),
+                vault.proto_config.as_ref(),
+                &[vault.bump],
+            ]],
+        ),
+        amount,
+    )
+}
+
+// TODO(mocha) | TODO(matcha): move to common file
+fn burn_tokens<'info>(
+    token_program: &Program<'info, Token>,
+    vault: &mut Account<'info, Vault>,
+    mint: &Account<'info, Mint>,
+    to: &Account<'info, TokenAccount>,
+    amount: u64,
+) -> Result<()> {
+    burn(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            Burn {
+                mint: mint.to_account_info().clone(),
+                to: to.to_account_info().clone(),
+                authority: vault.to_account_info().clone(),
+            },
+            &[&[
+                b"dca-vault-v1".as_ref(),
+                vault.token_a_mint.as_ref(),
+                vault.token_b_mint.as_ref(),
+                vault.proto_config.as_ref(),
+                &[vault.bump],
+            ]],
+        ),
+        amount,
+    )
+}
