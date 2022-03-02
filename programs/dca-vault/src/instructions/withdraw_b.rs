@@ -5,6 +5,8 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
+// TODO(mathca): Make sure the NFT account supply is one always
+
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
     #[account(
@@ -76,6 +78,13 @@ pub struct WithdrawB<'info> {
         }
     )]
     pub user_position_nft_account: Account<'info, TokenAccount>,
+
+    #[account(
+        constraint = {
+            user_position_nft_mint.supply == 1
+        }
+    )]
+    pub user_position_nft_mint: Account<'info, Mint>,
 
     // TODO(mathca): Make sure this actually verifies that its an ATA
     // TODO(matcha): ALSO, make sure that this ATA verification happens in other places where an ATA is passed in
