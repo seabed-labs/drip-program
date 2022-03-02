@@ -1,5 +1,5 @@
 use crate::math::calculate_withdraw_token_b_amount;
-use crate::seeds;
+use crate::sign;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -158,7 +158,7 @@ fn send_tokens<'info>(
                 to: to.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[seeds!(vault)],
+            &[sign!(vault)],
         ),
         amount,
     )
