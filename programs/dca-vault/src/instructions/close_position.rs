@@ -45,7 +45,9 @@ pub struct ClosePosition<'info> {
         constraint = {
             vault_period_j.period_id == std::cmp::min(
                 vault.last_dca_period,
-                user_position.dca_period_id_before_deposit + user_position.number_of_swaps
+                user_position.dca_period_id_before_deposit
+                    .checked_add(user_position.number_of_swaps)
+                    .unwrap()
             ) &&
             vault_period_j.vault == vault.key()
         }
@@ -62,7 +64,9 @@ pub struct ClosePosition<'info> {
         ],
         bump = vault_period_user_expiry.bump,
         constraint = {
-            vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit + user_position.number_of_swaps &&
+            vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit
+                                                    .checked_add(user_position.number_of_swaps)
+                                                    .unwrap() &&
             vault_period_user_expiry.vault == vault.key()
         }
     )]
@@ -76,7 +80,7 @@ pub struct ClosePosition<'info> {
             user_position.vault.as_ref(),
             user_position.position_authority.as_ref()
         ],
-        bump,
+        bump = user_position.bump,
         constraint = {
             !user_position.is_closed &&
             user_position.position_authority == user_position_nft_mint.key() &&
@@ -164,11 +168,8 @@ pub struct ClosePosition<'info> {
 
 pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     // transfer A and B
-    let i = ctx.accounts.user_position.dca_period_id_before_deposit;
-    let j = std::cmp::min(
-        ctx.accounts.vault_period_j.period_id,
-        ctx.accounts.vault_period_user_expiry.period_id,
-    );
+    let i = ctx.accounts.vault_period_i.period_id;
+    let j = ctx.accounts.vault_period_j.period_id;
     let withdraw_a = calculate_withdraw_token_a_amount(
         i,
         j,
@@ -183,7 +184,9 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
     );
-    let withdraw_b = max_withdrawable_amount - ctx.accounts.user_position.withdrawn_token_b_amount;
+    let withdraw_b = max_withdrawable_amount
+        .checked_sub(ctx.accounts.user_position.withdrawn_token_b_amount)
+        .unwrap();
 
     if withdraw_a != 0 {
         send_tokens(
@@ -220,10 +223,16 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     // Only reduce drip amount and dar if we haven't done so already
     if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
         let vault = &mut ctx.accounts.vault;
-        vault.drip_amount -= ctx.accounts.user_position.periodic_drip_amount;
+        vault.drip_amount = vault
+            .drip_amount
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
 
         let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
-        vault_period_user_expiry.dar -= ctx.accounts.user_position.periodic_drip_amount;
+        vault_period_user_expiry.dar = vault_period_user_expiry
+            .dar
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
     }
 
     Ok(())
