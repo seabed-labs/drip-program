@@ -185,21 +185,25 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     );
     let withdraw_b = max_withdrawable_amount - ctx.accounts.user_position.withdrawn_token_b_amount;
 
-    send_tokens(
-        &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
-        &ctx.accounts.vault_token_a_account,
-        &ctx.accounts.user_token_a_account,
-        withdraw_a,
-    )?;
+    if withdraw_a != 0 {
+        send_tokens(
+            &ctx.accounts.token_program,
+            &mut ctx.accounts.vault,
+            &ctx.accounts.vault_token_a_account,
+            &ctx.accounts.user_token_a_account,
+            withdraw_a,
+        )?;
+    }
 
-    send_tokens(
-        &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
-        &ctx.accounts.vault_token_b_account,
-        &ctx.accounts.user_token_b_account,
-        withdraw_b,
-    )?;
+    if withdraw_b != 0 {
+        send_tokens(
+            &ctx.accounts.token_program,
+            &mut ctx.accounts.vault,
+            &ctx.accounts.vault_token_b_account,
+            &ctx.accounts.user_token_b_account,
+            withdraw_b,
+        )?;
+    }
 
     burn_tokens(
         &ctx.accounts.token_program,
