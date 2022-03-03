@@ -10,4 +10,6 @@ pub enum ErrorCode {
     CannotGetVaultBump,
     #[msg("Cannot get vault_period bump")]
     CannotGetVaultPeriodBump,
+    #[msg("Withdrawable amount is zero")]
+    WithdrawableAmountIsZero,
 }

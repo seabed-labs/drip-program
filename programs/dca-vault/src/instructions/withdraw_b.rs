@@ -1,3 +1,4 @@
+use crate::common::ErrorCode::WithdrawableAmountIsZero;
 use crate::math::calculate_withdraw_token_b_amount;
 use crate::sign;
 use crate::state::{Position, Vault, VaultPeriod};
@@ -148,6 +149,10 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         .withdrawn_token_b_amount
         .checked_add(withdrawable_amount)
         .unwrap();
+
+    if withdrawable_amount == 0 {
+        return Err(WithdrawableAmountIsZero.into());
+    }
 
     send_tokens(
         &ctx.accounts.token_program,
