@@ -12,4 +12,6 @@ pub enum ErrorCode {
     CannotGetVaultBump,
     #[msg("Cannot get vault_period bump")]
     CannotGetVaultPeriodBump,
+    #[msg("Swap did not complete")]
+    IncompleteSwapError,
 }

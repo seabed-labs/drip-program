@@ -56,6 +56,23 @@ pub fn calculate_withdraw_token_b_amount(
     result
 }
 
+pub fn calculate_new_twap_amount(
+    prev_twap: u64,
+    current_period_id: u64,
+    exchange_rate: u64,
+) -> u64 {
+    return (prev_twap * (current_period_id - 1) + exchange_rate) / current_period_id;
+}
+
+pub fn get_exchange_rate(
+    dest_prev_account_balance: u64,
+    dest_new_account_balance: u64,
+    source_exchange_amt: u64,
+) -> u64 {
+    let balance_diff = dest_prev_account_balance - dest_new_account_balance;
+    return balance_diff / source_exchange_amt;
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
