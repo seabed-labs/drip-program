@@ -3,6 +3,7 @@ use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_lang::System;
 use anchor_spl::token::{burn, transfer, Burn, Mint, Token, TokenAccount, Transfer};
+use spl_token::state::AccountState;
 
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
@@ -127,6 +128,7 @@ pub struct ClosePosition<'info> {
         constraint = {
             user_position_nft_account.mint == user_position.position_authority &&
             user_position_nft_account.owner == withdrawer.key() &&
+            user_position_nft_account.state == AccountState::Initialized &&
             user_position_nft_account.amount == 1 &&
             user_position_nft_account.delegate.contains(&vault.key()) &&
             user_position_nft_account.delegated_amount == 1
