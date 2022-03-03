@@ -98,10 +98,6 @@ pub struct TriggerDCA<'info> {
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    pub swap_liquidity_pool_mint: Account<'info, Mint>,
-
-    pub swap_liquidity_pool_fee: Account<'info, TokenAccount>,
-
     /// CHECK: do checks in handler
     pub swap_liquidity_pool: AccountInfo<'info>,
 
@@ -124,8 +120,8 @@ pub struct TriggerDCA<'info> {
 
 pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     let swap_account_info = &ctx.accounts.swap_liquidity_pool;
-
     let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
+
     let now = Clock::get().unwrap().unix_timestamp;
 
     if !dca_allowed(
@@ -136,7 +132,9 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     }
 
     let prev_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
-    swap_tokens(&ctx, ctx.accounts.vault.drip_amount)?;
+
+    swap_tokens(&ctx, ctx.accounts.vault.drip_amount, swap)?;
+
     let new_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
 
     // For some reason swap did not happen ~ because we will never have swap amount of 0.
@@ -183,6 +181,7 @@ swap ix requires lot other authority accounts for verification; add them later
 fn swap_tokens<'info>(
     ctx: &Context<TriggerDCA>,
     swap_amount: u64,
+    swap: SwapV1,
 ) -> Result<()> {
 
     token::approve(
@@ -208,8 +207,8 @@ fn swap_tokens<'info>(
         &ctx.accounts.swap_token_a_account.key(),
         &ctx.accounts.swap_token_b_account.key(),
         &ctx.accounts.vault_token_b_account.key(),
-        &ctx.accounts.swap_liquidity_pool_fee.key(),
-        &ctx.accounts.swap_liquidity_pool_fee.key(),
+        swap.pool_mint(),
+        swap.pool_fee_account(),
         None,
         spl_token_swap::instruction::Swap {
             amount_in: swap_amount,
