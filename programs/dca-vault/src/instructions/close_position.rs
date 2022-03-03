@@ -20,48 +20,68 @@ pub struct ClosePosition<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
+        has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            user_position.dca_period_id_before_deposit.to_string().as_bytes().as_ref(),
+            vault_period_i.vault.as_ref(),
+            vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_i.bump,
+        constraint = {
+            vault_period_i.period_id == user_position.dca_period_id_before_deposit &&
+            vault_period_i.vault == vault.key()
+        }
     )]
     pub vault_period_i: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            vault.last_dca_period.to_string().as_bytes().as_ref(),
+            vault_period_j.vault.as_ref(),
+            vault_period_j.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_j.bump,
+        constraint = {
+            vault_period_j.period_id == std::cmp::min(
+                vault.last_dca_period,
+                user_position.dca_period_id_before_deposit + user_position.number_of_swaps
+            ) &&
+            vault_period_j.vault == vault.key()
+        }
     )]
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
 
     #[account(
         mut,
+        has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            (user_position.dca_period_id_before_deposit + user_position.number_of_swaps).to_string().as_bytes().as_ref(),
+            vault_period_user_expiry.vault.as_ref(),
+            vault_period_user_expiry.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_user_expiry.bump,
         constraint = {
-            vault_period_user_expiry.period_id == std::cmp::min(vault.last_dca_period, user_position.dca_period_id_before_deposit + user_position.number_of_swaps)
+            vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit + user_position.number_of_swaps &&
+            vault_period_user_expiry.vault == vault.key()
         }
     )]
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
     #[account(
         mut,
+        has_one = vault,
         seeds = [
             b"user_position".as_ref(),
-            vault.key().as_ref(),
-            user_position_nft_mint.key().as_ref()
+            user_position.vault.as_ref(),
+            user_position.position_authority.as_ref()
         ],
         bump,
-        constraint = user_position.is_closed == false
+        constraint = {
+            !user_position.is_closed &&
+            user_position.position_authority == user_position_nft_mint.key() &&
+            user_position.vault == vault.key()
+        }
     )]
     pub user_position: Account<'info, Position>,
 
@@ -156,13 +176,14 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         ctx.accounts.user_position.periodic_drip_amount,
     );
 
-    let withdraw_b = calculate_withdraw_token_b_amount(
+    let max_withdrawable_amount = calculate_withdraw_token_b_amount(
         i,
         j,
         ctx.accounts.vault_period_i.twap,
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
     );
+    let withdraw_b = max_withdrawable_amount - ctx.accounts.user_position.withdrawn_token_b_amount;
 
     send_tokens(
         &ctx.accounts.token_program,
@@ -195,7 +216,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     // Only reduce drip amount and dar if we haven't done so already
     if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
         let vault = &mut ctx.accounts.vault;
-        vault.drip_amount -= user_position.periodic_drip_amount;
+        vault.drip_amount -= ctx.accounts.user_position.periodic_drip_amount;
 
         let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
         vault_period_user_expiry.dar -= ctx.accounts.user_position.periodic_drip_amount;
