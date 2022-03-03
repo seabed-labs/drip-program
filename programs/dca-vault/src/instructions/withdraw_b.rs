@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use spl_token::state::AccountState;
 
 // TODO(matcha): Make sure the NFT account supply is one always
 
@@ -26,30 +27,32 @@ pub struct WithdrawB<'info> {
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            dca_period_predeposit.period_id.to_string().as_bytes().as_ref(),
+            vault_period_i.vault.as_ref(),
+            vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
-        bump = dca_period_predeposit.bump,
-        constraint = dca_period_predeposit.period_id == user_position.dca_period_id_before_deposit
+        bump = vault_period_i.bump,
+        constraint = {
+            vault_period_i.period_id == user_position.dca_period_id_before_deposit
+        }
     )]
-    pub dca_period_predeposit: Account<'info, VaultPeriod>,
+    pub vault_period_i: Account<'info, VaultPeriod>,
 
     #[account(
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            dca_period_latest.period_id.to_string().as_bytes().as_ref(),
+            vault_period_j.vault.as_ref(),
+            vault_period_j.period_id.to_string().as_bytes().as_ref(),
         ],
-        bump = dca_period_latest.bump,
+        bump = vault_period_j.bump,
         constraint = {
-            dca_period_latest.period_id == std::cmp::min(
+            vault_period_j.period_id == std::cmp::min(
                 vault.last_dca_period,
                 user_position.dca_period_id_before_deposit + user_position.number_of_swaps
             )
         }
     )]
-    pub dca_period_latest: Account<'info, VaultPeriod>,
+    pub vault_period_j: Account<'info, VaultPeriod>,
 
     // TODO(matcha) | TODO(mocha): Ensure that there's no way for user to exploit the accounts
     // passed in here to steal funds that do not belong to them by faking accounts
@@ -58,15 +61,13 @@ pub struct WithdrawB<'info> {
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
-            vault.key().as_ref(),
-            user_position_nft_account.mint.as_ref()
+            user_position.vault.as_ref(),
+            user_position.position_authority.as_ref()
         ],
         bump = user_position.bump,
         constraint = {
             user_position.position_authority == user_position_nft_account.mint &&
             !user_position.is_closed
-            // TODO(matcha): Make sure to validate that they're not trying to withdraw more than they are eligible for
-            // Eligibility is computed as = withdrawable_b - already_withdrawn_b
         }
     )]
     pub user_position: Account<'info, Position>,
@@ -74,15 +75,20 @@ pub struct WithdrawB<'info> {
     #[account(
         constraint = {
             user_position_nft_account.mint == user_position.position_authority &&
-            user_position_nft_account.owner == user.key() &&
-            user_position_nft_account.amount == 1
+            user_position_nft_account.owner == withdrawer.key() &&
+            user_position_nft_account.amount == 1 &&
+            user_position_nft_account.state == AccountState::Initialized
         }
     )]
     pub user_position_nft_account: Account<'info, TokenAccount>,
 
     #[account(
         constraint = {
-            user_position_nft_mint.supply == 1
+            user_position_nft_mint.supply == 1 &&
+            user_position_nft_mint.mint_authority.is_none() &&
+            user_position_nft_mint.decimals == 0 &&
+            user_position_nft_mint.is_initialized &&
+            user_position_nft_mint.freeze_authority.is_none()
         }
     )]
     pub user_position_nft_mint: Account<'info, Mint>,
@@ -93,21 +99,28 @@ pub struct WithdrawB<'info> {
         mut,
         associated_token::mint = vault_token_b_mint,
         associated_token::authority = vault,
-        // TODO: Add constraints here if the ATA stuff doesn't work including seed checks?
+        // TODO: Add integration test to verify that this ATA check actually works
     )]
     pub vault_token_b_account: Account<'info, TokenAccount>,
 
     #[account(
-        constraint = vault_token_b_mint.key() == vault.token_b_mint
+        constraint = {
+            vault_token_b_mint.key() == vault.token_b_mint &&
+            vault_token_b_mint.is_initialized
+        }
     )]
     pub vault_token_b_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = user_token_b_account.owner == user.key()
+        constraint = {
+            user_token_b_account.mint == vault.token_b_mint &&
+            user_token_b_account.owner == withdrawer.key() &&
+            user_token_b_account.state == AccountState::Initialized
+        }
     )]
     pub user_token_b_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub withdrawer: Signer<'info>,
     #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
     #[account(address = anchor_spl::associated_token::ID)]
@@ -117,8 +130,8 @@ pub struct WithdrawB<'info> {
 pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     let vault = &mut ctx.accounts.vault;
     let user_position = &mut ctx.accounts.user_position;
-    let period_i = &ctx.accounts.dca_period_predeposit;
-    let period_j = &ctx.accounts.dca_period_latest;
+    let period_i = &ctx.accounts.vault_period_i;
+    let period_j = &ctx.accounts.vault_period_j;
 
     let max_withdrawable_amount = calculate_withdraw_token_b_amount(
         user_position.dca_period_id_before_deposit,
@@ -128,7 +141,13 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         user_position.periodic_drip_amount,
     );
 
-    let withdrawable_amount = max_withdrawable_amount - user_position.withdrawn_token_b_amount;
+    let withdrawable_amount = max_withdrawable_amount
+        .checked_sub(user_position.withdrawn_token_b_amount)
+        .unwrap();
+    user_position.withdrawn_token_b_amount = user_position
+        .withdrawn_token_b_amount
+        .checked_add(withdrawable_amount)
+        .unwrap();
 
     send_tokens(
         &ctx.accounts.token_program,
@@ -138,7 +157,8 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         withdrawable_amount,
     )?;
 
-    user_position.withdrawn_token_b_amount += withdrawable_amount;
+    // TODO: Maybe add more metadata to this log?
+    msg!("Withdraw B IX Successful");
 
     Ok(())
 }
