@@ -167,9 +167,29 @@ pub struct ClosePosition<'info> {
 }
 
 pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
+    // Update state
+    let user_position = &mut ctx.accounts.user_position;
+    user_position.is_closed = true;
+
+    // Only reduce drip amount and dar if we haven't done so already
+    if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
+        let vault = &mut ctx.accounts.vault;
+        vault.drip_amount = vault
+            .drip_amount
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
+
+        let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
+        vault_period_user_expiry.dar = vault_period_user_expiry
+            .dar
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
+    }
+
     // transfer A and B
     let i = ctx.accounts.vault_period_i.period_id;
     let j = ctx.accounts.vault_period_j.period_id;
+
     let withdraw_a = calculate_withdraw_token_a_amount(
         i,
         j,
@@ -177,14 +197,14 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         ctx.accounts.user_position.periodic_drip_amount,
     );
 
-    let max_withdrawable_amount = calculate_withdraw_token_b_amount(
+    let max_withdrawable_b = calculate_withdraw_token_b_amount(
         i,
         j,
         ctx.accounts.vault_period_i.twap,
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
     );
-    let withdraw_b = max_withdrawable_amount
+    let withdraw_b = max_withdrawable_b
         .checked_sub(ctx.accounts.user_position.withdrawn_token_b_amount)
         .unwrap();
 
@@ -215,25 +235,6 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         &ctx.accounts.user_position_nft_account,
         1,
     )?;
-
-    // Update state
-    let user_position = &mut ctx.accounts.user_position;
-    user_position.is_closed = true;
-
-    // Only reduce drip amount and dar if we haven't done so already
-    if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
-        let vault = &mut ctx.accounts.vault;
-        vault.drip_amount = vault
-            .drip_amount
-            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
-            .unwrap();
-
-        let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
-        vault_period_user_expiry.dar = vault_period_user_expiry
-            .dar
-            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
-            .unwrap();
-    }
 
     Ok(())
 }
