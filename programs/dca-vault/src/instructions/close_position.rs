@@ -179,22 +179,6 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     let user_position = &mut ctx.accounts.user_position;
     user_position.is_closed = true;
 
-    // Only reduce drip amount and dar if we haven't done so already
-    if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
-        let vault = &mut ctx.accounts.vault;
-        vault.drip_amount = vault
-            .drip_amount
-            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
-            .unwrap();
-
-        let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
-        vault_period_user_expiry.dar = vault_period_user_expiry
-            .dar
-            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
-            .unwrap();
-    }
-
-    // transfer A and B
     let i = ctx.accounts.vault_period_i.period_id;
     let j = ctx.accounts.vault_period_j.period_id;
 
@@ -216,6 +200,28 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         .checked_sub(ctx.accounts.user_position.withdrawn_token_b_amount)
         .unwrap();
 
+    let user_position = &mut ctx.accounts.user_position;
+    user_position.withdrawn_token_b_amount = user_position
+        .withdrawn_token_b_amount
+        .checked_add(withdraw_b)
+        .unwrap();
+
+    // Only reduce drip amount and dar if we haven't done so already
+    if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {
+        let vault = &mut ctx.accounts.vault;
+        vault.drip_amount = vault
+            .drip_amount
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
+
+        let vault_period_user_expiry = &mut ctx.accounts.vault_period_user_expiry;
+        vault_period_user_expiry.dar = vault_period_user_expiry
+            .dar
+            .checked_sub(ctx.accounts.user_position.periodic_drip_amount)
+            .unwrap();
+    }
+
+    // transfer A, B and close position
     if withdraw_a != 0 {
         send_tokens(
             &ctx.accounts.token_program,
