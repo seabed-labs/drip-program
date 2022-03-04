@@ -5,20 +5,20 @@ pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64
 ///
 /// # Arguments
 ///
-/// * `dca_period_id_before_deposit`: the last completed period before deposit
+/// * `i`: the last completed period before deposit (dca_period_id_before_deposit)
 /// (at the time of deposit, this should be the same as last_dca_period)
-/// * `last_dca_period`: the last completed period of the vault
+/// * `j`: the min of vault.last_dca_period, and user position expiry (dca_period_id_before_deposit + number_of_swaps)
 /// * `number_of_swaps`: total number of swaps the user will participate in
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_a_amount(
-    dca_period_id_before_deposit: u64,
-    last_dca_period: u64,
+    i: u64,
+    j: u64,
     number_of_swaps: u64,
     periodic_drip_amount: u64,
 ) -> u64 {
-    let completed_swaps = last_dca_period - dca_period_id_before_deposit;
+    let completed_swaps = j - i;
     if number_of_swaps <= completed_swaps {
         return 0;
     }
@@ -29,9 +29,9 @@ pub fn calculate_withdraw_token_a_amount(
 ///
 /// # Arguments
 ///
-/// * `dca_period_id_before_deposit`: the last completed period before deposit
+/// * `i`: the last completed period before deposit (dca_period_id_before_deposit)
 /// (at the time of deposit, this should be the same as last_dca_period, also known as i)
-/// * `last_dca_period`: the last completed period of the vault (also known as j)
+/// * `j`: the min of vault.last_dca_period, and user position expiry (dca_period_id_before_deposit + number_of_swaps)
 /// * `number_of_swaps`: total number of swaps the user will participate in
 /// * `twap_i`: the value of twap in the vault period account for period i (dca_period_id_before_deposit)
 /// * `twap_j`: the value of twap in the vault period account for period j (last_dca_period)
@@ -39,14 +39,12 @@ pub fn calculate_withdraw_token_a_amount(
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_b_amount(
-    dca_period_id_before_deposit: u64,
-    last_dca_period: u64,
+    i: u64,
+    j: u64,
     twap_i: u64,
     twap_j: u64,
     periodic_drip_amount: u64,
 ) -> u64 {
-    let i = dca_period_id_before_deposit;
-    let j = last_dca_period;
     if i == j {
         return 0;
     }
