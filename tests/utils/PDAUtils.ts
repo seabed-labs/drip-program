@@ -47,9 +47,9 @@ export class PDAUtils extends TestUtil {
   }
 
   static async getVaultPDA(
-    tokenA: web3.PublicKey,
-    tokenB: web3.PublicKey,
-    protoConfig: web3.PublicKey
+    tokenA: PublicKey,
+    tokenB: PublicKey,
+    protoConfig: PublicKey
   ): Promise<PDA> {
     return await this.findPDA(ProgramUtils.vaultProgram.programId, [
       Buffer.from(CONSTANT_SEEDS.vault),
@@ -78,6 +78,14 @@ export class PDAUtils extends TestUtil {
       Buffer.from(CONSTANT_SEEDS.userPosition),
       vault.toBuffer(),
       positionNftMint.toBuffer(),
+    ]);
+  }
+
+  static async getSwapAuthorityPDA(
+    swap: PublicKey,
+  ): Promise<PDA> {
+    return await this.findPDA(ProgramUtils.tokenSwapProgram.programId, [
+      swap.toBuffer(),
     ]);
   }
 }

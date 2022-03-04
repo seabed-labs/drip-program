@@ -27,7 +27,8 @@ export interface MintToParams {
 export class TokenUtils extends TestUtil {
   static async createMint(
     mintAuthority: PublicKey,
-    decimals: number
+    freezeAuthority: PublicKey = mintAuthority,
+    decimals: number = 6
   ): Promise<Token> {
     const funderKeypair = KeypairUtils.generatePair();
     await SolUtils.fundAccount(
@@ -39,7 +40,7 @@ export class TokenUtils extends TestUtil {
       this.provider.connection,
       funderKeypair,
       mintAuthority,
-      mintAuthority,
+      freezeAuthority,
       decimals,
       TOKEN_PROGRAM_ID
     );
@@ -51,9 +52,24 @@ export class TokenUtils extends TestUtil {
   ): Promise<Token[]> {
     return await Promise.all(
       mintAuthorities.map((authority, i) =>
-        TokenUtils.createMint(authority, decimalsArray[i])
+        TokenUtils.createMint(authority, authority, decimalsArray[i])
       )
     );
+  }
+
+  static async createTokenAccount(
+    token: Token,
+    owner: PublicKey
+  ): Promise<PublicKey> {
+    return await token.createAccount(owner);
+  }
+
+  static async getOrCreateAssociatedTokenAccount(
+    token: Token,
+    owner: PublicKey
+  ): Promise<PublicKey> {
+    const ataInfo = await token.getOrCreateAssociatedAccountInfo(owner);
+    return new PublicKey(ataInfo.address);
   }
 
   static async mintTo(params: MintToParams): Promise<PublicKey> {
@@ -76,13 +92,13 @@ export class TokenUtils extends TestUtil {
   static async createMockUSDCMint(
     minter: PublicKey = this.provider.wallet.publicKey
   ): Promise<Token> {
-    return await this.createMint(minter, DECIMALS.USDC);
+    return await this.createMint(minter, minter, DECIMALS.USDC);
   }
 
   static async createMockBTCMint(
     minter: PublicKey = this.provider.wallet.publicKey
   ): Promise<Token> {
-    return await this.createMint(minter, DECIMALS.BTC);
+    return await this.createMint(minter, minter, DECIMALS.BTC);
   }
 
   static async fetchTokenAccountInfo(pubkey: PublicKey): Promise<{

@@ -6,6 +6,7 @@ import {
 import { DcaVault } from "../../target/types/dca_vault";
 import { TestUtil } from "./config";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import {TOKEN_SWAP_PROGRAM_ID} from "@solana/spl-token-swap";
 
 export class ProgramUtils extends TestUtil {
   static get systemProgram(): typeof SystemProgram {
@@ -26,6 +27,12 @@ export class ProgramUtils extends TestUtil {
     return {
       programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     };
+  }
+
+  static get tokenSwapProgram(): { programId: PublicKey } {
+    return {
+      programId: TOKEN_SWAP_PROGRAM_ID,
+    }
   }
 
   static get rentProgram(): { programId: PublicKey } {
