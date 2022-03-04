@@ -1,5 +1,5 @@
 pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
-    total_amount / dca_cycles
+    total_amount.checked_div(dca_cycles).unwrap()
 }
 
 ///
@@ -18,12 +18,12 @@ pub fn calculate_withdraw_token_a_amount(
     number_of_swaps: u64,
     periodic_drip_amount: u64,
 ) -> u64 {
-    let completed_swaps = j - i;
+    let completed_swaps = j.checked_sub(i).unwrap();
     if number_of_swaps <= completed_swaps {
         return 0;
     }
-    let remaining_swaps = number_of_swaps - completed_swaps;
-    remaining_swaps * periodic_drip_amount
+    let remaining_swaps = number_of_swaps.checked_sub(completed_swaps).unwrap();
+    remaining_swaps.checked_mul(periodic_drip_amount).unwrap()
 }
 
 ///
@@ -48,10 +48,23 @@ pub fn calculate_withdraw_token_b_amount(
     if i == j {
         return 0;
     }
-    let average_price_from_start = (twap_j * j - twap_i * i) / (j - i);
-    let dripped_so_far = periodic_drip_amount * (j - i);
-    let result = average_price_from_start * dripped_so_far;
-    result
+
+    // (twap_j * j - twap_i * i) / (j - i)
+    let average_price_from_start = (twap_j
+        .checked_mul(j)
+        .unwrap()
+        .checked_sub(twap_i.checked_mul(i).unwrap())
+        .unwrap())
+    .checked_div(j.checked_sub(i).unwrap())
+    .unwrap();
+    // periodic_drip_amount * (j-i)
+    let dripped_so_far = periodic_drip_amount
+        .checked_mul(j.checked_sub(i).unwrap())
+        .unwrap();
+    // average_price_from_start * dripped_so_far
+    average_price_from_start
+        .checked_mul(dripped_so_far)
+        .unwrap()
 }
 
 #[cfg(test)]
