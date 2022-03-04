@@ -8,6 +8,8 @@ pub enum ErrorCode {
     PeriodicDripAmountIsZero,
     #[msg("Cannot get vault bump")]
     CannotGetVaultBump,
+    #[msg("Cannot get position bump")]
+    CannotGetPositionBump,
     #[msg("Cannot get vault_period bump")]
     CannotGetVaultPeriodBump,
     #[msg("Withdrawable amount is zero")]

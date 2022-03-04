@@ -2,10 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
-use anchor_spl::token::{Mint, MintTo, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Mint, MintTo, Token, TokenAccount};
 use spl_token::instruction::AuthorityType;
 
 use crate::common::ErrorCode::PeriodicDripAmountIsZero;
+use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
 
@@ -18,7 +19,6 @@ pub struct DepositParams {
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
-    // Dcaf accounts
     // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
         mut,
@@ -120,11 +120,7 @@ pub struct Deposit<'info> {
 
 pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     // TODO(matcha): Do validations that are not possible via eDSL
-
-    // Take mutable references to init/mut accounts
-    let vault = &mut ctx.accounts.vault;
-    let vault_period_end = &mut ctx.accounts.vault_period_end;
-    let position = &mut ctx.accounts.user_position;
+    /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     let periodic_drip_amount =
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.dca_cycles);
@@ -133,25 +129,34 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         return Err(PeriodicDripAmountIsZero.into());
     }
 
-    // Make account modifications
-    vault.increase_drip_amount(periodic_drip_amount);
-    vault_period_end.increase_drip_amount_to_reduce(periodic_drip_amount);
-    position.init(
-        vault.key(),
+    let token_transfer = TransferToken::new(
+        &ctx.accounts.token_program,
+        &ctx.accounts.user_token_a_account,
+        &ctx.accounts.vault_token_a_account,
+        params.token_a_deposit_amount,
+    );
+
+    /* STATE UPDATES (EFFECTS) */
+
+    let vault_mut = &mut ctx.accounts.vault;
+    let vault_period_end_mut = &mut ctx.accounts.vault_period_end;
+    let position_mut = &mut ctx.accounts.user_position;
+
+    vault_mut.increase_drip_amount(periodic_drip_amount);
+    vault_period_end_mut.increase_drip_amount_to_reduce(periodic_drip_amount);
+    position_mut.init(
+        ctx.accounts.vault.key(),
         ctx.accounts.user_position_nft_mint.key(),
         params.token_a_deposit_amount,
-        vault.last_dca_period,
+        ctx.accounts.vault.last_dca_period,
         params.dca_cycles,
         periodic_drip_amount,
         ctx.bumps.get("user_position"),
     )?;
-    send_tokens(
-        &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
-        &ctx.accounts.user_token_a_account,
-        &ctx.accounts.vault_token_a_account,
-        params.token_a_deposit_amount,
-    )?;
+
+    /* MANUAL CPI (INTERACTIONS) */
+
+    token_transfer.execute(&mut ctx.accounts.vault)?;
 
     mint_position_nft(
         &ctx.accounts.token_program,
@@ -161,33 +166,6 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     )?;
 
     Ok(())
-}
-
-fn send_tokens<'info>(
-    token_program: &Program<'info, Token>,
-    vault: &mut Account<'info, Vault>,
-    from: &Account<'info, TokenAccount>,
-    to: &Account<'info, TokenAccount>,
-    amount: u64,
-) -> Result<()> {
-    token::transfer(
-        CpiContext::new_with_signer(
-            token_program.to_account_info().clone(),
-            Transfer {
-                from: from.to_account_info().clone(),
-                to: to.to_account_info().clone(),
-                authority: vault.to_account_info().clone(),
-            },
-            &[&[
-                b"dca-vault-v1".as_ref(),
-                vault.token_a_mint.as_ref(),
-                vault.token_b_mint.as_ref(),
-                vault.proto_config.as_ref(),
-                &[vault.bump],
-            ]],
-        ),
-        amount,
-    )
 }
 
 fn mint_position_nft<'info>(
