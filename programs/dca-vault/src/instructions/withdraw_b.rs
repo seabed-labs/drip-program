@@ -49,7 +49,7 @@ pub struct WithdrawB<'info> {
         constraint = {
             vault_period_j.period_id == std::cmp::min(
                 vault.last_dca_period,
-                user_position.dca_period_id_before_deposit + user_position.number_of_swaps
+                user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
             )
         }
     )]
