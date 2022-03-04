@@ -1,11 +1,11 @@
+use crate::math::get_exchange_rate;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Approve, Mint};
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token::state::AccountState;
 use spl_token_swap::state::{SwapState, SwapV1};
-use crate::math::get_exchange_rate;
 
 #[derive(Accounts)]
 #[instruction()]
