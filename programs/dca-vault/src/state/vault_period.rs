@@ -1,5 +1,6 @@
 use super::traits::ByteSized;
 use crate::common::ErrorCode::CannotGetVaultPeriodBump;
+use crate::math::{calculate_new_twap_amount, compute_price};
 use anchor_lang::prelude::*;
 
 #[account]
@@ -35,6 +36,16 @@ impl VaultPeriod {
 
     pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
         self.dar += extra_drip;
+    }
+
+    pub fn update_twap(
+        &mut self,
+        last_period: &Account<VaultPeriod>,
+        sent_a: u64,
+        received_b: u64,
+    ) {
+        let price = compute_price(received_b, sent_a);
+        self.twap = calculate_new_twap_amount(last_period.twap, self.period_id, price);
     }
 }
 

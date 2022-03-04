@@ -1,16 +1,19 @@
-use crate::math::get_exchange_rate;
+use crate::common::ErrorCode;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Approve, Mint};
+use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token::state::AccountState;
-use spl_token_swap::state::{SwapState, SwapV1};
+use spl_token_swap::solana_program::program_pack::Pack;
+use spl_token_swap::state::SwapV1;
+use std::ops::Deref;
 
 #[derive(Accounts)]
 #[instruction()]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
+    #[account(mut)]
     pub dca_trigger_source: Signer<'info>,
 
     #[account(
@@ -136,17 +139,28 @@ pub struct TriggerDCA<'info> {
     )]
     pub swap_fee_account: Account<'info, TokenAccount>,
 
+    // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
     // And add appropriate checks
-    /// CHECK: do checks in handler
+    #[account(
+        constraint = swap.owner == &spl_token_swap::ID
+    )]
+    // TODO: Do one last check to see if this can be type checked by creating an anchor-wrapped type (there probably is a way)
+    /// CHECK: Swap account cannot be serialized
     pub swap: AccountInfo<'info>,
 
-    // TODO: Generate Authority ID defined in processor.rs. / authority_id
-    /// CHECK: do checks in handler
+    // TODO: Verify swap_authority PDA according to logic in processor.rs. / authority_id
+    #[account(
+        constraint = swap.owner == &spl_token_swap::ID
+    )]
+    // TODO: We might be able to implement an anchor compatible type for this
+    /// CHECK: Swap authority is an arbitrary PDA, but should try and check still
     pub swap_authority: AccountInfo<'info>,
 
     // TODO: Test this is actually the Token swap program; clean this
     #[account(address = spl_token_swap::ID)]
+    // TODO: We can implement an anchor compatible type for this easily
+    /// CHECK: Swap program has no type?
     pub token_swap_program: AccountInfo<'info>,
 
     #[account(address = Token::id())]
@@ -164,57 +178,42 @@ pub struct TriggerDCA<'info> {
 pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
+    let swap_account_info = &ctx.accounts.swap;
+    let swap = SwapV1::unpack(&swap_account_info.data.deref().borrow())?;
+
+    if !ctx.accounts.vault.is_dca_activated() {
+        return Err(ErrorCode::DuplicateDCAError.into());
+    }
+
     /* STATE UPDATES (EFFECTS) */
+
+    let current_balance_b = ctx.accounts.vault_token_b_account.amount;
+    // Save sent_a since drip_amount is going to change
+    let sent_a = ctx.accounts.vault.drip_amount;
+
+    let vault = &mut ctx.accounts.vault;
+    vault.process_drip(
+        &ctx.accounts.current_vault_period,
+        ctx.accounts.vault_proto_config.granularity,
+    );
 
     /* MANUAL CPI (INTERACTIONS) */
 
-    // let swap_account_info = &ctx.accounts.swap;
-    // let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
-    //
-    // let now = Clock::get().unwrap().unix_timestamp;
-    //
-    // if !dca_allowed(ctx.accounts.vault.dca_activation_timestamp, now) {
-    //     return Err(ErrorCode::DuplicateDCAError.into());
-    // }
-    //
-    // let prev_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
-    //
-    // swap_tokens(&ctx, ctx.accounts.vault.drip_amount, swap)?;
-    //
-    // let new_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
-    //
-    // // For some reason swap did not happen ~ because we will never have swap amount of 0.
-    // if prev_vault_token_b_account_balance == new_vault_token_b_account_balance {
-    //     return Err(ErrorCode::IncompleteSwapError.into());
-    // }
-    //
-    // let exchange_rate: u64 = get_exchange_rate(
-    //     prev_vault_token_b_account_balance,
-    //     new_vault_token_b_account_balance,
-    //     ctx.accounts.vault.drip_amount,
-    // );
-    //
-    // let vault = &mut ctx.accounts.vault;
-    // let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
-    // let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
-    //
-    // let new_twap = calculate_new_twap_amount(
-    //     last_vault_period_account.twap,
-    //     current_vault_period_account.period_id,
-    //     exchange_rate,
-    // );
-    // current_vault_period_account.twap = new_twap;
-    //
-    // vault.last_dca_period = current_vault_period_account.period_id; // same as += 1
-    //
-    // // If any position(s) are closing at this period, the drip amount needs to be reduced
-    // vault.drip_amount -= current_vault_period_account.dar;
-    //
-    Ok(())
-}
+    swap_tokens(&ctx, ctx.accounts.vault.drip_amount, swap)?;
 
-fn dca_allowed(last_dca_activation_timetamp: i64, current_dca_trigger_time: i64) -> bool {
-    return current_dca_trigger_time > last_dca_activation_timetamp;
+    let new_balance_b = ctx.accounts.vault_token_b_account.amount;
+    // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
+    let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
+
+    // For some reason swap did not happen ~ because we will never have swap amount of 0.
+    if received_b == 0 {
+        return Err(ErrorCode::IncompleteSwapError.into());
+    }
+
+    let current_period_mut = &mut ctx.accounts.current_vault_period;
+    current_period_mut.update_twap(&ctx.accounts.last_vault_period, sent_a, received_b);
+
+    Ok(())
 }
 
 /*

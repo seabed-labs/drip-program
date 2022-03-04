@@ -67,21 +67,21 @@ pub fn calculate_withdraw_token_b_amount(
         .unwrap()
 }
 
-pub fn calculate_new_twap_amount(
-    prev_twap: u64,
-    current_period_id: u64,
-    exchange_rate: u64,
-) -> u64 {
-    return (prev_twap * (current_period_id - 1) + exchange_rate) / current_period_id;
+// TODO: Add unit tests
+pub fn calculate_new_twap_amount(twap_i_minus_1: u64, i: u64, price_i: u64) -> u64 {
+    // (twap[i-1] * (i - 1) + p[i]) / i
+    twap_i_minus_1
+        .checked_mul(i.checked_sub(1).unwrap())
+        .unwrap()
+        .checked_add(price_i)
+        .unwrap()
+        .checked_div(i)
+        .unwrap()
 }
 
-pub fn get_exchange_rate(
-    dest_prev_account_balance: u64,
-    dest_new_account_balance: u64,
-    source_exchange_amt: u64,
-) -> u64 {
-    let balance_diff = dest_prev_account_balance - dest_new_account_balance;
-    return balance_diff / source_exchange_amt;
+// TODO: Add unit tests
+pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u64 {
+    token_b_amount.checked_div(token_a_amount).unwrap()
 }
 
 #[cfg(test)]
