@@ -109,7 +109,8 @@ pub struct ClosePosition<'info> {
         mut,
         constraint = {
             user_token_a_account.mint == vault.token_a_mint &&
-            user_token_a_account.owner == withdrawer.key()
+            user_token_a_account.owner == withdrawer.key() &&
+            user_token_a_account.state == AccountState::Initialized
         }
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -118,7 +119,8 @@ pub struct ClosePosition<'info> {
         mut,
         constraint = {
             user_token_b_account.mint == vault.token_b_mint &&
-            user_token_b_account.owner == withdrawer.key()
+            user_token_b_account.owner == withdrawer.key() &&
+            user_token_b_account.state == AccountState::Initialized
         }
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
