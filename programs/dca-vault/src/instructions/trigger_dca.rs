@@ -1,16 +1,11 @@
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
-use anchor_lang::{prelude::*, solana_program};
+use anchor_lang::{prelude::*};
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token;
 use anchor_spl::token::{Approve, Mint};
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token::state::AccountState;
-use spl_token_swap::solana_program::program_pack::Pack;
 use spl_token_swap::state::{SwapState, SwapV1};
-use std::ops::Deref;
-
-use crate::common::ErrorCode;
-use crate::math::{calculate_new_twap_amount, get_exchange_rate};
+use crate::math::get_exchange_rate;
 
 #[derive(Accounts)]
 #[instruction()]
@@ -227,82 +222,83 @@ Invokes CPI to SPL's swap IX / Serum's Dex
 swap ix requires lot other authority accounts for verification; add them later
 */
 fn swap_tokens<'info>(ctx: &Context<TriggerDCA>, swap_amount: u64, swap: SwapV1) -> Result<()> {
-    token::approve(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info().clone(),
-            Approve {
-                to: ctx.accounts.vault_token_a_account.to_account_info().clone(),
-                delegate: ctx.accounts.vault.to_account_info().clone(),
-                authority: ctx.accounts.swap.to_account_info().clone(),
-            },
-        ),
-        swap_amount,
-    )?;
-
-    let min_slippage_amt = get_minimum_slippage_amount();
-
-    let ix = spl_token_swap::instruction::swap(
-        &ctx.accounts.token_swap_program.key(),
-        &ctx.accounts.token_program.key(),
-        &ctx.accounts.swap.key(),
-        &ctx.accounts.swap_authority.key(),
-        &ctx.accounts.swap.key(),
-        &ctx.accounts.vault_token_a_account.key(),
-        &ctx.accounts.swap_token_a_account.key(),
-        &ctx.accounts.swap_token_b_account.key(),
-        &ctx.accounts.vault_token_b_account.key(),
-        swap.pool_mint(),
-        swap.pool_fee_account(),
-        None,
-        spl_token_swap::instruction::Swap {
-            amount_in: swap_amount,
-            minimum_amount_out: min_slippage_amt,
-        },
-    )?;
-
-    //   The order in which swap accepts the accounts. (Adding it for now to refer/review easily)
+    // token::approve(
+    //     CpiContext::new(
+    //         ctx.accounts.token_program.to_account_info().clone(),
+    //         Approve {
+    //             to: ctx.accounts.vault_token_a_account.to_account_info().clone(),
+    //             delegate: ctx.accounts.vault.to_account_info().clone(),
+    //             authority: ctx.accounts.swap.to_account_info().clone(),
+    //         },
+    //     ),
+    //     swap_amount,
+    // )?;
     //
-    //   0. `[]` Token-swap
-    //   1. `[]` swap authority
-    //   2. `[]` user transfer authority
-    //   3. `[writable]` token_(A|B) SOURCE Account, amount is transferable by user transfer authority,
-    //   4. `[writable]` token_(A|B) Base Account to swap INTO.  Must be the SOURCE token.
-    //   5. `[writable]` token_(A|B) Base Account to swap FROM.  Must be the DESTINATION token.
-    //   6. `[writable]` token_(A|B) DESTINATION Account assigned to USER as the owner.
-    //   7. `[writable]` Pool token mint, to generate trading fees
-    //   8. `[writable]` Fee account, to receive trading fees
-    //   9. '[]` Token program id
-    //   10 `[optional, writable]` Host fee account to receive additional trading fees
-
-    solana_program::program::invoke_signed(
-        &ix,
-        &[
-            ctx.accounts.token_swap_program.clone(),
-            ctx.accounts.swap_authority.clone(),
-            ctx.accounts.swap.clone(),
-            ctx.accounts.vault_token_a_account.to_account_info().clone(),
-            ctx.accounts.swap_token_a_account.to_account_info().clone(),
-            ctx.accounts.swap_token_b_account.to_account_info().clone(),
-            ctx.accounts.vault_token_b_account.to_account_info().clone(),
-            ctx.accounts
-                .swap_liquidity_pool_mint
-                .to_account_info()
-                .clone(),
-            ctx.accounts
-                .swap_liquidity_pool_fee
-                .to_account_info()
-                .clone(),
-            ctx.accounts.token_program.to_account_info().clone(),
-        ],
-        &[&[
-            b"dca-vault-v1".as_ref(),
-            ctx.accounts.vault.token_a_mint.as_ref(),
-            ctx.accounts.vault.token_b_mint.as_ref(),
-            ctx.accounts.vault.proto_config.as_ref(),
-            &[ctx.accounts.vault.bump],
-        ]],
-    )
-    .map_err(Into::into)
+    // let min_slippage_amt = get_minimum_slippage_amount();
+    //
+    // let ix = spl_token_swap::instruction::swap(
+    //     &ctx.accounts.token_swap_program.key(),
+    //     &ctx.accounts.token_program.key(),
+    //     &ctx.accounts.swap.key(),
+    //     &ctx.accounts.swap_authority.key(),
+    //     &ctx.accounts.swap.key(),
+    //     &ctx.accounts.vault_token_a_account.key(),
+    //     &ctx.accounts.swap_token_a_account.key(),
+    //     &ctx.accounts.swap_token_b_account.key(),
+    //     &ctx.accounts.vault_token_b_account.key(),
+    //     swap.pool_mint(),
+    //     swap.pool_fee_account(),
+    //     None,
+    //     spl_token_swap::instruction::Swap {
+    //         amount_in: swap_amount,
+    //         minimum_amount_out: min_slippage_amt,
+    //     },
+    // )?;
+    //
+    // //   The order in which swap accepts the accounts. (Adding it for now to refer/review easily)
+    // //
+    // //   0. `[]` Token-swap
+    // //   1. `[]` swap authority
+    // //   2. `[]` user transfer authority
+    // //   3. `[writable]` token_(A|B) SOURCE Account, amount is transferable by user transfer authority,
+    // //   4. `[writable]` token_(A|B) Base Account to swap INTO.  Must be the SOURCE token.
+    // //   5. `[writable]` token_(A|B) Base Account to swap FROM.  Must be the DESTINATION token.
+    // //   6. `[writable]` token_(A|B) DESTINATION Account assigned to USER as the owner.
+    // //   7. `[writable]` Pool token mint, to generate trading fees
+    // //   8. `[writable]` Fee account, to receive trading fees
+    // //   9. '[]` Token program id
+    // //   10 `[optional, writable]` Host fee account to receive additional trading fees
+    //
+    // solana_program::program::invoke_signed(
+    //     &ix,
+    //     &[
+    //         ctx.accounts.token_swap_program.clone(),
+    //         ctx.accounts.swap_authority.clone(),
+    //         ctx.accounts.swap.clone(),
+    //         ctx.accounts.vault_token_a_account.to_account_info().clone(),
+    //         ctx.accounts.swap_token_a_account.to_account_info().clone(),
+    //         ctx.accounts.swap_token_b_account.to_account_info().clone(),
+    //         ctx.accounts.vault_token_b_account.to_account_info().clone(),
+    //         ctx.accounts
+    //             .swap_liquidity_pool_mint
+    //             .to_account_info()
+    //             .clone(),
+    //         ctx.accounts
+    //             .swap_liquidity_pool_fee
+    //             .to_account_info()
+    //             .clone(),
+    //         ctx.accounts.token_program.to_account_info().clone(),
+    //     ],
+    //     &[&[
+    //         b"dca-vault-v1".as_ref(),
+    //         ctx.accounts.vault.token_a_mint.as_ref(),
+    //         ctx.accounts.vault.token_b_mint.as_ref(),
+    //         ctx.accounts.vault.proto_config.as_ref(),
+    //         &[ctx.accounts.vault.bump],
+    //     ]],
+    // )
+    // .map_err(Into::into)
+    Ok(())
 }
 
 // TODO (matcha) Do the math
