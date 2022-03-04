@@ -1,13 +1,13 @@
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::{prelude::*, solana_program};
+use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::{Approve, Mint};
 use anchor_spl::token::{Token, TokenAccount};
+use spl_token::state::AccountState;
 use spl_token_swap::solana_program::program_pack::Pack;
 use spl_token_swap::state::{SwapState, SwapV1};
-use anchor_spl::associated_token::AssociatedToken;
 use std::ops::Deref;
-use spl_token::state::AccountState;
 
 use crate::common::ErrorCode;
 use crate::math::{calculate_new_twap_amount, get_exchange_rate};
@@ -68,9 +68,33 @@ pub struct TriggerDCA<'info> {
     pub current_vault_period: Account<'info, VaultPeriod>,
 
     #[account(
+        constraint = {
+            swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
+            swap_token_mint.is_initialized
+        }
+    )]
+    pub swap_token_mint: Account<'info, Mint>,
+
+    #[account(
+        constraint = {
+            token_a_mint.key() == vault.token_a_mint &&
+            token_a_mint.is_initialized
+        }
+    )]
+    pub token_a_mint: Account<'info, Mint>,
+
+    #[account(
+        constraint = {
+            token_b_mint.key() == vault.token_b_mint &&
+            token_b_mint.is_initialized
+        }
+    )]
+    pub token_b_mint: Account<'info, Mint>,
+
+    #[account(
         mut,
-        associated_token::mint = vault.token_a_mint,
-        associated_token::authority = vault.key(),
+        associated_token::mint = token_a_mint,
+        associated_token::authority = vault,
         constraint = {
             vault_token_a_account.state == AccountState::Initialized &&
             vault_token_a_account.amount >= vault.drip_amount
@@ -80,8 +104,8 @@ pub struct TriggerDCA<'info> {
 
     #[account(
         mut,
-        associated_token::mint = vault.token_b_mint,
-        associated_token::authority = vault.key(),
+        associated_token::mint = token_b_mint,
+        associated_token::authority = vault,
         constraint = {
             vault_token_b_account.state == AccountState::Initialized
         },
@@ -122,14 +146,6 @@ pub struct TriggerDCA<'info> {
     /// CHECK: do checks in handler
     pub swap: AccountInfo<'info>,
 
-    #[account(
-        constraint = {
-            swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
-            swap_token_mint.is_initialized
-        }
-    )]
-    pub swap_token_mint: Account<'info, Mint>,
-
     // TODO: Generate Authority ID defined in processor.rs. / authority_id
     /// CHECK: do checks in handler
     pub swap_authority: AccountInfo<'info>,
@@ -151,48 +167,54 @@ pub struct TriggerDCA<'info> {
 }
 
 pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
-    let swap_account_info = &ctx.accounts.swap;
-    let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
+    /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
-    let now = Clock::get().unwrap().unix_timestamp;
+    /* STATE UPDATES (EFFECTS) */
 
-    if !dca_allowed(ctx.accounts.vault.dca_activation_timestamp, now) {
-        return Err(ErrorCode::DuplicateDCAError.into());
-    }
+    /* MANUAL CPI (INTERACTIONS) */
 
-    let prev_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
-
-    swap_tokens(&ctx, ctx.accounts.vault.drip_amount, swap)?;
-
-    let new_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
-
-    // For some reason swap did not happen ~ because we will never have swap amount of 0.
-    if prev_vault_token_b_account_balance == new_vault_token_b_account_balance {
-        return Err(ErrorCode::IncompleteSwapError.into());
-    }
-
-    let exchange_rate: u64 = get_exchange_rate(
-        prev_vault_token_b_account_balance,
-        new_vault_token_b_account_balance,
-        ctx.accounts.vault.drip_amount,
-    );
-
-    let vault = &mut ctx.accounts.vault;
-    let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
-    let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
-
-    let new_twap = calculate_new_twap_amount(
-        last_vault_period_account.twap,
-        current_vault_period_account.period_id,
-        exchange_rate,
-    );
-    current_vault_period_account.twap = new_twap;
-
-    vault.last_dca_period = current_vault_period_account.period_id; // same as += 1
-
-    // If any position(s) are closing at this period, the drip amount needs to be reduced
-    vault.drip_amount -= current_vault_period_account.dar;
-
+    // let swap_account_info = &ctx.accounts.swap;
+    // let swap = SwapV1::unpack(swap_account_info.data.deref().borrow().deref())?;
+    //
+    // let now = Clock::get().unwrap().unix_timestamp;
+    //
+    // if !dca_allowed(ctx.accounts.vault.dca_activation_timestamp, now) {
+    //     return Err(ErrorCode::DuplicateDCAError.into());
+    // }
+    //
+    // let prev_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
+    //
+    // swap_tokens(&ctx, ctx.accounts.vault.drip_amount, swap)?;
+    //
+    // let new_vault_token_b_account_balance = ctx.accounts.vault_token_b_account.amount;
+    //
+    // // For some reason swap did not happen ~ because we will never have swap amount of 0.
+    // if prev_vault_token_b_account_balance == new_vault_token_b_account_balance {
+    //     return Err(ErrorCode::IncompleteSwapError.into());
+    // }
+    //
+    // let exchange_rate: u64 = get_exchange_rate(
+    //     prev_vault_token_b_account_balance,
+    //     new_vault_token_b_account_balance,
+    //     ctx.accounts.vault.drip_amount,
+    // );
+    //
+    // let vault = &mut ctx.accounts.vault;
+    // let current_vault_period_account = &mut ctx.accounts.current_vault_period_account;
+    // let last_vault_period_account = &mut ctx.accounts.last_vault_period_account;
+    //
+    // let new_twap = calculate_new_twap_amount(
+    //     last_vault_period_account.twap,
+    //     current_vault_period_account.period_id,
+    //     exchange_rate,
+    // );
+    // current_vault_period_account.twap = new_twap;
+    //
+    // vault.last_dca_period = current_vault_period_account.period_id; // same as += 1
+    //
+    // // If any position(s) are closing at this period, the drip amount needs to be reduced
+    // vault.drip_amount -= current_vault_period_account.dar;
+    //
     Ok(())
 }
 
