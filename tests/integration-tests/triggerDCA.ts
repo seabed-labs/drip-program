@@ -121,6 +121,21 @@ export function testTriggerDCA() {
     const poolTokenFeeAccount = await TokenUtils.createTokenAccount(poolToken, swapAuthorityPDA.publicKey);
     const swapPoolTokenAccount = await TokenUtils.createTokenAccount(poolToken, swapAuthorityPDA.publicKey);
 
+    // await SolUtils.fundAccount(tokenSwapKeypair.publicKey, SolUtils.solToLamports(10));
+    await TokenUtils.mintTo({
+      token: tokenA(),
+      mintAuthority: usdcMinter,
+      recipient: swapTokenAAccount,
+      amount: usdcAmount,
+    });
+
+    await TokenUtils.mintTo({
+      token: tokenB(),
+      mintAuthority: btcMinter,
+      recipient: swapTokenBAccount,
+      amount: btcAmount,
+    });
+
     const usdcBtcSwap = await SwapUtils.createSwap(
       swapHost,
       tokenSwapKeypair,
