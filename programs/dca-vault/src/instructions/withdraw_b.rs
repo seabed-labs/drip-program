@@ -1,11 +1,10 @@
 use crate::common::ErrorCode::WithdrawableAmountIsZero;
+use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_withdraw_token_b_amount;
-use crate::sign;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token;
-use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
 // TODO(matcha): Make sure the NFT account supply is one always
@@ -129,62 +128,46 @@ pub struct WithdrawB<'info> {
 }
 
 pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    let user_position = &mut ctx.accounts.user_position;
-    let period_i = &ctx.accounts.vault_period_i;
-    let period_j = &ctx.accounts.vault_period_j;
+    /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
+    // 1. Get max withdrawable Token B amount for this user
     let max_withdrawable_amount = calculate_withdraw_token_b_amount(
-        user_position.dca_period_id_before_deposit,
-        vault.last_dca_period,
-        period_i.twap,
-        period_j.twap,
-        user_position.periodic_drip_amount,
+        ctx.accounts.vault_period_i.period_id,
+        ctx.accounts.vault_period_j.period_id,
+        ctx.accounts.vault_period_i.twap,
+        ctx.accounts.vault_period_j.twap,
+        ctx.accounts.user_position.periodic_drip_amount,
     );
 
-    let withdrawable_amount = max_withdrawable_amount
-        .checked_sub(user_position.withdrawn_token_b_amount)
-        .unwrap();
-    user_position.withdrawn_token_b_amount = user_position
-        .withdrawn_token_b_amount
-        .checked_add(withdrawable_amount)
-        .unwrap();
+    // 2. Compute withdrawable amount (since they could have withdrawn some already)
+    let withdrawable_amount = ctx
+        .accounts
+        .user_position
+        .get_withdrawable_amount(max_withdrawable_amount);
 
+    // 3. No point in completing IX if there's nothing happening
     if withdrawable_amount == 0 {
         return Err(WithdrawableAmountIsZero.into());
     }
 
-    send_tokens(
+    // 4. Transfer tokens user wants to withdraw (this is lazily executed below)
+    let token_transfer = TransferToken::new(
         &ctx.accounts.token_program,
-        vault,
         &ctx.accounts.vault_token_b_account,
         &ctx.accounts.user_token_b_account,
         withdrawable_amount,
-    )?;
+    );
 
-    // TODO: Maybe add more metadata to this log?
-    msg!("Withdraw B IX Successful");
+    /* STATE UPDATES (EFFECTS) */
+
+    // 5. Update the user's position state to reflect the newly withdrawn amount
+    let user_position_mut = &mut ctx.accounts.user_position;
+    user_position_mut.update_withdrawn_amount(withdrawable_amount);
+
+    /* MANUAL CPI (INTERACTIONS) */
+
+    // 6. Invoke the token transfer IX
+    token_transfer.execute(&mut ctx.accounts.vault)?;
 
     Ok(())
-}
-
-fn send_tokens<'info>(
-    token_program: &Program<'info, Token>,
-    vault: &mut Account<'info, Vault>,
-    from: &Account<'info, TokenAccount>,
-    to: &Account<'info, TokenAccount>,
-    amount: u64,
-) -> Result<()> {
-    token::transfer(
-        CpiContext::new_with_signer(
-            token_program.to_account_info().clone(),
-            Transfer {
-                from: from.to_account_info().clone(),
-                to: to.to_account_info().clone(),
-                authority: vault.to_account_info().clone(),
-            },
-            &[sign!(vault)],
-        ),
-        amount,
-    )
 }

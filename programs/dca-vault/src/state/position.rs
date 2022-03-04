@@ -1,4 +1,4 @@
-use crate::common::ErrorCode::CannotGetVaultBump;
+use crate::common::ErrorCode::CannotGetPositionBump;
 use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;
@@ -59,8 +59,21 @@ impl Position {
                 self.bump = *val;
                 Ok(())
             }
-            None => Err(CannotGetVaultBump.into()),
+            None => Err(CannotGetPositionBump.into()),
         }
+    }
+
+    pub fn get_withdrawable_amount(&self, max_withdrawable_token_b_amount: u64) -> u64 {
+        max_withdrawable_token_b_amount
+            .checked_sub(self.withdrawn_token_b_amount)
+            .unwrap()
+    }
+
+    pub fn update_withdrawn_amount(&mut self, withdrawing_amount: u64) {
+        self.withdrawn_token_b_amount = self
+            .withdrawn_token_b_amount
+            .checked_add(withdrawing_amount)
+            .unwrap();
     }
 }
 
