@@ -14,4 +14,8 @@ pub enum ErrorCode {
     CannotGetVaultPeriodBump,
     #[msg("Withdrawable amount is zero")]
     WithdrawableAmountIsZero,
+    #[msg("DCA already trigerred for the current period. Duplicate DCA triggers not allowed")]
+    DuplicateDCAError,
+    #[msg("Swap did not complete")]
+    IncompleteSwapError,
 }
