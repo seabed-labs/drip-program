@@ -149,12 +149,16 @@ pub struct ClosePosition<'info> {
     pub user_position_nft_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint
+        constraint = {
+            token_a_mint.key() == vault.token_a_mint &&
+            token_a_mint.is_initialized
+        }
     )]
     pub token_a_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint
+        constraint = token_b_mint.key() == vault.token_b_mint &&
+        token_b_mint.is_initialized
     )]
     pub token_b_mint: Account<'info, Mint>,
 
