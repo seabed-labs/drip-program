@@ -1,158 +1,124 @@
-import {Keypair, PublicKey, Signer} from "@solana/web3.js";
-import {Token} from "@solana/spl-token";
-import {KeypairUtils} from "../utils/KeypairUtils";
-import {SolUtils} from "../utils/SolUtils";
-import {DECIMALS, TokenUtils} from "../utils/TokenUtils";
-import {amount, Denom} from "../utils/amount";
-import {VaultUtils} from "../utils/VaultUtils";
-import {Granularity} from "../utils/Granularity";
-import {PDA, PDAUtils} from "../utils/PDAUtils";
-import {SwapUtils} from "../utils/SwapUtils";
+import { KeypairUtils } from "../utils/KeypairUtils";
+import { SolUtils } from "../utils/SolUtils";
+import { PDAUtils } from "../utils/PDAUtils";
+import { TokenUtils } from "../utils/TokenUtils";
+import { SwapUtils } from "../utils/SwapUtils";
+import { PublicKey } from "@solana/web3.js";
 
 export function testTriggerDCA() {
-  let vaultProtoConfigPubkey: PublicKey;
-  let vaultPubkey: PublicKey;
-  let vaultPeriodPubkey: PublicKey;
-  let usdcMinter: Signer, btcMinter: Signer, user: Signer, swapHost: Keypair;
-  let usdc: Token, btc: Token;
-  let vaultTokenA_ATA: PublicKey, vaultTokenB_ATA: PublicKey;
-  let userBTC_ATA: PublicKey, userUSDC_ATA: PublicKey;
-
-  function tokenA(): Token {
-    return usdc;
-  }
-
-  function tokenB(): Token {
-    return btc;
-  }
-
-  function tokenAMint(): PublicKey {
-    return usdc.publicKey;
-  }
-
-  function tokenBMint(): PublicKey {
-    return btc.publicKey;
-  }
-
-  function userTokenA_ATA(): PublicKey {
-    return userUSDC_ATA;
-  }
-
-  function userTokenB_ATA(): PublicKey {
-    return userBTC_ATA;
-  }
-
   beforeEach(async () => {
-    [usdcMinter, btcMinter, user, swapHost] = KeypairUtils.generatePairs(4);
-    await SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(10));
-    await SolUtils.fundAccount(swapHost.publicKey, SolUtils.solToLamports(10));
+    const [payerKeypair, ownerKeypair, tokenSwapKeypair, swapPayerKeypair] =
+      KeypairUtils.generatePairs(4);
+    console.log("1. Generated 4 keypairs:", {
+      payer: payerKeypair.publicKey.toBase58(),
+      owner: ownerKeypair.publicKey.toBase58(),
+      tokenSwap: tokenSwapKeypair.publicKey.toBase58(),
+      swapPayer: swapPayerKeypair.publicKey.toBase58(),
+    });
 
-    [usdc, btc] = await TokenUtils.createMints(
-      [usdcMinter.publicKey, btcMinter.publicKey],
-      [DECIMALS.USDC, DECIMALS.BTC]
+    await SolUtils.fundAccount(payerKeypair.publicKey, 1000000000);
+    await SolUtils.fundAccount(ownerKeypair.publicKey, 1000000000);
+    await SolUtils.fundAccount(swapPayerKeypair.publicKey, 1000000000);
+    console.log(
+      "2. Funded owner, payer, and swapPayer with 1000000000 lamports"
     );
 
-    const [usdcAmount, btcAmount] = await TokenUtils.scaleAmountBatch(
-      [amount(10, Denom.Million), usdc],
-      [amount(1, Denom.Thousand), btc]
+    const swapAuthorityPDA = await PDAUtils.getSwapAuthorityPDA(
+      tokenSwapKeypair.publicKey
     );
-
-    [userUSDC_ATA, userBTC_ATA] = await TokenUtils.mintToBatch([
+    console.log(
+      `3. Generated swap authority PDA for tokenSwap = ${tokenSwapKeypair.publicKey}:`,
       {
-        token: usdc,
-        mintAuthority: usdcMinter,
-        recipient: user.publicKey,
-        amount: usdcAmount,
-      },
-      {
-        token: btc,
-        mintAuthority: btcMinter,
-        recipient: user.publicKey,
-        amount: btcAmount,
-      },
-    ]);
-
-    const vaultProtoConfigKeypair = KeypairUtils.generatePair();
-    await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: Granularity.DAILY,
-    });
-    vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
-
-    const vaultPDA = await PDAUtils.getVaultPDA(
-      tokenAMint(),
-      tokenBMint(),
-      vaultProtoConfigPubkey
+        swapAuthorityPDA: {
+          publicKey: swapAuthorityPDA.publicKey.toBase58(),
+          bump: swapAuthorityPDA.bump,
+        },
+      }
     );
 
-    [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
-    ]);
-
-    await VaultUtils.initVault(
-      vaultPDA.publicKey,
-      vaultProtoConfigPubkey,
-      tokenAMint(),
-      tokenBMint(),
-      vaultTokenA_ATA,
-      vaultTokenB_ATA
+    const swapLPToken = await TokenUtils.createMint(
+      swapAuthorityPDA.publicKey,
+      null,
+      2,
+      payerKeypair
     );
-
-    vaultPubkey = vaultPDA.publicKey;
-
-    const vaultPeriodPDA = await PDAUtils.getVaultPeriodPDA(vaultPubkey, 69);
-
-    await VaultUtils.initVaultPeriod(
-      vaultPubkey,
-      vaultPeriodPDA.publicKey,
-      vaultProtoConfigPubkey,
-      tokenAMint(),
-      tokenBMint(),
-      69
-    );
-
-    vaultPeriodPubkey = vaultPeriodPDA.publicKey;
-
-    const tokenSwapKeypair = await KeypairUtils.generatePair();
-    const swapAuthorityPDA = await PDAUtils.getSwapAuthorityPDA(tokenSwapKeypair.publicKey);
-    const swapTokenAAccount = await TokenUtils.createTokenAccount(tokenA(), swapAuthorityPDA.publicKey);
-    const swapTokenBAccount = await TokenUtils.createTokenAccount(tokenB(), swapAuthorityPDA.publicKey);
-    const poolToken = await TokenUtils.createMint(swapAuthorityPDA.publicKey, null, 6);
-    const poolTokenFeeAccount = await TokenUtils.createTokenAccount(poolToken, swapAuthorityPDA.publicKey);
-    const swapPoolTokenAccount = await TokenUtils.createTokenAccount(poolToken, swapAuthorityPDA.publicKey);
-
-    // await SolUtils.fundAccount(tokenSwapKeypair.publicKey, SolUtils.solToLamports(10));
-    await TokenUtils.mintTo({
-      token: tokenA(),
-      mintAuthority: usdcMinter,
-      recipient: swapTokenAAccount,
-      amount: usdcAmount,
+    console.log("4. Created LP token mint for tokenSwap:", {
+      mint: swapLPToken.publicKey.toBase58(),
     });
 
-    await TokenUtils.mintTo({
-      token: tokenB(),
-      mintAuthority: btcMinter,
-      recipient: swapTokenBAccount,
-      amount: btcAmount,
+    const swapLPTokenAccount = await swapLPToken.createAccount(
+      ownerKeypair.publicKey
+    );
+    console.log("5. Created LP token account with owner as owner:", {
+      account: swapLPTokenAccount.toBase58(),
     });
 
-    const usdcBtcSwap = await SwapUtils.createSwap(
-      swapHost,
+    const swapLPTokenFeeAccount = await swapLPToken.createAccount(
+      new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
+    );
+    console.log("6. Created LP token fee account with owner as owner:", {
+      account: swapLPTokenFeeAccount.toBase58(),
+    });
+
+    const tokenA = await TokenUtils.createMint(
+      ownerKeypair.publicKey,
+      null,
+      2,
+      payerKeypair
+    );
+    console.log("7. Created Token A Mint:", {
+      mint: tokenA.publicKey.toBase58(),
+    });
+
+    const swapTokenAAccount = await tokenA.createAccount(
+      swapAuthorityPDA.publicKey
+    );
+    console.log("8. Created Token A Account for swap:", {
+      account: swapTokenAAccount.toBase58(),
+    });
+
+    await tokenA.mintTo(swapTokenAAccount, ownerKeypair, [], 1000000);
+    console.log("9. Minted token A to swap account");
+
+    const tokenB = await TokenUtils.createMint(
+      ownerKeypair.publicKey,
+      null,
+      2,
+      payerKeypair
+    );
+    console.log("10. Created Token B Mint:", {
+      mint: tokenB.publicKey.toBase58(),
+    });
+
+    const swapTokenBAccount = await tokenB.createAccount(
+      swapAuthorityPDA.publicKey
+    );
+    console.log("11. Created Token B Account for swap:", {
+      account: swapTokenBAccount.toBase58(),
+    });
+
+    await tokenB.mintTo(swapTokenBAccount, ownerKeypair, [], 1000000);
+    console.log("12. Minted token B to swap account");
+
+    const tokenSwap = await SwapUtils.createSwap(
+      swapPayerKeypair,
       tokenSwapKeypair,
       swapAuthorityPDA,
-      tokenAMint(),
-      tokenBMint(),
+      tokenA.publicKey,
+      tokenB.publicKey,
       swapTokenAAccount,
       swapTokenBAccount,
-      poolToken.publicKey,
-      poolTokenFeeAccount,
-      swapPoolTokenAccount,
+      swapLPToken.publicKey,
+      swapLPTokenFeeAccount,
+      swapLPTokenAccount
     );
-
-    console.log('USDC <> BTC Swap Account Info:', usdcBtcSwap);
+    console.log("13. Created swap account:", {
+      address: tokenSwapKeypair.publicKey,
+      tokenSwap,
+    });
   });
 
-  it('sanity', () => {
+  it("sanity", () => {
     true.should.equal(true);
   });
 }

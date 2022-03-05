@@ -1,8 +1,8 @@
-import {TestUtil} from "./config";
-import {CurveType, TokenSwap} from "@solana/spl-token-swap";
-import {Keypair, PublicKey, Account} from "@solana/web3.js";
-import {PDA} from "./PDAUtils";
-import {ProgramUtils} from "./ProgramUtils";
+import { TestUtil } from "./config";
+import { CurveType, TokenSwap } from "@solana/spl-token-swap";
+import { Keypair, PublicKey, Account } from "@solana/web3.js";
+import { PDA } from "./PDAUtils";
+import { ProgramUtils } from "./ProgramUtils";
 
 export class SwapUtils extends TestUtil {
   static async createSwap(
@@ -15,8 +15,8 @@ export class SwapUtils extends TestUtil {
     swapTokenBAccount: PublicKey,
     poolTokenMint: PublicKey,
     poolTokenFeeAccount: PublicKey,
-    swapPoolTokenAccount: PublicKey,
-): Promise<TokenSwap> {
+    swapPoolTokenAccount: PublicKey
+  ): Promise<TokenSwap> {
     return await TokenSwap.createTokenSwap(
       this.provider.connection,
       new Account(payer.secretKey),
@@ -32,14 +32,14 @@ export class SwapUtils extends TestUtil {
       ProgramUtils.tokenSwapProgram.programId,
       ProgramUtils.tokenProgram.programId,
       swapAuthorityPDA.bump,
+      0,
+      10000,
       5,
       10000,
       0,
-      10,
       0,
-      10,
-      0,
-      10,
+      20,
+      100,
       CurveType.ConstantProduct
     );
   }

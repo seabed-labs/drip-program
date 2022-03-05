@@ -9,7 +9,7 @@ import { AccountUtils } from "./AccountUtils";
 import { TestUtil } from "./config";
 import { KeypairUtils } from "./KeypairUtils";
 import { SolUtils } from "./SolUtils";
-import { PublicKey, Signer } from "@solana/web3.js"; // Look up the token mint on solscan before adding here
+import { Keypair, PublicKey, Signer } from "@solana/web3.js"; // Look up the token mint on solscan before adding here
 
 // Look up the token mint on solscan before adding here
 export const DECIMALS = {
@@ -27,13 +27,13 @@ export interface MintToParams {
 export class TokenUtils extends TestUtil {
   static async createMint(
     mintAuthority: PublicKey,
-    freezeAuthority: PublicKey = mintAuthority,
-    decimals: number = 6
+    freezeAuthority: PublicKey = null,
+    decimals: number = 6,
+    funderKeypair: Keypair = KeypairUtils.generatePair()
   ): Promise<Token> {
-    const funderKeypair = KeypairUtils.generatePair();
     await SolUtils.fundAccount(
       funderKeypair.publicKey,
-      SolUtils.solToLamports(10)
+      SolUtils.solToLamports(5)
     );
 
     return await Token.createMint(

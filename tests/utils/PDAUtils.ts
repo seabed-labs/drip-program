@@ -81,9 +81,7 @@ export class PDAUtils extends TestUtil {
     ]);
   }
 
-  static async getSwapAuthorityPDA(
-    swap: PublicKey,
-  ): Promise<PDA> {
+  static async getSwapAuthorityPDA(swap: PublicKey): Promise<PDA> {
     return await this.findPDA(ProgramUtils.tokenSwapProgram.programId, [
       swap.toBuffer(),
     ]);
