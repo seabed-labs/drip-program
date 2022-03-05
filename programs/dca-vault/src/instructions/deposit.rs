@@ -1,3 +1,4 @@
+use crate::errors::ErrorCode::PeriodicDripAmountIsZero;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::associated_token::AssociatedToken;
@@ -5,7 +6,6 @@ use anchor_spl::token;
 use anchor_spl::token::{Mint, MintTo, Token, TokenAccount};
 use spl_token::instruction::AuthorityType;
 
-use crate::common::ErrorCode::PeriodicDripAmountIsZero;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};

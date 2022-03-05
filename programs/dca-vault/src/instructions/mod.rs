@@ -1,5 +1,4 @@
 pub mod close_position;
-pub mod common;
 pub mod deposit;
 pub mod init_vault;
 pub mod init_vault_period;

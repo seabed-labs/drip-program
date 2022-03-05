@@ -1,4 +1,5 @@
 use crate::common::ErrorCode::WithdrawableAmountIsZero;
+use crate::errors::ErrorCode::WithdrawableAmountIsZero;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_withdraw_token_b_amount;
 use crate::state::{Position, Vault, VaultPeriod};
