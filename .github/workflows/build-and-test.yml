@@ -1,6 +1,7 @@
 name: Build + Tests
 env:
   cli-id: anchor-v0.22.dev-7b86aed-solana-1.8.5
+  SWAP_PROGRAM_OWNER_FEE_ADDRESS: HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN
 on:
   push:
     branches:
