@@ -1,5 +1,4 @@
-use crate::common::ErrorCode;
-use crate::errors::ErrorCode::InvalidSwapFeeAccount;
+use crate::errors::ErrorCode;
 use crate::sign;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
@@ -179,7 +178,7 @@ pub struct TriggerDCA<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
+pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     // TODO: Instead of doing this, just verify from the swap account that the fee account is as expected
@@ -187,10 +186,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         let expected_owner = constraints
             .owner_key
             .parse::<Pubkey>()
-            .map_err(|_| InvalidSwapFeeAccount.into())?;
+            // .map_err(|_| return Err(ErrorCode::InvalidSwapFeeAccount.into()))
+            .unwrap();
 
         if expected_owner != ctx.accounts.swap_fee_account.key() {
-            return Err(InvalidSwapFeeAccount.into());
+            return Err(ErrorCode::InvalidSwapFeeAccount.into());
         }
         // constraints.owner_key.parse::<Pubkey>() == ctx.accounts.swap_fee_account.owner)
     }
@@ -217,8 +217,8 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     );
 
     /* MANUAL CPI (INTERACTIONS) */
-
-    swap_tokens(&ctx, ctx.accounts.vault.drip_amount, &swap)?;
+    let swap_amount = ctx.accounts.vault.drip_amount;
+    swap_tokens(&mut ctx, swap_amount, &swap)?;
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
@@ -239,7 +239,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     Invokes CPI to SPL's Token Swap
     swap ix requires lot other authority accounts for verification; add them later
 */
-fn swap_tokens<'info>(ctx: &Context<TriggerDCA>, swap_amount: u64, swap: &SwapV1) -> Result<()> {
+fn swap_tokens<'info>(
+    ctx: &mut anchor_lang::context::Context<TriggerDCA>,
+    swap_amount: u64,
+    swap: &SwapV1,
+) -> Result<()> {
     token::approve(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info().clone(),
@@ -312,14 +316,8 @@ fn swap_tokens<'info>(ctx: &Context<TriggerDCA>, swap_amount: u64, swap: &SwapV1
             ctx.accounts.swap_token_a_account.to_account_info().clone(),
             ctx.accounts.swap_token_b_account.to_account_info().clone(),
             ctx.accounts.vault_token_b_account.to_account_info().clone(),
-            ctx.accounts
-                .swap_liquidity_pool_mint
-                .to_account_info()
-                .clone(),
-            ctx.accounts
-                .swap_liquidity_pool_fee
-                .to_account_info()
-                .clone(),
+            ctx.accounts.swap_token_mint.to_account_info().clone(),
+            ctx.accounts.swap_fee_account.to_account_info().clone(),
             ctx.accounts.token_program.to_account_info().clone(),
         ],
         &[sign!(vault)],

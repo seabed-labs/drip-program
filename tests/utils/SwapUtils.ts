@@ -32,14 +32,14 @@ export class SwapUtils extends TestUtil {
       ProgramUtils.tokenSwapProgram.programId,
       ProgramUtils.tokenProgram.programId,
       swapAuthorityPDA.bump,
+      25, // must be non-zero
+      10000, // must be non-zero
+      5, // must be non-zero
+      10000, // must be non-zero
       0,
-      10000,
-      5,
-      10000,
       0,
-      0,
-      20,
-      100,
+      20, // must be non-zero
+      100, // must be non-zero
       CurveType.ConstantProduct
     );
   }

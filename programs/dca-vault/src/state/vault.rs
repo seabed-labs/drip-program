@@ -1,9 +1,7 @@
-use anchor_lang::prelude::*;
-
-use crate::common::ErrorCode::CannotGetVaultBump;
-use crate::state::VaultPeriod;
-
 use super::traits::ByteSized;
+use crate::errors::ErrorCode::CannotGetVaultBump;
+use crate::state::VaultPeriod;
+use anchor_lang::prelude::*;
 
 #[account]
 #[derive(Default)]

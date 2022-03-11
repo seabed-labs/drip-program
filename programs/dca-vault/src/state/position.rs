@@ -1,4 +1,4 @@
-use crate::common::ErrorCode::CannotGetPositionBump;
+use crate::errors::ErrorCode::CannotGetPositionBump;
 use anchor_lang::prelude::*;
 
 use super::traits::ByteSized;

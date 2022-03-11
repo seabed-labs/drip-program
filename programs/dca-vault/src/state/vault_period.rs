@@ -1,5 +1,5 @@
 use super::traits::ByteSized;
-use crate::common::ErrorCode::CannotGetVaultPeriodBump;
+use crate::errors::ErrorCode;
 use crate::math::{calculate_new_twap_amount, compute_price};
 use anchor_lang::prelude::*;
 
@@ -30,7 +30,7 @@ impl VaultPeriod {
                 self.bump = *val;
                 Ok(())
             }
-            None => Err(CannotGetVaultPeriodBump.into()),
+            None => Err(ErrorCode::CannotGetVaultPeriodBump.into()),
         }
     }
 

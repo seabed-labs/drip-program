@@ -1,5 +1,4 @@
-use crate::common::ErrorCode::WithdrawableAmountIsZero;
-use crate::errors::ErrorCode::WithdrawableAmountIsZero;
+use crate::errors::ErrorCode;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_withdraw_token_b_amount;
 use crate::state::{Position, Vault, VaultPeriod};
@@ -148,7 +147,7 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
 
     // 3. No point in completing IX if there's nothing happening
     if withdrawable_amount == 0 {
-        return Err(WithdrawableAmountIsZero.into());
+        return Err(ErrorCode::WithdrawableAmountIsZero.into());
     }
 
     // 4. Transfer tokens user wants to withdraw (this is lazily executed below)
