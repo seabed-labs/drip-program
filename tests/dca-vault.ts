@@ -4,7 +4,6 @@ import { testInitVaultPeriod } from "./integration-tests/initVaultPeriod";
 import { testDeposit } from "./integration-tests/deposit";
 import { testClosePosition } from "./integration-tests/closePosition";
 import { testTriggerDCA } from "./integration-tests/triggerDCA";
-// TODO: Put behind an env var
 import sinon from "sinon";
 
 const DISABLE_LOGGING = !process.env.LOG;

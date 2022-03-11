@@ -21,6 +21,7 @@
     "posinstall": "yarn build",
     "format": "cargo fmt && yarn run prettier --w .",
     "test": "cargo test && anchor test",
+    "test-with-log": "cargo test && LOG=true anchor test",
     "build": "anchor build"
   }
 }
