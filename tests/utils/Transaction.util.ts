@@ -2,7 +2,7 @@ import { TestUtil } from "./config";
 import { Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { web3 } from "@project-serum/anchor";
 
-export class TransactionUtils extends TestUtil {
+export class TransactionUtil extends TestUtil {
   static async executeInstructions(
     ...instructions: TransactionInstruction[]
   ): Promise<void> {

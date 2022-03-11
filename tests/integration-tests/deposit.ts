@@ -1,14 +1,21 @@
-import { KeypairUtils } from "../utils/KeypairUtils";
-import { DECIMALS, TokenUtils } from "../utils/TokenUtils";
-import { amount, Denom } from "../utils/amount";
+import { DECIMALS, TokenUtil } from "../utils/Token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
-import { VaultUtils } from "../utils/VaultUtils";
-import { Granularity } from "../utils/Granularity";
-import { PDAUtils } from "../utils/PDAUtils";
+import { VaultUtil } from "../utils/Vault.util";
 import { SolUtils } from "../utils/SolUtils";
-import { AccountUtils } from "../utils/AccountUtils";
+import { AccountUtil } from "../utils/Account.util";
 import should from "should";
+import {
+  amount,
+  Denom,
+  findAssociatedTokenAddress,
+  generatePair,
+  generatePairs,
+  getPositionPDA,
+  getVaultPDA,
+  getVaultPeriodPDA,
+  Granularity,
+} from "../utils/common.util";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 
@@ -38,20 +45,20 @@ export async function testDeposit() {
   }
 
   beforeEach(async () => {
-    [usdcMinter, btcMinter, user] = KeypairUtils.generatePairs(3);
+    [usdcMinter, btcMinter, user] = generatePairs(3);
     await SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(10));
 
-    [usdc, btc] = await TokenUtils.createMints(
+    [usdc, btc] = await TokenUtil.createMints(
       [usdcMinter.publicKey, btcMinter.publicKey],
       [DECIMALS.USDC, DECIMALS.BTC]
     );
 
-    const [usdcAmount, btcAmount] = await TokenUtils.scaleAmountBatch(
+    const [usdcAmount, btcAmount] = await TokenUtil.scaleAmountBatch(
       [amount(10, Denom.Million), usdc],
       [amount(1, Denom.Thousand), btc]
     );
 
-    [userUSDC_ATA, userBTC_ATA] = await TokenUtils.mintToBatch([
+    [userUSDC_ATA, userBTC_ATA] = await TokenUtil.mintToBatch([
       {
         token: usdc,
         mintAuthority: usdcMinter,
@@ -66,24 +73,24 @@ export async function testDeposit() {
       },
     ]);
 
-    const vaultProtoConfigKeypair = KeypairUtils.generatePair();
-    await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 
-    const vaultPDA = await PDAUtils.getVaultPDA(
+    const vaultPDA = await getVaultPDA(
       tokenAMint(),
       tokenBMint(),
       vaultProtoConfigPubkey
     );
 
     [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
     ]);
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenAMint(),
@@ -94,9 +101,9 @@ export async function testDeposit() {
 
     vaultPubkey = vaultPDA.publicKey;
 
-    const vaultPeriodPDA = await PDAUtils.getVaultPeriodPDA(vaultPubkey, 69);
+    const vaultPeriodPDA = await getVaultPeriodPDA(vaultPubkey, 69);
 
-    await VaultUtils.initVaultPeriod(
+    await VaultUtil.initVaultPeriod(
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
@@ -109,8 +116,8 @@ export async function testDeposit() {
   });
 
   it("happy path (first depositor, vault genesis)", async () => {
-    const positionNftMintKeypair = KeypairUtils.generatePair();
-    const positionPDA = await PDAUtils.getPositionPDA(
+    const positionNftMintKeypair = generatePair();
+    const positionPDA = await getPositionPDA(
       vaultPubkey,
       positionNftMintKeypair.publicKey
     );
@@ -120,18 +127,18 @@ export async function testDeposit() {
       vaultTokenAAccountBefore,
       userTokenAAccountBefore,
     ] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(
+      findAssociatedTokenAddress(
         user.publicKey,
         positionNftMintKeypair.publicKey
       ),
-      TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
-      await TokenUtils.fetchTokenAccountInfo(userTokenA_ATA()),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
+      await TokenUtil.fetchTokenAccountInfo(userTokenA_ATA()),
     ]);
 
     vaultTokenAAccountBefore.balance.toString().should.equal("0");
     userTokenAAccountBefore.balance.toString().should.equal("10000000000000");
 
-    const depositAmount = await TokenUtils.scaleAmount(
+    const depositAmount = await TokenUtil.scaleAmount(
       amount(10, Denom.Thousand),
       usdc
     );
@@ -144,7 +151,7 @@ export async function testDeposit() {
       depositAmount
     );
 
-    await VaultUtils.deposit({
+    await VaultUtil.deposit({
       params: {
         tokenADepositAmount: depositAmount,
         dcaCycles: new u64(69),
@@ -166,11 +173,11 @@ export async function testDeposit() {
       },
     });
 
-    const vaultAccount = await AccountUtils.fetchVaultAccount(vaultPubkey);
-    const vaultPeriodEndAccount = await AccountUtils.fetchVaultPeriodAccount(
+    const vaultAccount = await AccountUtil.fetchVaultAccount(vaultPubkey);
+    const vaultPeriodEndAccount = await AccountUtil.fetchVaultPeriodAccount(
       vaultPeriodPubkey
     );
-    const positionAccount = await AccountUtils.fetchPositionAccount(
+    const positionAccount = await AccountUtil.fetchPositionAccount(
       positionPDA.publicKey
     );
 
@@ -196,11 +203,11 @@ export async function testDeposit() {
       .should.equal("10000000000");
     positionAccount.withdrawnTokenBAmount.toString().should.equal("0");
 
-    const vaultTokenAAccountAfter = await TokenUtils.fetchTokenAccountInfo(
+    const vaultTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
       vaultTokenA_ATA
     );
 
-    const userTokenAAccountAfter = await TokenUtils.fetchTokenAccountInfo(
+    const userTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
       userTokenA_ATA()
     );
 
@@ -210,11 +217,11 @@ export async function testDeposit() {
     userTokenAAccountAfter.balance.toString().should.equal("9990000000000");
     userTokenAAccountAfter.delegatedAmount.toString().should.equal("0");
 
-    const userPositionNftMintAccount = await TokenUtils.fetchTokenMintInfo(
+    const userPositionNftMintAccount = await TokenUtil.fetchTokenMintInfo(
       positionNftMintKeypair.publicKey
     );
 
-    await TokenUtils.fetchTokenMintInfo(usdc.publicKey);
+    await TokenUtil.fetchTokenMintInfo(usdc.publicKey);
 
     should(userPositionNftMintAccount.mintAuthority).be.null();
     should(userPositionNftMintAccount.freezeAuthority).be.null();
@@ -222,7 +229,7 @@ export async function testDeposit() {
     userPositionNftMintAccount.decimals.toString().should.equal("0");
     userPositionNftMintAccount.isInitialized.should.equal(1);
 
-    const userPositionNftTokenAccount = await TokenUtils.fetchTokenAccountInfo(
+    const userPositionNftTokenAccount = await TokenUtil.fetchTokenAccountInfo(
       userPositionNft_ATA
     );
 

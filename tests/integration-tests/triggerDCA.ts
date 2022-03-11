@@ -1,12 +1,17 @@
-import { KeypairUtils } from "../utils/KeypairUtils";
 import { SolUtils } from "../utils/SolUtils";
-import { PDA, PDAUtils } from "../utils/PDAUtils";
-import { TokenUtils } from "../utils/TokenUtils";
-import { SwapUtils } from "../utils/SwapUtils";
+import { TokenUtil } from "../utils/Token.util";
+import { SwapUtil } from "../utils/Swap.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { VaultUtils } from "../utils/VaultUtils";
-import { Granularity } from "../utils/Granularity";
-import { AccountUtils } from "../utils/AccountUtils";
+import { VaultUtil } from "../utils/Vault.util";
+import {
+  findAssociatedTokenAddress,
+  generatePair,
+  generatePairs,
+  getSwapAuthorityPDA,
+  getVaultPDA,
+  Granularity,
+  PDA,
+} from "../utils/common.util";
 
 export function testTriggerDCA() {
   let vaultProtoConfigAccount: PublicKey,
@@ -17,7 +22,7 @@ export function testTriggerDCA() {
 
   beforeEach(async () => {
     const [payerKeypair, ownerKeypair, tokenSwapKeypair, swapPayerKeypair] =
-      KeypairUtils.generatePairs(5);
+      generatePairs(5);
     console.log("1. Generated 4 keypairs:", {
       payer: payerKeypair.publicKey.toBase58(),
       owner: ownerKeypair.publicKey.toBase58(),
@@ -32,7 +37,7 @@ export function testTriggerDCA() {
       "2. Funded owner, payer, and swapPayer with 1000000000 lamports"
     );
 
-    const swapAuthorityPDA = await PDAUtils.getSwapAuthorityPDA(
+    const swapAuthorityPDA = await getSwapAuthorityPDA(
       tokenSwapKeypair.publicKey
     );
     console.log(
@@ -45,7 +50,7 @@ export function testTriggerDCA() {
       }
     );
 
-    const swapLPToken = await TokenUtils.createMint(
+    const swapLPToken = await TokenUtil.createMint(
       swapAuthorityPDA.publicKey,
       null,
       2,
@@ -69,7 +74,7 @@ export function testTriggerDCA() {
       account: swapLPTokenFeeAccount.toBase58(),
     });
 
-    const tokenA = await TokenUtils.createMint(
+    const tokenA = await TokenUtil.createMint(
       ownerKeypair.publicKey,
       null,
       2,
@@ -89,7 +94,7 @@ export function testTriggerDCA() {
     await tokenA.mintTo(swapTokenAAccount, ownerKeypair, [], 1000000);
     console.log("9. Minted token A to swap account");
 
-    const tokenB = await TokenUtils.createMint(
+    const tokenB = await TokenUtil.createMint(
       ownerKeypair.publicKey,
       null,
       2,
@@ -109,7 +114,7 @@ export function testTriggerDCA() {
     await tokenB.mintTo(swapTokenBAccount, ownerKeypair, [], 1000000);
     console.log("12. Minted token B to swap account");
 
-    const tokenSwap = await SwapUtils.createSwap(
+    const tokenSwap = await SwapUtil.createSwap(
       swapPayerKeypair,
       tokenSwapKeypair,
       swapAuthorityPDA,
@@ -125,9 +130,9 @@ export function testTriggerDCA() {
       address: tokenSwapKeypair.publicKey.toBase58(),
     });
 
-    const vaultProtoConfigKeypair = KeypairUtils.generatePair();
-    await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: Granularity.HORULY,
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.HOURLY,
     });
     vaultProtoConfigAccount = vaultProtoConfigKeypair.publicKey;
 
@@ -135,21 +140,21 @@ export function testTriggerDCA() {
       address: vaultProtoConfigKeypair.publicKey.toBase58(),
     });
 
-    vaultPDA = await PDAUtils.getVaultPDA(
+    vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
       vaultProtoConfigKeypair.publicKey
     );
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
     console.log("15. Generated 2 vault token ATA's:", {
       vaultTokenA_ATA: vaultTokenA_ATA.toBase58(),
       vaultTokenB_ATA: vaultTokenB_ATA.toBase58(),
     });
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigKeypair.publicKey,
       tokenA.publicKey,
@@ -161,7 +166,7 @@ export function testTriggerDCA() {
       address: vaultPDA.publicKey.toBase58(),
     });
 
-    user = KeypairUtils.generatePair();
+    user = generatePair();
     await SolUtils.fundAccount(user.publicKey, 10000);
     console.log("17. Created and funded user:", {
       address: user.publicKey.toBase58(),

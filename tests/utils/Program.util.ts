@@ -8,7 +8,7 @@ import { TestUtil } from "./config";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_SWAP_PROGRAM_ID } from "@solana/spl-token-swap";
 
-export class ProgramUtils extends TestUtil {
+export class ProgramUtil extends TestUtil {
   static get systemProgram(): typeof SystemProgram {
     return SystemProgram;
   }
