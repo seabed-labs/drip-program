@@ -15,6 +15,8 @@ use std::ops::Deref;
 
 // TODO(latte): Limit the set of swap accounts that can be passed in for each vault
 
+// TODO(matcha): Change all accounts to box accounts
+
 #[derive(Accounts)]
 #[instruction()]
 pub struct TriggerDCA<'info> {
