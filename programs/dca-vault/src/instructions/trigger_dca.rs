@@ -13,6 +13,8 @@ use spl_token_swap::solana_program::program_pack::Pack;
 use spl_token_swap::state::SwapV1;
 use std::ops::Deref;
 
+// TODO(latte): Limit the set of swap accounts that can be passed in for each vault
+
 #[derive(Accounts)]
 #[instruction()]
 pub struct TriggerDCA<'info> {
@@ -181,24 +183,22 @@ pub struct TriggerDCA<'info> {
 pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
-    // TODO: Instead of doing this, just verify from the swap account that the fee account is as expected
-    if let Some(constraints) = SWAP_CONSTRAINTS {
-        let expected_owner = constraints
-            .owner_key
-            .parse::<Pubkey>()
-            // .map_err(|_| return Err(ErrorCode::InvalidSwapFeeAccount.into()))
-            .unwrap();
-
-        if expected_owner != ctx.accounts.swap_fee_account.key() {
-            return Err(ErrorCode::InvalidSwapFeeAccount.into());
-        }
-        // constraints.owner_key.parse::<Pubkey>() == ctx.accounts.swap_fee_account.owner)
-    }
-
-    // TODO(matcha): Check that the swap_authority passed in is indeed this swap's authority PDA
-
     let swap_account_info = &ctx.accounts.swap;
     let swap = SwapV1::unpack(&swap_account_info.data.deref().borrow())?;
+
+    let expected_swap_authority = Pubkey::create_program_address(
+        &[&swap_account_info.key.to_bytes()[..32], &[swap.nonce]],
+        &spl_token_swap::ID,
+    )
+    .unwrap();
+
+    if expected_swap_authority != ctx.accounts.swap_authority.key() {
+        return Err(ErrorCode::InvalidSwapAuthorityAccount.into());
+    }
+
+    if swap.pool_fee_account != ctx.accounts.swap_fee_account.key() {
+        return Err(ErrorCode::InvalidSwapFeeAccount.into());
+    }
 
     if !ctx.accounts.vault.is_dca_activated() {
         return Err(ErrorCode::DuplicateDCAError.into());

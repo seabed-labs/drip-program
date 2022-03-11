@@ -20,4 +20,6 @@ pub enum ErrorCode {
     IncompleteSwapError,
     #[msg("Invalid swap fee account")]
     InvalidSwapFeeAccount,
+    #[msg("Invalid swap authority account")]
+    InvalidSwapAuthorityAccount,
 }
