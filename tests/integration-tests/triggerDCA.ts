@@ -177,13 +177,14 @@ export function testTriggerDCA() {
     // vault drip 250000000
 
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
-    vaultAfter.dcaActivationTimestamp.should.be.greaterThan(startTime);
+    // TODO: Test this in a better way
+    vaultAfter.dcaActivationTimestamp.gt(new BN(startTime)).should.be.true();
     vaultTokenA_ATA_After.balance
       .toString()
       .should.not.equal(depositAmount.toString());
-    vaultTokenB_ATA_After.balance.toString().should.equal("0");
+    vaultTokenB_ATA_After.balance.toString().should.equal("249187889");
     // TODO(Mocha): check the actual twap value matches our expected value
-    // lastVaultPeriod.twap.should.not.equal("0");
+    lastVaultPeriod.twap.toString().should.equal("18386820858603774265");
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
