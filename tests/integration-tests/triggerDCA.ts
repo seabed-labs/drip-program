@@ -126,9 +126,6 @@ export function testTriggerDCA() {
   });
 
   it("sanity", async () => {
-    console.log('VAULT:', vaultPDA.publicKey.toBase58());
-    console.log('SWAP:', swap.toBase58());
-    console.log('SWAP AUTHORITY:', swapAuthority.toBase58());
     await VaultUtil.triggerDCA(
       user,
       vaultPDA.publicKey,

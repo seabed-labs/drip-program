@@ -236,11 +236,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     swap_tokens(
         &ctx.accounts.token_program,
         &ctx.accounts.token_swap_program,
-        &mut ctx.accounts.vault,
+        &ctx.accounts.vault,
         &ctx.accounts.vault_token_a_account,
         &ctx.accounts.vault_token_b_account,
-        &mut ctx.accounts.swap_authority,
-        &mut ctx.accounts.swap,
+        &ctx.accounts.swap_authority,
+        &ctx.accounts.swap,
         &ctx.accounts.swap_token_a_account,
         &ctx.accounts.swap_token_b_account,
         &ctx.accounts.swap_token_mint,
@@ -249,6 +249,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
+    ctx.accounts.vault_token_b_account.reload()?;
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
     let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
@@ -271,11 +272,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 fn swap_tokens<'info>(
     token_program: &Program<'info, Token>,
     token_swap_program: &Program<'info, TokenSwap>,
-    vault: &mut Account<'info, Vault>,
+    vault: &Account<'info, Vault>,
     vault_token_a_account: &Account<'info, TokenAccount>,
     vault_token_b_account: &Account<'info, TokenAccount>,
-    swap_authority_account_info: &mut AccountInfo<'info>,
-    swap_account_info: &mut AccountInfo<'info>,
+    swap_authority_account_info: &AccountInfo<'info>,
+    swap_account_info: &AccountInfo<'info>,
     swap_token_a_account: &Account<'info, TokenAccount>,
     swap_token_b_account: &Account<'info, TokenAccount>,
     swap_token_mint: &Account<'info, Mint>,
