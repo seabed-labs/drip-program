@@ -131,7 +131,7 @@ export function testTriggerDCA() {
     );
   });
 
-  it("happy path", async () => {
+  it.only("happy path", async () => {
     const startTime = Math.floor(new Date().getTime() / 1000);
     await VaultUtil.triggerDCA(
       user,
@@ -165,6 +165,7 @@ export function testTriggerDCA() {
     console.log("vaultTokenA_ATA_After:", vaultTokenA_ATA_After);
     console.log("vaultTokenB_ATA_After:", vaultTokenB_ATA_After);
     console.log("vaultAfter:", vaultAfter);
+    console.log("vaultAfter Drip:", vaultAfter.dripAmount.toString());
     console.log("lastVaultPeriod:", lastVaultPeriod);
 
     const depositAmount = await TokenUtil.scaleAmount(
@@ -172,10 +173,13 @@ export function testTriggerDCA() {
       tokenA
     );
 
+    // received b 249187889
+    // vault drip 250000000
+
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
     vaultAfter.dcaActivationTimestamp.should.be.greaterThan(startTime);
-    vaultTokenA_ATA_After.balance.should.not.equal(depositAmount);
-    vaultTokenB_ATA_After.balance.should.not.equal(0);
+    vaultTokenA_ATA_After.balance.toString().should.not.equal(depositAmount.toString());
+    vaultTokenB_ATA_After.balance.toString().should.equal("0");
     // TODO(Mocha): check the actual twap value matches our expected value
     // lastVaultPeriod.twap.should.not.equal("0");
   });
