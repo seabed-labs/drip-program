@@ -6,7 +6,6 @@ import {
   findAssociatedTokenAddress,
   generatePair,
   generatePairs,
-  Granularity,
   PDA,
 } from "../utils/common.util";
 import {
@@ -15,12 +14,12 @@ import {
   deployVaultPeriod,
   deployVaultProtoConfig,
   depositToVault,
+  sleep,
+  triggerDCAWrapper,
 } from "../utils/instruction.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { VaultUtil } from "../utils/Vault.util";
 import { AccountUtil } from "../utils/Account.util";
-import { BN } from "@project-serum/anchor";
 
 export function testTriggerDCA() {
   let user: Keypair;
@@ -40,7 +39,13 @@ export function testTriggerDCA() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
+  let trigerDCA;
+
   beforeEach(async () => {
+    // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
+    // sleep to progress to the next block
+    await sleep(500);
+
     user = generatePair();
     const [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
@@ -78,7 +83,7 @@ export function testTriggerDCA() {
       payerKeypair
     );
 
-    vaultProtoConfig = await deployVaultProtoConfig(Granularity.HOURLY);
+    vaultProtoConfig = await deployVaultProtoConfig(1);
 
     vaultPDA = await deployVault(
       tokenA.publicKey,
@@ -92,7 +97,7 @@ export function testTriggerDCA() {
     ]);
 
     vaultPeriods = await Promise.all(
-      [...Array(5).keys()].map((i) =>
+      [...Array(6).keys()].map((i) =>
         deployVaultPeriod(
           vaultProtoConfig,
           vaultPDA.publicKey,
@@ -125,18 +130,13 @@ export function testTriggerDCA() {
       vaultPeriods[4].publicKey,
       userTokenAAccount
     );
-  });
 
-  it("happy path", async () => {
-    const startTime = Math.floor(new Date().getTime() / 1000);
-    await VaultUtil.triggerDCA(
+    trigerDCA = triggerDCAWrapper(
       user,
       vaultPDA.publicKey,
       vaultProtoConfig,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      vaultPeriods[0].publicKey,
-      vaultPeriods[1].publicKey,
       tokenA.publicKey,
       tokenB.publicKey,
       swapTokenMint,
@@ -146,8 +146,12 @@ export function testTriggerDCA() {
       swapAuthority,
       swap
     );
+  });
 
-    const [
+  it("should trigger DCA twice with expected TWAP and Balance values", async () => {
+    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+
+    let [
       vaultTokenA_ATA_After,
       vaultTokenB_ATA_After,
       vaultAfter,
@@ -158,65 +162,66 @@ export function testTriggerDCA() {
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[1].publicKey),
     ]);
-    console.log("vaultTokenA_ATA_After:", vaultTokenA_ATA_After);
-    console.log("vaultTokenB_ATA_After:", vaultTokenB_ATA_After);
-    console.log("vaultAfter:", vaultAfter);
-    console.log("vaultAfter Drip:", vaultAfter.dripAmount.toString());
-    console.log("lastVaultPeriod:", lastVaultPeriod);
-
-    const depositAmount = await TokenUtil.scaleAmount(
-      amount(2, Denom.Thousand),
-      tokenA
-    );
-
-    // received b 249187889
-    // vault drip 250000000
 
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
-    // TODO: Test this in a better way
-    vaultAfter.dcaActivationTimestamp.gt(new BN(startTime)).should.be.true();
-    vaultTokenA_ATA_After.balance
-      .toString()
-      .should.not.equal(depositAmount.toString());
+    vaultTokenA_ATA_After.balance.toString().should.equal("750000000");
     vaultTokenB_ATA_After.balance.toString().should.equal("249187889");
-    // TODO(Mocha): check the actual twap value matches our expected value
+    // Calculated manually by doing b/a
     lastVaultPeriod.twap.toString().should.equal("18386820858603774265");
+
+    await sleep(1500);
+    await trigerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+
+    [
+      vaultTokenA_ATA_After,
+      vaultTokenB_ATA_After,
+      vaultAfter,
+      lastVaultPeriod,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
+      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[2].publicKey),
+    ]);
+
+    vaultAfter.lastDcaPeriod.toString().should.equal("2");
+    vaultTokenA_ATA_After.balance.toString().should.equal("500000000");
+    vaultTokenB_ATA_After.balance.toString().should.equal("498251433");
+    // Swap price in this period is 18377645817036392608
+    // Value calcualted manually using previous twap value and the new price from this period
+    lastVaultPeriod.twap.toString().should.equal("18382233337820083436");
+  });
+
+  it("should trigger DCA dca_cyles number of times", async () => {
+    for (let i = 0; i < 4; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+
+    const [vaultTokenA_ATA_After, vaultTokenB_ATA_After] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+    ]);
+    vaultTokenA_ATA_After.balance.toString().should.equal("0");
+    vaultTokenB_ATA_After.balance.toString().should.equal("996005860");
+  });
+
+  it("should fail to trigger DCA if vault token A balance is 0", async () => {
+    for (let i = 0; i < 4; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+    await trigerDCA(
+      vaultPeriods[4].publicKey,
+      vaultPeriods[5].publicKey
+    ).should.rejectedWith(new RegExp(".*Periodic drip amount == 0"));
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
-    await VaultUtil.triggerDCA(
-      user,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
-      vaultPeriods[0].publicKey,
+    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await trigerDCA(
       vaultPeriods[1].publicKey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-      swap
-    );
-    await VaultUtil.triggerDCA(
-      user,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
-      vaultPeriods[1].publicKey,
-      vaultPeriods[2].publicKey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-      swap
+      vaultPeriods[2].publicKey
     ).should.rejectedWith(
       new RegExp(
         ".*DCA already triggered for the current period. Duplicate DCA triggers not allowed"

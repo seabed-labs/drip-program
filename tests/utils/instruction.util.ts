@@ -17,6 +17,12 @@ import { SolUtils } from "./SolUtils";
 import { SwapUtil } from "./Swap.util";
 import { Token, u64 } from "@solana/spl-token";
 
+export const sleep = async (ms: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
 export const deployVaultProtoConfig = async (
   granularity: number
 ): Promise<PublicKey> => {
@@ -178,4 +184,40 @@ export const deploySwap = async (
     swapLPTokenFeeAccount,
     swapAuthorityPDA.publicKey,
   ];
+};
+
+export const triggerDCAWrapper = (
+  user: Keypair,
+  vault: PublicKey,
+  vaultProtoConfig: PublicKey,
+  vaultTokenA_ATA: PublicKey,
+  vaultTokenB_ATA,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey,
+  swapTokenMint: PublicKey,
+  swapTokenAAccount: PublicKey,
+  swapTokenBAccount: PublicKey,
+  swapFeeAccount: PublicKey,
+  swapAuthority: PublicKey,
+  swap: PublicKey
+) => {
+  return async (previousDCAPeriod: PublicKey, currentDCAPeriod: PublicKey) => {
+    await VaultUtil.triggerDCA(
+      user,
+      vault,
+      vaultProtoConfig,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      previousDCAPeriod,
+      currentDCAPeriod,
+      tokenAMint,
+      tokenBMint,
+      swapTokenMint,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      swapFeeAccount,
+      swapAuthority,
+      swap
+    );
+  };
 };
