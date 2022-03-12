@@ -44,6 +44,7 @@ export class AccountUtil extends TestUtil {
       | "lastDcaPeriod"
       | "dripAmount"
       | "bump"
+      | "dcaActivationTimestamp"
     >
   > {
     return await ProgramUtil.vaultProgram.account.vault.fetch(pubkey);

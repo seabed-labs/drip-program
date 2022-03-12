@@ -1,4 +1,6 @@
 import {
+  amount,
+  Denom,
   findAssociatedTokenAddress,
   generatePair,
   generatePairs,
@@ -147,11 +149,15 @@ export const deploySwap = async (
   const swapTokenAAccount = await tokenA.createAccount(
     swapAuthorityPDA.publicKey
   );
-  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], 1000000);
+  const mintAmount = await TokenUtil.scaleAmount(
+    amount(1, Denom.Million),
+    tokenA
+  );
+  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmount);
   const swapTokenBAccount = await tokenB.createAccount(
     swapAuthorityPDA.publicKey
   );
-  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], 1000000);
+  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmount);
   await SwapUtil.createSwap(
     swapPayerKeypair,
     tokenSwapKeypair,
