@@ -9,6 +9,7 @@ import sinon from "sinon";
 const DISABLE_LOGGING = !process.env.LOG;
 
 if (DISABLE_LOGGING) {
+  console.log("DISABLED LOGGING");
   sinon.stub(console, "log");
   sinon.stub(console, "error");
   sinon.stub(console, "warn");
@@ -21,5 +22,5 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVaultPeriod", testInitVaultPeriod);
   describe("#deposit", testDeposit);
   describe("#closePosition", testClosePosition);
-  describe.only("#triggerDCA", testTriggerDCA);
+  describe.skip("#triggerDCA", testTriggerDCA);
 });

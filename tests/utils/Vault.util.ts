@@ -182,7 +182,8 @@ export class VaultUtil extends TestUtil {
       swapAuthority: swapAuthority.toBase58(),
       tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
       tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-      associatedTokenProgram: ProgramUtil.associatedTokenProgram.programId.toBase58(),
+      associatedTokenProgram:
+        ProgramUtil.associatedTokenProgram.programId.toBase58(),
       systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       rent: ProgramUtil.rentProgram.programId.toBase58(),
     };

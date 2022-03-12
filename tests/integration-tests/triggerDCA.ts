@@ -79,7 +79,6 @@ export function testTriggerDCA() {
 
     vaultProtoConfig = await deployVaultProtoConfig(Granularity.HOURLY);
 
-
     vaultPDA = await deployVault(
       tokenA.publicKey,
       tokenB.publicKey,

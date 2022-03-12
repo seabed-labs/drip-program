@@ -155,11 +155,11 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
 
-    token_transfer.execute(&mut ctx.accounts.vault)?;
+    token_transfer.execute(&ctx.accounts.vault)?;
 
     mint_position_nft(
         &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
+        &ctx.accounts.vault,
         &ctx.accounts.user_position_nft_mint,
         &ctx.accounts.user_position_nft_account,
     )?;
@@ -169,7 +169,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
 fn mint_position_nft<'info>(
     token_program: &Program<'info, Token>,
-    vault: &mut Account<'info, Vault>,
+    vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
     to: &Account<'info, TokenAccount>,
 ) -> Result<()> {
