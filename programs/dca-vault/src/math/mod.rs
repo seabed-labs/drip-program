@@ -1,5 +1,4 @@
-use std::convert::{TryFrom, TryInto};
-use std::ops::Div;
+use std::convert::TryFrom;
 
 pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
     total_amount.checked_div(dca_cycles).unwrap()

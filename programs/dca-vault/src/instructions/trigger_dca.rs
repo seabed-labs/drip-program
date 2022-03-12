@@ -4,13 +4,10 @@ use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token;
-use anchor_spl::token::{Approve, Mint};
+use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token::state::AccountState;
-use spl_token_swap::constraints::SWAP_CONSTRAINTS;
-use spl_token_swap::solana_program::program_pack::Pack;
-use spl_token_swap::state::{SwapState, SwapV1, SwapVersion};
+use spl_token_swap::state::{SwapState, SwapVersion};
 use std::ops::Deref;
 
 // TODO(latte): Limit the set of swap accounts that can be passed in for each vault
@@ -372,6 +369,6 @@ fn swap_tokens<'info>(
 }
 
 // TODO (matcha) Do the math
-fn get_minimum_out(amount_in: u64) -> u64 {
+fn get_minimum_out(_amount_in: u64) -> u64 {
     return 1; // fake value for now
 }

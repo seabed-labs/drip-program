@@ -1,5 +1,5 @@
 import { SolUtils } from "../utils/SolUtils";
-import { MintToParams, TokenUtil } from "../utils/Token.util";
+import { TokenUtil } from "../utils/Token.util";
 import {
   amount,
   Denom,
@@ -17,7 +17,7 @@ import {
   depositToVault,
 } from "../utils/instruction.util";
 import { Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { VaultUtil } from "../utils/Vault.util";
 import { AccountUtil } from "../utils/Account.util";
 import { BN } from "@project-serum/anchor";
@@ -25,7 +25,6 @@ import { BN } from "@project-serum/anchor";
 export function testTriggerDCA() {
   let user: Keypair;
   let userTokenAAccount: PublicKey;
-  let userTokenBAccount: PublicKey;
   let tokenA: Token;
   let tokenB: Token;
   let swap: PublicKey;
@@ -112,9 +111,6 @@ export function testTriggerDCA() {
       tokenA
     );
     await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
-    userTokenBAccount = await tokenB.createAssociatedTokenAccount(
-      user.publicKey
-    );
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
