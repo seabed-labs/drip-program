@@ -131,7 +131,7 @@ export function testTriggerDCA() {
     );
   });
 
-  it.only("happy path", async () => {
+  it("happy path", async () => {
     const startTime = Math.floor(new Date().getTime() / 1000);
     await VaultUtil.triggerDCA(
       user,
