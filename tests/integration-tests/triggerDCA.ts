@@ -3,10 +3,8 @@ import { MintToParams, TokenUtil } from "../utils/Token.util";
 import {
   amount,
   Denom,
-  findAssociatedTokenAddress,
   generatePair,
   generatePairs,
-  getPositionPDA,
   Granularity,
   PDA,
 } from "../utils/common.util";
@@ -17,7 +15,6 @@ import {
   deployVaultProtoConfig,
   depositToVault,
 } from "../utils/instruction.util";
-import { VaultUtil } from "../utils/Vault.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
