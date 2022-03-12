@@ -132,7 +132,7 @@ export async function testDeposit() {
         positionNftMintKeypair.publicKey
       ),
       TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
-      await TokenUtil.fetchTokenAccountInfo(userTokenA_ATA()),
+      TokenUtil.fetchTokenAccountInfo(userTokenA_ATA()),
     ]);
 
     vaultTokenAAccountBefore.balance.toString().should.equal("0");

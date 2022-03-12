@@ -2,6 +2,7 @@ import {
   findAssociatedTokenAddress,
   generatePair,
   generatePairs,
+  getPositionPDA,
   getSwapAuthorityPDA,
   getVaultPDA,
   getVaultPeriodPDA,
@@ -12,7 +13,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./Token.util";
 import { SolUtils } from "./SolUtils";
 import { SwapUtil } from "./Swap.util";
-import { Token } from "@solana/spl-token";
+import { Token, u64 } from "@solana/spl-token";
 
 export const deployVaultProtoConfig = async (
   granularity: number
@@ -67,6 +68,54 @@ export const deployVaultPeriod = async (
     period
   );
   return vaultPeriodPDA;
+};
+
+export const depositToVault = async (
+  user: Keypair,
+  tokenA: Token,
+  tokenADepositAmount: u64,
+  dcaCycles: u64,
+  vault: PublicKey,
+  vaultPeriodEnd: PublicKey,
+  userTokenAAccount: PublicKey
+): Promise<void> => {
+  await tokenA.approve(
+    userTokenAAccount,
+    vault,
+    user.publicKey,
+    [user],
+    tokenADepositAmount
+  );
+  const userPositionNftMint = generatePair();
+  const positionPDA = await getPositionPDA(
+    vault,
+    userPositionNftMint.publicKey
+  );
+  const [vaultTokenAAccount, userPositionNftAccount] = await Promise.all([
+    findAssociatedTokenAddress(vault, tokenA.publicKey),
+    findAssociatedTokenAddress(user.publicKey, userPositionNftMint.publicKey),
+  ]);
+  await VaultUtil.deposit({
+    params: {
+      tokenADepositAmount,
+      dcaCycles,
+    },
+    accounts: {
+      vault,
+      vaultPeriodEnd,
+      userPosition: positionPDA.publicKey,
+      tokenAMint: tokenA.publicKey,
+      userPositionNftMint: userPositionNftMint.publicKey,
+      vaultTokenAAccount,
+      userTokenAAccount,
+      userPositionNftAccount,
+      depositor: user.publicKey,
+    },
+    signers: {
+      depositor: user,
+      userPositionNftMint,
+    },
+  });
 };
 
 export const deploySwap = async (
