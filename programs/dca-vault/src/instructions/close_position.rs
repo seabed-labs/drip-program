@@ -88,7 +88,7 @@ pub struct ClosePosition<'info> {
             user_position.vault == vault.key()
         }
     )]
-    pub user_position: Account<'info, Position>,
+    pub user_position: Box<Account<'info, Position>>,
 
     // Token Accounts
     #[account(
@@ -136,7 +136,7 @@ pub struct ClosePosition<'info> {
             user_position_nft_account.delegated_amount == 1
         }
     )]
-    pub user_position_nft_account: Account<'info, TokenAccount>,
+    pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
     // Mints
     #[account(
@@ -148,7 +148,7 @@ pub struct ClosePosition<'info> {
             user_position_nft_mint.mint_authority.is_none()
         }
     )]
-    pub user_position_nft_mint: Account<'info, Mint>,
+    pub user_position_nft_mint: Box<Account<'info, Mint>>,
 
     #[account(
         constraint = {
@@ -156,13 +156,13 @@ pub struct ClosePosition<'info> {
             token_a_mint.is_initialized
         }
     )]
-    pub token_a_mint: Account<'info, Mint>,
+    pub token_a_mint: Box<Account<'info, Mint>>,
 
     #[account(
         constraint = token_b_mint.key() == vault.token_b_mint &&
         token_b_mint.is_initialized
     )]
-    pub token_b_mint: Account<'info, Mint>,
+    pub token_b_mint: Box<Account<'info, Mint>>,
 
     // Other
     #[account(mut)]
