@@ -10,7 +10,7 @@ use anchor_spl::token::{Token, TokenAccount};
 use spl_token::state::AccountState;
 use spl_token_swap::constraints::SWAP_CONSTRAINTS;
 use spl_token_swap::solana_program::program_pack::Pack;
-use spl_token_swap::state::SwapV1;
+use spl_token_swap::state::{SwapState, SwapV1, SwapVersion};
 use std::ops::Deref;
 
 // TODO(latte): Limit the set of swap accounts that can be passed in for each vault
@@ -185,10 +185,10 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     let swap_account_info = &ctx.accounts.swap;
-    let swap = SwapV1::unpack(&swap_account_info.data.deref().borrow())?;
+    let swap = SwapVersion::unpack(&swap_account_info.data.deref().borrow())?;
 
     let expected_swap_authority = Pubkey::create_program_address(
-        &[&swap_account_info.key.to_bytes()[..32], &[swap.nonce]],
+        &[&swap_account_info.key.to_bytes()[..32], &[swap.nonce()]],
         &spl_token_swap::ID,
     )
     .unwrap();
@@ -197,7 +197,7 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
         return Err(ErrorCode::InvalidSwapAuthorityAccount.into());
     }
 
-    if swap.pool_fee_account != ctx.accounts.swap_fee_account.key() {
+    if *swap.pool_fee_account() != ctx.accounts.swap_fee_account.key() {
         return Err(ErrorCode::InvalidSwapFeeAccount.into());
     }
 
@@ -219,7 +219,7 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
     let swap_amount = ctx.accounts.vault.drip_amount;
-    swap_tokens(&mut ctx, swap_amount, &swap)?;
+    // swap_tokens(&mut ctx, swap_amount, &swap)?;
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
@@ -243,7 +243,7 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
 fn swap_tokens<'info>(
     ctx: &mut anchor_lang::context::Context<TriggerDCA>,
     swap_amount: u64,
-    swap: &SwapV1,
+    swap: &Box<dyn SwapState>,
 ) -> Result<()> {
     token::approve(
         CpiContext::new(
@@ -251,7 +251,7 @@ fn swap_tokens<'info>(
             Approve {
                 to: ctx.accounts.vault_token_a_account.to_account_info().clone(),
                 delegate: ctx.accounts.vault.to_account_info().clone(),
-                authority: ctx.accounts.swap.to_account_info().clone(),
+                authority: ctx.accounts.swap_authority.to_account_info().clone(),
             },
         ),
         swap_amount,
@@ -279,11 +279,11 @@ fn swap_tokens<'info>(
         &ctx.accounts.swap_authority.key(),
         &ctx.accounts.swap_authority.key(),
         &ctx.accounts.vault_token_a_account.key(),
-        &swap.token_a,
-        &swap.token_b,
+        swap.token_a_account(),
+        swap.token_b_account(),
         &ctx.accounts.vault_token_b_account.key(),
-        &swap.pool_mint,
-        &swap.pool_fee_account,
+        swap.pool_mint(),
+        swap.pool_fee_account(),
         None,
         spl_token_swap::instruction::Swap {
             amount_in: swap_amount,
