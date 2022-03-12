@@ -3,6 +3,7 @@ import { MintToParams, TokenUtil } from "../utils/Token.util";
 import {
   amount,
   Denom,
+  findAssociatedTokenAddress,
   generatePair,
   generatePairs,
   Granularity,
@@ -16,7 +17,8 @@ import {
   depositToVault,
 } from "../utils/instruction.util";
 import { Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { VaultUtil } from "../utils/Vault.util";
 
 export function testTriggerDCA() {
   let user: Keypair;
@@ -28,6 +30,14 @@ export function testTriggerDCA() {
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
   let vaultPeriods: PDA[];
+  let vaultTokenA_ATA: PublicKey;
+  let vaultTokenB_ATA: PublicKey;
+
+  let swapTokenMint: PublicKey;
+  let swapTokenAAccount: PublicKey;
+  let swapTokenBAccount: PublicKey;
+  let swapFeeAccount: PublicKey;
+  let swapAuthority: PublicKey;
 
   beforeEach(async () => {
     user = generatePair();
@@ -52,7 +62,14 @@ export function testTriggerDCA() {
       payerKeypair
     );
 
-    swap = await deploySwap(
+    [
+      swap,
+      swapTokenMint,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      swapFeeAccount,
+      swapAuthority,
+    ] = await deploySwap(
       tokenA,
       tokenOwnerKeypair,
       tokenB,
@@ -62,11 +79,17 @@ export function testTriggerDCA() {
 
     vaultProtoConfig = await deployVaultProtoConfig(Granularity.HOURLY);
 
+
     vaultPDA = await deployVault(
       tokenA.publicKey,
       tokenB.publicKey,
       vaultProtoConfig
     );
+
+    [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+    ]);
 
     vaultPeriods = await Promise.all(
       [...Array(5).keys()].map((i) =>
@@ -103,7 +126,24 @@ export function testTriggerDCA() {
     );
   });
 
-  it("sanity", () => {
+  it("sanity", async () => {
+    await VaultUtil.triggerDCA(
+      user,
+      vaultPDA.publicKey,
+      vaultProtoConfig,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      vaultPeriods[0].publicKey,
+      vaultPeriods[1].publicKey,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      swapTokenMint,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      swapFeeAccount,
+      swapAuthority,
+      swap
+    );
     true.should.equal(true);
   });
 }

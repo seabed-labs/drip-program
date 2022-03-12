@@ -18,7 +18,6 @@ use std::ops::Deref;
 // TODO(matcha): Change all accounts to box accounts
 
 #[derive(Accounts)]
-#[instruction()]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
     #[account(mut)]
@@ -34,7 +33,7 @@ pub struct TriggerDCA<'info> {
         ],
         bump = vault.bump,
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     #[account(
         constraint = {
@@ -42,7 +41,7 @@ pub struct TriggerDCA<'info> {
             vault_proto_config.key() == vault.proto_config
         }
     )]
-    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+    pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     #[account(
         seeds = [
@@ -56,7 +55,7 @@ pub struct TriggerDCA<'info> {
             last_vault_period.vault == vault.key()
         }
     )]
-    pub last_vault_period: Account<'info, VaultPeriod>,
+    pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
         mut,
@@ -71,7 +70,7 @@ pub struct TriggerDCA<'info> {
             current_vault_period.vault == vault.key()
         }
     )]
-    pub current_vault_period: Account<'info, VaultPeriod>,
+    pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
         constraint = {
@@ -79,7 +78,7 @@ pub struct TriggerDCA<'info> {
             swap_token_mint.is_initialized
         }
     )]
-    pub swap_token_mint: Account<'info, Mint>,
+    pub swap_token_mint: Box<Account<'info, Mint>>,
 
     #[account(
         constraint = {
@@ -87,7 +86,7 @@ pub struct TriggerDCA<'info> {
             token_a_mint.is_initialized
         }
     )]
-    pub token_a_mint: Account<'info, Mint>,
+    pub token_a_mint: Box<Account<'info, Mint>>,
 
     #[account(
         constraint = {
@@ -95,7 +94,7 @@ pub struct TriggerDCA<'info> {
             token_b_mint.is_initialized
         }
     )]
-    pub token_b_mint: Account<'info, Mint>,
+    pub token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
         mut,
@@ -144,7 +143,7 @@ pub struct TriggerDCA<'info> {
             swap_fee_account.mint == swap_token_mint.key()
         }
     )]
-    pub swap_fee_account: Account<'info, TokenAccount>,
+    pub swap_fee_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system

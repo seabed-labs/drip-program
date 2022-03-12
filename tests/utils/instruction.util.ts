@@ -124,7 +124,7 @@ export const deploySwap = async (
   tokenB: Token,
   tokenBMintOwner: Keypair,
   payerKeypair: Keypair
-): Promise<PublicKey> => {
+): Promise<PublicKey[]> => {
   const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
     generatePairs(5);
   await SolUtils.fundAccount(swapPayerKeypair.publicKey, 1000000000);
@@ -164,5 +164,12 @@ export const deploySwap = async (
     swapLPTokenFeeAccount,
     swapLPTokenAccount
   );
-  return tokenSwapKeypair.publicKey;
+  return [
+    tokenSwapKeypair.publicKey,
+    swapLPToken.publicKey,
+    swapTokenAAccount,
+    swapTokenBAccount,
+    swapLPTokenFeeAccount,
+    swapAuthorityPDA.publicKey,
+  ];
 };

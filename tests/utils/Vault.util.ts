@@ -1,6 +1,6 @@
 import { TestUtil } from "./config";
 import { ProgramUtil } from "./Program.util";
-import { PublicKey, Signer } from "@solana/web3.js";
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
 
@@ -145,5 +145,50 @@ export class VaultUtil extends TestUtil {
         signers: [input.signers.depositor, input.signers.userPositionNftMint],
       }
     );
+  }
+
+  static async triggerDCA(
+    user: Keypair | Signer,
+    vault: PublicKey,
+    vaultProtoConfig: PublicKey,
+    vaultTokenAAccount: PublicKey,
+    vaultTokenBAccount: PublicKey,
+    lastVaultPeriod: PublicKey,
+    currentVaultPeriod: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
+    swapTokenMint: PublicKey,
+    swapTokenAAccount: PublicKey,
+    swapTokenBAccount: PublicKey,
+    swapFeeAccount: PublicKey,
+    swapAuthority: PublicKey,
+    swap: PublicKey
+  ): Promise<void> {
+    const accounts = {
+      dcaTriggerSource: user.publicKey,
+      vault: vault.toBase58(),
+      vaultProtoConfig: vaultProtoConfig.toBase58(),
+      lastVaultPeriod: lastVaultPeriod.toBase58(),
+      currentVaultPeriod: currentVaultPeriod.toBase58(),
+      swapTokenMint: swapTokenMint.toBase58(),
+      tokenAMint: tokenAMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+      vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      swapTokenAAccount: swapTokenAAccount.toBase58(),
+      swapTokenBAccount: swapTokenBAccount.toBase58(),
+      swapFeeAccount: swapFeeAccount.toBase58(),
+      swap: swap.toBase58(),
+      swapAuthority: swapAuthority.toBase58(),
+      tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
+      tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+      associatedTokenProgram: ProgramUtil.associatedTokenProgram.programId.toBase58(),
+      systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+      rent: ProgramUtil.rentProgram.programId.toBase58(),
+    };
+    await ProgramUtil.vaultProgram.rpc.triggerDca({
+      accounts: accounts,
+      signers: [user],
+    });
   }
 }
