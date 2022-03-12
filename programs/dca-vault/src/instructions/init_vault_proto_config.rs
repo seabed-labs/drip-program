@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::common::ErrorCode;
+use crate::errors::ErrorCode;
 use crate::state::{ByteSized, VaultProtoConfig};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

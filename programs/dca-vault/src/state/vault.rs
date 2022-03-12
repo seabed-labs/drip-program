@@ -1,8 +1,7 @@
-use anchor_lang::prelude::*;
-
-use crate::common::ErrorCode::CannotGetVaultBump;
-
 use super::traits::ByteSized;
+use crate::errors::ErrorCode::CannotGetVaultBump;
+use crate::state::VaultPeriod;
+use anchor_lang::prelude::*;
 
 #[account]
 #[derive(Default)]
@@ -43,6 +42,7 @@ impl<'info> Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
+        // TODO: Use checked_xyz
         self.dca_activation_timestamp = now - now % granularity as i64;
 
         match bump {
@@ -56,6 +56,23 @@ impl<'info> Vault {
 
     pub fn increase_drip_amount(&mut self, extra_drip: u64) {
         self.drip_amount += extra_drip;
+    }
+
+    pub fn process_drip(&mut self, current_period: &Account<VaultPeriod>, granularity: u64) {
+        self.drip_amount = self.drip_amount.checked_sub(current_period.dar).unwrap();
+        self.last_dca_period = current_period.period_id;
+
+        let now = Clock::get().unwrap().unix_timestamp;
+        // TODO(matcha): Abstract away this date flooring math and add unit tests
+        // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
+        // TODO: Use checked_xyz
+        // TODO(matcha): Make sure this makes sense (think through it)
+        self.dca_activation_timestamp = (now - now % granularity as i64) + granularity as i64;
+    }
+
+    pub fn is_dca_activated(&self) -> bool {
+        let now = Clock::get().unwrap().unix_timestamp;
+        now >= self.dca_activation_timestamp
     }
 
     pub fn seeds(&self) -> [&[u8]; 4] {

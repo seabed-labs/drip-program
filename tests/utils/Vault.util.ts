@@ -1,8 +1,8 @@
 import { TestUtil } from "./config";
-import { ProgramUtils } from "./ProgramUtils";
-import { Granularity } from "./Granularity";
-import { PublicKey, Signer } from "@solana/web3.js";
+import { ProgramUtil } from "./Program.util";
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
+import { Granularity } from "./common.util";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
@@ -30,12 +30,12 @@ export interface DepositTxParams {
   };
 }
 
-export class VaultUtils extends TestUtil {
+export class VaultUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfig
   ): Promise<void> {
-    await ProgramUtils.vaultProgram.rpc.initVaultProtoConfig(
+    await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
       {
         granularity: new u64(vaultProtoConfig.granularity),
       },
@@ -43,7 +43,7 @@ export class VaultUtils extends TestUtil {
         accounts: {
           vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),
           creator: this.provider.wallet.publicKey.toString(),
-          systemProgram: ProgramUtils.systemProgram.programId.toString(),
+          systemProgram: ProgramUtil.systemProgram.programId.toString(),
         },
         signers: [vaultProtoConfigKeypair],
       }
@@ -74,18 +74,18 @@ export class VaultUtils extends TestUtil {
       creator: this.provider.wallet.publicKey.toString(),
       systemProgram:
         programs?.systemProgram?.toString() ??
-        ProgramUtils.systemProgram.programId.toString(),
+        ProgramUtil.systemProgram.programId.toString(),
       tokenProgram:
         programs?.tokenProgram?.toString() ??
-        ProgramUtils.tokenProgram.programId.toString(),
+        ProgramUtil.tokenProgram.programId.toString(),
       associatedTokenProgram:
         programs?.associatedTokenProgram?.toString() ??
-        ProgramUtils.associatedTokenProgram.programId.toString(),
+        ProgramUtil.associatedTokenProgram.programId.toString(),
       rent:
         programs?.rent?.toString() ??
-        ProgramUtils.rentProgram.programId.toString(),
+        ProgramUtil.rentProgram.programId.toString(),
     };
-    await ProgramUtils.vaultProgram.rpc.initVault({
+    await ProgramUtil.vaultProgram.rpc.initVault({
       accounts: accounts,
     });
   }
@@ -105,10 +105,10 @@ export class VaultUtils extends TestUtil {
       tokenAMint: tokenAMint.toString(),
       tokenBMint: tokenBMint.toString(),
       creator: this.provider.wallet.publicKey.toString(),
-      systemProgram: ProgramUtils.systemProgram.programId.toString(),
+      systemProgram: ProgramUtil.systemProgram.programId.toString(),
     };
 
-    await ProgramUtils.vaultProgram.rpc.initVaultPeriod(
+    await ProgramUtil.vaultProgram.rpc.initVaultPeriod(
       {
         periodId: new u64(periodId),
       },
@@ -119,7 +119,7 @@ export class VaultUtils extends TestUtil {
   }
 
   static async deposit(input: DepositTxParams): Promise<void> {
-    await ProgramUtils.vaultProgram.rpc.deposit(
+    await ProgramUtil.vaultProgram.rpc.deposit(
       {
         tokenADepositAmount: input.params.tokenADepositAmount,
         dcaCycles: input.params.dcaCycles,
@@ -136,14 +136,61 @@ export class VaultUtils extends TestUtil {
           userPositionNftAccount:
             input.accounts.userPositionNftAccount.toBase58(),
           depositor: input.accounts.depositor.toBase58(),
-          tokenProgram: ProgramUtils.tokenProgram.programId.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
-            ProgramUtils.associatedTokenProgram.programId.toBase58(),
-          rent: ProgramUtils.rentProgram.programId.toBase58(),
-          systemProgram: ProgramUtils.systemProgram.programId.toBase58(),
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
         },
         signers: [input.signers.depositor, input.signers.userPositionNftMint],
       }
     );
+  }
+
+  static async triggerDCA(
+    user: Keypair | Signer,
+    vault: PublicKey,
+    vaultProtoConfig: PublicKey,
+    vaultTokenAAccount: PublicKey,
+    vaultTokenBAccount: PublicKey,
+    lastVaultPeriod: PublicKey,
+    currentVaultPeriod: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey,
+    swapTokenMint: PublicKey,
+    swapTokenAAccount: PublicKey,
+    swapTokenBAccount: PublicKey,
+    swapFeeAccount: PublicKey,
+    swapAuthority: PublicKey,
+    swap: PublicKey
+  ): Promise<void> {
+    const accounts = {
+      dcaTriggerSource: user.publicKey.toBase58(),
+      vault: vault.toBase58(),
+      vaultProtoConfig: vaultProtoConfig.toBase58(),
+      lastVaultPeriod: lastVaultPeriod.toBase58(),
+      currentVaultPeriod: currentVaultPeriod.toBase58(),
+      swapTokenMint: swapTokenMint.toBase58(),
+      tokenAMint: tokenAMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+      vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      swapTokenAAccount: swapTokenAAccount.toBase58(),
+      swapTokenBAccount: swapTokenBAccount.toBase58(),
+      swapFeeAccount: swapFeeAccount.toBase58(),
+      swap: swap.toBase58(),
+      swapAuthority: swapAuthority.toBase58(),
+      tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
+      tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+      associatedTokenProgram:
+        ProgramUtil.associatedTokenProgram.programId.toBase58(),
+      systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+      rent: ProgramUtil.rentProgram.programId.toBase58(),
+    };
+
+    await ProgramUtil.vaultProgram.rpc.triggerDca({
+      accounts: accounts,
+      signers: [user],
+    });
   }
 }

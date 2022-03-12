@@ -1,4 +1,4 @@
-use crate::common::ErrorCode::WithdrawableAmountIsZero;
+use crate::errors::ErrorCode;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_withdraw_token_b_amount;
 use crate::state::{Position, Vault, VaultPeriod};
@@ -101,7 +101,7 @@ pub struct WithdrawB<'info> {
         associated_token::authority = vault,
         // TODO: Add integration test to verify that this ATA check actually works
     )]
-    pub vault_token_b_account: Account<'info, TokenAccount>,
+    pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         constraint = {
@@ -109,7 +109,7 @@ pub struct WithdrawB<'info> {
             vault_token_b_mint.is_initialized
         }
     )]
-    pub vault_token_b_mint: Account<'info, Mint>,
+    pub vault_token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
         constraint = {
@@ -118,7 +118,7 @@ pub struct WithdrawB<'info> {
             user_token_b_account.state == AccountState::Initialized
         }
     )]
-    pub user_token_b_account: Account<'info, TokenAccount>,
+    pub user_token_b_account: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub withdrawer: Signer<'info>,
     #[account(address = Token::id())]
@@ -147,7 +147,7 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
 
     // 3. No point in completing IX if there's nothing happening
     if withdrawable_amount == 0 {
-        return Err(WithdrawableAmountIsZero.into());
+        return Err(ErrorCode::WithdrawableAmountIsZero.into());
     }
 
     // 4. Transfer tokens user wants to withdraw (this is lazily executed below)

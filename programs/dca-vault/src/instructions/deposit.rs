@@ -1,14 +1,13 @@
+use crate::errors::ErrorCode::PeriodicDripAmountIsZero;
+use crate::interactions::transfer_token::TransferToken;
+use crate::math::calculate_periodic_drip_amount;
+use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token;
 use anchor_spl::token::{Mint, MintTo, Token, TokenAccount};
 use spl_token::instruction::AuthorityType;
-
-use crate::common::ErrorCode::PeriodicDripAmountIsZero;
-use crate::interactions::transfer_token::TransferToken;
-use crate::math::calculate_periodic_drip_amount;
-use crate::state::{Position, Vault, VaultPeriod};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositParams {
@@ -156,11 +155,11 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
 
-    token_transfer.execute(&mut ctx.accounts.vault)?;
+    token_transfer.execute(&ctx.accounts.vault)?;
 
     mint_position_nft(
         &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
+        &ctx.accounts.vault,
         &ctx.accounts.user_position_nft_mint,
         &ctx.accounts.user_position_nft_account,
     )?;
@@ -170,7 +169,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
 fn mint_position_nft<'info>(
     token_program: &Program<'info, Token>,
-    vault: &mut Account<'info, Vault>,
+    vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
     to: &Account<'info, TokenAccount>,
 ) -> Result<()> {

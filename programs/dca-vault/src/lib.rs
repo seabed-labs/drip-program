@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
-
 use instructions::*;
-
+pub mod errors;
 pub mod instructions;
 pub mod interactions;
 pub mod macros;
@@ -44,5 +43,9 @@ pub mod dca_vault {
 
     pub fn withdraw_b(ctx: Context<WithdrawB>) -> Result<()> {
         instructions::withdraw_b::handler(ctx)
+    }
+
+    pub fn trigger_dca(ctx: Context<TriggerDCA>) -> Result<()> {
+        instructions::trigger_dca::handler(ctx)
     }
 }

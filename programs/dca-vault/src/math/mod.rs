@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
     total_amount.checked_div(dca_cycles).unwrap()
 }
@@ -41,19 +43,23 @@ pub fn calculate_withdraw_token_a_amount(
 pub fn calculate_withdraw_token_b_amount(
     i: u64,
     j: u64,
-    twap_i: u64,
-    twap_j: u64,
+    twap_i_x64: u128,
+    twap_j_x64: u128,
     periodic_drip_amount: u64,
 ) -> u64 {
     if i == j {
         return 0;
     }
 
+    let i = u128::from(i);
+    let j = u128::from(j);
+    let periodic_drip_amount = u128::from(periodic_drip_amount);
+
     // (twap_j * j - twap_i * i) / (j - i)
-    let average_price_from_start = (twap_j
+    let average_price_from_start_x64 = (twap_j_x64
         .checked_mul(j)
         .unwrap()
-        .checked_sub(twap_i.checked_mul(i).unwrap())
+        .checked_sub(twap_i_x64.checked_mul(i).unwrap())
         .unwrap())
     .checked_div(j.checked_sub(i).unwrap())
     .unwrap();
@@ -62,9 +68,31 @@ pub fn calculate_withdraw_token_b_amount(
         .checked_mul(j.checked_sub(i).unwrap())
         .unwrap();
     // average_price_from_start * dripped_so_far
-    average_price_from_start
+    let amount_x64 = average_price_from_start_x64
         .checked_mul(dripped_so_far)
+        .unwrap();
+
+    u64::try_from(amount_x64.checked_shr(64).unwrap()).unwrap()
+}
+
+// TODO: Add unit tests
+pub fn calculate_new_twap_amount(twap_i_minus_1: u128, i: u64, price_i: u128) -> u128 {
+    // (twap[i-1] * (i - 1) + p[i]) / i
+    twap_i_minus_1
+        .checked_mul(u128::from(i.checked_sub(1).unwrap()))
         .unwrap()
+        .checked_add(price_i)
+        .unwrap()
+        .checked_div(u128::from(i))
+        .unwrap()
+}
+
+// TODO: Add unit tests
+pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
+    let numerator_x64 = u128::from(token_b_amount).checked_shl(64).unwrap();
+    let denominator = u128::from(token_a_amount);
+
+    numerator_x64.checked_div(denominator).unwrap()
 }
 
 #[cfg(test)]
@@ -136,14 +164,14 @@ mod test {
     // Price token_b/token_a: 10, 20, 30, 40, 50, 60, 70
     // TWAP: [0, 10, 15, 20, 25, 30, 35, 40]
     // In practice there will be a lot more 0's as we are dealing with base values
-    #[test_case(0, 4, 0, 25, 4, 25*4*4; "Can withdraw B when starting from first period")]
-    #[test_case(1, 4, 10, 25, 4, 30*4*3; "Can withdraw B when not starting from first period")]
-    #[test_case(4, 4, 10, 25, 4, 0; "Can withdraw 0 B when i equals j")]
+    #[test_case(0, 4,  0 << 64, 25 << 64, 4, 25*4*4; "Can withdraw B when starting from first period")]
+    #[test_case(1, 4, 10 << 64, 25 << 64, 4, 30*4*3; "Can withdraw B when not starting from first period")]
+    #[test_case(4, 4, 10 << 64, 25 << 64, 4, 0; "Can withdraw 0 B when i equals j")]
     fn calculate_withdraw_token_b_amount_tests(
         dca_period_id_before_deposit: u64,
         last_dca_period: u64,
-        twap_i: u64,
-        twap_j: u64,
+        twap_i: u128,
+        twap_j: u128,
         periodic_drip_amount: u64,
         expected_withdrawal_b: u64,
     ) {
@@ -160,21 +188,15 @@ mod test {
     }
 
     #[test_case(4, 1, 0, 25, 4; "Should panic when j is less than i")]
-    #[test_case(1, 4, 0, 25, u64::max_value(); "Should panic if overflow")]
+    #[test_case(1, 4, 0, u128::max_value(), 4; "Should panic if overflow")]
     #[should_panic]
     fn calculate_withdraw_token_b_amount_panic_tests(
-        dca_period_id_before_deposit: u64,
-        last_dca_period: u64,
-        twap_i: u64,
-        twap_j: u64,
+        i: u64,
+        j: u64,
+        twap_i: u128,
+        twap_j: u128,
         periodic_drip_amount: u64,
     ) {
-        calculate_withdraw_token_b_amount(
-            dca_period_id_before_deposit,
-            last_dca_period,
-            twap_i,
-            twap_j,
-            periodic_drip_amount,
-        );
+        calculate_withdraw_token_b_amount(i, j, twap_i, twap_j, periodic_drip_amount);
     }
 }

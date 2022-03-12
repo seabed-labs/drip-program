@@ -25,7 +25,7 @@ impl<'info> TransferToken<'info> {
         }
     }
 
-    pub fn execute(self, vault: &mut Account<'info, Vault>) -> Result<()> {
+    pub fn execute(self, vault: &Account<'info, Vault>) -> Result<()> {
         anchor_spl::token::transfer(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),

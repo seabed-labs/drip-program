@@ -1,11 +1,15 @@
-import { AccountUtils } from "../utils/AccountUtils";
-import { Granularity } from "../utils/Granularity";
-import { KeypairUtils } from "../utils/KeypairUtils";
-import { PDA, PDAUtils } from "../utils/PDAUtils";
-import { TokenUtils } from "../utils/TokenUtils";
-import { VaultUtils } from "../utils/VaultUtils";
+import { AccountUtil } from "../utils/Account.util";
+import { TokenUtil } from "../utils/Token.util";
+import { VaultUtil } from "../utils/Vault.util";
 import { PublicKey } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
+import {
+  findAssociatedTokenAddress,
+  generatePair,
+  getVaultPDA,
+  Granularity,
+  PDA,
+} from "../utils/common.util";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: PublicKey;
@@ -13,31 +17,31 @@ export function testInitVault() {
   let tokenB: Token;
 
   beforeEach(async () => {
-    const vaultProtoConfigKeypair = KeypairUtils.generatePair();
-    await VaultUtils.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
     });
     vaultProtoConfigAccount = vaultProtoConfigKeypair.publicKey;
 
     [tokenA, tokenB] = await Promise.all([
-      TokenUtils.createMockUSDCMint(),
-      TokenUtils.createMockBTCMint(),
+      TokenUtil.createMockUSDCMint(),
+      TokenUtil.createMockBTCMint(),
     ]);
   });
 
   it("initializes the vault account correctly", async () => {
-    const vaultPDA = await PDAUtils.getVaultPDA(
+    const vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
       vaultProtoConfigAccount
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -46,12 +50,12 @@ export function testInitVault() {
       vaultTokenB_ATA
     );
 
-    const vaultAccount = await AccountUtils.fetchVaultAccount(
+    const vaultAccount = await AccountUtil.fetchVaultAccount(
       vaultPDA.publicKey
     );
     const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      TokenUtils.fetchTokenAccountInfo(vaultTokenA_ATA),
-      TokenUtils.fetchTokenAccountInfo(vaultTokenB_ATA),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
     ]);
 
     // TODO(matcha): Somehow test vaultAccount.dcaActivationTimestamp
@@ -95,18 +99,18 @@ export function testInitVault() {
 
   it("should fail to initialize when vault PDA is generated with invalid seeds", async () => {
     // NOTE: swapped tokenA and tokenB
-    const vaultPDA = await PDAUtils.getVaultPDA(
+    const vaultPDA = await getVaultPDA(
       tokenB.publicKey,
       tokenA.publicKey,
       vaultProtoConfigAccount
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      PDAUtils.findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -121,14 +125,14 @@ export function testInitVault() {
   });
 
   it("should fail to initialize when vault PDA is on ed25519 curve", async () => {
-    const vaultPDAPublicKey = KeypairUtils.generatePair().publicKey;
+    const vaultPDAPublicKey = generatePair().publicKey;
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      PDAUtils.findAssociatedTokenAddress(vaultPDAPublicKey, tokenA.publicKey),
-      PDAUtils.findAssociatedTokenAddress(vaultPDAPublicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDAPublicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDAPublicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDAPublicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -143,18 +147,18 @@ export function testInitVault() {
   });
 
   it("should fail to initialize when token accounts are not ATA's", async () => {
-    const vaultPDA = await PDAUtils.getVaultPDA(
+    const vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
       vaultProtoConfigAccount
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      KeypairUtils.generatePair().publicKey,
-      KeypairUtils.generatePair().publicKey,
+      generatePair().publicKey,
+      generatePair().publicKey,
     ]);
 
-    await VaultUtils.initVault(
+    await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -172,68 +176,62 @@ export function testInitVault() {
 
     // Values the same for all tests, no need for a beforeEach
     before(async () => {
-      vaultPDA = await PDAUtils.getVaultPDA(
+      vaultPDA = await getVaultPDA(
         tokenA.publicKey,
         tokenB.publicKey,
         vaultProtoConfigAccount
       );
       [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-        PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.publicKey,
-          tokenA.publicKey
-        ),
-        PDAUtils.findAssociatedTokenAddress(
-          vaultPDA.publicKey,
-          tokenB.publicKey
-        ),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
       ]);
     });
 
     it("should fail to initialize when system program is passed in", async () => {
-      await VaultUtils.initVault(
+      await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
-        { systemProgram: KeypairUtils.generatePair().publicKey }
+        { systemProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
 
     it("should fail to initialize when invalid token program is passed in", async () => {
-      await VaultUtils.initVault(
+      await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
-        { tokenProgram: KeypairUtils.generatePair().publicKey }
+        { tokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
 
     it("should fail to initialize when invalid associated token program is passed in", async () => {
-      await VaultUtils.initVault(
+      await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
-        { associatedTokenProgram: KeypairUtils.generatePair().publicKey }
+        { associatedTokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
 
     it("should fail to initialize when invalid rent program is passed in", async () => {
-      await VaultUtils.initVault(
+      await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
-        { rent: KeypairUtils.generatePair().publicKey }
+        { rent: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*invalid program argument"));
     });
   });

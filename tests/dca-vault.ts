@@ -3,11 +3,13 @@ import { testInitVaultProtoConfig } from "./integration-tests/initVaultProtoConf
 import { testInitVaultPeriod } from "./integration-tests/initVaultPeriod";
 import { testDeposit } from "./integration-tests/deposit";
 import { testClosePosition } from "./integration-tests/closePosition";
-import sinon from "sinon"; // TODO: Put behind an env var
+import { testTriggerDCA } from "./integration-tests/triggerDCA";
+import sinon from "sinon";
 
-const DISABLE_LOGGING = true;
+const DISABLE_LOGGING = !process.env.LOG;
 
 if (DISABLE_LOGGING) {
+  console.log("DISABLED LOGGING");
   sinon.stub(console, "log");
   sinon.stub(console, "error");
   sinon.stub(console, "warn");
@@ -20,4 +22,5 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVaultPeriod", testInitVaultPeriod);
   describe("#deposit", testDeposit);
   describe("#closePosition", testClosePosition);
+  describe("#triggerDCA", testTriggerDCA);
 });

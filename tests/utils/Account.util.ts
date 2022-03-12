@@ -1,10 +1,10 @@
 import { web3 } from "@project-serum/anchor";
 import { TestUtil } from "./config";
-import { ProgramUtils } from "./ProgramUtils";
-import { AsyncReturnType } from "./types";
+import { ProgramUtil } from "./Program.util";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AsyncReturnType } from "./common.util";
 
-export class AccountUtils extends TestUtil {
+export class AccountUtil extends TestUtil {
   static async fetchAccountInfo(
     pubkey: PublicKey
   ): Promise<AccountInfo<unknown>> {
@@ -21,12 +21,12 @@ export class AccountUtils extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<
-        typeof ProgramUtils.vaultProgram.account.vaultProtoConfig.fetch
+        typeof ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch
       >,
       "granularity"
     >
   > {
-    return await ProgramUtils.vaultProgram.account.vaultProtoConfig.fetch(
+    return await ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch(
       pubkey
     );
   }
@@ -35,7 +35,7 @@ export class AccountUtils extends TestUtil {
     pubkey: web3.PublicKey
   ): Promise<
     Pick<
-      AsyncReturnType<typeof ProgramUtils.vaultProgram.account.vault.fetch>,
+      AsyncReturnType<typeof ProgramUtil.vaultProgram.account.vault.fetch>,
       | "protoConfig"
       | "tokenAMint"
       | "tokenBMint"
@@ -44,9 +44,10 @@ export class AccountUtils extends TestUtil {
       | "lastDcaPeriod"
       | "dripAmount"
       | "bump"
+      | "dcaActivationTimestamp"
     >
   > {
-    return await ProgramUtils.vaultProgram.account.vault.fetch(pubkey);
+    return await ProgramUtil.vaultProgram.account.vault.fetch(pubkey);
   }
 
   static async fetchVaultPeriodAccount(
@@ -54,12 +55,12 @@ export class AccountUtils extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<
-        typeof ProgramUtils.vaultProgram.account.vaultPeriod.fetch
+        typeof ProgramUtil.vaultProgram.account.vaultPeriod.fetch
       >,
       "vault" | "periodId" | "twap" | "dar"
     >
   > {
-    return await ProgramUtils.vaultProgram.account.vaultPeriod.fetch(pubkey);
+    return await ProgramUtil.vaultProgram.account.vaultPeriod.fetch(pubkey);
   }
 
   static async fetchPositionAccount(
@@ -67,7 +68,7 @@ export class AccountUtils extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<
-        typeof ProgramUtils.vaultProgram.account.vaultPeriod.fetch
+        typeof ProgramUtil.vaultProgram.account.vaultPeriod.fetch
       >,
       | "positionAuthority"
       | "depositedTokenAAmount"
@@ -81,6 +82,6 @@ export class AccountUtils extends TestUtil {
       | "bump"
     >
   > {
-    return await ProgramUtils.vaultProgram.account.position.fetch(pubkey);
+    return await ProgramUtil.vaultProgram.account.position.fetch(pubkey);
   }
 }

@@ -1,5 +1,6 @@
 use super::traits::ByteSized;
-use crate::common::ErrorCode::CannotGetVaultPeriodBump;
+use crate::errors::ErrorCode;
+use crate::math::{calculate_new_twap_amount, compute_price};
 use anchor_lang::prelude::*;
 
 #[account]
@@ -10,8 +11,8 @@ pub struct VaultPeriod {
 
     // Data
     pub period_id: u64, // The period index/offset from the genesis period of the vault (0, 1, ...)
-    pub twap: u64, // Time weighted average price of asset A expressed in asset B from period 1 to this period
-    pub dar: u64,  // Drip amount to reduce at this period
+    pub twap: u128, // Time weighted average price of asset A expressed in asset B from period 1 to this period
+    pub dar: u64,   // Drip amount to reduce at this period
 
     // Bump
     pub bump: u8,
@@ -29,12 +30,22 @@ impl VaultPeriod {
                 self.bump = *val;
                 Ok(())
             }
-            None => Err(CannotGetVaultPeriodBump.into()),
+            None => Err(ErrorCode::CannotGetVaultPeriodBump.into()),
         }
     }
 
     pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
         self.dar += extra_drip;
+    }
+
+    pub fn update_twap(
+        &mut self,
+        last_period: &Account<VaultPeriod>,
+        sent_a: u64,
+        received_b: u64,
+    ) {
+        let price = compute_price(received_b, sent_a);
+        self.twap = calculate_new_twap_amount(last_period.twap, self.period_id, price);
     }
 }
 
@@ -46,6 +57,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(VaultPeriod::byte_size(), 64);
+        assert_eq!(VaultPeriod::byte_size(), 72);
     }
 }

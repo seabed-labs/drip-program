@@ -5,11 +5,11 @@ import {
   TOKEN_PROGRAM_ID,
   u64,
 } from "@solana/spl-token";
-import { AccountUtils } from "./AccountUtils";
+import { AccountUtil } from "./Account.util";
 import { TestUtil } from "./config";
-import { KeypairUtils } from "./KeypairUtils";
 import { SolUtils } from "./SolUtils";
-import { PublicKey, Signer } from "@solana/web3.js"; // Look up the token mint on solscan before adding here
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { generatePair } from "./common.util"; // Look up the token mint on solscan before adding here
 
 // Look up the token mint on solscan before adding here
 export const DECIMALS = {
@@ -24,22 +24,23 @@ export interface MintToParams {
   amount: u64;
 }
 
-export class TokenUtils extends TestUtil {
+export class TokenUtil extends TestUtil {
   static async createMint(
     mintAuthority: PublicKey,
-    decimals: number
+    freezeAuthority: PublicKey = null,
+    decimals: number = 6,
+    funderKeypair: Keypair = generatePair()
   ): Promise<Token> {
-    const funderKeypair = KeypairUtils.generatePair();
     await SolUtils.fundAccount(
       funderKeypair.publicKey,
-      SolUtils.solToLamports(10)
+      SolUtils.solToLamports(5)
     );
 
     return await Token.createMint(
       this.provider.connection,
       funderKeypair,
       mintAuthority,
-      mintAuthority,
+      freezeAuthority,
       decimals,
       TOKEN_PROGRAM_ID
     );
@@ -51,9 +52,24 @@ export class TokenUtils extends TestUtil {
   ): Promise<Token[]> {
     return await Promise.all(
       mintAuthorities.map((authority, i) =>
-        TokenUtils.createMint(authority, decimalsArray[i])
+        TokenUtil.createMint(authority, authority, decimalsArray[i])
       )
     );
+  }
+
+  static async createTokenAccount(
+    token: Token,
+    owner: PublicKey
+  ): Promise<PublicKey> {
+    return await token.createAccount(owner);
+  }
+
+  static async getOrCreateAssociatedTokenAccount(
+    token: Token,
+    owner: PublicKey
+  ): Promise<PublicKey> {
+    const ataInfo = await token.getOrCreateAssociatedAccountInfo(owner);
+    return new PublicKey(ataInfo.address);
   }
 
   static async mintTo(params: MintToParams): Promise<PublicKey> {
@@ -70,19 +86,19 @@ export class TokenUtils extends TestUtil {
   }
 
   static async mintToBatch(batchParams: MintToParams[]): Promise<PublicKey[]> {
-    return await Promise.all(batchParams.map(TokenUtils.mintTo));
+    return await Promise.all(batchParams.map(TokenUtil.mintTo));
   }
 
   static async createMockUSDCMint(
     minter: PublicKey = this.provider.wallet.publicKey
   ): Promise<Token> {
-    return await this.createMint(minter, DECIMALS.USDC);
+    return await this.createMint(minter, minter, DECIMALS.USDC);
   }
 
   static async createMockBTCMint(
     minter: PublicKey = this.provider.wallet.publicKey
   ): Promise<Token> {
-    return await this.createMint(minter, DECIMALS.BTC);
+    return await this.createMint(minter, minter, DECIMALS.BTC);
   }
 
   static async fetchTokenAccountInfo(pubkey: PublicKey): Promise<{
@@ -98,7 +114,7 @@ export class TokenUtils extends TestUtil {
     rentExemptReserve: null | u64;
     closeAuthority: null | PublicKey;
   }> {
-    const accountData = await AccountUtils.fetchAccountData(pubkey);
+    const accountData = await AccountUtil.fetchAccountData(pubkey);
     // TODO(Mocha): define module for decode
     const decodedData = AccountLayout.decode(accountData);
 
@@ -133,7 +149,7 @@ export class TokenUtils extends TestUtil {
     isInitialized: boolean;
     freezeAuthority: null | PublicKey;
   }> {
-    const accountData = await AccountUtils.fetchAccountData(pubkey);
+    const accountData = await AccountUtil.fetchAccountData(pubkey);
     const decodedData = MintLayout.decode(accountData);
 
     return {
@@ -173,7 +189,7 @@ export class TokenUtils extends TestUtil {
     ...batchInput: [amount: u64 | number | string, token: Token][]
   ): Promise<u64[]> {
     return await Promise.all(
-      batchInput.map(([amount, token]) => TokenUtils.scaleAmount(amount, token))
+      batchInput.map(([amount, token]) => TokenUtil.scaleAmount(amount, token))
     );
   }
 }

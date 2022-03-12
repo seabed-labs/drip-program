@@ -1,6 +1,6 @@
 import { TestUtil } from "./config";
-import { ProgramUtils } from "./ProgramUtils";
-import { TransactionUtils } from "./TransactionUtils";
+import { ProgramUtil } from "./Program.util";
+import { TransactionUtil } from "./Transaction.util";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
 export class SolUtils extends TestUtil {
@@ -16,8 +16,8 @@ export class SolUtils extends TestUtil {
     address: PublicKey,
     lamports: number
   ): Promise<void> {
-    await TransactionUtils.executeInstructions(
-      ProgramUtils.systemProgram.transfer({
+    await TransactionUtil.executeInstructions(
+      ProgramUtil.systemProgram.transfer({
         fromPubkey: this.provider.wallet.publicKey,
         toPubkey: address,
         lamports,
