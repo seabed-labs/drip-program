@@ -165,7 +165,7 @@ export class VaultUtil extends TestUtil {
     swap: PublicKey
   ): Promise<void> {
     const accounts = {
-      dcaTriggerSource: user.publicKey,
+      dcaTriggerSource: user.publicKey.toBase58(),
       vault: vault.toBase58(),
       vaultProtoConfig: vaultProtoConfig.toBase58(),
       lastVaultPeriod: lastVaultPeriod.toBase58(),
@@ -187,6 +187,10 @@ export class VaultUtil extends TestUtil {
       systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       rent: ProgramUtil.rentProgram.programId.toBase58(),
     };
+    console.log(
+      'TRIGGER DCA ACCOUNTS:',
+      accounts
+    );
     await ProgramUtil.vaultProgram.rpc.triggerDca({
       accounts: accounts,
       signers: [user],

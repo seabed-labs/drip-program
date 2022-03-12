@@ -17,6 +17,16 @@ use std::ops::Deref;
 
 // TODO(matcha): Change all accounts to box accounts
 
+// TODO: Verify that this is all there is to making a Program compatible struct
+#[derive(Clone)]
+pub struct TokenSwap;
+
+impl anchor_lang::Id for TokenSwap {
+    fn id() -> Pubkey {
+        spl_token_swap::ID
+    }
+}
+
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
@@ -73,6 +83,7 @@ pub struct TriggerDCA<'info> {
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        mut,
         constraint = {
             swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
             swap_token_mint.is_initialized
@@ -149,6 +160,7 @@ pub struct TriggerDCA<'info> {
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
     // And add appropriate checks
     #[account(
+        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: Do one last check to see if this can be type checked by creating an anchor-wrapped type (there probably is a way)
@@ -157,6 +169,7 @@ pub struct TriggerDCA<'info> {
 
     // TODO: Verify swap_authority PDA according to logic in processor.rs. / authority_id
     #[account(
+        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: We might be able to implement an anchor compatible type for this
@@ -167,8 +180,9 @@ pub struct TriggerDCA<'info> {
     #[account(address = spl_token_swap::ID)]
     // TODO: We can implement an anchor compatible type for this easily
     /// CHECK: Swap program has no type?
-    pub token_swap_program: AccountInfo<'info>,
+    pub token_swap_program: Program<'info, TokenSwap>,
 
+    // TODO: Remove this extra address check if anchor does it under the hood (i think it does)
     #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
 
@@ -181,7 +195,7 @@ pub struct TriggerDCA<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
+pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     let swap_account_info = &ctx.accounts.swap;
@@ -219,7 +233,21 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
     let swap_amount = ctx.accounts.vault.drip_amount;
-    // swap_tokens(&mut ctx, swap_amount, &swap)?;
+    swap_tokens(
+        &ctx.accounts.token_program,
+        &ctx.accounts.token_swap_program,
+        &mut ctx.accounts.vault,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.vault_token_b_account,
+        &mut ctx.accounts.swap_authority,
+        &mut ctx.accounts.swap,
+        &ctx.accounts.swap_token_a_account,
+        &ctx.accounts.swap_token_b_account,
+        &ctx.accounts.swap_token_mint,
+        &ctx.accounts.swap_fee_account,
+        &swap,
+        swap_amount,
+    )?;
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
@@ -241,21 +269,36 @@ pub fn handler(mut ctx: Context<TriggerDCA>) -> Result<()> {
     swap ix requires lot other authority accounts for verification; add them later
 */
 fn swap_tokens<'info>(
-    ctx: &mut anchor_lang::context::Context<TriggerDCA>,
-    swap_amount: u64,
+    token_program: &Program<'info, Token>,
+    token_swap_program: &Program<'info, TokenSwap>,
+    vault: &mut Account<'info, Vault>,
+    vault_token_a_account: &Account<'info, TokenAccount>,
+    vault_token_b_account: &Account<'info, TokenAccount>,
+    swap_authority_account_info: &mut AccountInfo<'info>,
+    swap_account_info: &mut AccountInfo<'info>,
+    swap_token_a_account: &Account<'info, TokenAccount>,
+    swap_token_b_account: &Account<'info, TokenAccount>,
+    swap_token_mint: &Account<'info, Mint>,
+    swap_fee_account: &Account<'info, TokenAccount>,
     swap: &Box<dyn SwapState>,
+    swap_amount: u64,
 ) -> Result<()> {
-    token::approve(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info().clone(),
-            Approve {
-                to: ctx.accounts.vault_token_a_account.to_account_info().clone(),
-                delegate: ctx.accounts.vault.to_account_info().clone(),
-                authority: ctx.accounts.swap_authority.to_account_info().clone(),
-            },
-        ),
-        swap_amount,
-    )?;
+    msg!("Starting CPI flow");
+
+    // token::approve(
+    //     CpiContext::new_with_signer(
+    //         token_program.to_account_info().clone(),
+    //         Approve {
+    //             to: vault_token_a_account.to_account_info().clone(),
+    //             authority: vault.to_account_info().clone(),
+    //             delegate: swap_authority_account_info.to_account_info().clone(),
+    //         },
+    //         &[sign!(vault)]
+    //     ),
+    //     swap_amount,
+    // )?;
+    //
+    // msg!("Approved token transfer");
 
     // Get swap's token A balance = X
     // Get swap's token B balance = Y
@@ -273,15 +316,15 @@ fn swap_tokens<'info>(
     let min_amount_out = get_minimum_out(swap_amount);
 
     let ix = spl_token_swap::instruction::swap(
-        &ctx.accounts.token_swap_program.key(),
-        &ctx.accounts.token_program.key(),
-        &ctx.accounts.swap.key(),
-        &ctx.accounts.swap_authority.key(),
-        &ctx.accounts.swap_authority.key(),
-        &ctx.accounts.vault_token_a_account.key(),
+        &token_swap_program.key(),
+        &token_program.key(),
+        &swap_account_info.key(),
+        &swap_authority_account_info.key(),
+        &vault.key(),
+        &vault_token_a_account.key(),
         swap.token_a_account(),
         swap.token_b_account(),
-        &ctx.accounts.vault_token_b_account.key(),
+        &vault_token_b_account.key(),
         swap.pool_mint(),
         swap.pool_fee_account(),
         None,
@@ -290,8 +333,6 @@ fn swap_tokens<'info>(
             minimum_amount_out: min_amount_out,
         },
     )?;
-
-    let vault = &mut ctx.accounts.vault;
 
     //   The order in which swap accepts the accounts. (Adding it for now to refer/review easily)
     //
@@ -310,20 +351,23 @@ fn swap_tokens<'info>(
     solana_program::program::invoke_signed(
         &ix,
         &[
-            ctx.accounts.token_swap_program.clone(),
-            ctx.accounts.swap_authority.clone(),
-            ctx.accounts.swap.clone(),
-            ctx.accounts.vault_token_a_account.to_account_info().clone(),
-            ctx.accounts.swap_token_a_account.to_account_info().clone(),
-            ctx.accounts.swap_token_b_account.to_account_info().clone(),
-            ctx.accounts.vault_token_b_account.to_account_info().clone(),
-            ctx.accounts.swap_token_mint.to_account_info().clone(),
-            ctx.accounts.swap_fee_account.to_account_info().clone(),
-            ctx.accounts.token_program.to_account_info().clone(),
+            swap_account_info.clone(),
+            swap_authority_account_info.clone(),
+            vault.to_account_info().clone(),
+            vault_token_a_account.to_account_info().clone(),
+            swap_token_a_account.to_account_info().clone(),
+            swap_token_b_account.to_account_info().clone(),
+            vault_token_b_account.to_account_info().clone(),
+            swap_token_mint.to_account_info().clone(),
+            swap_fee_account.to_account_info().clone(),
+            token_program.to_account_info().clone(),
         ],
         &[sign!(vault)],
-    )
-    .map_err(Into::into)
+    )?;
+
+    msg!("Completed Swap");
+
+    Ok(())
 }
 
 // TODO (matcha) Do the math
