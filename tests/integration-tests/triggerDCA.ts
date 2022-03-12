@@ -178,7 +178,9 @@ export function testTriggerDCA() {
 
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
     vaultAfter.dcaActivationTimestamp.should.be.greaterThan(startTime);
-    vaultTokenA_ATA_After.balance.toString().should.not.equal(depositAmount.toString());
+    vaultTokenA_ATA_After.balance
+      .toString()
+      .should.not.equal(depositAmount.toString());
     vaultTokenB_ATA_After.balance.toString().should.equal("0");
     // TODO(Mocha): check the actual twap value matches our expected value
     // lastVaultPeriod.twap.should.not.equal("0");
