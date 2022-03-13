@@ -270,12 +270,16 @@ export function testWithdrawB() {
     }
     let [i, j] = [0, 2];
     await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-
-    const [userTokenBAccount_After] = await Promise.all([
+    let [userTokenBAccount_After] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
     ]);
-    userTokenBAccount_After.balance.toString().should.equal("498251432");
+    userTokenBAccount_After.balance.toString().should.equal("496765235");
+    await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
+    [userTokenBAccount_After] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+    ]);
+    userTokenBAccount_After.balance.toString().should.equal("496765235");
   });
 }
