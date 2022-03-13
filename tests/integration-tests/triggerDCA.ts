@@ -158,23 +158,15 @@ export function testTriggerDCA() {
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[1].publicKey),
     ]);
-    console.log("vaultTokenA_ATA_After:", vaultTokenA_ATA_After);
-    console.log("vaultTokenB_ATA_After:", vaultTokenB_ATA_After);
-    console.log("vaultAfter:", vaultAfter);
-    console.log("vaultAfter Drip:", vaultAfter.dripAmount.toString());
-    console.log("lastVaultPeriod:", lastVaultPeriod);
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
       tokenA
     );
 
-    // received b 249187889
-    // vault drip 250000000
-
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
     // TODO: Test this in a better way
-    vaultAfter.dcaActivationTimestamp.gt(new BN(startTime)).should.be.true();
+    vaultAfter.dcaActivationTimestamp.gtn(startTime).should.be.true();
     vaultTokenA_ATA_After.balance
       .toString()
       .should.not.equal(depositAmount.toString());
