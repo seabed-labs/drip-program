@@ -112,6 +112,7 @@ pub struct WithdrawB<'info> {
     pub vault_token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
+        mut,
         constraint = {
             user_token_b_account.mint == vault.token_b_mint &&
             user_token_b_account.owner == withdrawer.key() &&
@@ -167,7 +168,7 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     /* MANUAL CPI (INTERACTIONS) */
 
     // 6. Invoke the token transfer IX
-    token_transfer.execute(&mut ctx.accounts.vault)?;
+    token_transfer.execute(&ctx.accounts.vault)?;
 
     Ok(())
 }

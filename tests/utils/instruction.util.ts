@@ -86,7 +86,7 @@ export const depositToVault = async (
   vault: PublicKey,
   vaultPeriodEnd: PublicKey,
   userTokenAAccount: PublicKey
-): Promise<void> => {
+): Promise<PublicKey[]> => {
   await tokenA.approve(
     userTokenAAccount,
     vault,
@@ -124,6 +124,12 @@ export const depositToVault = async (
       userPositionNftMint,
     },
   });
+
+  return [
+    userPositionNftMint.publicKey,
+    positionPDA.publicKey,
+    userPositionNftAccount,
+  ];
 };
 
 export const deploySwap = async (
@@ -218,6 +224,34 @@ export const triggerDCAWrapper = (
       swapFeeAccount,
       swapAuthority,
       swap
+    );
+  };
+};
+
+export const withdrawBWrapper = (
+  user: Keypair,
+  vault: PublicKey,
+  positionAccount: PublicKey,
+  userPostionNFTAccount: PublicKey,
+  userPositionNFTMint: PublicKey,
+  vaultTokenA: PublicKey,
+  vaultTokenB: PublicKey,
+  tokenBMint: PublicKey,
+  userTokenBAccount: PublicKey
+) => {
+  return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
+    await VaultUtil.withdrawB(
+      user,
+      vault,
+      positionAccount,
+      userPostionNFTAccount,
+      userPositionNFTMint,
+      vaultTokenA,
+      vaultTokenB,
+      vaultPeriodI,
+      vaultPeriodJ,
+      tokenBMint,
+      userTokenBAccount
     );
   };
 };

@@ -193,4 +193,42 @@ export class VaultUtil extends TestUtil {
       signers: [user],
     });
   }
+
+  static async withdrawB(
+    withdrawer: Keypair | Signer,
+    vault: PublicKey,
+    userPosition: PublicKey,
+    userPositionNftAccount: PublicKey,
+    userPositionNftMint: PublicKey,
+    vaultTokenAAccount: PublicKey,
+    vaultTokenBAccount: PublicKey,
+    vaultPeriodI: PublicKey,
+    vaultPeriodJ: PublicKey,
+    tokenBMint: PublicKey,
+    userTokenBAccount: PublicKey
+  ): Promise<void> {
+    const accounts = {
+      withdrawer: withdrawer.publicKey.toBase58(),
+      vault: vault.toBase58(),
+      vaultPeriodI: vaultPeriodI.toBase58(),
+      vaultPeriodJ: vaultPeriodJ.toBase58(),
+      userPosition: userPosition.toBase58(),
+      userPositionNftAccount: userPositionNftAccount.toBase58(),
+      userPositionNftMint: userPositionNftMint.toBase58(),
+      vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+      vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      vaultTokenBMint: tokenBMint.toBase58(),
+      userTokenBAccount: userTokenBAccount.toBase58(),
+      tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+      associatedTokenProgram:
+        ProgramUtil.associatedTokenProgram.programId.toBase58(),
+      // systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+      // rent: ProgramUtil.rentProgram.programId.toBase58(),
+    };
+
+    await ProgramUtil.vaultProgram.rpc.withdrawB({
+      accounts: accounts,
+      signers: [withdrawer],
+    });
+  }
 }
