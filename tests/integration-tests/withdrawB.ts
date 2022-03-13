@@ -32,7 +32,7 @@ export function testWithdrawB() {
   let userTokenBAccount: PublicKey;
 
   let userPositionNFTMint;
-  let positionAccount;
+  let userPositionAccount;
   let userPostionNFTAccount;
 
   let tokenA: Token;
@@ -137,7 +137,7 @@ export function testWithdrawB() {
       amount(1, Denom.Thousand),
       tokenA
     );
-    [userPositionNFTMint, positionAccount, userPostionNFTAccount] =
+    [userPositionNFTMint, userPositionAccount, userPostionNFTAccount] =
       await depositToVault(
         user,
         tokenA,
@@ -167,7 +167,7 @@ export function testWithdrawB() {
     withdrawB = withdrawBWrapper(
       user,
       vaultPDA.publicKey,
-      positionAccount,
+      userPositionAccount,
       userPostionNFTAccount,
       userPositionNFTMint,
       vaultTokenA_ATA,
@@ -264,7 +264,7 @@ export function testWithdrawB() {
     const [userTokenBAccount_Before, userPositionAccount_Before] =
       await Promise.all([
         TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        AccountUtil.fetchPositionAccount(positionAccount),
+        AccountUtil.fetchPositionAccount(userPositionAccount),
       ]);
     userTokenBAccount_Before.balance.toString().should.equal("0");
     userPositionAccount_Before.withdrawnTokenBAmount
@@ -274,7 +274,7 @@ export function testWithdrawB() {
     let [userTokenBAccount_After, userPositionAccount_After] =
       await Promise.all([
         TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        AccountUtil.fetchPositionAccount(positionAccount),
+        AccountUtil.fetchPositionAccount(userPositionAccount),
       ]);
     userTokenBAccount_After.balance.toString().should.equal("496765235");
     userPositionAccount_After.withdrawnTokenBAmount
