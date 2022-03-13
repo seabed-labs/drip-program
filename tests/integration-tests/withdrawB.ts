@@ -20,7 +20,6 @@ import {
 } from "../utils/instruction.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { VaultUtil } from "../utils/Vault.util";
 import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../utils/Account.util";
 
@@ -178,14 +177,6 @@ export function testWithdrawB() {
     );
   });
 
-  it("should not be able to withdraw when withdrawable amount is 0", async () => {
-    let [i, j] = [0, 0];
-    await withdrawB(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey
-    ).should.rejectedWith(new RegExp(".*Withdrawable amount is zero"));
-  });
-
   it("should be able to withdraw in the middle of the DCA", async () => {
     const [userTokenBAccount_Before] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
@@ -238,33 +229,33 @@ export function testWithdrawB() {
     vaultTokenB_ATA_After.balance.lt(new BN(10)).should.be.true();
   });
 
-  it("should not be able to withdraw twice in the same period", async () => {
-    {
-      const user2 = generatePair();
-      await SolUtils.fundAccount(user2.publicKey, 1000000000);
-      const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
-        user2.publicKey
-      );
-      const user2MintAmount = await TokenUtil.scaleAmount(
-        amount(3, Denom.Thousand),
-        tokenA
-      );
-      await tokenA.mintTo(
-        user2TokenAAccount,
-        tokenOwnerKeypair,
-        [],
-        user2MintAmount
-      );
-      await depositToVault(
-        user2,
-        tokenA,
-        user2MintAmount,
-        new u64(2),
-        vaultPDA.publicKey,
-        vaultPeriods[2].publicKey,
-        user2TokenAAccount
-      );
+  it("should be able to withdraw in the middle of the DCA and at the end", async () => {
+    for (let i = 0; i < 2; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
     }
+    await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[2].publicKey);
+    let [userTokenBAccount_After] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+    ]);
+    userTokenBAccount_After.balance.toString().should.equal("498251432");
+    for (let i = 2; i < 4; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+    await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[4].publicKey);
+    [userTokenBAccount_After] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+    ]);
+    userTokenBAccount_After.balance.toString().should.equal("996005859");
+  });
+
+  it("should not be able to withdraw twice in the same period", async () => {
+    await depositWithNewUser({
+      mintAmount: 3,
+      dcaCycles: 2,
+      newUserEndVaultPeriod: vaultPeriods[2].publicKey,
+    });
     for (let i = 0; i < 2; i++) {
       await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
       await sleep(1500);
@@ -295,4 +286,48 @@ export function testWithdrawB() {
       vaultPeriods[j].publicKey
     ).should.be.rejectedWith(new RegExp("Withdrawable amount is zero"));
   });
+
+  it("should not be able to withdraw when withdrawable amount is 0", async () => {
+    let [i, j] = [0, 0];
+    await withdrawB(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey
+    ).should.rejectedWith(new RegExp(".*Withdrawable amount is zero"));
+  });
+
+  // TODO(Mocha): Move this function if we need it in more places
+  const depositWithNewUser = async ({
+    dcaCycles,
+    newUserEndVaultPeriod,
+    mintAmount,
+  }: {
+    dcaCycles: number;
+    newUserEndVaultPeriod: PublicKey;
+    mintAmount: number;
+  }) => {
+    const user2 = generatePair();
+    await SolUtils.fundAccount(user2.publicKey, 1000000000);
+    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
+      user2.publicKey
+    );
+    const user2MintAmount = await TokenUtil.scaleAmount(
+      amount(mintAmount, Denom.Thousand),
+      tokenA
+    );
+    await tokenA.mintTo(
+      user2TokenAAccount,
+      tokenOwnerKeypair,
+      [],
+      user2MintAmount
+    );
+    await depositToVault(
+      user2,
+      tokenA,
+      user2MintAmount,
+      new u64(dcaCycles),
+      vaultPDA.publicKey,
+      newUserEndVaultPeriod,
+      user2TokenAAccount
+    );
+  };
 }
