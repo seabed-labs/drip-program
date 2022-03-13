@@ -67,9 +67,7 @@ export class AccountUtil extends TestUtil {
     pubkey: web3.PublicKey
   ): Promise<
     Pick<
-      AsyncReturnType<
-        typeof ProgramUtil.vaultProgram.account.vaultPeriod.fetch
-      >,
+      AsyncReturnType<typeof ProgramUtil.vaultProgram.account.position.fetch>,
       | "positionAuthority"
       | "depositedTokenAAmount"
       | "withdrawnTokenBAmount"

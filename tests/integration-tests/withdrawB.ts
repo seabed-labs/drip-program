@@ -22,6 +22,7 @@ import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { VaultUtil } from "../utils/Vault.util";
 import { BN } from "@project-serum/anchor";
+import { AccountUtil } from "../utils/Account.util";
 
 export function testWithdrawB() {
   let tokenOwnerKeypair;
@@ -237,7 +238,7 @@ export function testWithdrawB() {
     vaultTokenB_ATA_After.balance.lt(new BN(10)).should.be.true();
   });
 
-  it.only("should not be able to withdraw twice in the same period", async () => {
+  it("should not be able to withdraw twice in the same period", async () => {
     {
       const user2 = generatePair();
       await SolUtils.fundAccount(user2.publicKey, 1000000000);
@@ -269,17 +270,29 @@ export function testWithdrawB() {
       await sleep(1500);
     }
     let [i, j] = [0, 2];
+    const [userTokenBAccount_Before, userPositionAccount_Before] =
+      await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+        AccountUtil.fetchPositionAccount(positionAccount),
+      ]);
+    userTokenBAccount_Before.balance.toString().should.equal("0");
+    userPositionAccount_Before.withdrawnTokenBAmount
+      .toString()
+      .should.equal("0");
     await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    let [userTokenBAccount_After] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-    ]);
+    let [userTokenBAccount_After, userPositionAccount_After] =
+      await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+        AccountUtil.fetchPositionAccount(positionAccount),
+      ]);
     userTokenBAccount_After.balance.toString().should.equal("496765235");
-    await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    [userTokenBAccount_After] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-    ]);
-    userTokenBAccount_After.balance.toString().should.equal("496765235");
+    userPositionAccount_After.withdrawnTokenBAmount
+      .toString()
+      .should.equal("496765235");
+
+    await withdrawB(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey
+    ).should.be.rejectedWith(new RegExp("Withdrawable amount is zero"));
   });
 }

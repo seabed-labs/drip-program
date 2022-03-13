@@ -58,6 +58,7 @@ pub struct WithdrawB<'info> {
     // passed in here to steal funds that do not belong to them by faking accounts
     // Pre-requisite to ^: Ensure that users can't pass in a constructed PDA
     #[account(
+        mut,
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
@@ -162,8 +163,9 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     /* STATE UPDATES (EFFECTS) */
 
     // 5. Update the user's position state to reflect the newly withdrawn amount
-    let user_position_mut = &mut ctx.accounts.user_position;
-    user_position_mut.update_withdrawn_amount(withdrawable_amount);
+    ctx.accounts
+        .user_position
+        .update_withdrawn_amount(withdrawable_amount);
 
     /* MANUAL CPI (INTERACTIONS) */
 

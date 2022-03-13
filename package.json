@@ -20,9 +20,16 @@
     "prepare": "husky install",
     "posinstall": "yarn build",
     "format": "cargo fmt && yarn run prettier --w .",
-    "test:unit": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN cargo test",
-    "test": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN cargo test && SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor test",
-    "test-with-log": "LOG=true yarn test",
+    "test:unit:raw": "cargo test",
+    "test:integration:raw": "anchor test",
+    "test:integration:detach:raw": "anchor test --detach",
+    "test:unit": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:unit:raw",
+    "test:integration": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:integration:raw",
+    "test:integration:detach": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:integration:detach:raw",
+    "test": "yarn test:unit && yarn test:integration",
+    "test:log": "LOG=true yarn test",
+    "test:detach": "yarn test:unit && yarn test:integration:detach",
+    "test:detach:log": "LOG=true yarn test:detach",
     "build": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build"
   }
 }
