@@ -1,6 +1,11 @@
 import { TestUtil } from "./config";
 import { ProgramUtil } from "./Program.util";
-import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  Signer,
+  TransactionSignature,
+} from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
 
@@ -34,8 +39,8 @@ export class VaultUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfig
-  ): Promise<void> {
-    await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
+  ): Promise<TransactionSignature> {
+    return await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
       {
         granularity: new u64(vaultProtoConfig.granularity),
       },
@@ -63,7 +68,7 @@ export class VaultUtil extends TestUtil {
       associatedTokenProgram?: PublicKey;
       rent?: PublicKey;
     }
-  ): Promise<void> {
+  ): Promise<TransactionSignature> {
     const accounts = {
       vault: vaultPubkey.toString(),
       vaultProtoConfig: vaultProtoConfigAccount.toString(),
@@ -85,7 +90,7 @@ export class VaultUtil extends TestUtil {
         programs?.rent?.toString() ??
         ProgramUtil.rentProgram.programId.toString(),
     };
-    await ProgramUtil.vaultProgram.rpc.initVault({
+    return await ProgramUtil.vaultProgram.rpc.initVault({
       accounts: accounts,
     });
   }
@@ -97,7 +102,7 @@ export class VaultUtil extends TestUtil {
     tokenAMint: PublicKey,
     tokenBMint: PublicKey,
     periodId: number
-  ): Promise<void> {
+  ): Promise<TransactionSignature> {
     const accounts = {
       vault: vault.toString(),
       vaultPeriod: vaultPeriod.toString(),
@@ -108,7 +113,7 @@ export class VaultUtil extends TestUtil {
       systemProgram: ProgramUtil.systemProgram.programId.toString(),
     };
 
-    await ProgramUtil.vaultProgram.rpc.initVaultPeriod(
+    return await ProgramUtil.vaultProgram.rpc.initVaultPeriod(
       {
         periodId: new u64(periodId),
       },
@@ -118,8 +123,8 @@ export class VaultUtil extends TestUtil {
     );
   }
 
-  static async deposit(input: DepositTxParams): Promise<void> {
-    await ProgramUtil.vaultProgram.rpc.deposit(
+  static async deposit(input: DepositTxParams): Promise<TransactionSignature> {
+    return await ProgramUtil.vaultProgram.rpc.deposit(
       {
         tokenADepositAmount: input.params.tokenADepositAmount,
         dcaCycles: input.params.dcaCycles,
@@ -163,7 +168,7 @@ export class VaultUtil extends TestUtil {
     swapFeeAccount: PublicKey,
     swapAuthority: PublicKey,
     swap: PublicKey
-  ): Promise<void> {
+  ): Promise<TransactionSignature> {
     const accounts = {
       dcaTriggerSource: user.publicKey.toBase58(),
       vault: vault.toBase58(),
@@ -188,7 +193,7 @@ export class VaultUtil extends TestUtil {
       rent: ProgramUtil.rentProgram.programId.toBase58(),
     };
 
-    await ProgramUtil.vaultProgram.rpc.triggerDca({
+    return await ProgramUtil.vaultProgram.rpc.triggerDca({
       accounts: accounts,
       signers: [user],
     });
@@ -206,7 +211,7 @@ export class VaultUtil extends TestUtil {
     vaultPeriodJ: PublicKey,
     tokenBMint: PublicKey,
     userTokenBAccount: PublicKey
-  ): Promise<void> {
+  ): Promise<TransactionSignature> {
     const accounts = {
       withdrawer: withdrawer.publicKey.toBase58(),
       vault: vault.toBase58(),
@@ -222,11 +227,9 @@ export class VaultUtil extends TestUtil {
       tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
       associatedTokenProgram:
         ProgramUtil.associatedTokenProgram.programId.toBase58(),
-      // systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-      // rent: ProgramUtil.rentProgram.programId.toBase58(),
     };
 
-    await ProgramUtil.vaultProgram.rpc.withdrawB({
+    return await ProgramUtil.vaultProgram.rpc.withdrawB({
       accounts: accounts,
       signers: [withdrawer],
     });
