@@ -195,6 +195,11 @@ pub struct TriggerDCA<'info> {
 pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
+    // TODO(Mocha): We could do this check as an eDSL constraint with custom error
+    if ctx.accounts.vault_token_a_account.amount == 0 {
+        return Err(ErrorCode::PeriodicDripAmountIsZero.into());
+    }
+
     let swap_account_info = &ctx.accounts.swap;
     let swap = SwapVersion::unpack(&swap_account_info.data.deref().borrow())?;
 
@@ -218,9 +223,13 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 
     /* STATE UPDATES (EFFECTS) */
 
+    let current_balance_a = ctx.accounts.vault_token_a_account.amount;
+    msg!("vault a balance: {}", current_balance_a);
+
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
+    msg!("vault b balance: {}", current_balance_b);
     // Save sent_a since drip_amount is going to change
-    let sent_a = ctx.accounts.vault.drip_amount;
+    let swap_amount = ctx.accounts.vault.drip_amount;
 
     let vault = &mut ctx.accounts.vault;
     vault.process_drip(
@@ -229,7 +238,6 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     );
 
     /* MANUAL CPI (INTERACTIONS) */
-    let swap_amount = ctx.accounts.vault.drip_amount;
     swap_tokens(
         &ctx.accounts.token_program,
         &ctx.accounts.token_swap_program,
@@ -246,8 +254,15 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
+    ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
+
+    let new_balance_a = ctx.accounts.vault_token_a_account.amount;
+    msg!("new vault a balance: {}", new_balance_a);
+
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
+    msg!("new vault b balance: {}", new_balance_b);
+
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
     let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
 
@@ -257,7 +272,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     }
 
     let current_period_mut = &mut ctx.accounts.current_vault_period;
-    current_period_mut.update_twap(&ctx.accounts.last_vault_period, sent_a, received_b);
+    current_period_mut.update_twap(&ctx.accounts.last_vault_period, swap_amount, received_b);
 
     Ok(())
 }

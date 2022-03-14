@@ -17,6 +17,12 @@ import { SolUtils } from "./SolUtils";
 import { SwapUtil } from "./Swap.util";
 import { Token, u64 } from "@solana/spl-token";
 
+export const sleep = async (ms: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
 export const deployVaultProtoConfig = async (
   granularity: number
 ): Promise<PublicKey> => {
@@ -72,6 +78,48 @@ export const deployVaultPeriod = async (
   return vaultPeriodPDA;
 };
 
+// TODO(Mocha): might be useful to return the new user
+export const depositWithNewUserWrapper = (
+  vault: PublicKey,
+  tokenOwnerKeypair: Keypair,
+  tokenA: Token
+) => {
+  return async ({
+    dcaCycles,
+    newUserEndVaultPeriod,
+    mintAmount,
+  }: {
+    dcaCycles: number;
+    newUserEndVaultPeriod: PublicKey;
+    mintAmount: number;
+  }) => {
+    const user2 = generatePair();
+    await SolUtils.fundAccount(user2.publicKey, 1000000000);
+    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
+      user2.publicKey
+    );
+    const user2MintAmount = await TokenUtil.scaleAmount(
+      amount(mintAmount, Denom.Thousand),
+      tokenA
+    );
+    await tokenA.mintTo(
+      user2TokenAAccount,
+      tokenOwnerKeypair,
+      [],
+      user2MintAmount
+    );
+    await depositToVault(
+      user2,
+      tokenA,
+      user2MintAmount,
+      new u64(dcaCycles),
+      vault,
+      newUserEndVaultPeriod,
+      user2TokenAAccount
+    );
+  };
+};
+
 export const depositToVault = async (
   user: Keypair,
   tokenA: Token,
@@ -80,7 +128,7 @@ export const depositToVault = async (
   vault: PublicKey,
   vaultPeriodEnd: PublicKey,
   userTokenAAccount: PublicKey
-): Promise<void> => {
+): Promise<PublicKey[]> => {
   await tokenA.approve(
     userTokenAAccount,
     vault,
@@ -118,6 +166,12 @@ export const depositToVault = async (
       userPositionNftMint,
     },
   });
+
+  return [
+    userPositionNftMint.publicKey,
+    positionPDA.publicKey,
+    userPositionNftAccount,
+  ];
 };
 
 export const deploySwap = async (
@@ -178,4 +232,111 @@ export const deploySwap = async (
     swapLPTokenFeeAccount,
     swapAuthorityPDA.publicKey,
   ];
+};
+
+export const triggerDCAWrapper = (
+  user: Keypair,
+  vault: PublicKey,
+  vaultProtoConfig: PublicKey,
+  vaultTokenA_ATA: PublicKey,
+  vaultTokenB_ATA,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey,
+  swapTokenMint: PublicKey,
+  swapTokenAAccount: PublicKey,
+  swapTokenBAccount: PublicKey,
+  swapFeeAccount: PublicKey,
+  swapAuthority: PublicKey,
+  swap: PublicKey
+) => {
+  return async (previousDCAPeriod: PublicKey, currentDCAPeriod: PublicKey) => {
+    await VaultUtil.triggerDCA(
+      user,
+      vault,
+      vaultProtoConfig,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      previousDCAPeriod,
+      currentDCAPeriod,
+      tokenAMint,
+      tokenBMint,
+      swapTokenMint,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      swapFeeAccount,
+      swapAuthority,
+      swap
+    );
+  };
+};
+
+export const withdrawBWrapper = (
+  user: Keypair,
+  vault: PublicKey,
+  positionAccount: PublicKey,
+  userPostionNFTAccount: PublicKey,
+  userPositionNFTMint: PublicKey,
+  vaultTokenA: PublicKey,
+  vaultTokenB: PublicKey,
+  tokenBMint: PublicKey,
+  userTokenBAccount: PublicKey
+) => {
+  return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
+    await VaultUtil.withdrawB(
+      user,
+      vault,
+      positionAccount,
+      userPostionNFTAccount,
+      userPositionNFTMint,
+      vaultTokenA,
+      vaultTokenB,
+      vaultPeriodI,
+      vaultPeriodJ,
+      tokenBMint,
+      userTokenBAccount
+    );
+  };
+};
+
+export const closePositionWrapper = (
+  withdrawer: Keypair,
+  vault: PublicKey,
+  userPosition: PublicKey,
+
+  vaultTokenAAccount: PublicKey,
+  vaultTokenBAccount: PublicKey,
+  userTokenAAccount: PublicKey,
+  userTokenBAccount: PublicKey,
+
+  userPositionNftAccount: PublicKey,
+
+  userPositionNftMint: PublicKey,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey
+) => {
+  return async (
+    vaultPeriodI: PublicKey,
+    vaultPeriodJ: PublicKey,
+    vaultPeriodUserExpiry: PublicKey
+  ) => {
+    await VaultUtil.closePosition(
+      withdrawer,
+      vault,
+      userPosition,
+      vaultPeriodI,
+      vaultPeriodJ,
+      vaultPeriodUserExpiry,
+
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      userTokenAAccount,
+      userTokenBAccount,
+
+      userPositionNftAccount,
+
+      userPositionNftMint,
+      tokenAMint,
+      tokenBMint
+    );
+  };
 };

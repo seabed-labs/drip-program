@@ -5,6 +5,7 @@ import { testDeposit } from "./integration-tests/deposit";
 import { testClosePosition } from "./integration-tests/closePosition";
 import { testTriggerDCA } from "./integration-tests/triggerDCA";
 import sinon from "sinon";
+import { testWithdrawB } from "./integration-tests/withdrawB";
 
 const DISABLE_LOGGING = !process.env.LOG;
 
@@ -21,6 +22,7 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVault", testInitVault);
   describe("#initVaultPeriod", testInitVaultPeriod);
   describe("#deposit", testDeposit);
+  describe("#withdrawB", testWithdrawB);
   describe("#closePosition", testClosePosition);
   describe("#triggerDCA", testTriggerDCA);
 });

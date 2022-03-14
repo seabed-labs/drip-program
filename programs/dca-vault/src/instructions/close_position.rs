@@ -140,6 +140,8 @@ pub struct ClosePosition<'info> {
 
     // Mints
     #[account(
+        // mut neeed because we are burning the users NFT
+        mut,
         constraint = {
             user_position_nft_mint.key() == user_position.position_authority &&
             user_position_nft_mint.supply == 1 &&

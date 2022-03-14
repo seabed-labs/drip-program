@@ -12,7 +12,6 @@ use spl_token::state::AccountState;
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
     #[account(
-        mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
             vault.token_a_mint.as_ref(),
@@ -58,6 +57,8 @@ pub struct WithdrawB<'info> {
     // passed in here to steal funds that do not belong to them by faking accounts
     // Pre-requisite to ^: Ensure that users can't pass in a constructed PDA
     #[account(
+        // mut needed because we are updating withdrawn amount
+        mut,
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
@@ -96,6 +97,7 @@ pub struct WithdrawB<'info> {
     // TODO(matcha): Make sure this actually verifies that its an ATA
     // TODO(matcha): ALSO, make sure that this ATA verification happens in other places where an ATA is passed in
     #[account(
+        // mut needed because we are changing the balance
         mut,
         associated_token::mint = vault_token_b_mint,
         associated_token::authority = vault,
@@ -112,6 +114,8 @@ pub struct WithdrawB<'info> {
     pub vault_token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
+        // mut needed because we are changing the balance
+        mut,
         constraint = {
             user_token_b_account.mint == vault.token_b_mint &&
             user_token_b_account.owner == withdrawer.key() &&
@@ -161,13 +165,14 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     /* STATE UPDATES (EFFECTS) */
 
     // 5. Update the user's position state to reflect the newly withdrawn amount
-    let user_position_mut = &mut ctx.accounts.user_position;
-    user_position_mut.update_withdrawn_amount(withdrawable_amount);
+    ctx.accounts
+        .user_position
+        .update_withdrawn_amount(withdrawable_amount);
 
     /* MANUAL CPI (INTERACTIONS) */
 
     // 6. Invoke the token transfer IX
-    token_transfer.execute(&mut ctx.accounts.vault)?;
+    token_transfer.execute(&ctx.accounts.vault)?;
 
     Ok(())
 }
