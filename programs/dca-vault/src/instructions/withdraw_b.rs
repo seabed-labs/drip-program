@@ -12,7 +12,6 @@ use spl_token::state::AccountState;
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
     #[account(
-        mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
             vault.token_a_mint.as_ref(),
@@ -58,6 +57,7 @@ pub struct WithdrawB<'info> {
     // passed in here to steal funds that do not belong to them by faking accounts
     // Pre-requisite to ^: Ensure that users can't pass in a constructed PDA
     #[account(
+        // mut needed because we are updating withdrawn amount
         mut,
         has_one = vault,
         seeds = [
@@ -97,6 +97,7 @@ pub struct WithdrawB<'info> {
     // TODO(matcha): Make sure this actually verifies that its an ATA
     // TODO(matcha): ALSO, make sure that this ATA verification happens in other places where an ATA is passed in
     #[account(
+        // mut needed because we are changing the balance
         mut,
         associated_token::mint = vault_token_b_mint,
         associated_token::authority = vault,
@@ -113,6 +114,7 @@ pub struct WithdrawB<'info> {
     pub vault_token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
+        // mut needed because we are changing the balance
         mut,
         constraint = {
             user_token_b_account.mint == vault.token_b_mint &&

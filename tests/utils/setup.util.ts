@@ -84,11 +84,15 @@ export const depositWithNewUserWrapper = (
   tokenOwnerKeypair: Keypair,
   tokenA: Token
 ) => {
-  return async (
-    dcaCycles: number,
-    newUserEndVaultPeriod: PublicKey,
-    mintAmount: number
-  ) => {
+  return async ({
+    dcaCycles,
+    newUserEndVaultPeriod,
+    mintAmount,
+  }: {
+    dcaCycles: number;
+    newUserEndVaultPeriod: PublicKey;
+    mintAmount: number;
+  }) => {
     const user2 = generatePair();
     await SolUtils.fundAccount(user2.publicKey, 1000000000);
     const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(

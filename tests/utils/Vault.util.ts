@@ -40,16 +40,19 @@ export class VaultUtil extends TestUtil {
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfig
   ): Promise<TransactionSignature> {
+    const accounts = {
+      vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),
+      creator: this.provider.wallet.publicKey.toString(),
+      systemProgram: ProgramUtil.systemProgram.programId.toString(),
+    };
+
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
       {
         granularity: new u64(vaultProtoConfig.granularity),
       },
       {
-        accounts: {
-          vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),
-          creator: this.provider.wallet.publicKey.toString(),
-          systemProgram: ProgramUtil.systemProgram.programId.toString(),
-        },
+        accounts,
         signers: [vaultProtoConfigKeypair],
       }
     );
@@ -70,26 +73,28 @@ export class VaultUtil extends TestUtil {
     }
   ): Promise<TransactionSignature> {
     const accounts = {
-      vault: vaultPubkey.toString(),
-      vaultProtoConfig: vaultProtoConfigAccount.toString(),
-      tokenAMint: tokenAMint.toString(),
-      tokenBMint: tokenBMint.toString(),
-      tokenAAccount: tokenA_ATA.toString(),
-      tokenBAccount: tokenB_ATA.toString(),
-      creator: this.provider.wallet.publicKey.toString(),
+      vault: vaultPubkey.toBase58(),
+      vaultProtoConfig: vaultProtoConfigAccount.toBase58(),
+      tokenAMint: tokenAMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      tokenAAccount: tokenA_ATA.toBase58(),
+      tokenBAccount: tokenB_ATA.toBase58(),
+      creator: this.provider.wallet.publicKey.toBase58(),
       systemProgram:
-        programs?.systemProgram?.toString() ??
-        ProgramUtil.systemProgram.programId.toString(),
+        programs?.systemProgram?.toBase58() ??
+        ProgramUtil.systemProgram.programId.toBase58(),
       tokenProgram:
-        programs?.tokenProgram?.toString() ??
-        ProgramUtil.tokenProgram.programId.toString(),
+        programs?.tokenProgram?.toBase58() ??
+        ProgramUtil.tokenProgram.programId.toBase58(),
       associatedTokenProgram:
-        programs?.associatedTokenProgram?.toString() ??
-        ProgramUtil.associatedTokenProgram.programId.toString(),
+        programs?.associatedTokenProgram?.toBase58() ??
+        ProgramUtil.associatedTokenProgram.programId.toBase58(),
       rent:
-        programs?.rent?.toString() ??
-        ProgramUtil.rentProgram.programId.toString(),
+        programs?.rent?.toBase58() ??
+        ProgramUtil.rentProgram.programId.toBase58(),
     };
+
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.initVault({
       accounts: accounts,
     });
@@ -104,49 +109,52 @@ export class VaultUtil extends TestUtil {
     periodId: number
   ): Promise<TransactionSignature> {
     const accounts = {
-      vault: vault.toString(),
-      vaultPeriod: vaultPeriod.toString(),
-      vaultProtoConfig: vaultProtoConfig.toString(),
-      tokenAMint: tokenAMint.toString(),
-      tokenBMint: tokenBMint.toString(),
-      creator: this.provider.wallet.publicKey.toString(),
-      systemProgram: ProgramUtil.systemProgram.programId.toString(),
+      vault: vault.toBase58(),
+      vaultPeriod: vaultPeriod.toBase58(),
+      vaultProtoConfig: vaultProtoConfig.toBase58(),
+      tokenAMint: tokenAMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      creator: this.provider.wallet.publicKey.toBase58(),
+      systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
     };
 
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.initVaultPeriod(
       {
         periodId: new u64(periodId),
       },
       {
-        accounts: accounts,
+        accounts,
       }
     );
   }
 
   static async deposit(input: DepositTxParams): Promise<TransactionSignature> {
+    const accounts = {
+      vault: input.accounts.vault.toBase58(),
+      vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
+      userPosition: input.accounts.userPosition.toBase58(),
+      tokenAMint: input.accounts.tokenAMint.toBase58(),
+      userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
+      vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
+      userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
+      userPositionNftAccount: input.accounts.userPositionNftAccount.toBase58(),
+      depositor: input.accounts.depositor.toBase58(),
+      tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+      associatedTokenProgram:
+        ProgramUtil.associatedTokenProgram.programId.toBase58(),
+      rent: ProgramUtil.rentProgram.programId.toBase58(),
+      systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+    };
+
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.deposit(
       {
         tokenADepositAmount: input.params.tokenADepositAmount,
         dcaCycles: input.params.dcaCycles,
       },
       {
-        accounts: {
-          vault: input.accounts.vault.toBase58(),
-          vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
-          userPosition: input.accounts.userPosition.toBase58(),
-          tokenAMint: input.accounts.tokenAMint.toBase58(),
-          userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
-          vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
-          userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
-          userPositionNftAccount:
-            input.accounts.userPositionNftAccount.toBase58(),
-          depositor: input.accounts.depositor.toBase58(),
-          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          rent: ProgramUtil.rentProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-        },
+        accounts,
         signers: [input.signers.depositor, input.signers.userPositionNftMint],
       }
     );
@@ -193,8 +201,9 @@ export class VaultUtil extends TestUtil {
       rent: ProgramUtil.rentProgram.programId.toBase58(),
     };
 
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.triggerDca({
-      accounts: accounts,
+      accounts,
       signers: [user],
     });
   }
@@ -229,6 +238,7 @@ export class VaultUtil extends TestUtil {
         ProgramUtil.associatedTokenProgram.programId.toBase58(),
     };
 
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.withdrawB({
       accounts: accounts,
       signers: [withdrawer],
@@ -277,9 +287,9 @@ export class VaultUtil extends TestUtil {
       systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
     };
 
-    console.log(JSON.stringify(accounts, undefined, 2));
+    // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.closePosition({
-      accounts: accounts,
+      accounts,
       signers: [withdrawer],
     });
   }
