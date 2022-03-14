@@ -24,16 +24,16 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
 
 export function testClosePosition() {
-  let tokenOwnerKeypair;
-  let payerKeypair;
+  let tokenOwnerKeypair: Keypair;
+  let payerKeypair: Keypair;
 
   let user: Keypair;
   let userTokenAAccount: PublicKey;
   let userTokenBAccount: PublicKey;
 
-  let userPositionNFTMint;
-  let userPositionAccount;
-  let userPositionNFTAccount;
+  let userPositionNFTMint: PublicKey;
+  let userPositionAccount: PublicKey;
+  let userPositionNFTAccount: PublicKey;
   let userPosition: Token;
 
   let tokenA: Token;

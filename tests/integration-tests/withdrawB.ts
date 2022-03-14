@@ -25,16 +25,16 @@ import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../utils/Account.util";
 
 export function testWithdrawB() {
-  let tokenOwnerKeypair;
-  let payerKeypair;
+  let tokenOwnerKeypair: Keypair;
+  let payerKeypair: Keypair;
 
   let user: Keypair;
   let userTokenAAccount: PublicKey;
   let userTokenBAccount: PublicKey;
 
-  let userPositionNFTMint;
-  let userPositionAccount;
-  let userPostionNFTAccount;
+  let userPositionNFTMint: PublicKey;
+  let userPositionAccount: PublicKey;
+  let userPostionNFTAccount: PublicKey;
 
   let tokenA: Token;
   let tokenB: Token;
