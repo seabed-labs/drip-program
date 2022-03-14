@@ -51,7 +51,7 @@ export function testWithdrawB() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
-  let trigerDCA;
+  let triggerDCA;
   let withdrawB;
   let depositWithNewUser;
 
@@ -150,7 +150,7 @@ export function testWithdrawB() {
         userTokenAAccount
       );
 
-    trigerDCA = triggerDCAWrapper(
+    triggerDCA = triggerDCAWrapper(
       user,
       vaultPDA.publicKey,
       vaultProtoConfig,
@@ -191,7 +191,10 @@ export function testWithdrawB() {
     ]);
 
     for (let i = 0; i < 2; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
 
@@ -217,7 +220,10 @@ export function testWithdrawB() {
     ]);
 
     for (let i = 0; i < 4; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
 
@@ -239,7 +245,10 @@ export function testWithdrawB() {
 
   it("should be able to withdraw in the middle of the DCA and at the end", async () => {
     for (let i = 0; i < 2; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[2].publicKey);
@@ -248,7 +257,10 @@ export function testWithdrawB() {
     ]);
     userTokenBAccount_After.balance.toString().should.equal("498251432");
     for (let i = 2; i < 4; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[4].publicKey);
@@ -265,7 +277,10 @@ export function testWithdrawB() {
       newUserEndVaultPeriod: vaultPeriods[2].publicKey,
     });
     for (let i = 0; i < 2; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     let [i, j] = [0, 2];

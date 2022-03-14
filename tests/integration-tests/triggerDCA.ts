@@ -39,7 +39,7 @@ export function testTriggerDCA() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
-  let trigerDCA;
+  let triggerDCA;
 
   beforeEach(async () => {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
@@ -131,7 +131,7 @@ export function testTriggerDCA() {
       userTokenAAccount
     );
 
-    trigerDCA = triggerDCAWrapper(
+    triggerDCA = triggerDCAWrapper(
       user,
       vaultPDA.publicKey,
       vaultProtoConfig,
@@ -149,7 +149,7 @@ export function testTriggerDCA() {
   });
 
   it("should trigger DCA twice with expected TWAP and Balance values", async () => {
-    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
 
     let [
       vaultTokenA_ATA_After,
@@ -170,7 +170,7 @@ export function testTriggerDCA() {
     lastVaultPeriod.twap.toString().should.equal("18386820858603774265");
 
     await sleep(1500);
-    await trigerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
 
     [
       vaultTokenA_ATA_After,
@@ -194,7 +194,10 @@ export function testTriggerDCA() {
 
   it("should trigger DCA dca_cyles number of times", async () => {
     for (let i = 0; i < 4; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
 
@@ -208,18 +211,21 @@ export function testTriggerDCA() {
 
   it("should fail to trigger DCA if vault token A balance is 0", async () => {
     for (let i = 0; i < 4; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
-    await trigerDCA(
+    await triggerDCA(
       vaultPeriods[4].publicKey,
       vaultPeriods[5].publicKey
     ).should.rejectedWith(new RegExp(".*Periodic drip amount == 0"));
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
-    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
-    await trigerDCA(
+    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await triggerDCA(
       vaultPeriods[1].publicKey,
       vaultPeriods[2].publicKey
     ).should.rejectedWith(

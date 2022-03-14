@@ -51,7 +51,7 @@ export function testClosePosition() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
-  let trigerDCA;
+  let triggerDCA;
   let closePosition;
   let depositWithNewUser;
 
@@ -152,7 +152,7 @@ export function testClosePosition() {
 
     userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
 
-    trigerDCA = triggerDCAWrapper(
+    triggerDCA = triggerDCAWrapper(
       user,
       vaultPDA.publicKey,
       vaultProtoConfig,
@@ -233,7 +233,10 @@ export function testClosePosition() {
 
   it("should be able to close position in the middle of the DCA", async () => {
     for (let i = 0; i < 2; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     await userPosition.approve(
@@ -277,7 +280,10 @@ export function testClosePosition() {
 
   it("should be able to close position at the end of the DCA", async () => {
     for (let i = 0; i < 4; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     await userPosition.approve(
@@ -326,7 +332,10 @@ export function testClosePosition() {
       newUserEndVaultPeriod: vaultPeriods[5].publicKey,
     });
     for (let i = 0; i < 5; i++) {
-      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await triggerDCA(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
       await sleep(1500);
     }
     await userPosition.approve(
@@ -363,7 +372,7 @@ export function testClosePosition() {
   });
 
   it("should fail if invalid vault periods are provided", async () => {
-    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     await sleep(1500);
     await userPosition.approve(
       userPositionNFTAccount,
@@ -385,7 +394,7 @@ export function testClosePosition() {
         vaultPeriods[k].publicKey
       ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
     }
-    await trigerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
     for (const [i, j, k] of testCases) {
       await closePosition(
         vaultPeriods[i].publicKey,
