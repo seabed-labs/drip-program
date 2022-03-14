@@ -17,11 +17,9 @@ import {
   depositToVault,
   sleep,
   triggerDCAWrapper,
-  withdrawBWrapper,
 } from "../utils/instruction.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../utils/Account.util";
 
 export function testClosePosition() {
@@ -54,7 +52,6 @@ export function testClosePosition() {
 
   let trigerDCA;
   let closePosition;
-  // let withdrawB;
 
   beforeEach(async () => {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
@@ -187,7 +184,7 @@ export function testClosePosition() {
     );
   });
 
-  it.only("should be able to close position before first first DCA", async () => {
+  it("should be able to close position before first first DCA", async () => {
     await userPosition.approve(
       userPositionNFTAccount,
       vaultPDA.publicKey,
@@ -226,179 +223,231 @@ export function testClosePosition() {
     vault_After.dripAmount.toString().should.equal("0");
   });
 
-  // it("should be able to close position in the middle of the DCA", async () => {
-  //   const [userTokenBAccount_Before] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //   ]);
+  it("should be able to close position in the middle of the DCA", async () => {
+    for (let i = 0; i < 2; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
 
-  //   for (let i = 0; i < 2; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
+    let [i, j, k] = [0, 2, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    );
 
-  //   let [i, j, k] = [0, 2, 4];
-  //   await closePosition(
-  //     vaultPeriods[i].publicKey,
-  //     vaultPeriods[j].publicKey,
-  //     vaultPeriods[k].publicKey
-  //   );
+    const [
+      userTokenAAccount_After,
+      userTokenBAccount_After,
+      userPositionNFTAccount_After,
+      userPositionAccount_After,
+      vault_After,
+      vaultPeriodUserExpiry_After,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.fetchPositionAccount(userPositionAccount),
+      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
+      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
+    ]);
 
-  //   const [userTokenBAccount_After, vaultTokenB_ATA_After] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //     TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-  //   ]);
+    userTokenAAccount_After.balance.toString().should.equal("1500000000");
+    userTokenBAccount_After.balance.toString().should.equal("498251432");
+    userPositionNFTAccount_After.balance.toString().should.equal("0");
+    userPositionAccount_After.isClosed.should.be.true();
+    vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
+    vault_After.dripAmount.toString().should.equal("0");
+  });
 
-  //   userTokenBAccount_After.balance
-  //     .gt(userTokenBAccount_Before.balance)
-  //     .should.be.true();
-  //   userTokenBAccount_After.balance.toString().should.equal("498251432");
-  //   // The vault token b balance is 1 here, likely due to rounding issues
-  //   vaultTokenB_ATA_After.balance.lt(new BN(10)).should.be.true();
-  // });
+  it("should be able to close position at the end of the DCA", async () => {
+    for (let i = 0; i < 4; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
 
-  // it("should be able to close position when users DCA is finished", async () => {
-  //   const [userTokenBAccount_Before] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //   ]);
+    let [i, j, k] = [0, 4, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    );
 
-  //   for (let i = 0; i < 4; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
+    const [
+      userTokenAAccount_After,
+      userTokenBAccount_After,
+      userPositionNFTAccount_After,
+      userPositionAccount_After,
+      vault_After,
+      vaultPeriodUserExpiry_After,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.fetchPositionAccount(userPositionAccount),
+      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
+      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
+    ]);
 
-  //   let [i, j] = [0, 4];
-  //   await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
+    userTokenAAccount_After.balance.toString().should.equal("1000000000");
+    userTokenBAccount_After.balance.toString().should.equal("996005859");
+    userPositionNFTAccount_After.balance.toString().should.equal("0");
+    userPositionAccount_After.isClosed.should.be.true();
+    vaultPeriodUserExpiry_After.dar.toString().should.equal("250000000");
+    vault_After.dripAmount.toString().should.equal("0");
+  });
 
-  //   const [userTokenBAccount_After, vaultTokenB_ATA_After] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //     TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-  //   ]);
+  it("should be able to close position past the end of the DCA", async () => {
+    await depositWithNewUser({
+      mintAmount: 3,
+      dcaCycles: 5,
+      newUserEndVaultPeriod: vaultPeriods[5].publicKey,
+    });
+    for (let i = 0; i < 5; i++) {
+      await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
+      await sleep(1500);
+    }
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
 
-  //   userTokenBAccount_After.balance
-  //     .gt(userTokenBAccount_Before.balance)
-  //     .should.be.true();
-  //   userTokenBAccount_After.balance.toString().should.equal("996005859");
-  //   // The vault token b balance is 1 here, likely due to rounding issues
-  //   vaultTokenB_ATA_After.balance.lt(new BN(10)).should.be.true();
-  // });
+    let [i, j, k] = [0, 4, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    );
 
-  // it("should be able to close position after users DCA is finished", async () => {
-  //   const [userTokenBAccount_Before] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //   ]);
+    const [
+      userTokenAAccount_After,
+      userTokenBAccount_After,
+      userPositionNFTAccount_After,
+      userPositionAccount_After,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.fetchPositionAccount(userPositionAccount),
+    ]);
 
-  //   for (let i = 0; i < 4; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
+    userTokenAAccount_After.balance.toString().should.equal("1000000000");
+    userTokenBAccount_After.balance.toString().should.equal("993628003");
+    userPositionNFTAccount_After.balance.toString().should.equal("0");
+    userPositionAccount_After.isClosed.should.be.true();
+  });
 
-  //   let [i, j] = [0, 4];
-  //   await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
+  it("should fail if invalid vault periods are provided", async () => {
+    await trigerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await sleep(1500);
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
+    const testCases = [
+      [0, 0, 0],
+      [0, 0, 1],
+      [0, 1, 0],
+      [1, 0, 0],
+    ];
+    for (const [i, j, k] of testCases) {
+      await closePosition(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[j].publicKey,
+        vaultPeriods[k].publicKey
+      ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+    }
+    await trigerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    for (const [i, j, k] of testCases) {
+      await closePosition(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[j].publicKey,
+        vaultPeriods[k].publicKey
+      ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+    }
+  });
 
-  //   const [userTokenBAccount_After, vaultTokenB_ATA_After] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //     TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-  //   ]);
-
-  //   userTokenBAccount_After.balance
-  //     .gt(userTokenBAccount_Before.balance)
-  //     .should.be.true();
-  //   userTokenBAccount_After.balance.toString().should.equal("996005859");
-  //   // The vault token b balance is 1 here, likely due to rounding issues
-  //   vaultTokenB_ATA_After.balance.lt(new BN(10)).should.be.true();
-  // });
-
-  // it("should not be able to close position more than once", async () => {
-  //   for (let i = 0; i < 2; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
-  //   await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[2].publicKey);
-  //   let [userTokenBAccount_After] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //   ]);
-  //   userTokenBAccount_After.balance.toString().should.equal("498251432");
-  //   for (let i = 2; i < 4; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
-  //   await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[4].publicKey);
-  //   [userTokenBAccount_After] = await Promise.all([
-  //     TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //   ]);
-  //   userTokenBAccount_After.balance.toString().should.equal("996005859");
-  // });
-
-  // it("should be able to close position before first first DCA", async () => {
-  //   await depositWithNewUser({
-  //     mintAmount: 3,
-  //     dcaCycles: 2,
-  //     newUserEndVaultPeriod: vaultPeriods[2].publicKey,
-  //   });
-  //   for (let i = 0; i < 2; i++) {
-  //     await trigerDCA(vaultPeriods[i].publicKey, vaultPeriods[i + 1].publicKey);
-  //     await sleep(1500);
-  //   }
-  //   let [i, j] = [0, 2];
-  //   const [userTokenBAccount_Before, userPositionAccount_Before] =
-  //     await Promise.all([
-  //       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //       AccountUtil.fetchPositionAccount(userPositionAccount),
-  //     ]);
-  //   userTokenBAccount_Before.balance.toString().should.equal("0");
-  //   userPositionAccount_Before.withdrawnTokenBAmount
-  //     .toString()
-  //     .should.equal("0");
-  //   await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-  //   let [userTokenBAccount_After, userPositionAccount_After] =
-  //     await Promise.all([
-  //       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-  //       AccountUtil.fetchPositionAccount(userPositionAccount),
-  //     ]);
-  //   userTokenBAccount_After.balance.toString().should.equal("496765235");
-  //   userPositionAccount_After.withdrawnTokenBAmount
-  //     .toString()
-  //     .should.equal("496765235");
-
-  //   await withdrawB(
-  //     vaultPeriods[i].publicKey,
-  //     vaultPeriods[j].publicKey
-  //   ).should.be.rejectedWith(new RegExp("Withdrawable amount is zero"));
-  // });
+  it("should not be able to close position more than once", async () => {
+    let [i, j, k] = [0, 0, 4];
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    );
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+  });
 
   // TODO(Mocha): Move this function if we need it in more places
-  // const depositWithNewUser = async ({
-  //   dcaCycles,
-  //   newUserEndVaultPeriod,
-  //   mintAmount,
-  // }: {
-  //   dcaCycles: number;
-  //   newUserEndVaultPeriod: PublicKey;
-  //   mintAmount: number;
-  // }) => {
-  //   const user2 = generatePair();
-  //   await SolUtils.fundAccount(user2.publicKey, 1000000000);
-  //   const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
-  //     user2.publicKey
-  //   );
-  //   const user2MintAmount = await TokenUtil.scaleAmount(
-  //     amount(mintAmount, Denom.Thousand),
-  //     tokenA
-  //   );
-  //   await tokenA.mintTo(
-  //     user2TokenAAccount,
-  //     tokenOwnerKeypair,
-  //     [],
-  //     user2MintAmount
-  //   );
-  //   await depositToVault(
-  //     user2,
-  //     tokenA,
-  //     user2MintAmount,
-  //     new u64(dcaCycles),
-  //     vaultPDA.publicKey,
-  //     newUserEndVaultPeriod,
-  //     user2TokenAAccount
-  //   );
-  // };
+  const depositWithNewUser = async ({
+    dcaCycles,
+    newUserEndVaultPeriod,
+    mintAmount,
+  }: {
+    dcaCycles: number;
+    newUserEndVaultPeriod: PublicKey;
+    mintAmount: number;
+  }) => {
+    const user2 = generatePair();
+    await SolUtils.fundAccount(user2.publicKey, 1000000000);
+    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
+      user2.publicKey
+    );
+    const user2MintAmount = await TokenUtil.scaleAmount(
+      amount(mintAmount, Denom.Thousand),
+      tokenA
+    );
+    await tokenA.mintTo(
+      user2TokenAAccount,
+      tokenOwnerKeypair,
+      [],
+      user2MintAmount
+    );
+    await depositToVault(
+      user2,
+      tokenA,
+      user2MintAmount,
+      new u64(dcaCycles),
+      vaultPDA.publicKey,
+      newUserEndVaultPeriod,
+      user2TokenAAccount
+    );
+  };
 }

@@ -134,7 +134,7 @@ pub struct ClosePosition<'info> {
             user_position_nft_account.amount == 1 &&
             user_position_nft_account.delegate.contains(&vault.key()) &&
             user_position_nft_account.delegated_amount == 1
-        } 
+        }
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
