@@ -12,6 +12,6 @@ yarn run prettier --c ./
 echo "Running cargo tests"
 cargo test
 
-echo "Running anchor tests"
-anchor test | tee .anchor/test.logs
-! cat .anchor/test.logs | grep failing
+# echo "Running anchor tests"
+# anchor test | tee .anchor/test.logs
+# ! cat .anchor/test.logs | grep failing
