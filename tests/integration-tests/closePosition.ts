@@ -15,9 +15,10 @@ import {
   deployVaultPeriod,
   deployVaultProtoConfig,
   depositToVault,
+  depositWithNewUserWrapper,
   sleep,
   triggerDCAWrapper,
-} from "../utils/instruction.util";
+} from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
@@ -52,6 +53,7 @@ export function testClosePosition() {
 
   let trigerDCA;
   let closePosition;
+  let depositWithNewUser;
 
   beforeEach(async () => {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
@@ -181,6 +183,12 @@ export function testClosePosition() {
       userPositionNFTMint,
       tokenA.publicKey,
       tokenB.publicKey
+    );
+
+    depositWithNewUser = depositWithNewUserWrapper(
+      vaultPDA.publicKey,
+      tokenOwnerKeypair,
+      tokenA
     );
   });
 
@@ -414,40 +422,4 @@ export function testClosePosition() {
       vaultPeriods[k].publicKey
     ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
   });
-
-  // TODO(Mocha): Move this function if we need it in more places
-  const depositWithNewUser = async ({
-    dcaCycles,
-    newUserEndVaultPeriod,
-    mintAmount,
-  }: {
-    dcaCycles: number;
-    newUserEndVaultPeriod: PublicKey;
-    mintAmount: number;
-  }) => {
-    const user2 = generatePair();
-    await SolUtils.fundAccount(user2.publicKey, 1000000000);
-    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user2.publicKey
-    );
-    const user2MintAmount = await TokenUtil.scaleAmount(
-      amount(mintAmount, Denom.Thousand),
-      tokenA
-    );
-    await tokenA.mintTo(
-      user2TokenAAccount,
-      tokenOwnerKeypair,
-      [],
-      user2MintAmount
-    );
-    await depositToVault(
-      user2,
-      tokenA,
-      user2MintAmount,
-      new u64(dcaCycles),
-      vaultPDA.publicKey,
-      newUserEndVaultPeriod,
-      user2TokenAAccount
-    );
-  };
 }

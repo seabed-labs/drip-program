@@ -16,7 +16,7 @@ import {
   depositToVault,
   sleep,
   triggerDCAWrapper,
-} from "../utils/instruction.util";
+} from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";

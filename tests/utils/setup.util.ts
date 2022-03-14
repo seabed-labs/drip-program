@@ -78,6 +78,44 @@ export const deployVaultPeriod = async (
   return vaultPeriodPDA;
 };
 
+// TODO(Mocha): might be useful to return the new user
+export const depositWithNewUserWrapper = (
+  vault: PublicKey,
+  tokenOwnerKeypair: Keypair,
+  tokenA: Token
+) => {
+  return async (
+    dcaCycles: number,
+    newUserEndVaultPeriod: PublicKey,
+    mintAmount: number
+  ) => {
+    const user2 = generatePair();
+    await SolUtils.fundAccount(user2.publicKey, 1000000000);
+    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
+      user2.publicKey
+    );
+    const user2MintAmount = await TokenUtil.scaleAmount(
+      amount(mintAmount, Denom.Thousand),
+      tokenA
+    );
+    await tokenA.mintTo(
+      user2TokenAAccount,
+      tokenOwnerKeypair,
+      [],
+      user2MintAmount
+    );
+    await depositToVault(
+      user2,
+      tokenA,
+      user2MintAmount,
+      new u64(dcaCycles),
+      vault,
+      newUserEndVaultPeriod,
+      user2TokenAAccount
+    );
+  };
+};
+
 export const depositToVault = async (
   user: Keypair,
   tokenA: Token,
