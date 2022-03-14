@@ -134,12 +134,14 @@ pub struct ClosePosition<'info> {
             user_position_nft_account.amount == 1 &&
             user_position_nft_account.delegate.contains(&vault.key()) &&
             user_position_nft_account.delegated_amount == 1
-        }
+        } 
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
     // Mints
     #[account(
+        // mut neeed because we are burning the users NFT
+        mut,
         constraint = {
             user_position_nft_mint.key() == user_position.position_authority &&
             user_position_nft_mint.supply == 1 &&

@@ -23,6 +23,6 @@ describe("DCA Vault Program Integration Tests", () => {
   describe("#initVaultPeriod", testInitVaultPeriod);
   describe("#deposit", testDeposit);
   describe("#withdrawB", testWithdrawB);
-  describe("#closePosition", testClosePosition);
+  describe.only("#closePosition", testClosePosition);
   describe("#triggerDCA", testTriggerDCA);
 });

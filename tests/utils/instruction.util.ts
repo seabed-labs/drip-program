@@ -255,3 +255,46 @@ export const withdrawBWrapper = (
     );
   };
 };
+
+export const closePositionWrapper = (
+  withdrawer: Keypair,
+  vault: PublicKey,
+  userPosition: PublicKey,
+
+  vaultTokenAAccount: PublicKey,
+  vaultTokenBAccount: PublicKey,
+  userTokenAAccount: PublicKey,
+  userTokenBAccount: PublicKey,
+
+  userPositionNftAccount: PublicKey,
+
+  userPositionNftMint: PublicKey,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey
+) => {
+  return async (
+    vaultPeriodI: PublicKey,
+    vaultPeriodJ: PublicKey,
+    vaultPeriodUserExpiry: PublicKey
+  ) => {
+    await VaultUtil.closePosition(
+      withdrawer,
+      vault,
+      userPosition,
+      vaultPeriodI,
+      vaultPeriodJ,
+      vaultPeriodUserExpiry,
+
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      userTokenAAccount,
+      userTokenBAccount,
+
+      userPositionNftAccount,
+
+      userPositionNftMint,
+      tokenAMint,
+      tokenBMint
+    );
+  };
+};

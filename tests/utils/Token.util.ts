@@ -10,6 +10,7 @@ import { TestUtil } from "./config";
 import { SolUtils } from "./SolUtils";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { generatePair } from "./common.util"; // Look up the token mint on solscan before adding here
+import { ProgramUtil } from "./Program.util";
 
 // Look up the token mint on solscan before adding here
 export const DECIMALS = {
@@ -25,6 +26,15 @@ export interface MintToParams {
 }
 
 export class TokenUtil extends TestUtil {
+  static fetchMint(mint: PublicKey, payer: Keypair = generatePair()): Token {
+    return new Token(
+      this.provider.connection,
+      mint,
+      ProgramUtil.tokenProgram.programId,
+      payer
+    );
+  }
+
   static async createMint(
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey = null,

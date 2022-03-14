@@ -234,4 +234,53 @@ export class VaultUtil extends TestUtil {
       signers: [withdrawer],
     });
   }
+
+  static async closePosition(
+    withdrawer: Keypair | Signer,
+    vault: PublicKey,
+    userPosition: PublicKey,
+    vaultPeriodI: PublicKey,
+    vaultPeriodJ: PublicKey,
+    vaultPeriodUserExpiry: PublicKey,
+
+    vaultTokenAAccount: PublicKey,
+    vaultTokenBAccount: PublicKey,
+    userTokenAAccount: PublicKey,
+    userTokenBAccount: PublicKey,
+
+    userPositionNftAccount: PublicKey,
+
+    userPositionNftMint: PublicKey,
+    tokenAMint: PublicKey,
+    tokenBMint: PublicKey
+  ): Promise<TransactionSignature> {
+    const accounts = {
+      vault: vault.toBase58(),
+      vaultPeriodI: vaultPeriodI.toBase58(),
+      vaultPeriodJ: vaultPeriodJ.toBase58(),
+      vaultPeriodUserExpiry: vaultPeriodUserExpiry.toBase58(),
+      userPosition: userPosition.toBase58(),
+
+      vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+      vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      userTokenAAccount: userTokenAAccount.toBase58(),
+      userTokenBAccount: userTokenBAccount.toBase58(),
+
+      userPositionNftAccount: userPositionNftAccount.toBase58(),
+
+      userPositionNftMint: userPositionNftMint.toBase58(),
+      tokenAMint: tokenAMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+
+      withdrawer: withdrawer.publicKey.toBase58(),
+      tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+      systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+    };
+
+    console.log(JSON.stringify(accounts, undefined, 2));
+    return await ProgramUtil.vaultProgram.rpc.closePosition({
+      accounts: accounts,
+      signers: [withdrawer],
+    });
+  }
 }
