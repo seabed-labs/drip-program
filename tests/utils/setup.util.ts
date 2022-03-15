@@ -82,7 +82,8 @@ export const deployVaultPeriod = async (
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
-  tokenA: Token
+  tokenA: Token,
+  shouldLog: boolean = false
 ) => {
   return async ({
     dcaCycles,
@@ -94,10 +95,20 @@ export const depositWithNewUserWrapper = (
     mintAmount: number;
   }) => {
     const user2 = generatePair();
+    if (shouldLog) {
+      console.log(
+        "user2:",
+        user2.publicKey.toBase58(),
+        user2.secretKey.toString()
+      );
+    }
     await SolUtils.fundAccount(user2.publicKey, 1000000000);
     const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
       user2.publicKey
     );
+    if (shouldLog) {
+      console.log("user2TokenAAccount:", user2TokenAAccount.toBase58());
+    }
     const user2MintAmount = await TokenUtil.scaleAmount(
       amount(mintAmount, Denom.Thousand),
       tokenA
@@ -108,7 +119,11 @@ export const depositWithNewUserWrapper = (
       [],
       user2MintAmount
     );
-    await depositToVault(
+    const [
+      user2PositionNFTMint,
+      user2PositionAccount,
+      user2PositionNFTAccount,
+    ] = await depositToVault(
       user2,
       tokenA,
       user2MintAmount,
@@ -117,6 +132,14 @@ export const depositWithNewUserWrapper = (
       newUserEndVaultPeriod,
       user2TokenAAccount
     );
+    if (shouldLog) {
+      console.log("user2PositionNFTMint:", user2PositionNFTMint.toBase58());
+      console.log("user2PositionAccount:", user2PositionAccount.toBase58());
+      console.log(
+        "user2PositionNFTAccount:",
+        user2PositionNFTAccount.toBase58()
+      );
+    }
   };
 };
 
