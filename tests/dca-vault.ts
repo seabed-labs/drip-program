@@ -6,8 +6,10 @@ import { testClosePosition } from "./integration-tests/closePosition";
 import { testTriggerDCA } from "./integration-tests/triggerDCA";
 import sinon from "sinon";
 import { testWithdrawB } from "./integration-tests/withdrawB";
+import { setupKeeperBot } from "./deps-test/setupKeeperBot";
 
 const DISABLE_LOGGING = !process.env.LOG;
+const SETUP_BOT = process.env.SETUP_BOT;
 
 if (DISABLE_LOGGING) {
   console.log("DISABLED LOGGING");
@@ -17,12 +19,16 @@ if (DISABLE_LOGGING) {
   sinon.stub(console, "info");
 }
 
-describe("DCA Vault Program Integration Tests", () => {
-  describe("#initVaultProtoConfig", testInitVaultProtoConfig);
-  describe("#initVault", testInitVault);
-  describe("#initVaultPeriod", testInitVaultPeriod);
-  describe("#deposit", testDeposit);
-  describe("#withdrawB", testWithdrawB);
-  describe("#closePosition", testClosePosition);
-  describe("#triggerDCA", testTriggerDCA);
-});
+if (SETUP_BOT) {
+  describe("Setup Programs for Keeper Bot", setupKeeperBot);
+} else {
+  describe("DCA Vault Program Integration Tests", () => {
+    describe("#initVaultProtoConfig", testInitVaultProtoConfig);
+    describe("#initVault", testInitVault);
+    describe("#initVaultPeriod", testInitVaultPeriod);
+    describe("#deposit", testDeposit);
+    describe("#withdrawB", testWithdrawB);
+    describe("#closePosition", testClosePosition);
+    describe("#triggerDCA", testTriggerDCA);
+  });
+}

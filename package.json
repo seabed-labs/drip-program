@@ -26,10 +26,12 @@
     "test:unit": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:unit:raw",
     "test:integration": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:integration:raw",
     "test:integration:detach": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN yarn test:integration:detach:raw",
+    "test:log:integration:detach": "LOG=true yarn test:integration:detach",
     "test": "yarn test:unit && yarn test:integration",
     "test:log": "LOG=true yarn test",
     "test:detach": "yarn test:unit && yarn test:integration:detach",
     "test:detach:log": "LOG=true yarn test:detach",
+    "test:setupkeeperbot": "SETUP_BOT=true yarn test:log:integration:detach",
     "build": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build"
   }
 }
