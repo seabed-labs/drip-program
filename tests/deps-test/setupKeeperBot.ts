@@ -15,6 +15,8 @@ import {
 } from "../utils/setup.util";
 import { Token } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import fs from "fs";
+import YAML from "yaml";
 
 export function setupKeeperBot() {
   let tokenOwnerKeypair: Keypair;
@@ -25,7 +27,6 @@ export function setupKeeperBot() {
   let swap: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
-  let vaultPeriods: PDA[];
   let vaultTokenA_ATA: PublicKey;
   let vaultTokenB_ATA: PublicKey;
 
@@ -95,7 +96,7 @@ export function setupKeeperBot() {
     console.log("swapFeeAccount:", swapFeeAccount.toBase58());
     console.log("swapAuthority:", swapAuthority.toBase58());
 
-    vaultProtoConfig = await deployVaultProtoConfig(1);
+    vaultProtoConfig = await deployVaultProtoConfig(5);
     console.log("vaultProtoConfig:", vaultProtoConfig.toBase58());
 
     vaultPDA = await deployVault(
@@ -112,33 +113,57 @@ export function setupKeeperBot() {
     console.log("vaultTokenAAccount:", vaultTokenA_ATA.toBase58());
     console.log("vaultTokenBAccount:", vaultTokenB_ATA.toBase58());
 
-    const numPeriods = 101;
-    vaultPeriods = await Promise.all(
-      [...Array(numPeriods).keys()].map((i) =>
-        deployVaultPeriod(
-          vaultProtoConfig,
-          vaultPDA.publicKey,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          i
-        )
-      )
-    );
-    console.log(`deployed ${numPeriods} vault periods`);
-
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
       tokenA
     );
 
+    await deployVaultPeriod(
+      vaultProtoConfig,
+      vaultPDA.publicKey,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      0
+    );
     for (let i = 1; i < 11; i++) {
+      const newUserEndVaultPeriod = await deployVaultPeriod(
+        vaultProtoConfig,
+        vaultPDA.publicKey,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        i * 10
+      );
       await depositWithNewUser({
         dcaCycles: i * 10,
-        newUserEndVaultPeriod: vaultPeriods[i * 10].publicKey,
+        newUserEndVaultPeriod: newUserEndVaultPeriod.publicKey,
         mintAmount: i,
       });
     }
+
+    const localConfig = {
+      environment: "LOCALNET",
+      triggerDCA: [
+        {
+          vault: vaultPDA.publicKey.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          vaultTokenAAccount: vaultTokenA_ATA.toBase58(),
+          vaultTokenBAccount: vaultTokenB_ATA.toBase58(),
+          tokenAMint: tokenA.publicKey.toBase58(),
+          tokenBMint: tokenB.publicKey.toBase58(),
+          swapTokenMint: swapTokenMint.toBase58(),
+          swapTokenAAccount: swapTokenAAccount.toBase58(),
+          swapTokenBAccount: swapTokenBAccount.toBase58(),
+          swapFeeAccount: swapFeeAccount.toBase58(),
+          swapAuthority: swapAuthority.toBase58(),
+          swap: swap.toBase58(),
+        },
+      ],
+    };
+    fs.writeFileSync(
+      "../keeper-bot/configs/localnet.yaml",
+      YAML.stringify(localConfig)
+    );
   });
 
   it("sets up keeper bot dependencies", async () => {
