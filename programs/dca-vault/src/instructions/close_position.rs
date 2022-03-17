@@ -78,7 +78,6 @@ pub struct ClosePosition<'info> {
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
-            user_position.vault.as_ref(),
             user_position.position_authority.as_ref()
         ],
         bump = user_position.bump,

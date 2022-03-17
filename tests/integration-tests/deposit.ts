@@ -117,10 +117,7 @@ export async function testDeposit() {
 
   it("happy path (first depositor, vault genesis)", async () => {
     const positionNftMintKeypair = generatePair();
-    const positionPDA = await getPositionPDA(
-      vaultPubkey,
-      positionNftMintKeypair.publicKey
-    );
+    const positionPDA = await getPositionPDA(positionNftMintKeypair.publicKey);
 
     const [
       userPositionNft_ATA,

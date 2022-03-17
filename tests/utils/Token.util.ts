@@ -43,7 +43,7 @@ export class TokenUtil extends TestUtil {
   ): Promise<Token> {
     await SolUtils.fundAccount(
       funderKeypair.publicKey,
-      SolUtils.solToLamports(5)
+      SolUtils.solToLamports(0.2)
     );
 
     return await Token.createMint(
