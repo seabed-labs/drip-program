@@ -7,7 +7,7 @@ pub mod macros;
 pub mod math;
 pub mod state;
 
-declare_id!("6rCWVjanBs1gx5jhpUAXoDqLwwURaNxKoGUxczjG6hFX");
+declare_id!("3Q1eJ9m3jYJ3F32gcJYL7gMPn9kj87MzzjgoAL7VSN6E");
 
 // TODO(matcha): Restrict to bare minimum mutable accounts
 

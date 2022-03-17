@@ -102,7 +102,7 @@ export const depositWithNewUserWrapper = (
         user2.secretKey.toString()
       );
     }
-    await SolUtils.fundAccount(user2.publicKey, 1000000000);
+    await SolUtils.fundAccount(user2.publicKey, SolUtils.solToLamports(0.2));
     const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
       user2.publicKey
     );
@@ -160,10 +160,7 @@ export const depositToVault = async (
     tokenADepositAmount
   );
   const userPositionNftMint = generatePair();
-  const positionPDA = await getPositionPDA(
-    vault,
-    userPositionNftMint.publicKey
-  );
+  const positionPDA = await getPositionPDA(userPositionNftMint.publicKey);
   const [vaultTokenAAccount, userPositionNftAccount] = await Promise.all([
     findAssociatedTokenAddress(vault, tokenA.publicKey),
     findAssociatedTokenAddress(user.publicKey, userPositionNftMint.publicKey),
@@ -206,8 +203,14 @@ export const deploySwap = async (
 ): Promise<PublicKey[]> => {
   const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
     generatePairs(5);
-  await SolUtils.fundAccount(swapPayerKeypair.publicKey, 1000000000);
-  await SolUtils.fundAccount(swapOwnerKeyPair.publicKey, 1000000000);
+  await SolUtils.fundAccount(
+    swapPayerKeypair.publicKey,
+    SolUtils.solToLamports(0.2)
+  );
+  await SolUtils.fundAccount(
+    swapOwnerKeyPair.publicKey,
+    SolUtils.solToLamports(0.2)
+  );
   const swapAuthorityPDA = await getSwapAuthorityPDA(
     tokenSwapKeypair.publicKey
   );

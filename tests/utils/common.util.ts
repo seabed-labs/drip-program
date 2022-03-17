@@ -118,13 +118,9 @@ export const getVaultPeriodPDA = async (vault: PublicKey, periodId: number) => {
   ]);
 };
 
-export const getPositionPDA = async (
-  vault: PublicKey,
-  positionNftMint: PublicKey
-) => {
+export const getPositionPDA = async (positionNftMint: PublicKey) => {
   return findPDA(ProgramUtil.vaultProgram.programId, [
     Buffer.from(CONSTANT_SEEDS.userPosition),
-    vault.toBuffer(),
     positionNftMint.toBuffer(),
   ]);
 };
