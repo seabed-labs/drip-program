@@ -70,13 +70,33 @@ export function setupKeeperBot() {
       payerKeypair
     );
     console.log("tokenAMint:", tokenA.publicKey.toBase58());
+
+    for (const testWallet of [
+      "8XHtH5q5TyuFCcSkVjKW7jqE26ta2e7rXDnSLEHAgjD2",
+      "42Wfx1vHs571B5KwhB6SFrsBiNTSkr9YhJm37WHtU6v9",
+      "BJmuWLetrZRm2ADpDVxArg6CovgUwxgYESV5GHVDwnHi",
+    ]) {
+      const testTokenAAccount = await tokenA.createAssociatedTokenAccount(
+        new PublicKey(testWallet)
+      );
+      await tokenA.mintTo(
+        testTokenAAccount,
+        tokenOwnerKeypair,
+        [],
+        await TokenUtil.scaleAmount(amount(10, Denom.Million), tokenA)
+      );
+      console.log("funded testAccount account for token A", {
+        wallet: testWallet,
+        tokenAMint: tokenA.publicKey.toString(),
+      });
+    }
   });
 
   beforeEach(async () => {
     config += 1;
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
     // sleep to progress to the next block
-    await sleep(500);
+    await sleep(1000);
 
     tokenB = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
@@ -117,66 +137,46 @@ export function setupKeeperBot() {
         vaultProtoConfig
       );
       console.log("vault:", vaultPDA.publicKey.toBase58());
-    }
 
-    [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
-    ]);
-    console.log("vaultTokenAAccount:", vaultTokenA_ATA.toBase58());
-    console.log("vaultTokenBAccount:", vaultTokenB_ATA.toBase58());
+      [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      ]);
+      console.log("vaultTokenAAccount:", vaultTokenA_ATA.toBase58());
+      console.log("vaultTokenBAccount:", vaultTokenB_ATA.toBase58());
 
-    for (const testWallet of [
-      "8XHtH5q5TyuFCcSkVjKW7jqE26ta2e7rXDnSLEHAgjD2",
-      "42Wfx1vHs571B5KwhB6SFrsBiNTSkr9YhJm37WHtU6v9",
-      "BJmuWLetrZRm2ADpDVxArg6CovgUwxgYESV5GHVDwnHi",
-    ]) {
-      const testTokenAAccount = await tokenA.createAssociatedTokenAccount(
-        new PublicKey(testWallet)
+      await deployVaultPeriod(
+        vaultProtoConfig,
+        vaultPDA.publicKey,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        0
       );
-      await tokenA.mintTo(
-        testTokenAAccount,
-        tokenOwnerKeypair,
-        [],
-        await TokenUtil.scaleAmount(amount(100, Denom.Million), tokenA)
+
+      const localConfig = {
+        environment: process.env.ENV ?? "LOCALNET",
+        triggerDCA: [
+          {
+            vault: vaultPDA.publicKey.toBase58(),
+            vaultProtoConfig: vaultProtoConfig.toBase58(),
+            vaultTokenAAccount: vaultTokenA_ATA.toBase58(),
+            vaultTokenBAccount: vaultTokenB_ATA.toBase58(),
+            tokenAMint: tokenA.publicKey.toBase58(),
+            tokenBMint: tokenB.publicKey.toBase58(),
+            swapTokenMint: swapTokenMint.toBase58(),
+            swapTokenAAccount: swapTokenAAccount.toBase58(),
+            swapTokenBAccount: swapTokenBAccount.toBase58(),
+            swapFeeAccount: swapFeeAccount.toBase58(),
+            swapAuthority: swapAuthority.toBase58(),
+            swap: swap.toBase58(),
+          },
+        ],
+      };
+      fs.writeFileSync(
+        `../keeper-bot/configs/setup${config}g${granularity}.yaml`,
+        YAML.stringify(localConfig)
       );
-      console.log("funded testAccount account for token A", {
-        wallet: testTokenAAccount,
-        tokenAMint: tokenA,
-      });
     }
-
-    await deployVaultPeriod(
-      vaultProtoConfig,
-      vaultPDA.publicKey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      0
-    );
-
-    const localConfig = {
-      environment: process.env.ENV ?? "LOCALNET",
-      triggerDCA: [
-        {
-          vault: vaultPDA.publicKey.toBase58(),
-          vaultProtoConfig: vaultProtoConfig.toBase58(),
-          vaultTokenAAccount: vaultTokenA_ATA.toBase58(),
-          vaultTokenBAccount: vaultTokenB_ATA.toBase58(),
-          tokenAMint: tokenA.publicKey.toBase58(),
-          tokenBMint: tokenB.publicKey.toBase58(),
-          swapTokenMint: swapTokenMint.toBase58(),
-          swapTokenAAccount: swapTokenAAccount.toBase58(),
-          swapTokenBAccount: swapTokenBAccount.toBase58(),
-          swapFeeAccount: swapFeeAccount.toBase58(),
-          swapAuthority: swapAuthority.toBase58(),
-          swap: swap.toBase58(),
-        },
-      ],
-    };
-    fs.writeFileSync(
-      `../keeper-bot/configs/setup${config}.yaml`,
-      YAML.stringify(localConfig)
-    );
   });
 
   it("setup first vault", async () => {

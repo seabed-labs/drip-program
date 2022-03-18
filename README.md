@@ -27,3 +27,17 @@ To run tests manually (from the root):
 To run tests inside docker (from the root):
 
 - ./scripts/test_docker_local.sh
+
+## Devnet
+
+Add phantom wallet address to array of address's in setupKeeperBot.
+
+```
+    for (const testWallet of [
+      "8XHtH5q5TyuFCcSkVjKW7jqE26ta2e7rXDnSLEHAgjD2",
+      "42Wfx1vHs571B5KwhB6SFrsBiNTSkr9YhJm37WHtU6v9",
+      "BJmuWLetrZRm2ADpDVxArg6CovgUwxgYESV5GHVDwnHi",
+    ]) {
+```
+
+Run the setup script `yarn setup:dev`, this will setup all the needed accounts, and fund the testWallet with test tokens.
