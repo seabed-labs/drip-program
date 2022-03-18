@@ -33,6 +33,7 @@
     "test:detach": "yarn test:unit && yarn test:integration:detach",
     "test:detach:log": "LOG=true yarn test:detach",
     "test:setupkeeperbot": "SETUP_BOT=true yarn test:log:integration:detach",
-    "build": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build"
+    "build": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build",
+    "setup:dev": "ENV=DEVNET SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN LOG=true ANCHOR_WALLET=~/.config/solana/id.json SETUP_BOT=true anchor test --skip-deploy"
   }
 }
