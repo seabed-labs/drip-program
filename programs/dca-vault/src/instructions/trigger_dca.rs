@@ -27,10 +27,10 @@ impl anchor_lang::Id for TokenSwap {
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
-    #[account(mut)]
     pub dca_trigger_source: Signer<'info>,
 
     #[account(
+        // mut needed
         mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
@@ -65,6 +65,7 @@ pub struct TriggerDCA<'info> {
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut neeed because we are changing state
         mut,
         seeds = [
             b"vault_period".as_ref(),
@@ -80,6 +81,7 @@ pub struct TriggerDCA<'info> {
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut needed for CPI
         mut,
         constraint = {
             swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
@@ -105,6 +107,7 @@ pub struct TriggerDCA<'info> {
     pub token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,
@@ -116,6 +119,7 @@ pub struct TriggerDCA<'info> {
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_b_mint,
         associated_token::authority = vault,
@@ -136,6 +140,7 @@ pub struct TriggerDCA<'info> {
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             swap_token_b_account.mint == vault.token_b_mint &&
@@ -146,6 +151,7 @@ pub struct TriggerDCA<'info> {
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             swap_fee_account.mint == swap_token_mint.key()
@@ -157,7 +163,6 @@ pub struct TriggerDCA<'info> {
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
     // And add appropriate checks
     #[account(
-        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: Do one last check to see if this can be type checked by creating an anchor-wrapped type (there probably is a way)
@@ -166,7 +171,6 @@ pub struct TriggerDCA<'info> {
 
     // TODO: Verify swap_authority PDA according to logic in processor.rs. / authority_id
     #[account(
-        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: We might be able to implement an anchor compatible type for this
