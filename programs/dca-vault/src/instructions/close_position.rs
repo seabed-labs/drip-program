@@ -9,6 +9,7 @@ use spl_token::state::AccountState;
 pub struct ClosePosition<'info> {
     // Dcaf accounts
     #[account(
+        // mut neeed
         mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
@@ -56,6 +57,7 @@ pub struct ClosePosition<'info> {
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut neeed because we are changing state
         mut,
         has_one = vault,
         seeds = [
@@ -74,6 +76,7 @@ pub struct ClosePosition<'info> {
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut neeed because we are changing state
         mut,
         has_one = vault,
         seeds = [
@@ -91,6 +94,7 @@ pub struct ClosePosition<'info> {
 
     // Token Accounts
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,
@@ -98,6 +102,7 @@ pub struct ClosePosition<'info> {
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_b_mint,
         associated_token::authority = vault,
@@ -105,6 +110,7 @@ pub struct ClosePosition<'info> {
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             user_token_a_account.mint == vault.token_a_mint &&
@@ -115,6 +121,7 @@ pub struct ClosePosition<'info> {
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             user_token_b_account.mint == vault.token_b_mint &&
@@ -125,6 +132,7 @@ pub struct ClosePosition<'info> {
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             user_position_nft_account.mint == user_position.position_authority &&
@@ -166,7 +174,6 @@ pub struct ClosePosition<'info> {
     pub token_b_mint: Box<Account<'info, Mint>>,
 
     // Other
-    #[account(mut)]
     pub withdrawer: Signer<'info>,
 
     #[account(address = Token::id())]

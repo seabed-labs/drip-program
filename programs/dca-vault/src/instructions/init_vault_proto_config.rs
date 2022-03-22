@@ -17,6 +17,7 @@ pub struct InitializeVaultProtoConfig<'info> {
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
+    // mut neeed because we are initing accounts
     #[account(mut)]
     pub creator: Signer<'info>,
 
