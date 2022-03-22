@@ -122,7 +122,6 @@ pub struct WithdrawB<'info> {
         }
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
-    #[account(mut)]
     pub withdrawer: Signer<'info>,
     #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
