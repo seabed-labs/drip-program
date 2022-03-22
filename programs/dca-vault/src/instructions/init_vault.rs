@@ -44,6 +44,7 @@ pub struct InitializeVault<'info> {
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
+    // mut neeed because we are initing accounts
     #[account(mut)]
     pub creator: Signer<'info>,
 
