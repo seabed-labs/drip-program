@@ -20,6 +20,7 @@ pub struct DepositParams {
 pub struct Deposit<'info> {
     // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
+        // mut needed
         mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
@@ -34,6 +35,7 @@ pub struct Deposit<'info> {
     // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
     // TODO(matcha): Add PDA seed validation here
     #[account(
+        // mut needed because we are changing state
         mut,
         has_one = vault,
         constraint = {
@@ -74,6 +76,7 @@ pub struct Deposit<'info> {
     // TODO(matcha): Verify that this is an ATA (and all other places too)
     // Token accounts
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             vault_token_a_account.mint == vault.token_a_mint &&
@@ -84,6 +87,7 @@ pub struct Deposit<'info> {
 
     // TODO(matcha): Revisit this and make sure this constraint makes sense
     #[account(
+        // mut neeed because we are changing balance
         mut,
         constraint = {
             user_token_a_account.mint == vault.token_a_mint &&
@@ -104,6 +108,7 @@ pub struct Deposit<'info> {
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
     // Other
+    // mut neeed because we are initing accounts 
     #[account(mut)]
     pub depositor: Signer<'info>,
 
