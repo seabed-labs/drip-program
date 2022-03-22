@@ -108,7 +108,7 @@ pub struct Deposit<'info> {
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
     // Other
-    // mut neeed because we are initing accounts 
+    // mut neeed because we are initing accounts
     #[account(mut)]
     pub depositor: Signer<'info>,
 
