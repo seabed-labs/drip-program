@@ -20,6 +20,8 @@ export function testInitVault() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
+      triggerDCASpread: 5,
+      baseWithdrawalDCASpread: 5,
     });
     vaultProtoConfigAccount = vaultProtoConfigKeypair.publicKey;
 

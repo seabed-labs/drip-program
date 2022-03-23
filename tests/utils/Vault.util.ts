@@ -11,6 +11,8 @@ import { Granularity } from "./common.util";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
+  triggerDCASpread: number;
+  baseWithdrawalDCASpread: number;
 };
 
 export interface DepositTxParams {
@@ -50,6 +52,8 @@ export class VaultUtil extends TestUtil {
     return await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
       {
         granularity: new u64(vaultProtoConfig.granularity),
+        triggerDcaSpread: vaultProtoConfig.triggerDCASpread,
+        baseWithdrawalDcaSpread: vaultProtoConfig.baseWithdrawalDCASpread,
       },
       {
         accounts,

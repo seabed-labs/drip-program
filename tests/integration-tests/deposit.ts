@@ -76,6 +76,8 @@ export async function testDeposit() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
+      triggerDCASpread: 5,
+      baseWithdrawalDCASpread: 5,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 
