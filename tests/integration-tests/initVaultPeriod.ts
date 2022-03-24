@@ -24,7 +24,7 @@ export function testInitVaultPeriod() {
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       triggerDCASpread: 5,
-      baseWithdrawalDCASpread: 5,
+      baseWithdrawalSpread: 5,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 

@@ -9,7 +9,7 @@ pub struct InitVaultProtoConfigParams {
     // spread applied to each trigger DCA in bips
     trigger_dca_spread: u16,
     // spread applied to each withdrawal DCA in bips
-    base_withdrawal_dca_spread: u16,
+    base_withdrawal_spread: u16,
 }
 
 #[derive(Accounts)]
@@ -41,7 +41,7 @@ pub fn handler(
     vault_proto_config.init(
         params.granularity,
         params.trigger_dca_spread,
-        params.base_withdrawal_dca_spread,
+        params.base_withdrawal_spread,
     );
     Ok(())
 }

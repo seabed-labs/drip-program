@@ -7,19 +7,14 @@ use super::traits::ByteSized;
 pub struct VaultProtoConfig {
     pub granularity: u64,
     pub trigger_dca_spread: u16,
-    pub base_withdrawal_dca_spread: u16,
+    pub base_withdrawal_spread: u16,
 }
 
 impl VaultProtoConfig {
-    pub fn init(
-        &mut self,
-        granularity: u64,
-        trigger_dca_spread: u16,
-        base_withdrawal_dca_spread: u16,
-    ) {
+    pub fn init(&mut self, granularity: u64, trigger_dca_spread: u16, base_withdrawal_spread: u16) {
         self.granularity = granularity;
         self.trigger_dca_spread = trigger_dca_spread;
-        self.base_withdrawal_dca_spread = base_withdrawal_dca_spread;
+        self.base_withdrawal_spread = base_withdrawal_spread;
     }
 }
 
