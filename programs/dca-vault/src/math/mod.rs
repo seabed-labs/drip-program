@@ -95,6 +95,21 @@ pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
     numerator_x64.checked_div(denominator).unwrap()
 }
 
+///
+/// # Arguments
+///
+/// * `amount`
+/// * `spread`
+///
+/// returns: u64
+pub fn calculate_spread_amount(amount: u64, spread: u16) -> u64 {
+    amount
+        .checked_div(10000)
+        .unwrap()
+        .checked_mul(spread.into())
+        .unwrap()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -198,5 +213,20 @@ mod test {
         periodic_drip_amount: u64,
     ) {
         calculate_withdraw_token_b_amount(i, j, twap_i, twap_j, periodic_drip_amount);
+    }
+
+    #[test_case(0, 5, 0; "Spread amount is 0 with 0 initial amount")]
+    #[test_case(10000, 0, 0; "Spread amount is 0 with 0 spread")]
+    #[test_case(9999, 10000, 0; "Spread amount is 0 when initial amount is less then 10000")]
+    #[test_case(10000, 10000, 10000; "Spread amount is initial amount with max spread")]
+    #[test_case(10000, 9, 9; "Spread amount is expected value")]
+    fn calculate_spread_amount_tests(amount: u64, spread: u16, expected_result: u64) {
+        assert_eq!(calculate_spread_amount(amount, spread), expected_result,);
+    }
+
+    #[test_case(u64::max_value(), u16::max_value(); "Should panic if overflow")]
+    #[should_panic]
+    fn calculate_spread_amount_panic_tests(amount: u64, spread: u16) {
+        calculate_spread_amount(amount, spread);
     }
 }
