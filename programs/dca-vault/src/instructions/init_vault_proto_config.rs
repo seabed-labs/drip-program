@@ -36,6 +36,9 @@ pub fn handler(
     if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
+    if params.trigger_dca_spread > 10000 || params.base_withdrawal_spread > 10000 {
+        return Err(ErrorCode::InvalidSpread.into());
+    }
     /* STATE UPDATES (EFFECTS) */
     let vault_proto_config = &mut ctx.accounts.vault_proto_config;
     vault_proto_config.init(

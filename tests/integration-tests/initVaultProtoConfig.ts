@@ -66,6 +66,7 @@ export function testInitVaultProtoConfig() {
       )
     );
   });
+
   it("errors when baseWithdrawalSpread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
@@ -77,5 +78,23 @@ export function testInitVaultProtoConfig() {
         '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
       )
     );
+  });
+
+  it("errors when triggerDCASpread is higher than 10000", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 10001,
+      baseWithdrawalSpread: 5,
+    }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
+  });
+
+  it("errors when baseWithdrawalSpread is higher than 10000", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 10001,
+    }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
   });
 }

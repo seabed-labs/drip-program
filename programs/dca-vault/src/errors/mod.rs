@@ -16,6 +16,8 @@ pub enum ErrorCode {
     InvalidGranularity,
     #[msg("Token mint does not match expected value")]
     InvalidMint,
+    #[msg("Spread must be >=0 and <=10000")]
+    InvalidSpread,
     #[msg("Invalid swap authority account")]
     InvalidSwapAuthorityAccount,
     #[msg("Invalid swap fee account")]
