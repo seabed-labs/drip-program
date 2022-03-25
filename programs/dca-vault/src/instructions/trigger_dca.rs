@@ -220,7 +220,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
     msg!("vault b balance: {}", current_balance_b);
-    // Save swap_amount since drip_amount is going to change
+    // Use drip_amount becasue it may change after process_drip
     let trigger_spread_amount = calculate_spread_amount(
         ctx.accounts.vault.drip_amount,
         ctx.accounts.vault_proto_config.trigger_dca_spread,
