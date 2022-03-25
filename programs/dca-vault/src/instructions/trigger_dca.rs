@@ -238,7 +238,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         ctx.accounts.vault_proto_config.granularity,
     );
 
-    let trigger_spread_transfer = TransferToken::new(
+    let dca_trigger_fee_transfer = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_a_account,
         &ctx.accounts.dca_trigger_fee_token_a_account,
@@ -262,7 +262,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
-    trigger_spread_transfer.execute(&ctx.accounts.vault)?;
+    dca_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
 
     ctx.accounts.dca_trigger_fee_token_a_account.reload()?;
     ctx.accounts.vault_token_a_account.reload()?;
