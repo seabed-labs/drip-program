@@ -23,7 +23,6 @@ pub struct WithdrawB<'info> {
     pub vault: Account<'info, Vault>,
 
     #[account(
-        constraint = vault_proto_config.granularity != 0,
         constraint = vault_proto_config.key() == vault.proto_config
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
