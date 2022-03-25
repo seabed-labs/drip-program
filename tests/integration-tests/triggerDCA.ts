@@ -83,7 +83,7 @@ export function testTriggerDCA() {
       payerKeypair
     );
 
-    vaultProtoConfig = await deployVaultProtoConfig(1);
+    vaultProtoConfig = await deployVaultProtoConfig(1, 5, 5);
 
     vaultPDA = await deployVault(
       tokenA.publicKey,
@@ -229,9 +229,7 @@ export function testTriggerDCA() {
       vaultPeriods[1].publicKey,
       vaultPeriods[2].publicKey
     ).should.rejectedWith(
-      new RegExp(
-        ".*DCA already triggered for the current period. Duplicate DCA triggers not allowed"
-      )
+      new RegExp(".*DCA already triggered for the current period")
     );
   });
 }

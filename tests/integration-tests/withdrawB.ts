@@ -97,7 +97,7 @@ export function testWithdrawB() {
       payerKeypair
     );
 
-    vaultProtoConfig = await deployVaultProtoConfig(1);
+    vaultProtoConfig = await deployVaultProtoConfig(1, 5, 5);
 
     vaultPDA = await deployVault(
       tokenA.publicKey,

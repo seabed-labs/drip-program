@@ -128,7 +128,7 @@ export function setupKeeperBot() {
     console.log("swapAuthority:", swapAuthority.toBase58());
 
     for (const granularity of [60, 3600, 86400, 604800, 2592000]) {
-      vaultProtoConfig = await deployVaultProtoConfig(granularity);
+      vaultProtoConfig = await deployVaultProtoConfig(granularity, 5, 5);
       console.log("vaultProtoConfig:", vaultProtoConfig.toBase58());
 
       vaultPDA = await deployVault(

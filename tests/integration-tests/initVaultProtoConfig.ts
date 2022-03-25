@@ -7,6 +7,8 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 10,
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
@@ -14,12 +16,16 @@ export function testInitVaultProtoConfig() {
       );
     // Make sure the granularity is actually 1 day (24 hours) in second
     vaultProtoConfigAccount.granularity.toString().should.equal("86400");
+    vaultProtoConfigAccount.triggerDcaSpread.toString().should.equal("5");
+    vaultProtoConfigAccount.baseWithdrawalSpread.toString().should.equal("10");
   });
 
   it("uses absolute value when granularity is negative", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: -10,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 5,
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
@@ -32,6 +38,8 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: 0,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 5,
     }).should.rejectedWith(
       new RegExp(".*Granularity must be an integer larger than 0")
     );
@@ -41,6 +49,52 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: "1o" as any as number,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 5,
     }).should.rejectedWith(new RegExp(".*Invalid character"));
+  });
+
+  it("errors when triggerDCASpread is not within u16 bound", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 70000,
+      baseWithdrawalSpread: 5,
+    }).should.rejectedWith(
+      new RegExp(
+        '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
+      )
+    );
+  });
+
+  it("errors when baseWithdrawalSpread is not within u16 bound", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 70000,
+    }).should.rejectedWith(
+      new RegExp(
+        '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
+      )
+    );
+  });
+
+  it("errors when triggerDCASpread is higher than 10000", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 10001,
+      baseWithdrawalSpread: 5,
+    }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
+  });
+
+  it("errors when baseWithdrawalSpread is higher than 10000", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 10001,
+    }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
   });
 }

@@ -23,6 +23,8 @@ export function testInitVaultPeriod() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
+      triggerDCASpread: 5,
+      baseWithdrawalSpread: 5,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 

@@ -23,7 +23,7 @@ export class AccountUtil extends TestUtil {
       AsyncReturnType<
         typeof ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch
       >,
-      "granularity"
+      "granularity" | "triggerDcaSpread" | "baseWithdrawalSpread"
     >
   > {
     return await ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch(

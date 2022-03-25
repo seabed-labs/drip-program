@@ -6,6 +6,10 @@ use crate::state::{ByteSized, VaultProtoConfig};
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitVaultProtoConfigParams {
     granularity: u64,
+    // spread applied to each trigger DCA in bips
+    trigger_dca_spread: u16,
+    // spread applied to each withdrawal DCA in bips
+    base_withdrawal_spread: u16,
 }
 
 #[derive(Accounts)]
@@ -28,10 +32,18 @@ pub fn handler(
     ctx: Context<InitializeVaultProtoConfig>,
     params: InitVaultProtoConfigParams,
 ) -> Result<()> {
-    let vault_proto_config = &mut ctx.accounts.vault_proto_config;
+    /* MANUAL CHECKS + COMPUTE (CHECKS) */
     if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
-    vault_proto_config.granularity = params.granularity;
+    if params.trigger_dca_spread > 10000 || params.base_withdrawal_spread > 10000 {
+        return Err(ErrorCode::InvalidSpread.into());
+    }
+    /* STATE UPDATES (EFFECTS) */
+    ctx.accounts.vault_proto_config.init(
+        params.granularity,
+        params.trigger_dca_spread,
+        params.base_withdrawal_spread,
+    );
     Ok(())
 }

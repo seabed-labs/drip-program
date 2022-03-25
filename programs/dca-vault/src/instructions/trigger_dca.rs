@@ -43,10 +43,8 @@ pub struct TriggerDCA<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = {
-            vault_proto_config.granularity != 0 &&
-            vault_proto_config.key() == vault.proto_config
-        }
+        constraint = vault_proto_config.granularity != 0,
+        constraint = vault_proto_config.key() == vault.proto_config
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -57,10 +55,8 @@ pub struct TriggerDCA<'info> {
             last_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = last_vault_period.bump,
-        constraint = {
-            last_vault_period.period_id == vault.last_dca_period &&
-            last_vault_period.vault == vault.key()
-        }
+        constraint = last_vault_period.period_id == vault.last_dca_period,
+        constraint = last_vault_period.vault == vault.key()
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -73,36 +69,28 @@ pub struct TriggerDCA<'info> {
             current_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = current_vault_period.bump,
-        constraint = {
-            current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap() &&
-            current_vault_period.vault == vault.key()
-        }
+        constraint = current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap(),
+        constraint = current_vault_period.vault == vault.key()
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
         // mut needed for CPI
         mut,
-        constraint = {
-            swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
-            swap_token_mint.is_initialized
-        }
+        constraint = swap_token_mint.mint_authority.contains(&swap_authority.key()),
+        constraint = swap_token_mint.is_initialized
     )]
     pub swap_token_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        constraint = {
-            token_a_mint.key() == vault.token_a_mint &&
-            token_a_mint.is_initialized
-        }
+        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = token_a_mint.is_initialized
     )]
     pub token_a_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        constraint = {
-            token_b_mint.key() == vault.token_b_mint &&
-            token_b_mint.is_initialized
-        }
+        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = token_b_mint.is_initialized
     )]
     pub token_b_mint: Box<Account<'info, Mint>>,
 
@@ -111,10 +99,8 @@ pub struct TriggerDCA<'info> {
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,
-        constraint = {
-            vault_token_a_account.state == AccountState::Initialized &&
-            vault_token_a_account.amount >= vault.drip_amount
-        }
+        constraint = vault_token_a_account.state == AccountState::Initialized,
+        constraint = vault_token_a_account.amount >= vault.drip_amount
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -123,41 +109,41 @@ pub struct TriggerDCA<'info> {
         mut,
         associated_token::mint = token_b_mint,
         associated_token::authority = vault,
-        constraint = {
-            vault_token_b_account.state == AccountState::Initialized
-        },
+        constraint = vault_token_b_account.state == AccountState::Initialized
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
-        constraint = {
-            swap_token_a_account.mint == vault.token_a_mint &&
-            swap_token_a_account.owner == swap_authority.key() &&
-            swap_token_a_account.state == AccountState::Initialized
-        },
+        constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_a_account.owner == swap_authority.key(),
+        constraint = swap_token_a_account.state == AccountState::Initialized,
     )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut neeed because we are changing balance
         mut,
-        constraint = {
-            swap_token_b_account.mint == vault.token_b_mint &&
-            swap_token_b_account.owner == swap_authority.key() &&
-            swap_token_b_account.state == AccountState::Initialized
-        },
+        constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_b_account.owner == swap_authority.key(),
+        constraint = swap_token_b_account.state == AccountState::Initialized
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut neeed because we are changing balance
         mut,
-        constraint = {
-            swap_fee_account.mint == swap_token_mint.key()
-        }
+        constraint = swap_fee_account.mint == swap_token_mint.key()
     )]
     pub swap_fee_account: Box<Account<'info, TokenAccount>>,
+
+    // #[account(
+    //     // mut neeed because we are changing balance
+    //     mut,
+    //     constraint = dca_trigger_source_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
+    //     constraint = dca_trigger_source_token_b_account.state == AccountState::Initialized
+    // )]
+    // pub dca_trigger_source_token_b_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
@@ -233,6 +219,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
     msg!("vault b balance: {}", current_balance_b);
     // Save sent_a since drip_amount is going to change
+    // let trigger_spread_amount = ctx.
     let swap_amount = ctx.accounts.vault.drip_amount;
 
     let vault = &mut ctx.accounts.vault;
