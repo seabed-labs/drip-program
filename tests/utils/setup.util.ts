@@ -266,6 +266,7 @@ export const deploySwap = async (
 
 export const triggerDCAWrapper = (
   user: Keypair,
+  dcaTriggerFeeTokenAAccount: PublicKey,
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   vaultTokenA_ATA: PublicKey,
@@ -282,6 +283,7 @@ export const triggerDCAWrapper = (
   return async (previousDCAPeriod: PublicKey, currentDCAPeriod: PublicKey) => {
     await VaultUtil.triggerDCA(
       user,
+      dcaTriggerFeeTokenAAccount,
       vault,
       vaultProtoConfig,
       vaultTokenA_ATA,
@@ -303,6 +305,7 @@ export const triggerDCAWrapper = (
 export const withdrawBWrapper = (
   user: Keypair,
   vault: PublicKey,
+  vaultProtoConfig: PublicKey,
   positionAccount: PublicKey,
   userPostionNFTAccount: PublicKey,
   userPositionNFTMint: PublicKey,
@@ -315,6 +318,7 @@ export const withdrawBWrapper = (
     await VaultUtil.withdrawB(
       user,
       vault,
+      vaultProtoConfig,
       positionAccount,
       userPostionNFTAccount,
       userPositionNFTMint,
@@ -331,15 +335,13 @@ export const withdrawBWrapper = (
 export const closePositionWrapper = (
   withdrawer: Keypair,
   vault: PublicKey,
+  vaultProtoConfig: PublicKey,
   userPosition: PublicKey,
-
   vaultTokenAAccount: PublicKey,
   vaultTokenBAccount: PublicKey,
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
-
   userPositionNftAccount: PublicKey,
-
   userPositionNftMint: PublicKey,
   tokenAMint: PublicKey,
   tokenBMint: PublicKey
@@ -352,18 +354,16 @@ export const closePositionWrapper = (
     await VaultUtil.closePosition(
       withdrawer,
       vault,
+      vaultProtoConfig,
       userPosition,
       vaultPeriodI,
       vaultPeriodJ,
       vaultPeriodUserExpiry,
-
       vaultTokenAAccount,
       vaultTokenBAccount,
       userTokenAAccount,
       userTokenBAccount,
-
       userPositionNftAccount,
-
       userPositionNftMint,
       tokenAMint,
       tokenBMint

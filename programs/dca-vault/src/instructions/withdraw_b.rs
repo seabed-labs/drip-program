@@ -1,7 +1,7 @@
 use crate::errors::ErrorCode;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_withdraw_token_b_amount;
-use crate::state::{Position, Vault, VaultPeriod};
+use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -21,6 +21,12 @@ pub struct WithdrawB<'info> {
         bump = vault.bump
     )]
     pub vault: Account<'info, Vault>,
+
+    #[account(
+        constraint = vault_proto_config.granularity != 0,
+        constraint = vault_proto_config.key() == vault.proto_config
+    )]
+    pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     #[account(
         has_one = vault,
@@ -139,6 +145,7 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         ctx.accounts.vault_period_i.twap,
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
+        ctx.accounts.vault_proto_config.trigger_dca_spread,
     );
 
     // 2. Compute withdrawable amount (since they could have withdrawn some already)
