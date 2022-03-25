@@ -38,6 +38,7 @@ pub fn calculate_withdraw_token_a_amount(
 /// * `twap_i`: the value of twap in the vault period account for period i (dca_period_id_before_deposit)
 /// * `twap_j`: the value of twap in the vault period account for period j (last_dca_period)
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
+/// * `trigger_dca_spread`: spread applied in each trigger DCA
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_b_amount(
