@@ -80,21 +80,21 @@ export function testInitVaultProtoConfig() {
     );
   });
 
-  it("errors when triggerDCASpread is higher than 10000", async () => {
+  it("errors when triggerDCASpread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
-      triggerDCASpread: 10001,
+      triggerDCASpread: 5000,
       baseWithdrawalSpread: 5,
     }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
   });
 
-  it("errors when baseWithdrawalSpread is higher than 10000", async () => {
+  it("errors when baseWithdrawalSpread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       triggerDCASpread: 5,
-      baseWithdrawalSpread: 10001,
+      baseWithdrawalSpread: 5000,
     }).should.rejectedWith(new RegExp(".*Spread must be >=0 and <=10000"));
   });
 }

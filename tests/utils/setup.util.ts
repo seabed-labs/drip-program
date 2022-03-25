@@ -40,6 +40,7 @@ export const deployVaultProtoConfig = async (
 export const deployVault = async (
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   vaultProtoConfigAccount: PublicKey
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
@@ -57,7 +58,8 @@ export const deployVault = async (
     tokenAMint,
     tokenBMint,
     vaultTokenA_ATA,
-    vaultTokenB_ATA
+    vaultTokenB_ATA,
+    vaultTreasuryTokenBAccount
   );
   return vaultPDA;
 };
@@ -311,6 +313,7 @@ export const withdrawBWrapper = (
   userPositionNFTMint: PublicKey,
   vaultTokenA: PublicKey,
   vaultTokenB: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   tokenBMint: PublicKey,
   userTokenBAccount: PublicKey
 ) => {
@@ -324,6 +327,7 @@ export const withdrawBWrapper = (
       userPositionNFTMint,
       vaultTokenA,
       vaultTokenB,
+      vaultTreasuryTokenBAccount,
       vaultPeriodI,
       vaultPeriodJ,
       tokenBMint,
@@ -339,6 +343,7 @@ export const closePositionWrapper = (
   userPosition: PublicKey,
   vaultTokenAAccount: PublicKey,
   vaultTokenBAccount: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
@@ -361,6 +366,7 @@ export const closePositionWrapper = (
       vaultPeriodUserExpiry,
       vaultTokenAAccount,
       vaultTokenBAccount,
+      vaultTreasuryTokenBAccount,
       userTokenAAccount,
       userTokenBAccount,
       userPositionNftAccount,

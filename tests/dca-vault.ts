@@ -27,7 +27,7 @@ if (SETUP_BOT) {
     describe("#initVault", testInitVault);
     describe("#initVaultPeriod", testInitVaultPeriod);
     describe("#deposit", testDeposit);
-    describe("#withdrawB", testWithdrawB);
+    describe.only("#withdrawB", testWithdrawB);
     describe("#closePosition", testClosePosition);
     describe("#triggerDCA", testTriggerDCA);
   });

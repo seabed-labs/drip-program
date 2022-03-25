@@ -69,6 +69,7 @@ export class VaultUtil extends TestUtil {
     tokenBMint: PublicKey,
     tokenA_ATA: PublicKey,
     tokenB_ATA: PublicKey,
+    treasuryTokenBAccount: PublicKey,
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
@@ -83,6 +84,7 @@ export class VaultUtil extends TestUtil {
       tokenBMint: tokenBMint.toBase58(),
       tokenAAccount: tokenA_ATA.toBase58(),
       tokenBAccount: tokenB_ATA.toBase58(),
+      treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
       creator: this.provider.wallet.publicKey.toBase58(),
       systemProgram:
         programs?.systemProgram?.toBase58() ??
@@ -223,6 +225,7 @@ export class VaultUtil extends TestUtil {
     userPositionNftMint: PublicKey,
     vaultTokenAAccount: PublicKey,
     vaultTokenBAccount: PublicKey,
+    vaultTreasuryTokenBAccount: PublicKey,
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     tokenBMint: PublicKey,
@@ -239,7 +242,8 @@ export class VaultUtil extends TestUtil {
       userPositionNftMint: userPositionNftMint.toBase58(),
       vaultTokenAAccount: vaultTokenAAccount.toBase58(),
       vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-      vaultTokenBMint: tokenBMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
       userTokenBAccount: userTokenBAccount.toBase58(),
       tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
       associatedTokenProgram:
@@ -263,6 +267,7 @@ export class VaultUtil extends TestUtil {
     vaultPeriodUserExpiry: PublicKey,
     vaultTokenAAccount: PublicKey,
     vaultTokenBAccount: PublicKey,
+    vaultTreasuryTokenBAccount: PublicKey,
     userTokenAAccount: PublicKey,
     userTokenBAccount: PublicKey,
     userPositionNftAccount: PublicKey,
@@ -279,6 +284,7 @@ export class VaultUtil extends TestUtil {
       userPosition: userPosition.toBase58(),
       vaultTokenAAccount: vaultTokenAAccount.toBase58(),
       vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
       userTokenAAccount: userTokenAAccount.toBase58(),
       userTokenBAccount: userTokenBAccount.toBase58(),
       userPositionNftAccount: userPositionNftAccount.toBase58(),
