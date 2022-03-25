@@ -66,13 +66,13 @@ pub fn calculate_withdraw_token_b_amount(
     .checked_div(j.checked_sub(i).unwrap())
     .unwrap();
     // periodic_drip_amount * (j-i)
-    let mut dripped_so_far = periodic_drip_amount
+    let dripped_so_far = periodic_drip_amount
         .checked_mul(j.checked_sub(i).unwrap())
         .unwrap();
     // subtract spreads we've already taken
     let trigger_dca_spread_amount =
         calculate_spread_amount(u64::try_from(dripped_so_far).unwrap(), trigger_dca_spread);
-    dripped_so_far = dripped_so_far
+    let dripped_so_far = dripped_so_far
         .checked_sub(trigger_dca_spread_amount.into())
         .unwrap();
     // average_price_from_start * dripped_so_far
