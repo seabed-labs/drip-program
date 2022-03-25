@@ -268,10 +268,10 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
 
-    let new_dca_trigger_feebalance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
+    let new_dca_trigger_fee_balance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
     msg!(
         "new dca trigger fee a balance: {}",
-        new_dca_trigger_feebalance_a
+        new_dca_trigger_fee_balance_a
     );
 
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
