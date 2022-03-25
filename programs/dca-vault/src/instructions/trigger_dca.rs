@@ -1,4 +1,6 @@
 use crate::errors::ErrorCode;
+use crate::interactions::transfer_token::TransferToken;
+use crate::math::calculate_spread_amount;
 use crate::sign;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
@@ -137,13 +139,13 @@ pub struct TriggerDCA<'info> {
     )]
     pub swap_fee_account: Box<Account<'info, TokenAccount>>,
 
-    // #[account(
-    //     // mut neeed because we are changing balance
-    //     mut,
-    //     constraint = dca_trigger_source_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
-    //     constraint = dca_trigger_source_token_b_account.state == AccountState::Initialized
-    // )]
-    // pub dca_trigger_source_token_b_account: Box<Account<'info, TokenAccount>>,
+    #[account(
+        // mut neeed because we are changing balance
+        mut,
+        constraint = dca_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = dca_trigger_fee_token_a_account.state == AccountState::Initialized
+    )]
+    pub dca_trigger_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
@@ -218,14 +220,29 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
     msg!("vault b balance: {}", current_balance_b);
-    // Save sent_a since drip_amount is going to change
-    // let trigger_spread_amount = ctx.
-    let swap_amount = ctx.accounts.vault.drip_amount;
+    // Use drip_amount becasue it may change after process_drip
+    let trigger_spread_amount = calculate_spread_amount(
+        ctx.accounts.vault.drip_amount,
+        ctx.accounts.vault_proto_config.trigger_dca_spread,
+    );
+    let swap_amount = ctx
+        .accounts
+        .vault
+        .drip_amount
+        .checked_sub(trigger_spread_amount)
+        .unwrap();
 
     let vault = &mut ctx.accounts.vault;
     vault.process_drip(
         &ctx.accounts.current_vault_period,
         ctx.accounts.vault_proto_config.granularity,
+    );
+
+    let dca_trigger_fee_transfer = TransferToken::new(
+        &ctx.accounts.token_program,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.dca_trigger_fee_token_a_account,
+        trigger_spread_amount,
     );
 
     /* MANUAL CPI (INTERACTIONS) */
@@ -245,8 +262,17 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
+    dca_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
+
+    ctx.accounts.dca_trigger_fee_token_a_account.reload()?;
     ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
+
+    let new_dca_trigger_fee_balance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
+    msg!(
+        "new dca trigger fee a balance: {}",
+        new_dca_trigger_fee_balance_a
+    );
 
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
     msg!("new vault a balance: {}", new_balance_a);

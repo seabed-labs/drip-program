@@ -15,7 +15,7 @@ export class TestConfig {
   );
 
   constructor(provider: Provider) {
-    console.log(process.env.ENV);
+    console.log(process.env.ENV ?? "no environment specified");
     setProvider(provider);
     this.provider = provider;
   }

@@ -31,6 +31,9 @@ export function testClosePosition() {
   let userTokenAAccount: PublicKey;
   let userTokenBAccount: PublicKey;
 
+  let bot: Keypair;
+  let botTokenAAccount: PublicKey;
+
   let userPositionNFTMint: PublicKey;
   let userPositionAccount: PublicKey;
   let userPositionNFTAccount: PublicKey;
@@ -61,9 +64,11 @@ export function testClosePosition() {
     await sleep(500);
 
     user = generatePair();
+    bot = generatePair();
     [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
       SolUtils.fundAccount(user.publicKey, 1000000000),
+      SolUtils.fundAccount(bot.publicKey, 1000000000),
       SolUtils.fundAccount(payerKeypair.publicKey, 1000000000),
       SolUtils.fundAccount(tokenOwnerKeypair.publicKey, 1000000000),
     ]);
@@ -131,6 +136,8 @@ export function testClosePosition() {
     );
     await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
 
+    botTokenAAccount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
+
     userTokenBAccount = await tokenB.createAssociatedTokenAccount(
       user.publicKey
     );
@@ -153,7 +160,8 @@ export function testClosePosition() {
     userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
 
     triggerDCA = triggerDCAWrapper(
-      user,
+      bot,
+      botTokenAAccount,
       vaultPDA.publicKey,
       vaultProtoConfig,
       vaultTokenA_ATA,
@@ -171,15 +179,13 @@ export function testClosePosition() {
     closePosition = closePositionWrapper(
       user,
       vaultPDA.publicKey,
+      vaultProtoConfig,
       userPositionAccount,
-
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       userTokenAAccount,
       userTokenBAccount,
-
       userPositionNFTAccount,
-
       userPositionNFTMint,
       tokenA.publicKey,
       tokenB.publicKey
@@ -271,7 +277,7 @@ export function testClosePosition() {
     ]);
 
     userTokenAAccount_After.balance.toString().should.equal("1500000000");
-    userTokenBAccount_After.balance.toString().should.equal("498251432");
+    userTokenBAccount_After.balance.toString().should.equal("498002434");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
     vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
@@ -318,7 +324,7 @@ export function testClosePosition() {
     ]);
 
     userTokenAAccount_After.balance.toString().should.equal("1000000000");
-    userTokenBAccount_After.balance.toString().should.equal("996005859");
+    userTokenBAccount_After.balance.toString().should.equal("995508357");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
     vaultPeriodUserExpiry_After.dar.toString().should.equal("250000000");
@@ -366,7 +372,7 @@ export function testClosePosition() {
     ]);
 
     userTokenAAccount_After.balance.toString().should.equal("1000000000");
-    userTokenBAccount_After.balance.toString().should.equal("993628003");
+    userTokenBAccount_After.balance.toString().should.equal("993132870");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
   });

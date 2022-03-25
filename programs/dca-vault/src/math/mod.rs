@@ -38,6 +38,7 @@ pub fn calculate_withdraw_token_a_amount(
 /// * `twap_i`: the value of twap in the vault period account for period i (dca_period_id_before_deposit)
 /// * `twap_j`: the value of twap in the vault period account for period j (last_dca_period)
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
+/// * `trigger_dca_spread`: spread applied in each trigger DCA
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_b_amount(
@@ -46,6 +47,7 @@ pub fn calculate_withdraw_token_b_amount(
     twap_i_x64: u128,
     twap_j_x64: u128,
     periodic_drip_amount: u64,
+    trigger_dca_spread: u16,
 ) -> u64 {
     if i == j {
         return 0;
@@ -66,6 +68,12 @@ pub fn calculate_withdraw_token_b_amount(
     // periodic_drip_amount * (j-i)
     let dripped_so_far = periodic_drip_amount
         .checked_mul(j.checked_sub(i).unwrap())
+        .unwrap();
+    // subtract spreads we've already taken
+    let trigger_dca_spread_amount =
+        calculate_spread_amount(u64::try_from(dripped_so_far).unwrap(), trigger_dca_spread);
+    let dripped_so_far = dripped_so_far
+        .checked_sub(trigger_dca_spread_amount.into())
         .unwrap();
     // average_price_from_start * dripped_so_far
     let amount_x64 = average_price_from_start_x64
@@ -182,15 +190,19 @@ mod test {
     // Price token_b/token_a: 10, 20, 30, 40, 50, 60, 70
     // TWAP: [0, 10, 15, 20, 25, 30, 35, 40]
     // In practice there will be a lot more 0's as we are dealing with base values
-    #[test_case(0, 4,  0 << 64, 25 << 64, 4, 25*4*4; "Can withdraw B when starting from first period")]
-    #[test_case(1, 4, 10 << 64, 25 << 64, 4, 30*4*3; "Can withdraw B when not starting from first period")]
-    #[test_case(4, 4, 10 << 64, 25 << 64, 4, 0; "Can withdraw 0 B when i equals j")]
+    #[test_case(0, 4,  0 << 64, 25 << 64, 4, 0, 25*4*4; "Can withdraw B when starting from first period")]
+    #[test_case(0, 4,  0 << 64, 25 << 64, 4, 5000, 25*(4*4 - 8); "Can withdraw B when starting from first period with spread")]
+    #[test_case(1, 4, 10 << 64, 25 << 64, 4, 0, 30*4*3; "Can withdraw B when not starting from first period")]
+    #[test_case(1, 4, 10 << 64, 25 << 64, 4, 5000, 30*(4*3-6); "Can withdraw B when not starting from first period with spread")]
+    #[test_case(4, 4, 10 << 64, 25 << 64, 4, 0, 0; "Can withdraw 0 B when i equals j")]
+    #[test_case(1, 4, 10 << 64, 25 << 64, 4, 10000, 0; "Can withdraw 0 B when spread is 10000")]
     fn calculate_withdraw_token_b_amount_tests(
         dca_period_id_before_deposit: u64,
         last_dca_period: u64,
         twap_i: u128,
         twap_j: u128,
         periodic_drip_amount: u64,
+        trigger_dca_spread: u16,
         expected_withdrawal_b: u64,
     ) {
         assert_eq!(
@@ -200,13 +212,14 @@ mod test {
                 twap_i,
                 twap_j,
                 periodic_drip_amount,
+                trigger_dca_spread
             ),
             expected_withdrawal_b,
         );
     }
 
-    #[test_case(4, 1, 0, 25, 4; "Should panic when j is less than i")]
-    #[test_case(1, 4, 0, u128::max_value(), 4; "Should panic if overflow")]
+    #[test_case(4, 1, 0, 25, 4, 0; "Should panic when j is less than i")]
+    #[test_case(1, 4, 0, u128::max_value(), 4, 0; "Should panic if overflow")]
     #[should_panic]
     fn calculate_withdraw_token_b_amount_panic_tests(
         i: u64,
@@ -214,8 +227,16 @@ mod test {
         twap_i: u128,
         twap_j: u128,
         periodic_drip_amount: u64,
+        trigger_dca_spread: u16,
     ) {
-        calculate_withdraw_token_b_amount(i, j, twap_i, twap_j, periodic_drip_amount);
+        calculate_withdraw_token_b_amount(
+            i,
+            j,
+            twap_i,
+            twap_j,
+            periodic_drip_amount,
+            trigger_dca_spread,
+        );
     }
 
     #[test_case(0, 5, 0; "Spread amount is 0 with 0 initial amount")]

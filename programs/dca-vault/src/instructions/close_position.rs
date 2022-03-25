@@ -1,5 +1,5 @@
 use crate::math::{calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount};
-use crate::state::{Position, Vault, VaultPeriod};
+use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_lang::System;
 use anchor_spl::token::{burn, transfer, Burn, Mint, Token, TokenAccount, Transfer};
@@ -20,6 +20,11 @@ pub struct ClosePosition<'info> {
         bump = vault.bump
     )]
     pub vault: Box<Account<'info, Vault>>,
+
+    #[account(
+        constraint = vault_proto_config.key() == vault.proto_config
+    )]
+    pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     #[account(
         has_one = vault,
@@ -203,6 +208,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         ctx.accounts.vault_period_i.twap,
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
+        ctx.accounts.vault_proto_config.trigger_dca_spread,
     );
     let withdraw_b = max_withdrawable_b
         .checked_sub(ctx.accounts.user_position.withdrawn_token_b_amount)

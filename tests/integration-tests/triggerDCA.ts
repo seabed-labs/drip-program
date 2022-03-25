@@ -24,8 +24,13 @@ import { AccountUtil } from "../utils/Account.util";
 export function testTriggerDCA() {
   let user: Keypair;
   let userTokenAAccount: PublicKey;
+
+  let bot: Keypair;
+  let botTokenAAcount: PublicKey;
+
   let tokenA: Token;
   let tokenB: Token;
+
   let swap: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
@@ -47,9 +52,11 @@ export function testTriggerDCA() {
     await sleep(500);
 
     user = generatePair();
+    bot = generatePair();
     const [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
       SolUtils.fundAccount(user.publicKey, 1000000000),
+      SolUtils.fundAccount(bot.publicKey, 1000000000),
       SolUtils.fundAccount(payerKeypair.publicKey, 1000000000),
       SolUtils.fundAccount(tokenOwnerKeypair.publicKey, 1000000000),
     ]);
@@ -117,6 +124,8 @@ export function testTriggerDCA() {
     );
     await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
 
+    botTokenAAcount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
+
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
       tokenA
@@ -132,7 +141,8 @@ export function testTriggerDCA() {
     );
 
     triggerDCA = triggerDCAWrapper(
-      user,
+      bot,
+      botTokenAAcount,
       vaultPDA.publicKey,
       vaultProtoConfig,
       vaultTokenA_ATA,
@@ -152,44 +162,48 @@ export function testTriggerDCA() {
     await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
 
     let [
-      vaultTokenA_ATA_After,
-      vaultTokenB_ATA_After,
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+      botTokenAAccountAfter,
       vaultAfter,
       lastVaultPeriod,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
       TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+      TokenUtil.fetchTokenAccountInfo(botTokenAAcount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[1].publicKey),
     ]);
 
     vaultAfter.lastDcaPeriod.toString().should.equal("1");
-    vaultTokenA_ATA_After.balance.toString().should.equal("750000000");
-    vaultTokenB_ATA_After.balance.toString().should.equal("249187889");
+    vaultTokenAAccountAfter.balance.toString().should.equal("750000000");
+    vaultTokenBAccountAfter.balance.toString().should.equal("249063328");
+    botTokenAAccountAfter.balance.toString().should.equal("125000");
     // Calculated manually by doing b/a
-    lastVaultPeriod.twap.toString().should.equal("18386820858603774265");
+    lastVaultPeriod.twap.toString().should.equal("18386823290694860353");
 
     await sleep(1500);
     await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
 
     [
-      vaultTokenA_ATA_After,
-      vaultTokenB_ATA_After,
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+      botTokenAAccountAfter,
       vaultAfter,
       lastVaultPeriod,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
       TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+      TokenUtil.fetchTokenAccountInfo(botTokenAAcount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[2].publicKey),
     ]);
 
     vaultAfter.lastDcaPeriod.toString().should.equal("2");
-    vaultTokenA_ATA_After.balance.toString().should.equal("500000000");
-    vaultTokenB_ATA_After.balance.toString().should.equal("498251433");
-    // Swap price in this period is 18377645817036392608
-    // Value calcualted manually using previous twap value and the new price from this period
-    lastVaultPeriod.twap.toString().should.equal("18382233337820083436");
+    vaultTokenAAccountAfter.balance.toString().should.equal("500000000");
+    vaultTokenBAccountAfter.balance.toString().should.equal("498002435");
+    botTokenAAccountAfter.balance.toString().should.equal("250000");
+    lastVaultPeriod.twap.toString().should.equal("18382238052084394572");
   });
 
   it("should trigger DCA dca_cyles number of times", async () => {
@@ -201,12 +215,18 @@ export function testTriggerDCA() {
       await sleep(1500);
     }
 
-    const [vaultTokenA_ATA_After, vaultTokenB_ATA_After] = await Promise.all([
+    const [
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+      botTokenAAccountAfter,
+    ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
       TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
+      TokenUtil.fetchTokenAccountInfo(botTokenAAcount),
     ]);
-    vaultTokenA_ATA_After.balance.toString().should.equal("0");
-    vaultTokenB_ATA_After.balance.toString().should.equal("996005860");
+    vaultTokenAAccountAfter.balance.toString().should.equal("0");
+    vaultTokenBAccountAfter.balance.toString().should.equal("995508358");
+    botTokenAAccountAfter.balance.toString().should.equal("500000");
   });
 
   it("should fail to trigger DCA if vault token A balance is 0", async () => {
