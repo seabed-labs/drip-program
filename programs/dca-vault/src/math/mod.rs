@@ -103,11 +103,14 @@ pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
 ///
 /// returns: u64
 pub fn calculate_spread_amount(amount: u64, spread: u16) -> u64 {
-    amount
-        .checked_div(10000)
-        .unwrap()
-        .checked_mul(spread.into())
-        .unwrap()
+    u64::try_from(
+        u128::from(amount)
+            .checked_mul(spread.into())
+            .unwrap()
+            .checked_div(10000)
+            .unwrap(),
+    )
+    .unwrap()
 }
 
 #[cfg(test)]
@@ -217,7 +220,7 @@ mod test {
 
     #[test_case(0, 5, 0; "Spread amount is 0 with 0 initial amount")]
     #[test_case(10000, 0, 0; "Spread amount is 0 with 0 spread")]
-    #[test_case(9999, 10000, 0; "Spread amount is 0 when initial amount is less then 10000")]
+    #[test_case(9999, 10000, 9999; "Spread amount is 0 when initial amount is less then 10000")]
     #[test_case(10000, 10000, 10000; "Spread amount is initial amount with max spread")]
     #[test_case(10000, 9, 9; "Spread amount is expected value")]
     fn calculate_spread_amount_tests(amount: u64, spread: u16, expected_result: u64) {

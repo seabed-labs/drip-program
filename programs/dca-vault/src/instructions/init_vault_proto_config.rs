@@ -40,8 +40,7 @@ pub fn handler(
         return Err(ErrorCode::InvalidSpread.into());
     }
     /* STATE UPDATES (EFFECTS) */
-    let vault_proto_config = &mut ctx.accounts.vault_proto_config;
-    vault_proto_config.init(
+    ctx.accounts.vault_proto_config.init(
         params.granularity,
         params.trigger_dca_spread,
         params.base_withdrawal_spread,
