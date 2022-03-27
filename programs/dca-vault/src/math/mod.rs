@@ -1,7 +1,5 @@
 use std::convert::TryFrom;
 
-use anchor_lang::prelude::msg;
-
 pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
     total_amount.checked_div(dca_cycles).unwrap()
 }
