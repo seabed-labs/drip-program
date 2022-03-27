@@ -209,7 +209,7 @@ export function testClosePosition() {
     );
   });
 
-  it("should be able to close position before first first DCA", async () => {
+  it("should be able to close position before first DCA", async () => {
     await userPosition.approve(
       userPositionNFTAccount,
       vaultPDA.publicKey,
@@ -227,6 +227,7 @@ export function testClosePosition() {
     const [
       userTokenAAccount_After,
       userTokenBAccount_After,
+      vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccount_After,
       userPositionAccount_After,
       vault_After,
@@ -234,6 +235,7 @@ export function testClosePosition() {
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
@@ -242,6 +244,7 @@ export function testClosePosition() {
 
     userTokenAAccount_After.balance.toString().should.equal("2000000000");
     userTokenBAccount_After.balance.toString().should.equal("0");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
     vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
@@ -274,6 +277,7 @@ export function testClosePosition() {
     const [
       userTokenAAccount_After,
       userTokenBAccount_After,
+      vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccount_After,
       userPositionAccount_After,
       vault_After,
@@ -281,6 +285,7 @@ export function testClosePosition() {
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
@@ -289,6 +294,7 @@ export function testClosePosition() {
 
     userTokenAAccount_After.balance.toString().should.equal("1500000000");
     userTokenBAccount_After.balance.toString().should.equal("497753433");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
     vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
@@ -321,6 +327,7 @@ export function testClosePosition() {
     const [
       userTokenAAccount_After,
       userTokenBAccount_After,
+      vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccount_After,
       userPositionAccount_After,
       vault_After,
@@ -328,6 +335,7 @@ export function testClosePosition() {
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
@@ -336,6 +344,7 @@ export function testClosePosition() {
 
     userTokenAAccount_After.balance.toString().should.equal("1000000000");
     userTokenBAccount_After.balance.toString().should.equal("995010603");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
     vaultPeriodUserExpiry_After.dar.toString().should.equal("250000000");
@@ -373,17 +382,20 @@ export function testClosePosition() {
     const [
       userTokenAAccount_After,
       userTokenBAccount_After,
+      vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccount_After,
       userPositionAccount_After,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
     ]);
 
     userTokenAAccount_After.balance.toString().should.equal("1000000000");
     userTokenBAccount_After.balance.toString().should.equal("992636304");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("496566");
     userPositionNFTAccount_After.balance.toString().should.equal("0");
     userPositionAccount_After.isClosed.should.be.true();
   });

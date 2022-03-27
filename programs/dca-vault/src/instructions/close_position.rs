@@ -56,7 +56,7 @@ pub struct ClosePosition<'info> {
             user_position.dca_period_id_before_deposit
                 .checked_add(user_position.number_of_swaps)
                 .unwrap()
-        ),
+            ),
         constraint = vault_period_j.vault == vault.key()
     )]
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
@@ -186,7 +186,7 @@ pub struct ClosePosition<'info> {
 pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
-    // 1. Get max withdrawable Token A and Token B
+    // 1. Get max withdrawable Token A and Token B for this user
     let i = ctx.accounts.vault_period_i.period_id;
     let j = ctx.accounts.vault_period_j.period_id;
     let withdrawable_amount_a = calculate_withdraw_token_a_amount(
@@ -217,6 +217,12 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         .accounts
         .user_position
         .get_withdrawable_amount_with_spread(withdrawable_amount_b, withdrawal_spread_amount_b);
+    msg!(
+        "spread {} withdrawable_amount_b {} base_withdrawal_spread {}",
+        withdrawal_spread_amount_b,
+        withdrawable_amount_b,
+        ctx.accounts.vault_proto_config.base_withdrawal_spread
+    );
 
     // 3. Transfer tokens (these are lazily executed below)
     let transfer_a_to_user = TransferToken::new(
@@ -244,7 +250,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     ctx.accounts.user_position.update_is_closed(true);
     ctx.accounts
         .user_position
-        .update_withdrawn_amount(withdrawable_amount_b);
+        .update_withdrawn_amount(withdrawable_amount_b, withdrawal_spread_amount_b);
 
     // Only reduce drip amount and dar if we haven't done so already
     if ctx.accounts.vault_period_j.period_id < ctx.accounts.vault_period_user_expiry.period_id {

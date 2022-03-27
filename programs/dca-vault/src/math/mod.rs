@@ -1,5 +1,7 @@
 use std::convert::TryFrom;
 
+use anchor_lang::prelude::msg;
+
 pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
     total_amount.checked_div(dca_cycles).unwrap()
 }
@@ -72,6 +74,7 @@ pub fn calculate_withdraw_token_b_amount(
     // subtract spreads we've already taken
     let trigger_dca_spread_amount =
         calculate_spread_amount(u64::try_from(dripped_so_far).unwrap(), trigger_dca_spread);
+    msg!("trigger_dca_spread_amount {}", trigger_dca_spread_amount);
     let dripped_so_far = dripped_so_far
         .checked_sub(trigger_dca_spread_amount.into())
         .unwrap();

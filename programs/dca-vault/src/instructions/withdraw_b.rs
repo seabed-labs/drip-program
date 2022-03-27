@@ -148,26 +148,20 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         ctx.accounts.user_position.periodic_drip_amount,
         ctx.accounts.vault_proto_config.trigger_dca_spread,
     );
-    msg!("withdrawable_amount_b {}", withdrawable_amount_b);
-
     let withdrawable_amount_b = ctx
         .accounts
         .user_position
         .get_withdrawable_amount_with_max(withdrawable_amount_b);
-    msg!("withdrawable_amount_b {}", withdrawable_amount_b);
 
     // 2. Account for Withdrawal Spread on Token B
     let withdrawal_spread_amount_b = calculate_spread_amount(
         withdrawable_amount_b,
         ctx.accounts.vault_proto_config.base_withdrawal_spread,
     );
-    msg!("withdrawal_spread_amount_b {}", withdrawal_spread_amount_b);
-
     let withdrawable_amount_b = ctx
         .accounts
         .user_position
         .get_withdrawable_amount_with_spread(withdrawable_amount_b, withdrawal_spread_amount_b);
-    msg!("withdrawable_amount_b {}", withdrawable_amount_b);
 
     // 3. No point in completing IX if there's nothing happening
     if withdrawable_amount_b == 0 {
@@ -175,12 +169,6 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     }
 
     // 4. Transfer tokens (these are lazily executed below)
-    msg!(
-        "vault token b balance {}",
-        ctx.accounts.vault_token_b_account.amount
-    );
-
-    msg!("transfering {} token b to user", withdrawable_amount_b);
     let transfer_to_user = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_b_account,
@@ -204,13 +192,13 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     // 5. Update the user's position state to reflect the newly withdrawn amount
     ctx.accounts
         .user_position
-        .update_withdrawn_amount(withdrawable_amount_b);
+        .update_withdrawn_amount(withdrawable_amount_b, withdrawal_spread_amount_b);
 
     /* MANUAL CPI (INTERACTIONS) */
 
     // 6. Invoke the token transfer IX's
     transfer_to_user.execute(&ctx.accounts.vault)?;
-    if withdrawal_spread_amount_b != 0 {
+    if withdrawal_spread_amount_b > 0 {
         transfer_to_treasury.execute(&ctx.accounts.vault)?;
     }
 

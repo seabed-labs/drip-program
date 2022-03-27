@@ -318,7 +318,7 @@ export const withdrawBWrapper = (
   userTokenBAccount: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    await VaultUtil.withdrawB(
+    const txHash = await VaultUtil.withdrawB(
       user,
       vault,
       vaultProtoConfig,
@@ -333,6 +333,7 @@ export const withdrawBWrapper = (
       tokenBMint,
       userTokenBAccount
     );
+    console.log("withdrawB", txHash);
   };
 };
 
@@ -356,7 +357,7 @@ export const closePositionWrapper = (
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
   ) => {
-    await VaultUtil.closePosition(
+    const txHash = await VaultUtil.closePosition(
       withdrawer,
       vault,
       vaultProtoConfig,
@@ -374,5 +375,6 @@ export const closePositionWrapper = (
       tokenAMint,
       tokenBMint
     );
+    console.log("closePosition", txHash);
   };
 };
