@@ -176,10 +176,6 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         withdrawable_amount_b,
     );
 
-    msg!(
-        "transfering {} token b to treasury",
-        withdrawal_spread_amount_b
-    );
     let transfer_to_treasury = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_b_account,

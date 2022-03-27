@@ -217,12 +217,6 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         .accounts
         .user_position
         .get_withdrawable_amount_with_spread(withdrawable_amount_b, withdrawal_spread_amount_b);
-    msg!(
-        "spread {} withdrawable_amount_b {} base_withdrawal_spread {}",
-        withdrawal_spread_amount_b,
-        withdrawable_amount_b,
-        ctx.accounts.vault_proto_config.base_withdrawal_spread
-    );
 
     // 3. Transfer tokens (these are lazily executed below)
     let transfer_a_to_user = TransferToken::new(
