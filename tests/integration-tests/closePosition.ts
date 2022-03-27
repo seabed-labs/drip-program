@@ -225,13 +225,13 @@ export function testClosePosition() {
       vaultPeriods[k].publicKey
     );
     const [
-      userTokenAAccount_After,
-      userTokenBAccount_After,
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccount_After,
-      userPositionAccount_After,
+      userPositionNFTAccountAfter,
+      userPositionAccountAfter,
       vault_After,
-      vaultPeriodUserExpiry_After,
+      vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
@@ -242,12 +242,12 @@ export function testClosePosition() {
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccount_After.balance.toString().should.equal("2000000000");
-    userTokenBAccount_After.balance.toString().should.equal("0");
+    userTokenAAccountAfter.balance.toString().should.equal("2000000000");
+    userTokenBAccountAfter.balance.toString().should.equal("0");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
-    userPositionNFTAccount_After.balance.toString().should.equal("0");
-    userPositionAccount_After.isClosed.should.be.true();
-    vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
+    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    userPositionAccountAfter.isClosed.should.be.true();
+    vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
   });
 
@@ -275,13 +275,13 @@ export function testClosePosition() {
     );
 
     const [
-      userTokenAAccount_After,
-      userTokenBAccount_After,
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccount_After,
-      userPositionAccount_After,
+      userPositionNFTAccountAfter,
+      userPositionAccountAfter,
       vault_After,
-      vaultPeriodUserExpiry_After,
+      vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
@@ -292,12 +292,12 @@ export function testClosePosition() {
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccount_After.balance.toString().should.equal("1500000000");
-    userTokenBAccount_After.balance.toString().should.equal("497753433");
+    userTokenAAccountAfter.balance.toString().should.equal("1500000000");
+    userTokenBAccountAfter.balance.toString().should.equal("497753433");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
-    userPositionNFTAccount_After.balance.toString().should.equal("0");
-    userPositionAccount_After.isClosed.should.be.true();
-    vaultPeriodUserExpiry_After.dar.toString().should.equal("0");
+    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    userPositionAccountAfter.isClosed.should.be.true();
+    vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
   });
 
@@ -325,13 +325,13 @@ export function testClosePosition() {
     );
 
     const [
-      userTokenAAccount_After,
-      userTokenBAccount_After,
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccount_After,
-      userPositionAccount_After,
+      userPositionNFTAccountAfter,
+      userPositionAccountAfter,
       vault_After,
-      vaultPeriodUserExpiry_After,
+      vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
@@ -342,12 +342,12 @@ export function testClosePosition() {
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccount_After.balance.toString().should.equal("1000000000");
-    userTokenBAccount_After.balance.toString().should.equal("995010603");
+    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+    userTokenBAccountAfter.balance.toString().should.equal("995010603");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
-    userPositionNFTAccount_After.balance.toString().should.equal("0");
-    userPositionAccount_After.isClosed.should.be.true();
-    vaultPeriodUserExpiry_After.dar.toString().should.equal("250000000");
+    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    userPositionAccountAfter.isClosed.should.be.true();
+    vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
     vault_After.dripAmount.toString().should.equal("0");
   });
 
@@ -380,11 +380,11 @@ export function testClosePosition() {
     );
 
     const [
-      userTokenAAccount_After,
-      userTokenBAccount_After,
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccount_After,
-      userPositionAccount_After,
+      userPositionNFTAccountAfter,
+      userPositionAccountAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
@@ -393,11 +393,11 @@ export function testClosePosition() {
       AccountUtil.fetchPositionAccount(userPositionAccount),
     ]);
 
-    userTokenAAccount_After.balance.toString().should.equal("1000000000");
-    userTokenBAccount_After.balance.toString().should.equal("992636304");
+    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+    userTokenBAccountAfter.balance.toString().should.equal("992636304");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("496566");
-    userPositionNFTAccount_After.balance.toString().should.equal("0");
-    userPositionAccount_After.isClosed.should.be.true();
+    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    userPositionAccountAfter.isClosed.should.be.true();
   });
 
   it("should fail if invalid vault periods are provided", async () => {
