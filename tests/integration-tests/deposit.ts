@@ -56,12 +56,6 @@ export async function testDeposit() {
         recipient: user.publicKey,
         amount: usdcAmount,
       },
-      // {
-      //   token: tokenB,
-      //   mintAuthority: btcMinter,
-      //   recipient: user.publicKey,
-      //   amount: btcAmount,
-      // },
     ]);
 
     const vaultProtoConfigKeypair = generatePair();

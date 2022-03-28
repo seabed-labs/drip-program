@@ -22,7 +22,8 @@ pub struct InitializeVault<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.granularity != 0 @ErrorCode::InvalidGranularity
+        constraint = vault_proto_config.granularity != 0 @ErrorCode::InvalidGranularity,
+        constraint = vault_proto_config.trigger_dca_spread < 5000 && vault_proto_config.base_withdrawal_spread < 5000 @ErrorCode::InvalidSpread,
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 

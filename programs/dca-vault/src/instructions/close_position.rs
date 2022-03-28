@@ -153,7 +153,7 @@ pub struct ClosePosition<'info> {
     #[account(
         // mut neeed because we are burning the users NFT
         mut,
-        constraint = user_position_nft_mint.key() == user_position.position_authority,
+        constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint,
         constraint = user_position_nft_mint.supply == 1,
         constraint = user_position_nft_mint.decimals == 0,
         constraint = user_position_nft_mint.is_initialized == true,
