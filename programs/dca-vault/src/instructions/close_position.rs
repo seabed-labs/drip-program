@@ -186,7 +186,7 @@ pub struct ClosePosition<'info> {
 pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
-    // 1. Get max withdrawable Token A and Token B for this user
+    // 1. Get max withdrawable Token A and Token B for this position
     let i = ctx.accounts.vault_period_i.period_id;
     let j = ctx.accounts.vault_period_j.period_id;
     let withdrawable_amount_a = calculate_withdraw_token_a_amount(
