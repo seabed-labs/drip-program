@@ -69,29 +69,12 @@ impl Position {
             .unwrap()
     }
 
-    pub fn get_withdrawable_amount_with_spread(
-        &self,
-        token_b_amount: u64,
-        spread_amount: u64,
-    ) -> u64 {
-        token_b_amount.checked_sub(spread_amount).unwrap()
+    pub fn increase_withdrawn_amount(&mut self, amount: u64) {
+        self.withdrawn_token_b_amount = self.withdrawn_token_b_amount.checked_add(amount).unwrap();
     }
 
-    pub fn update_withdrawn_amount(
-        &mut self,
-        user_withdraw_amount: u64,
-        spread_withdraw_amount: u64,
-    ) {
-        self.withdrawn_token_b_amount = self
-            .withdrawn_token_b_amount
-            .checked_add(user_withdraw_amount)
-            .unwrap()
-            .checked_add(spread_withdraw_amount)
-            .unwrap();
-    }
-
-    pub fn update_is_closed(&mut self, is_closed: bool) {
-        self.is_closed = is_closed;
+    pub fn close(&mut self) {
+        self.is_closed = true;
     }
 }
 

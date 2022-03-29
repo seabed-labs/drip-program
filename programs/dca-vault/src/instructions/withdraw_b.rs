@@ -140,7 +140,7 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     // 1. Get max withdrawable Token B amount for this user
-    let withdrawable_amount_b = calculate_withdraw_token_b_amount(
+    let max_withdrawable_amount_b = calculate_withdraw_token_b_amount(
         ctx.accounts.vault_period_i.period_id,
         ctx.accounts.vault_period_j.period_id,
         ctx.accounts.vault_period_i.twap,
@@ -148,20 +148,19 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
         ctx.accounts.user_position.periodic_drip_amount,
         ctx.accounts.vault_proto_config.trigger_dca_spread,
     );
-    let withdrawable_amount_b = ctx
+    let withdrawable_amount_b_before_fees = ctx
         .accounts
         .user_position
-        .get_withdrawable_amount_with_max(withdrawable_amount_b);
+        .get_withdrawable_amount_with_max(max_withdrawable_amount_b);
 
     // 2. Account for Withdrawal Spread on Token B
     let withdrawal_spread_amount_b = calculate_spread_amount(
-        withdrawable_amount_b,
+        withdrawable_amount_b_before_fees,
         ctx.accounts.vault_proto_config.base_withdrawal_spread,
     );
-    let withdrawable_amount_b = ctx
-        .accounts
-        .user_position
-        .get_withdrawable_amount_with_spread(withdrawable_amount_b, withdrawal_spread_amount_b);
+    let withdrawable_amount_b = withdrawable_amount_b_before_fees
+        .checked_sub(withdrawal_spread_amount_b)
+        .unwrap();
 
     // 3. No point in completing IX if there's nothing happening
     if withdrawable_amount_b == 0 {
@@ -169,33 +168,37 @@ pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
     }
 
     // 4. Transfer tokens (these are lazily executed below)
-    let transfer_to_user = TransferToken::new(
+    let transfer_b_to_user = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_b_account,
         &ctx.accounts.user_token_b_account,
         withdrawable_amount_b,
     );
 
-    let transfer_to_treasury = TransferToken::new(
-        &ctx.accounts.token_program,
-        &ctx.accounts.vault_token_b_account,
-        &ctx.accounts.vault_treasury_token_b_account,
-        withdrawal_spread_amount_b,
-    );
+    let transfer_b_to_treasury = if withdrawal_spread_amount_b == 0 {
+        None
+    } else {
+        Some(TransferToken::new(
+            &ctx.accounts.token_program,
+            &ctx.accounts.vault_token_b_account,
+            &ctx.accounts.vault_treasury_token_b_account,
+            withdrawal_spread_amount_b,
+        ))
+    };
 
     /* STATE UPDATES (EFFECTS) */
 
     // 5. Update the user's position state to reflect the newly withdrawn amount
     ctx.accounts
         .user_position
-        .update_withdrawn_amount(withdrawable_amount_b, withdrawal_spread_amount_b);
+        .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
 
     /* MANUAL CPI (INTERACTIONS) */
 
     // 6. Invoke the token transfer IX's
-    transfer_to_user.execute(&ctx.accounts.vault)?;
-    if withdrawal_spread_amount_b > 0 {
-        transfer_to_treasury.execute(&ctx.accounts.vault)?;
+    transfer_b_to_user.execute(&ctx.accounts.vault)?;
+    if let Some(transfer) = transfer_b_to_treasury {
+        transfer.execute(&ctx.accounts.vault)?;
     }
 
     Ok(())
