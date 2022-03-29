@@ -21,16 +21,11 @@ https://project-serum.github.io/anchor/getting-started/installation.html
 
 To run tests manually (from the root):
 
-- cargo test
-- anchor test
-
-To run tests inside docker (from the root):
-
-- ./scripts/test_docker_local.sh
+`yarn run test`
 
 ## Devnet
 
-Add phantom wallet address to array of address's in setupKeeperBot.
+Add phantom wallet address to array of address's in `setupKeeperBot.ts`.
 
 ```
     for (const testWallet of [
