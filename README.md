@@ -15,7 +15,7 @@ https://project-serum.github.io/anchor/getting-started/installation.html
 2. Setup nvm with node v16.13.0
 3. Install typescript globally
 4. `yarn install`
-5. yarn run `build-deps` to build dependent programs
+5. yarn run `build` to build the program
 
 ## Test
 
