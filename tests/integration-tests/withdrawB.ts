@@ -45,8 +45,9 @@ export function testWithdrawB() {
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
   let vaultPeriods: PDA[];
-  let vaultTokenA_ATA: PublicKey;
-  let vaultTokenB_ATA: PublicKey;
+  let vaultTokenAAccount: PublicKey;
+  let vaultTokenBAccount: PublicKey;
+  let vaultTreasuryTokenBAccount: PublicKey;
 
   let swapTokenMint: PublicKey;
   let swapTokenAAccount: PublicKey;
@@ -67,10 +68,13 @@ export function testWithdrawB() {
     bot = generatePair();
     [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
-      SolUtils.fundAccount(user.publicKey, 1000000000),
-      SolUtils.fundAccount(bot.publicKey, 1000000000),
-      SolUtils.fundAccount(payerKeypair.publicKey, 1000000000),
-      SolUtils.fundAccount(tokenOwnerKeypair.publicKey, 1000000000),
+      SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(0.1)),
+      SolUtils.fundAccount(bot.publicKey, SolUtils.solToLamports(0.1)),
+      SolUtils.fundAccount(payerKeypair.publicKey, SolUtils.solToLamports(0.1)),
+      SolUtils.fundAccount(
+        tokenOwnerKeypair.publicKey,
+        SolUtils.solToLamports(0.1)
+      ),
     ]);
 
     tokenA = await TokenUtil.createMint(
@@ -104,13 +108,19 @@ export function testWithdrawB() {
 
     vaultProtoConfig = await deployVaultProtoConfig(1, 5, 5);
 
+    vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
+      tokenB,
+      payerKeypair.publicKey
+    );
+
     vaultPDA = await deployVault(
       tokenA.publicKey,
       tokenB.publicKey,
+      vaultTreasuryTokenBAccount,
       vaultProtoConfig
     );
 
-    [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+    [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
@@ -162,8 +172,8 @@ export function testWithdrawB() {
       botTokenAAccount,
       vaultPDA.publicKey,
       vaultProtoConfig,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
       tokenA.publicKey,
       tokenB.publicKey,
       swapTokenMint,
@@ -181,8 +191,9 @@ export function testWithdrawB() {
       userPositionAccount,
       userPostionNFTAccount,
       userPositionNFTMint,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      vaultTreasuryTokenBAccount,
       tokenB.publicKey,
       userTokenBAccount
     );
@@ -210,17 +221,18 @@ export function testWithdrawB() {
     let [i, j] = [0, 2];
     await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
 
-    const [userTokenBAccountAfter, vaultTokenBAccountAfter] = await Promise.all(
-      [
-        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-      ]
-    );
+    const [
+      userTokenBAccountAfter,
+      vaultTokenBAccountAfter,
+      vaultTreasuryTokenBAccountAfter,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+    ]);
 
-    userTokenBAccountAfter.balance
-      .gt(userTokenBAccountBefore.balance)
-      .should.be.true();
-    userTokenBAccountAfter.balance.toString().should.equal("498002434");
+    userTokenBAccountAfter.balance.toString().should.equal("497753433");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
     // The vault token b balance is 1 here, likely due to rounding issues
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
   });
@@ -241,17 +253,18 @@ export function testWithdrawB() {
     let [i, j] = [0, 4];
     await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
 
-    const [userTokenBAccountAfter, vaultTokenBAccountAfter] = await Promise.all(
-      [
-        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
-      ]
-    );
+    const [
+      userTokenBAccountAfter,
+      vaultTokenBAccountAfter,
+      vaultTreasuryTokenBAccountAfter,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+    ]);
 
-    userTokenBAccountAfter.balance
-      .gt(userTokenBAccountBefore.balance)
-      .should.be.true();
-    userTokenBAccountAfter.balance.toString().should.equal("995508357");
+    userTokenBAccountAfter.balance.toString().should.equal("995010603");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
     // The vault token b balance is 1 here, likely due to rounding issues
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
   });
@@ -265,10 +278,13 @@ export function testWithdrawB() {
       await sleep(1500);
     }
     await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[2].publicKey);
-    let [userTokenBAccountAfter] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-    ]);
-    userTokenBAccountAfter.balance.toString().should.equal("498002434");
+    let [userTokenBAccountAfter, vaultTreasuryTokenBAccountAfter] =
+      await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+      ]);
+    userTokenBAccountAfter.balance.toString().should.equal("497753433");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
     for (let i = 2; i < 4; i++) {
       await triggerDCA(
         vaultPeriods[i].publicKey,
@@ -277,10 +293,14 @@ export function testWithdrawB() {
       await sleep(1500);
     }
     await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[4].publicKey);
-    [userTokenBAccountAfter] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-    ]);
-    userTokenBAccountAfter.balance.toString().should.equal("995508357");
+    [userTokenBAccountAfter, vaultTreasuryTokenBAccountAfter] =
+      await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+      ]);
+    // Diff of 1 from previous test due to rounding issues since we always round down
+    userTokenBAccountAfter.balance.toString().should.equal("995010604");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497753");
   });
 
   it("should not be able to withdraw twice in the same period", async () => {
@@ -311,7 +331,7 @@ export function testWithdrawB() {
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
     ]);
-    userTokenBAccountAfter.balance.toString().should.equal("496517717");
+    userTokenBAccountAfter.balance.toString().should.equal("496269459");
     userPositionAccountAfter.withdrawnTokenBAmount
       .toString()
       .should.equal("496517717");

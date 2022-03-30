@@ -40,6 +40,7 @@ export const deployVaultProtoConfig = async (
 export const deployVault = async (
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   vaultProtoConfigAccount: PublicKey
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
@@ -57,7 +58,8 @@ export const deployVault = async (
     tokenAMint,
     tokenBMint,
     vaultTokenA_ATA,
-    vaultTokenB_ATA
+    vaultTokenB_ATA,
+    vaultTreasuryTokenBAccount
   );
   return vaultPDA;
 };
@@ -311,11 +313,12 @@ export const withdrawBWrapper = (
   userPositionNFTMint: PublicKey,
   vaultTokenA: PublicKey,
   vaultTokenB: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   tokenBMint: PublicKey,
   userTokenBAccount: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    await VaultUtil.withdrawB(
+    const txHash = await VaultUtil.withdrawB(
       user,
       vault,
       vaultProtoConfig,
@@ -324,11 +327,13 @@ export const withdrawBWrapper = (
       userPositionNFTMint,
       vaultTokenA,
       vaultTokenB,
+      vaultTreasuryTokenBAccount,
       vaultPeriodI,
       vaultPeriodJ,
       tokenBMint,
       userTokenBAccount
     );
+    console.log("withdrawB", txHash);
   };
 };
 
@@ -339,6 +344,7 @@ export const closePositionWrapper = (
   userPosition: PublicKey,
   vaultTokenAAccount: PublicKey,
   vaultTokenBAccount: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
@@ -351,7 +357,7 @@ export const closePositionWrapper = (
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
   ) => {
-    await VaultUtil.closePosition(
+    const txHash = await VaultUtil.closePosition(
       withdrawer,
       vault,
       vaultProtoConfig,
@@ -361,6 +367,7 @@ export const closePositionWrapper = (
       vaultPeriodUserExpiry,
       vaultTokenAAccount,
       vaultTokenBAccount,
+      vaultTreasuryTokenBAccount,
       userTokenAAccount,
       userTokenBAccount,
       userPositionNftAccount,
@@ -368,5 +375,6 @@ export const closePositionWrapper = (
       tokenAMint,
       tokenBMint
     );
+    console.log("closePosition", txHash);
   };
 };

@@ -12,6 +12,7 @@ pub struct Vault {
     pub token_b_mint: Pubkey,
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
+    pub treasury_token_b_account: Pubkey,
 
     // Data
     pub last_dca_period: u64, // 1 to N
@@ -28,6 +29,7 @@ impl<'info> Vault {
         token_b_mint: Pubkey,
         token_a_account: Pubkey,
         token_b_account: Pubkey,
+        treasury_token_b_account: Pubkey,
         granularity: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
@@ -36,6 +38,7 @@ impl<'info> Vault {
         self.token_b_mint = token_b_mint;
         self.token_a_account = token_a_account;
         self.token_b_account = token_b_account;
+        self.treasury_token_b_account = treasury_token_b_account;
         self.last_dca_period = 0;
         self.drip_amount = 0;
 
@@ -56,6 +59,10 @@ impl<'info> Vault {
 
     pub fn increase_drip_amount(&mut self, extra_drip: u64) {
         self.drip_amount += extra_drip;
+    }
+
+    pub fn decrease_drip_amount(&mut self, position_drip: u64) {
+        self.drip_amount = self.drip_amount.checked_sub(position_drip).unwrap();
     }
 
     pub fn process_drip(&mut self, current_period: &Account<VaultPeriod>, granularity: u64) {
@@ -93,6 +100,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 192);
+        assert_eq!(Vault::byte_size(), 224);
     }
 }

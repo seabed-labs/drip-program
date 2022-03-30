@@ -36,7 +36,8 @@ pub fn handler(
     if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
-    if params.trigger_dca_spread > 10000 || params.base_withdrawal_spread > 10000 {
+    // TODO(Mocha): Flush this out
+    if params.trigger_dca_spread >= 5000 || params.base_withdrawal_spread >= 5000 {
         return Err(ErrorCode::InvalidSpread.into());
     }
     /* STATE UPDATES (EFFECTS) */

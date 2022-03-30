@@ -24,52 +24,37 @@ export async function testDeposit() {
   let vaultPubkey: PublicKey;
   let vaultPeriodPubkey: PublicKey;
   let usdcMinter: Signer, btcMinter: Signer, user: Signer;
-  let usdc: Token, btc: Token;
-  let vaultTokenA_ATA: PublicKey, vaultTokenB_ATA: PublicKey;
-  let userBTC_ATA: PublicKey, userUSDC_ATA: PublicKey;
-
-  function tokenAMint(): PublicKey {
-    return usdc.publicKey;
-  }
-
-  function tokenBMint(): PublicKey {
-    return btc.publicKey;
-  }
-
-  function userTokenA_ATA(): PublicKey {
-    return userUSDC_ATA;
-  }
-
-  function userTokenB_ATA(): PublicKey {
-    return userBTC_ATA;
-  }
+  let tokenA: Token;
+  let tokenB: Token;
+  let vaultTokenAAccount: PublicKey;
+  let vaultTokenBAccount: PublicKey;
+  let vaultTreasuryTokenBAccount: PublicKey;
+  let userTokenAAccount: PublicKey;
 
   beforeEach(async () => {
+    const treasuryOwner = generatePair();
     [usdcMinter, btcMinter, user] = generatePairs(3);
-    await SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(10));
+    await Promise.all([
+      SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(1)),
+      SolUtils.fundAccount(treasuryOwner.publicKey, SolUtils.solToLamports(1)),
+    ]);
 
-    [usdc, btc] = await TokenUtil.createMints(
+    [tokenA, tokenB] = await TokenUtil.createMints(
       [usdcMinter.publicKey, btcMinter.publicKey],
       [DECIMALS.USDC, DECIMALS.BTC]
     );
 
-    const [usdcAmount, btcAmount] = await TokenUtil.scaleAmountBatch(
-      [amount(10, Denom.Million), usdc],
-      [amount(1, Denom.Thousand), btc]
-    );
+    const [usdcAmount] = await TokenUtil.scaleAmountBatch([
+      amount(10, Denom.Million),
+      tokenA,
+    ]);
 
-    [userUSDC_ATA, userBTC_ATA] = await TokenUtil.mintToBatch([
+    [userTokenAAccount] = await TokenUtil.mintToBatch([
       {
-        token: usdc,
+        token: tokenA,
         mintAuthority: usdcMinter,
         recipient: user.publicKey,
         amount: usdcAmount,
-      },
-      {
-        token: btc,
-        mintAuthority: btcMinter,
-        recipient: user.publicKey,
-        amount: btcAmount,
       },
     ]);
 
@@ -82,23 +67,25 @@ export async function testDeposit() {
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 
     const vaultPDA = await getVaultPDA(
-      tokenAMint(),
-      tokenBMint(),
+      tokenA.publicKey,
+      tokenB.publicKey,
       vaultProtoConfigPubkey
     );
 
-    [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint()),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint()),
-    ]);
-
+    [vaultTokenAAccount, vaultTokenBAccount, vaultTreasuryTokenBAccount] =
+      await Promise.all([
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+        TokenUtil.createTokenAccount(tokenB, treasuryOwner.publicKey),
+      ]);
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenAMint(),
-      tokenBMint(),
-      vaultTokenA_ATA,
-      vaultTokenB_ATA
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      vaultTreasuryTokenBAccount
     );
 
     vaultPubkey = vaultPDA.publicKey;
@@ -109,8 +96,8 @@ export async function testDeposit() {
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenAMint(),
-      tokenBMint(),
+      tokenA.publicKey,
+      tokenB.publicKey,
       69
     );
 
@@ -130,8 +117,8 @@ export async function testDeposit() {
         user.publicKey,
         positionNftMintKeypair.publicKey
       ),
-      TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
-      TokenUtil.fetchTokenAccountInfo(userTokenA_ATA()),
+      TokenUtil.fetchTokenAccountInfo(vaultTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
     ]);
 
     vaultTokenAAccountBefore.balance.toString().should.equal("0");
@@ -139,11 +126,11 @@ export async function testDeposit() {
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(10, Denom.Thousand),
-      usdc
+      tokenA
     );
 
-    await usdc.approve(
-      userTokenA_ATA(),
+    await tokenA.approve(
+      userTokenAAccount,
       vaultPubkey,
       user.publicKey,
       [user],
@@ -159,10 +146,10 @@ export async function testDeposit() {
         vault: vaultPubkey,
         vaultPeriodEnd: vaultPeriodPubkey,
         userPosition: positionPDA.publicKey,
-        tokenAMint: tokenAMint(),
+        tokenAMint: tokenA.publicKey,
         userPositionNftMint: positionNftMintKeypair.publicKey,
-        vaultTokenAAccount: vaultTokenA_ATA,
-        userTokenAAccount: userTokenA_ATA(),
+        vaultTokenAAccount: vaultTokenAAccount,
+        userTokenAAccount: userTokenAAccount,
         userPositionNftAccount: userPositionNft_ATA,
         depositor: user.publicKey,
       },
@@ -203,11 +190,11 @@ export async function testDeposit() {
     positionAccount.withdrawnTokenBAmount.toString().should.equal("0");
 
     const vaultTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
-      vaultTokenA_ATA
+      vaultTokenAAccount
     );
 
     const userTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
-      userTokenA_ATA()
+      userTokenAAccount
     );
 
     // TODO(matcha): Any other tests to add here? Maybe better to be on the paranoid side and check everything
@@ -220,7 +207,7 @@ export async function testDeposit() {
       positionNftMintKeypair.publicKey
     );
 
-    await TokenUtil.fetchTokenMintInfo(usdc.publicKey);
+    await TokenUtil.fetchTokenMintInfo(tokenA.publicKey);
 
     should(userPositionNftMintAccount.mintAuthority).be.null();
     should(userPositionNftMintAccount.freezeAuthority).be.null();

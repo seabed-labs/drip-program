@@ -1,7 +1,7 @@
 import { AccountUtil } from "../utils/Account.util";
 import { TokenUtil } from "../utils/Token.util";
 import { VaultUtil } from "../utils/Vault.util";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import {
   findAssociatedTokenAddress,
@@ -10,25 +10,39 @@ import {
   Granularity,
   PDA,
 } from "../utils/common.util";
+import { SolUtils } from "../utils/SolUtils";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: PublicKey;
   let tokenA: Token;
   let tokenB: Token;
+  let treasuryTokenBAccount: PublicKey;
 
   beforeEach(async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: Granularity.DAILY,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 5,
-    });
+    const treasuryOwner = generatePair();
+    await Promise.all([
+      SolUtils.fundAccount(
+        treasuryOwner.publicKey,
+        SolUtils.solToLamports(0.1)
+      ),
+      VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+        granularity: Granularity.DAILY,
+        triggerDCASpread: 5,
+        baseWithdrawalSpread: 5,
+      }),
+    ]);
+
     vaultProtoConfigAccount = vaultProtoConfigKeypair.publicKey;
 
     [tokenA, tokenB] = await Promise.all([
       TokenUtil.createMockUSDCMint(),
       TokenUtil.createMockBTCMint(),
     ]);
+    treasuryTokenBAccount = await TokenUtil.createTokenAccount(
+      tokenB,
+      treasuryOwner.publicKey
+    );
   });
 
   it("initializes the vault account correctly", async () => {
@@ -49,7 +63,8 @@ export function testInitVault() {
       tokenA.publicKey,
       tokenB.publicKey,
       vaultTokenA_ATA,
-      vaultTokenB_ATA
+      vaultTokenB_ATA,
+      treasuryTokenBAccount
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
@@ -118,7 +133,8 @@ export function testInitVault() {
       tokenA.publicKey,
       tokenB.publicKey,
       vaultTokenA_ATA,
-      vaultTokenB_ATA
+      vaultTokenB_ATA,
+      treasuryTokenBAccount
     ).should.rejectedWith(
       new RegExp(
         ".*Cross-program invocation with unauthorized signer or writable account"
@@ -140,7 +156,8 @@ export function testInitVault() {
       tokenA.publicKey,
       tokenB.publicKey,
       vaultTokenA_ATA,
-      vaultTokenB_ATA
+      vaultTokenB_ATA,
+      treasuryTokenBAccount
     ).should.rejectedWith(
       new RegExp(
         ".*Cross-program invocation with unauthorized signer or writable account"
@@ -166,7 +183,8 @@ export function testInitVault() {
       tokenA.publicKey,
       tokenB.publicKey,
       vaultTokenA_ATA,
-      vaultTokenB_ATA
+      vaultTokenB_ATA,
+      treasuryTokenBAccount
     ).should.rejectedWith(
       new RegExp(".*An account required by the instruction is missing")
     );
@@ -197,6 +215,7 @@ export function testInitVault() {
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
+        treasuryTokenBAccount,
         { systemProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -209,6 +228,7 @@ export function testInitVault() {
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
+        treasuryTokenBAccount,
         { tokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -221,6 +241,7 @@ export function testInitVault() {
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
+        treasuryTokenBAccount,
         { associatedTokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -233,6 +254,7 @@ export function testInitVault() {
         tokenB.publicKey,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
+        treasuryTokenBAccount,
         { rent: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*invalid program argument"));
     });
