@@ -38,6 +38,7 @@ export function setupKeeperBot() {
   let swapTokenBAccount: PublicKey;
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
+  let vaultTreasuryTokenBAccount: PublicKey;
 
   // let depositWithNewUser;
 
@@ -131,9 +132,15 @@ export function setupKeeperBot() {
       vaultProtoConfig = await deployVaultProtoConfig(granularity, 5, 5);
       console.log("vaultProtoConfig:", vaultProtoConfig.toBase58());
 
+      vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
+        tokenB,
+        payerKeypair.publicKey
+      );
+
       vaultPDA = await deployVault(
         tokenA.publicKey,
         tokenB.publicKey,
+        vaultTreasuryTokenBAccount,
         vaultProtoConfig
       );
       console.log("vault:", vaultPDA.publicKey.toBase58());
@@ -161,6 +168,7 @@ export function setupKeeperBot() {
             vaultProtoConfig: vaultProtoConfig.toBase58(),
             vaultTokenAAccount: vaultTokenA_ATA.toBase58(),
             vaultTokenBAccount: vaultTokenB_ATA.toBase58(),
+            vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
             tokenAMint: tokenA.publicKey.toBase58(),
             tokenBMint: tokenB.publicKey.toBase58(),
             swapTokenMint: swapTokenMint.toBase58(),
@@ -176,6 +184,7 @@ export function setupKeeperBot() {
         `../keeper-bot/configs/setup${config}g${granularity}.yaml`,
         YAML.stringify(localConfig)
       );
+      console.log(JSON.stringify(localConfig, null, 2));
     }
   });
 
