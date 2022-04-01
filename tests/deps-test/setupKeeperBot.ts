@@ -124,7 +124,7 @@ export function setupKeeperBot() {
           tokenOwnerKeypair,
           payerKeypair
         );
-        for (const granularity of [10, 60, 3600, 86400]) {
+        for (const granularity of [60, 3600, 86400]) {
           console.log(
             "creating config",
             tokenA.publicKey.toBase58(),
