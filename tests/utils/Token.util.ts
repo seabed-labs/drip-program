@@ -39,12 +39,15 @@ export class TokenUtil extends TestUtil {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey = null,
     decimals: number = 6,
-    funderKeypair: Keypair = generatePair()
+    funderKeypair: Keypair = generatePair(),
+    shouldFund = true
   ): Promise<Token> {
-    await SolUtils.fundAccount(
-      funderKeypair.publicKey,
-      SolUtils.solToLamports(0.2)
-    );
+    if (shouldFund) {
+      await SolUtils.fundAccount(
+        funderKeypair.publicKey,
+        SolUtils.solToLamports(0.2)
+      );
+    }
 
     return await Token.createMint(
       this.provider.connection,
