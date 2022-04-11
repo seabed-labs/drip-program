@@ -86,7 +86,6 @@ export function testInitVaultPeriod() {
       tokenBMint,
       69
     );
-
     const vaultPeriodAccount = await AccountUtil.fetchVaultPeriodAccount(
       vaultPeriodPubkey
     );

@@ -1,4 +1,5 @@
 use crate::errors::ErrorCode;
+use crate::events::Log;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_spread_amount;
 use crate::sign;
@@ -216,10 +217,16 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     /* STATE UPDATES (EFFECTS) */
 
     let current_balance_a = ctx.accounts.vault_token_a_account.amount;
-    msg!("vault a balance: {}", current_balance_a);
+    emit!(Log {
+        data: Some(current_balance_a),
+        message: "vault a balance".to_string(),
+    });
 
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
-    msg!("vault b balance: {}", current_balance_b);
+    emit!(Log {
+        data: Some(current_balance_b),
+        message: "vault b balance".to_string(),
+    });
     // Use drip_amount becasue it may change after process_drip
     let trigger_spread_amount = calculate_spread_amount(
         ctx.accounts.vault.drip_amount,
@@ -269,16 +276,22 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     ctx.accounts.vault_token_b_account.reload()?;
 
     let new_dca_trigger_fee_balance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
-    msg!(
-        "new dca trigger fee a balance: {}",
-        new_dca_trigger_fee_balance_a
-    );
+    emit!(Log {
+        data: Some(new_dca_trigger_fee_balance_a),
+        message: "new dca trigger fee a balance".to_string(),
+    });
 
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
-    msg!("new vault a balance: {}", new_balance_a);
+    emit!(Log {
+        data: Some(new_balance_a),
+        message: "new vault a balance".to_string(),
+    });
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
-    msg!("new vault b balance: {}", new_balance_b);
+    emit!(Log {
+        data: Some(new_balance_b),
+        message: "new vault b balance".to_string(),
+    });
 
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
     let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
@@ -313,22 +326,10 @@ fn swap_tokens<'info>(
     swap: &Box<dyn SwapState>,
     swap_amount: u64,
 ) -> Result<()> {
-    msg!("Starting CPI flow");
-
-    // token::approve(
-    //     CpiContext::new_with_signer(
-    //         token_program.to_account_info().clone(),
-    //         Approve {
-    //             to: vault_token_a_account.to_account_info().clone(),
-    //             authority: vault.to_account_info().clone(),
-    //             delegate: swap_authority_account_info.to_account_info().clone(),
-    //         },
-    //         &[sign!(vault)]
-    //     ),
-    //     swap_amount,
-    // )?;
-    //
-    // msg!("Approved token transfer");
+    emit!(Log {
+        data: None,
+        message: "starting CPI flow".to_string(),
+    });
 
     // Get swap's token A balance = X
     // Get swap's token B balance = Y
@@ -394,8 +395,10 @@ fn swap_tokens<'info>(
         ],
         &[sign!(vault)],
     )?;
-
-    msg!("Completed Swap");
+    emit!(Log {
+        data: None,
+        message: "completed swap".to_string(),
+    });
 
     Ok(())
 }

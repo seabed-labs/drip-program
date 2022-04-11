@@ -1,3 +1,4 @@
+use crate::events::Log;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
@@ -70,6 +71,9 @@ pub fn handler(
         ctx.bumps.get("vault_period"),
     )?;
 
-    msg!("Initialized VaultPeriod");
+    emit!(Log {
+        data: None,
+        message: "initialized VaultPeriod".to_string(),
+    });
     Ok(())
 }

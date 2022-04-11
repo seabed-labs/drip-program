@@ -1,4 +1,5 @@
 use crate::errors::ErrorCode;
+use crate::events::Log;
 use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -84,7 +85,10 @@ pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;
-    msg!("Initialized Vault");
+    emit!(Log {
+        data: None,
+        message: "initialized Vault".to_string(),
+    });
     /* MANUAL CPI (INTERACTIONS) */
     Ok(())
 }
