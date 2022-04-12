@@ -78,7 +78,6 @@ export function setupKeeperBot() {
 
     for (const token of tokens) {
       for (const testWallet of testWallets) {
-        // await sleep(500);
         const testTokenAAccount = await token.createAssociatedTokenAccount(
           new PublicKey(testWallet)
         );
@@ -97,7 +96,6 @@ export function setupKeeperBot() {
 
     const configs = [];
     for (let i = 0; i < tokens.length; i++) {
-      // await sleep(500);
       const tokenB = tokens[i];
       const tokenBSymbol = tokenNames[i];
       const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
@@ -107,7 +105,6 @@ export function setupKeeperBot() {
 
       for (let j = 0; j < tokens.length; j++) {
         if (i == j) continue;
-        // await sleep(500);
         const tokenA = tokens[j];
         const tokenASymbol = tokenNames[j];
         const [

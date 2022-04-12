@@ -73,7 +73,7 @@ export const deployVaultPeriod = async (
 ): Promise<PDA> => {
   const vaultPeriodPDA = await getVaultPeriodPDA(vault, period);
 
-  await VaultUtil.initVaultPeriod(
+  const txHash = await VaultUtil.initVaultPeriod(
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
@@ -81,6 +81,7 @@ export const deployVaultPeriod = async (
     tokenBMint,
     period
   );
+  console.log("initVaultPeriod", txHash);
   return vaultPeriodPDA;
 };
 
