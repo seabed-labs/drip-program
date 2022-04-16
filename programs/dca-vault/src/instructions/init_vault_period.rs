@@ -1,3 +1,4 @@
+use crate::events::Log;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
@@ -52,6 +53,7 @@ pub struct InitializeVaultPeriod<'info> {
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
+    // mut neeed because we are initing accounts
     #[account(mut)]
     pub creator: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -69,6 +71,9 @@ pub fn handler(
         ctx.bumps.get("vault_period"),
     )?;
 
-    msg!("Initialized VaultPeriod");
+    emit!(Log {
+        data: None,
+        message: "initialized VaultPeriod".to_string(),
+    });
     Ok(())
 }

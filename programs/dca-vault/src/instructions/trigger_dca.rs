@@ -1,4 +1,7 @@
 use crate::errors::ErrorCode;
+use crate::events::Log;
+use crate::interactions::transfer_token::TransferToken;
+use crate::math::calculate_spread_amount;
 use crate::sign;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
@@ -27,10 +30,10 @@ impl anchor_lang::Id for TokenSwap {
 #[derive(Accounts)]
 pub struct TriggerDCA<'info> {
     // User that triggers the DCA
-    #[account(mut)]
     pub dca_trigger_source: Signer<'info>,
 
     #[account(
+        // mut needed
         mut,
         seeds = [
             b"dca-vault-v1".as_ref(),
@@ -43,10 +46,8 @@ pub struct TriggerDCA<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = {
-            vault_proto_config.granularity != 0 &&
-            vault_proto_config.key() == vault.proto_config
-        }
+        constraint = vault_proto_config.granularity != 0,
+        constraint = vault_proto_config.key() == vault.proto_config
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -57,14 +58,13 @@ pub struct TriggerDCA<'info> {
             last_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = last_vault_period.bump,
-        constraint = {
-            last_vault_period.period_id == vault.last_dca_period &&
-            last_vault_period.vault == vault.key()
-        }
+        constraint = last_vault_period.period_id == vault.last_dca_period,
+        constraint = last_vault_period.vault == vault.key()
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut neeed because we are changing state
         mut,
         seeds = [
             b"vault_period".as_ref(),
@@ -72,92 +72,86 @@ pub struct TriggerDCA<'info> {
             current_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = current_vault_period.bump,
-        constraint = {
-            current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap() &&
-            current_vault_period.vault == vault.key()
-        }
+        constraint = current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap(),
+        constraint = current_vault_period.vault == vault.key()
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
+        // mut needed for CPI
         mut,
-        constraint = {
-            swap_token_mint.mint_authority.contains(&swap_authority.key()) &&
-            swap_token_mint.is_initialized
-        }
+        constraint = swap_token_mint.mint_authority.contains(&swap_authority.key()),
+        constraint = swap_token_mint.is_initialized
     )]
     pub swap_token_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        constraint = {
-            token_a_mint.key() == vault.token_a_mint &&
-            token_a_mint.is_initialized
-        }
+        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = token_a_mint.is_initialized
     )]
     pub token_a_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        constraint = {
-            token_b_mint.key() == vault.token_b_mint &&
-            token_b_mint.is_initialized
-        }
+        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = token_b_mint.is_initialized
     )]
     pub token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,
-        constraint = {
-            vault_token_a_account.state == AccountState::Initialized &&
-            vault_token_a_account.amount >= vault.drip_amount
-        }
+        constraint = vault_token_a_account.state == AccountState::Initialized,
+        constraint = vault_token_a_account.amount >= vault.drip_amount
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
         associated_token::mint = token_b_mint,
         associated_token::authority = vault,
-        constraint = {
-            vault_token_b_account.state == AccountState::Initialized
-        },
+        constraint = vault_token_b_account.state == AccountState::Initialized
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         mut,
-        constraint = {
-            swap_token_a_account.mint == vault.token_a_mint &&
-            swap_token_a_account.owner == swap_authority.key() &&
-            swap_token_a_account.state == AccountState::Initialized
-        },
+        constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_a_account.owner == swap_authority.key(),
+        constraint = swap_token_a_account.state == AccountState::Initialized,
     )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
-        constraint = {
-            swap_token_b_account.mint == vault.token_b_mint &&
-            swap_token_b_account.owner == swap_authority.key() &&
-            swap_token_b_account.state == AccountState::Initialized
-        },
+        constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_b_account.owner == swap_authority.key(),
+        constraint = swap_token_b_account.state == AccountState::Initialized
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut neeed because we are changing balance
         mut,
-        constraint = {
-            swap_fee_account.mint == swap_token_mint.key()
-        }
+        constraint = swap_fee_account.mint == swap_token_mint.key()
     )]
     pub swap_fee_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        // mut neeed because we are changing balance
+        mut,
+        constraint = dca_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = dca_trigger_fee_token_a_account.state == AccountState::Initialized
+    )]
+    pub dca_trigger_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
     // And add appropriate checks
     #[account(
-        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: Do one last check to see if this can be type checked by creating an anchor-wrapped type (there probably is a way)
@@ -166,7 +160,6 @@ pub struct TriggerDCA<'info> {
 
     // TODO: Verify swap_authority PDA according to logic in processor.rs. / authority_id
     #[account(
-        mut,
         constraint = swap.owner == &spl_token_swap::ID
     )]
     // TODO: We might be able to implement an anchor compatible type for this
@@ -224,17 +217,39 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     /* STATE UPDATES (EFFECTS) */
 
     let current_balance_a = ctx.accounts.vault_token_a_account.amount;
-    msg!("vault a balance: {}", current_balance_a);
+    emit!(Log {
+        data: Some(current_balance_a),
+        message: "vault a balance".to_string(),
+    });
 
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
-    msg!("vault b balance: {}", current_balance_b);
-    // Save sent_a since drip_amount is going to change
-    let swap_amount = ctx.accounts.vault.drip_amount;
+    emit!(Log {
+        data: Some(current_balance_b),
+        message: "vault b balance".to_string(),
+    });
+    // Use drip_amount becasue it may change after process_drip
+    let trigger_spread_amount = calculate_spread_amount(
+        ctx.accounts.vault.drip_amount,
+        ctx.accounts.vault_proto_config.trigger_dca_spread,
+    );
+    let swap_amount = ctx
+        .accounts
+        .vault
+        .drip_amount
+        .checked_sub(trigger_spread_amount)
+        .unwrap();
 
     let vault = &mut ctx.accounts.vault;
     vault.process_drip(
         &ctx.accounts.current_vault_period,
         ctx.accounts.vault_proto_config.granularity,
+    );
+
+    let dca_trigger_fee_transfer = TransferToken::new(
+        &ctx.accounts.token_program,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.dca_trigger_fee_token_a_account,
+        trigger_spread_amount,
     );
 
     /* MANUAL CPI (INTERACTIONS) */
@@ -254,14 +269,29 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
+    dca_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
+
+    ctx.accounts.dca_trigger_fee_token_a_account.reload()?;
     ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
 
+    let new_dca_trigger_fee_balance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
+    emit!(Log {
+        data: Some(new_dca_trigger_fee_balance_a),
+        message: "new dca trigger fee a balance".to_string(),
+    });
+
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
-    msg!("new vault a balance: {}", new_balance_a);
+    emit!(Log {
+        data: Some(new_balance_a),
+        message: "new vault a balance".to_string(),
+    });
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
-    msg!("new vault b balance: {}", new_balance_b);
+    emit!(Log {
+        data: Some(new_balance_b),
+        message: "new vault b balance".to_string(),
+    });
 
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
     let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
@@ -296,22 +326,10 @@ fn swap_tokens<'info>(
     swap: &Box<dyn SwapState>,
     swap_amount: u64,
 ) -> Result<()> {
-    msg!("Starting CPI flow");
-
-    // token::approve(
-    //     CpiContext::new_with_signer(
-    //         token_program.to_account_info().clone(),
-    //         Approve {
-    //             to: vault_token_a_account.to_account_info().clone(),
-    //             authority: vault.to_account_info().clone(),
-    //             delegate: swap_authority_account_info.to_account_info().clone(),
-    //         },
-    //         &[sign!(vault)]
-    //     ),
-    //     swap_amount,
-    // )?;
-    //
-    // msg!("Approved token transfer");
+    emit!(Log {
+        data: None,
+        message: "starting CPI flow".to_string(),
+    });
 
     // Get swap's token A balance = X
     // Get swap's token B balance = Y
@@ -377,8 +395,10 @@ fn swap_tokens<'info>(
         ],
         &[sign!(vault)],
     )?;
-
-    msg!("Completed Swap");
+    emit!(Log {
+        data: None,
+        message: "completed swap".to_string(),
+    });
 
     Ok(())
 }

@@ -38,6 +38,10 @@ impl VaultPeriod {
         self.dar += extra_drip;
     }
 
+    pub fn decrease_drip_amount_to_reduce(&mut self, position_drip: u64) {
+        self.dar = self.dar.checked_sub(position_drip).unwrap();
+    }
+
     pub fn update_twap(
         &mut self,
         last_period: &Account<VaultPeriod>,

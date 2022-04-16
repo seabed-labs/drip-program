@@ -11,6 +11,8 @@ import { Granularity } from "./common.util";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
+  triggerDCASpread: number;
+  baseWithdrawalSpread: number;
 };
 
 export interface DepositTxParams {
@@ -50,6 +52,8 @@ export class VaultUtil extends TestUtil {
     return await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
       {
         granularity: new u64(vaultProtoConfig.granularity),
+        triggerDcaSpread: vaultProtoConfig.triggerDCASpread,
+        baseWithdrawalSpread: vaultProtoConfig.baseWithdrawalSpread,
       },
       {
         accounts,
@@ -65,6 +69,7 @@ export class VaultUtil extends TestUtil {
     tokenBMint: PublicKey,
     tokenA_ATA: PublicKey,
     tokenB_ATA: PublicKey,
+    treasuryTokenBAccount: PublicKey,
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
@@ -79,6 +84,7 @@ export class VaultUtil extends TestUtil {
       tokenBMint: tokenBMint.toBase58(),
       tokenAAccount: tokenA_ATA.toBase58(),
       tokenBAccount: tokenB_ATA.toBase58(),
+      treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
       creator: this.provider.wallet.publicKey.toBase58(),
       systemProgram:
         programs?.systemProgram?.toBase58() ??
@@ -162,6 +168,7 @@ export class VaultUtil extends TestUtil {
 
   static async triggerDCA(
     user: Keypair | Signer,
+    dcaTriggerFeeTokenAAccount: PublicKey,
     vault: PublicKey,
     vaultProtoConfig: PublicKey,
     vaultTokenAAccount: PublicKey,
@@ -179,6 +186,7 @@ export class VaultUtil extends TestUtil {
   ): Promise<TransactionSignature> {
     const accounts = {
       dcaTriggerSource: user.publicKey.toBase58(),
+      dcaTriggerFeeTokenAAccount: dcaTriggerFeeTokenAAccount.toBase58(),
       vault: vault.toBase58(),
       vaultProtoConfig: vaultProtoConfig.toBase58(),
       lastVaultPeriod: lastVaultPeriod.toBase58(),
@@ -211,11 +219,13 @@ export class VaultUtil extends TestUtil {
   static async withdrawB(
     withdrawer: Keypair | Signer,
     vault: PublicKey,
+    vaultProtoConfig: PublicKey,
     userPosition: PublicKey,
     userPositionNftAccount: PublicKey,
     userPositionNftMint: PublicKey,
     vaultTokenAAccount: PublicKey,
     vaultTokenBAccount: PublicKey,
+    vaultTreasuryTokenBAccount: PublicKey,
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     tokenBMint: PublicKey,
@@ -224,6 +234,7 @@ export class VaultUtil extends TestUtil {
     const accounts = {
       withdrawer: withdrawer.publicKey.toBase58(),
       vault: vault.toBase58(),
+      vaultProtoConfig: vaultProtoConfig.toBase58(),
       vaultPeriodI: vaultPeriodI.toBase58(),
       vaultPeriodJ: vaultPeriodJ.toBase58(),
       userPosition: userPosition.toBase58(),
@@ -231,7 +242,8 @@ export class VaultUtil extends TestUtil {
       userPositionNftMint: userPositionNftMint.toBase58(),
       vaultTokenAAccount: vaultTokenAAccount.toBase58(),
       vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-      vaultTokenBMint: tokenBMint.toBase58(),
+      tokenBMint: tokenBMint.toBase58(),
+      vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
       userTokenBAccount: userTokenBAccount.toBase58(),
       tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
       associatedTokenProgram:
@@ -248,40 +260,37 @@ export class VaultUtil extends TestUtil {
   static async closePosition(
     withdrawer: Keypair | Signer,
     vault: PublicKey,
+    vaultProtoConfig: PublicKey,
     userPosition: PublicKey,
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey,
-
     vaultTokenAAccount: PublicKey,
     vaultTokenBAccount: PublicKey,
+    vaultTreasuryTokenBAccount: PublicKey,
     userTokenAAccount: PublicKey,
     userTokenBAccount: PublicKey,
-
     userPositionNftAccount: PublicKey,
-
     userPositionNftMint: PublicKey,
     tokenAMint: PublicKey,
     tokenBMint: PublicKey
   ): Promise<TransactionSignature> {
     const accounts = {
       vault: vault.toBase58(),
+      vaultProtoConfig: vaultProtoConfig.toBase58(),
       vaultPeriodI: vaultPeriodI.toBase58(),
       vaultPeriodJ: vaultPeriodJ.toBase58(),
       vaultPeriodUserExpiry: vaultPeriodUserExpiry.toBase58(),
       userPosition: userPosition.toBase58(),
-
       vaultTokenAAccount: vaultTokenAAccount.toBase58(),
       vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+      vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
       userTokenAAccount: userTokenAAccount.toBase58(),
       userTokenBAccount: userTokenBAccount.toBase58(),
-
       userPositionNftAccount: userPositionNftAccount.toBase58(),
-
       userPositionNftMint: userPositionNftMint.toBase58(),
       tokenAMint: tokenAMint.toBase58(),
       tokenBMint: tokenBMint.toBase58(),
-
       withdrawer: withdrawer.publicKey.toBase58(),
       tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
       systemProgram: ProgramUtil.systemProgram.programId.toBase58(),

@@ -12,7 +12,7 @@ pub struct Position {
     // Total deposited
     pub deposited_token_a_amount: u64,
 
-    // Total withdrawn B
+    // Total withdrawn B (amount sent to the user + amount sent to the treasury)
     pub withdrawn_token_b_amount: u64,
 
     // The A/B/G vault the position belongs to
@@ -63,17 +63,18 @@ impl Position {
         }
     }
 
-    pub fn get_withdrawable_amount(&self, max_withdrawable_token_b_amount: u64) -> u64 {
+    pub fn get_withdrawable_amount_with_max(&self, max_withdrawable_token_b_amount: u64) -> u64 {
         max_withdrawable_token_b_amount
             .checked_sub(self.withdrawn_token_b_amount)
             .unwrap()
     }
 
-    pub fn update_withdrawn_amount(&mut self, withdrawing_amount: u64) {
-        self.withdrawn_token_b_amount = self
-            .withdrawn_token_b_amount
-            .checked_add(withdrawing_amount)
-            .unwrap();
+    pub fn increase_withdrawn_amount(&mut self, amount: u64) {
+        self.withdrawn_token_b_amount = self.withdrawn_token_b_amount.checked_add(amount).unwrap();
+    }
+
+    pub fn close(&mut self) {
+        self.is_closed = true;
     }
 }
 

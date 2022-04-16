@@ -24,11 +24,15 @@ export const sleep = async (ms: number) => {
 };
 
 export const deployVaultProtoConfig = async (
-  granularity: number
+  granularity: number,
+  triggerDCASpread: number,
+  baseWithdrawalSpread: number
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
   await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
     granularity,
+    triggerDCASpread,
+    baseWithdrawalSpread,
   });
   return vaultProtoConfigKeypair.publicKey;
 };
@@ -36,6 +40,7 @@ export const deployVaultProtoConfig = async (
 export const deployVault = async (
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   vaultProtoConfigAccount: PublicKey
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
@@ -53,7 +58,8 @@ export const deployVault = async (
     tokenAMint,
     tokenBMint,
     vaultTokenA_ATA,
-    vaultTokenB_ATA
+    vaultTokenB_ATA,
+    vaultTreasuryTokenBAccount
   );
   return vaultPDA;
 };
@@ -67,7 +73,7 @@ export const deployVaultPeriod = async (
 ): Promise<PDA> => {
   const vaultPeriodPDA = await getVaultPeriodPDA(vault, period);
 
-  await VaultUtil.initVaultPeriod(
+  const txHash = await VaultUtil.initVaultPeriod(
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
@@ -75,6 +81,7 @@ export const deployVaultPeriod = async (
     tokenBMint,
     period
   );
+  console.log("initVaultPeriod", txHash);
   return vaultPeriodPDA;
 };
 
@@ -262,6 +269,7 @@ export const deploySwap = async (
 
 export const triggerDCAWrapper = (
   user: Keypair,
+  dcaTriggerFeeTokenAAccount: PublicKey,
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   vaultTokenA_ATA: PublicKey,
@@ -278,6 +286,7 @@ export const triggerDCAWrapper = (
   return async (previousDCAPeriod: PublicKey, currentDCAPeriod: PublicKey) => {
     await VaultUtil.triggerDCA(
       user,
+      dcaTriggerFeeTokenAAccount,
       vault,
       vaultProtoConfig,
       vaultTokenA_ATA,
@@ -299,43 +308,47 @@ export const triggerDCAWrapper = (
 export const withdrawBWrapper = (
   user: Keypair,
   vault: PublicKey,
+  vaultProtoConfig: PublicKey,
   positionAccount: PublicKey,
   userPostionNFTAccount: PublicKey,
   userPositionNFTMint: PublicKey,
   vaultTokenA: PublicKey,
   vaultTokenB: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   tokenBMint: PublicKey,
   userTokenBAccount: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    await VaultUtil.withdrawB(
+    const txHash = await VaultUtil.withdrawB(
       user,
       vault,
+      vaultProtoConfig,
       positionAccount,
       userPostionNFTAccount,
       userPositionNFTMint,
       vaultTokenA,
       vaultTokenB,
+      vaultTreasuryTokenBAccount,
       vaultPeriodI,
       vaultPeriodJ,
       tokenBMint,
       userTokenBAccount
     );
+    console.log("withdrawB", txHash);
   };
 };
 
 export const closePositionWrapper = (
   withdrawer: Keypair,
   vault: PublicKey,
+  vaultProtoConfig: PublicKey,
   userPosition: PublicKey,
-
   vaultTokenAAccount: PublicKey,
   vaultTokenBAccount: PublicKey,
+  vaultTreasuryTokenBAccount: PublicKey,
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
-
   userPositionNftAccount: PublicKey,
-
   userPositionNftMint: PublicKey,
   tokenAMint: PublicKey,
   tokenBMint: PublicKey
@@ -345,24 +358,24 @@ export const closePositionWrapper = (
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
   ) => {
-    await VaultUtil.closePosition(
+    const txHash = await VaultUtil.closePosition(
       withdrawer,
       vault,
+      vaultProtoConfig,
       userPosition,
       vaultPeriodI,
       vaultPeriodJ,
       vaultPeriodUserExpiry,
-
       vaultTokenAAccount,
       vaultTokenBAccount,
+      vaultTreasuryTokenBAccount,
       userTokenAAccount,
       userTokenBAccount,
-
       userPositionNftAccount,
-
       userPositionNftMint,
       tokenAMint,
       tokenBMint
     );
+    console.log("closePosition", txHash);
   };
 };
