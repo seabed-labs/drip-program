@@ -60,22 +60,28 @@ export function setupKeeperBot() {
         TokenUtil.createMint(
           tokenOwnerKeypair.publicKey,
           null,
-          10,
+          9,
           payerKeypair,
           false
         ),
         TokenUtil.createMint(
           tokenOwnerKeypair.publicKey,
           null,
-          6,
+          9,
           payerKeypair,
           false
         ),
       ]))
     );
 
-    const tokenNames = ["USDC", "SOL", "ORCA"];
-
+    const tokenNames = ["USDC", "SOL", "ETH"];
+    // usdc, sol, 60
+    // usdc, sol, 3600
+    // usdc, sol, 86400
+    // eth, usdc, 60
+    // sol, usdc 3600
+    // eth, usdc 86400
+    // sol, usdc 86400
     for (const token of tokens) {
       for (const testWallet of testWallets) {
         const testTokenAAccount = await token.createAssociatedTokenAccount(
@@ -85,7 +91,7 @@ export function setupKeeperBot() {
           testTokenAAccount,
           tokenOwnerKeypair,
           [],
-          await TokenUtil.scaleAmount(amount(10, Denom.Million), token)
+          await TokenUtil.scaleAmount(amount(100, Denom.Thousand), token)
         );
         console.log("funded testAccount account with tokens", {
           wallet: testWallet,
@@ -95,83 +101,92 @@ export function setupKeeperBot() {
     }
 
     const configs = [];
-    for (let i = 0; i < tokens.length; i++) {
-      const tokenB = tokens[i];
-      const tokenBSymbol = tokenNames[i];
-      const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
-        tokenB,
-        payerKeypair.publicKey
-      );
-
-      for (let j = 0; j < tokens.length; j++) {
-        if (i == j) continue;
-        const tokenA = tokens[j];
-        const tokenASymbol = tokenNames[j];
-        const [
-          swap,
-          swapTokenMint,
-          swapTokenAAccount,
-          swapTokenBAccount,
-          swapFeeAccount,
-          swapAuthority,
-        ] = await deploySwap(
-          tokenA,
-          tokenOwnerKeypair,
+    for (const granularity of [60, 3600, 86400]) {
+      const vaultProtoConfig = await deployVaultProtoConfig(granularity, 5, 5);
+      for (let i = 0; i < tokens.length; i++) {
+        const tokenB = tokens[i];
+        const tokenBSymbol = tokenNames[i];
+        const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
           tokenB,
-          tokenOwnerKeypair,
-          payerKeypair
+          payerKeypair.publicKey
         );
-        for (const granularity of [60, 3600, 86400]) {
-          console.log(
-            "creating config",
-            tokenA.publicKey.toBase58(),
-            tokenB.publicKey.toBase58(),
-            granularity
-          );
+
+        for (let j = 0; j < tokens.length; j++) {
+          if (i == j) continue;
           await sleep(500);
-          const vaultProtoConfig = await deployVaultProtoConfig(
-            granularity,
-            5,
-            5
-          );
+          try {
+            const tokenA = tokens[j];
+            const tokenASymbol = tokenNames[j];
+            console.log(
+              "creating config",
+              tokenA.publicKey.toBase58(),
+              tokenASymbol,
+              tokenB.publicKey.toBase58(),
+              tokenBSymbol,
+              vaultProtoConfig.toBase58(),
+              granularity
+            );
 
-          const vaultPDA = await deployVault(
-            tokenA.publicKey,
-            tokenB.publicKey,
-            vaultTreasuryTokenBAccount,
-            vaultProtoConfig
-          );
-          const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-            findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-            findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
-          ]);
+            const [
+              swap,
+              swapTokenMint,
+              swapTokenAAccount,
+              swapTokenBAccount,
+              swapFeeAccount,
+              swapAuthority,
+            ] = await deploySwap(
+              tokenA,
+              tokenOwnerKeypair,
+              tokenB,
+              tokenOwnerKeypair,
+              payerKeypair,
+              // TODO(mocha): use a hard coded map so that token a -> token b price makes sense
+              {
+                a: 100,
+                b: 1,
+              }
+            );
 
-          await deployVaultPeriod(
-            vaultProtoConfig,
-            vaultPDA.publicKey,
-            tokenA.publicKey,
-            tokenB.publicKey,
-            0
-          );
-          const config = {
-            vault: vaultPDA.publicKey.toBase58(),
-            vaultProtoConfig: vaultProtoConfig.toBase58(),
-            vaultProtoConfigGranularity: granularity,
-            vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-            vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-            vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
-            tokenAMint: tokenA.publicKey.toBase58(),
-            tokenASymbol: tokenASymbol,
-            tokenBMint: tokenB.publicKey.toBase58(),
-            tokenBSymbol: tokenBSymbol,
-            swapTokenMint: swapTokenMint.toBase58(),
-            swapTokenAAccount: swapTokenAAccount.toBase58(),
-            swapTokenBAccount: swapTokenBAccount.toBase58(),
-            swapFeeAccount: swapFeeAccount.toBase58(),
-            swapAuthority: swapAuthority.toBase58(),
-            swap: swap.toBase58(),
-          };
-          configs.push(config);
+            const vaultPDA = await deployVault(
+              tokenA.publicKey,
+              tokenB.publicKey,
+              vaultTreasuryTokenBAccount,
+              vaultProtoConfig
+            );
+            const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
+              findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+              findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+            ]);
+
+            await deployVaultPeriod(
+              vaultProtoConfig,
+              vaultPDA.publicKey,
+              tokenA.publicKey,
+              tokenB.publicKey,
+              0
+            );
+            const config = {
+              vault: vaultPDA.publicKey.toBase58(),
+              vaultProtoConfig: vaultProtoConfig.toBase58(),
+              vaultProtoConfigGranularity: granularity,
+              vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+              vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+              vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
+              tokenAMint: tokenA.publicKey.toBase58(),
+              tokenASymbol: tokenASymbol,
+              tokenBMint: tokenB.publicKey.toBase58(),
+              tokenBSymbol: tokenBSymbol,
+              swapTokenMint: swapTokenMint.toBase58(),
+              swapTokenAAccount: swapTokenAAccount.toBase58(),
+              swapTokenBAccount: swapTokenBAccount.toBase58(),
+              swapFeeAccount: swapFeeAccount.toBase58(),
+              swapAuthority: swapAuthority.toBase58(),
+              swap: swap.toBase58(),
+            };
+            configs.push(config);
+          } catch (e) {
+            console.log("error deploying", e);
+          }
         }
       }
     }
