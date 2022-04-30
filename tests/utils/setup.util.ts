@@ -206,7 +206,11 @@ export const deploySwap = async (
   tokenAMintOwner: Keypair,
   tokenB: Token,
   tokenBMintOwner: Keypair,
-  payerKeypair: Keypair
+  payerKeypair: Keypair,
+  mintAmount?: {
+    a?: number;
+    b?: number;
+  }
 ): Promise<PublicKey[]> => {
   const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
     generatePairs(5);
@@ -236,15 +240,19 @@ export const deploySwap = async (
   const swapTokenAAccount = await tokenA.createAccount(
     swapAuthorityPDA.publicKey
   );
-  const mintAmount = await TokenUtil.scaleAmount(
-    amount(1, Denom.Million),
+  const mintAmountA = await TokenUtil.scaleAmount(
+    amount(mintAmount?.a ?? 1, Denom.Million),
     tokenA
   );
-  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmount);
+  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
   const swapTokenBAccount = await tokenB.createAccount(
     swapAuthorityPDA.publicKey
   );
-  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmount);
+  const mintAmountB = await TokenUtil.scaleAmount(
+    amount(mintAmount?.b ?? 1, Denom.Million),
+    tokenB
+  );
+  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
   await SwapUtil.createSwap(
     swapPayerKeypair,
     tokenSwapKeypair,
