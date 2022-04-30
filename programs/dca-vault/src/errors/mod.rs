@@ -18,12 +18,16 @@ pub enum ErrorCode {
     InvalidMint,
     #[msg("Spread must be >=0 and <=10000")]
     InvalidSpread,
+    #[msg("Provided account references the wrong vault-proto-config")]
+    InvalidVaultProtoConfigReference,
     #[msg("Invalid swap authority account")]
     InvalidSwapAuthorityAccount,
     #[msg("Invalid swap fee account")]
     InvalidSwapFeeAccount,
-    #[msg("Invalid vault period")]
+    #[msg("Invalid vault-period")]
     InvalidVaultPeriod,
+    #[msg("Provided account references the wrong vault")]
+    InvalidVaultReference,
     #[msg("Periodic drip amount == 0")]
     PeriodicDripAmountIsZero,
     #[msg("Position is already closed")]

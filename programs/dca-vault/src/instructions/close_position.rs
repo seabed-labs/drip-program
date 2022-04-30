@@ -27,7 +27,7 @@ pub struct ClosePosition<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config
+        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -40,7 +40,7 @@ pub struct ClosePosition<'info> {
         ],
         bump = vault_period_i.bump,
         constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_i.vault == vault.key()
+        constraint = vault_period_i.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_i: Box<Account<'info, VaultPeriod>>,
 
@@ -56,7 +56,7 @@ pub struct ClosePosition<'info> {
             vault.last_dca_period,
             user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
         ) @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_j.vault == vault.key()
+        constraint = vault_period_j.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
 
@@ -73,7 +73,7 @@ pub struct ClosePosition<'info> {
         constraint = vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit
                 .checked_add(user_position.number_of_swaps)
                 .unwrap() @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_user_expiry.vault == vault.key()
+        constraint = vault_period_user_expiry.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
@@ -88,7 +88,7 @@ pub struct ClosePosition<'info> {
         bump = user_position.bump,
         constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
         constraint = user_position.position_authority == user_position_nft_mint.key(),
-        constraint = user_position.vault == vault.key()
+        constraint = user_position.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub user_position: Box<Account<'info, Position>>,
 
@@ -143,7 +143,7 @@ pub struct ClosePosition<'info> {
         constraint = user_position_nft_account.owner == withdrawer.key(),
         constraint = user_position_nft_account.state == AccountState::Initialized,
         constraint = user_position_nft_account.amount == 1,
-        constraint = user_position_nft_account.delegate.contains(&vault.key()),
+        constraint = user_position_nft_account.delegate.contains(&vault.key()) @ErrorCode::InvalidVaultReference,
         constraint = user_position_nft_account.delegated_amount == 1
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,

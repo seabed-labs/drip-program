@@ -421,7 +421,7 @@ export function testClosePosition() {
         vaultPeriods[i].publicKey,
         vaultPeriods[j].publicKey,
         vaultPeriods[k].publicKey
-      ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+      ).should.be.rejectedWith(new RegExp(".*Invalid vault-period"));
     }
     await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
     for (const [i, j, k] of testCases) {
@@ -429,7 +429,7 @@ export function testClosePosition() {
         vaultPeriods[i].publicKey,
         vaultPeriods[j].publicKey,
         vaultPeriods[k].publicKey
-      ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+      ).should.be.rejectedWith(new RegExp(".*Invalid vault-period"));
     }
   });
 
@@ -458,6 +458,6 @@ export function testClosePosition() {
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
       vaultPeriods[k].publicKey
-    ).should.be.rejectedWith(new RegExp(".*A raw constraint was violated"));
+    ).should.be.rejectedWith(new RegExp(".*Position is already closed"));
   });
 }
