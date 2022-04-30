@@ -22,8 +22,12 @@ pub enum ErrorCode {
     InvalidSwapAuthorityAccount,
     #[msg("Invalid swap fee account")]
     InvalidSwapFeeAccount,
+    #[msg("Invalid vault period")]
+    InvalidVaultPeriod,
     #[msg("Periodic drip amount == 0")]
     PeriodicDripAmountIsZero,
+    #[msg("Position is already closed")]
+    PositionAlreadyClosed,
     #[msg("Withdrawable amount is zero")]
     WithdrawableAmountIsZero,
 }

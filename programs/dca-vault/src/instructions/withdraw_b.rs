@@ -8,7 +8,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
 // TODO(matcha): Make sure the NFT account supply is one always
-
+// TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
     /* DCAF ACCOUNTS */
@@ -36,7 +36,8 @@ pub struct WithdrawB<'info> {
             vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_i.bump,
-        constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit
+        constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_i.vault == vault.key()
     )]
     pub vault_period_i: Account<'info, VaultPeriod>,
 
@@ -49,9 +50,10 @@ pub struct WithdrawB<'info> {
         ],
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(
-                vault.last_dca_period,
-                user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
-            )
+            vault.last_dca_period,
+            user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
+        ) @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_j.vault == vault.key()
     )]
     pub vault_period_j: Account<'info, VaultPeriod>,
 
@@ -68,7 +70,7 @@ pub struct WithdrawB<'info> {
         ],
         bump = user_position.bump,
         constraint = user_position.position_authority == user_position_nft_account.mint @ErrorCode::InvalidMint,
-        constraint = !user_position.is_closed
+        constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
     )]
     pub user_position: Account<'info, Position>,
 
@@ -102,7 +104,7 @@ pub struct WithdrawB<'info> {
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
         constraint = vault_treasury_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
