@@ -41,7 +41,7 @@ pub struct Deposit<'info> {
         constraint = {
             params.dca_cycles > 0 &&
             vault_period_end.period_id > 0 &&
-            vault_period_end.period_id == vault.last_dca_period + params.dca_cycles
+            vault_period_end.period_id == vault.last_dca_period.checked_add(params.dca_cycles).unwrap()
         }
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,

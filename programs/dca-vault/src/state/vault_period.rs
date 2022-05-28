@@ -35,11 +35,11 @@ impl VaultPeriod {
     }
 
     pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {
-        self.dar += extra_drip;
+        self.dar = self.dar.checked_add(extra_drip).expect("dar overflow");
     }
 
     pub fn decrease_drip_amount_to_reduce(&mut self, position_drip: u64) {
-        self.dar = self.dar.checked_sub(position_drip).unwrap();
+        self.dar = self.dar.checked_sub(position_drip).expect("dar underflow");
     }
 
     pub fn update_twap(
