@@ -21,7 +21,7 @@ pub struct WithdrawB<'info> {
         ],
         bump = vault.bump
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: Box<Account<'info, Vault>>,
 
     #[account(
         constraint = vault_proto_config.key() == vault.proto_config

@@ -10,8 +10,6 @@ pub mod state;
 
 declare_id!("AahZjZGD5Lv9HGPYUXZRS5GpeFFF13Wvx1fAFgwUxxDR");
 
-// TODO(matcha): Restrict to bare minimum mutable accounts
-
 #[program]
 pub mod dca_vault {
     use super::*;
@@ -23,30 +21,30 @@ pub mod dca_vault {
         instructions::init_vault_proto_config::handler(ctx, params)
     }
 
-    pub fn init_vault(ctx: Context<InitializeVault>) -> Result<()> {
-        instructions::init_vault::handler(ctx)
+    pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
+        init_vault::handler(ctx, params)
     }
 
     pub fn init_vault_period(
         ctx: Context<InitializeVaultPeriod>,
         params: InitializeVaultPeriodParams,
     ) -> Result<()> {
-        instructions::init_vault_period::handler(ctx, params)
+        init_vault_period::handler(ctx, params)
     }
 
     pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
-        instructions::close_position::handler(ctx)
+        close_position::handler(ctx)
     }
 
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
-        instructions::deposit::handler(ctx, params)
+        deposit::handler(ctx, params)
     }
 
     pub fn withdraw_b(ctx: Context<WithdrawB>) -> Result<()> {
-        instructions::withdraw_b::handler(ctx)
+        withdraw_b::handler(ctx)
     }
 
     pub fn trigger_dca(ctx: Context<TriggerDCA>) -> Result<()> {
-        instructions::trigger_dca::handler(ctx)
+        trigger_dca::handler(ctx)
     }
 }

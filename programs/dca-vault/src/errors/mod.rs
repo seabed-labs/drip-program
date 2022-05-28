@@ -18,6 +18,10 @@ pub enum ErrorCode {
     InvalidMint,
     #[msg("Spread must be >=0 and <=10000")]
     InvalidSpread,
+    #[msg("Swap Account Does Not Match Vault Swaps")]
+    InvalidSwapAccount,
+    #[msg("A Vault May Limit to a Maximum of 5 Token Swaps")]
+    InvalidNumSwaps,
     #[msg("Provided account references the wrong vault-proto-config")]
     InvalidVaultProtoConfigReference,
     #[msg("Invalid swap authority account")]

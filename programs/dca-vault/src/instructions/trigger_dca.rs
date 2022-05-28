@@ -192,6 +192,16 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
     if ctx.accounts.vault_token_a_account.amount == 0 {
         return Err(ErrorCode::PeriodicDripAmountIsZero.into());
     }
+    if ctx.accounts.vault.limit_swaps {
+        if let Err(_) = ctx
+            .accounts
+            .vault
+            .swaps
+            .binary_search(ctx.accounts.swap.key)
+        {
+            return Err(ErrorCode::InvalidSwapAccount.into());
+        }
+    }
 
     let swap_account_info = &ctx.accounts.swap;
     let swap = SwapVersion::unpack(&swap_account_info.data.deref().borrow())?;

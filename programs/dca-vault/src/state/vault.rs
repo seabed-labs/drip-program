@@ -13,6 +13,9 @@ pub struct Vault {
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
     pub treasury_token_b_account: Pubkey,
+    pub swaps: [Pubkey; 5],
+    // pub swaps: Vec<Pubkey>,
+    pub limit_swaps: bool,
 
     // Data
     pub last_dca_period: u64, // 1 to N
@@ -20,6 +23,13 @@ pub struct Vault {
     pub dca_activation_timestamp: i64,
     pub bump: u8,
 }
+
+// impl Vault {
+//     pub const MAX_SIZE: usize = 32 + 32 + 32 + 32 + 32 + 32 + (1 + 5 * 32) + 8 + 8 + 8 + 1;
+//     pub fn byte_size() -> usize {
+//         return Vault::MAX_SIZE + 8;
+//     }
+// }
 
 impl<'info> Vault {
     pub fn init(
@@ -30,6 +40,9 @@ impl<'info> Vault {
         token_a_account: Pubkey,
         token_b_account: Pubkey,
         treasury_token_b_account: Pubkey,
+        swaps: [Pubkey; 5],
+        // swaps: Vec<Pubkey>,
+        limit_swaps: bool,
         granularity: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
@@ -39,6 +52,9 @@ impl<'info> Vault {
         self.token_a_account = token_a_account;
         self.token_b_account = token_b_account;
         self.treasury_token_b_account = treasury_token_b_account;
+        self.swaps = swaps;
+        self.limit_swaps = limit_swaps;
+
         self.last_dca_period = 0;
         self.drip_amount = 0;
 
@@ -103,6 +119,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 224);
+        assert_eq!(Vault::byte_size(), 384);
     }
 }
