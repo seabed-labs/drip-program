@@ -6,3 +6,4 @@ target
 node_modules
 .idea
 Cargo.lock
+devnet-keypair.json

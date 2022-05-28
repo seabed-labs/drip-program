@@ -9,6 +9,7 @@ use anchor_lang::System;
 use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
+// TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
     /* DCAF ACCOUNTS */
@@ -26,7 +27,7 @@ pub struct ClosePosition<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config
+        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -38,8 +39,8 @@ pub struct ClosePosition<'info> {
             vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_i.bump,
-        constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit,
-        constraint = vault_period_i.vault == vault.key()
+        constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_i.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_i: Box<Account<'info, VaultPeriod>>,
 
@@ -53,11 +54,9 @@ pub struct ClosePosition<'info> {
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(
             vault.last_dca_period,
-            user_position.dca_period_id_before_deposit
-                .checked_add(user_position.number_of_swaps)
-                .unwrap()
-            ),
-        constraint = vault_period_j.vault == vault.key()
+            user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
+        ) @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_j.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
 
@@ -72,9 +71,9 @@ pub struct ClosePosition<'info> {
         ],
         bump = vault_period_user_expiry.bump,
         constraint = vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit
-                                                .checked_add(user_position.number_of_swaps)
-                                                .unwrap(),
-        constraint = vault_period_user_expiry.vault == vault.key()
+                .checked_add(user_position.number_of_swaps)
+                .unwrap() @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_user_expiry.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
@@ -87,15 +86,15 @@ pub struct ClosePosition<'info> {
             user_position.position_authority.as_ref()
         ],
         bump = user_position.bump,
-        constraint = !user_position.is_closed,
+        constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
         constraint = user_position.position_authority == user_position_nft_mint.key(),
-        constraint = user_position.vault == vault.key()
+        constraint = user_position.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub user_position: Box<Account<'info, Position>>,
 
     /* TOKEN ACCOUNTS */
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,
@@ -103,7 +102,7 @@ pub struct ClosePosition<'info> {
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         associated_token::mint = token_b_mint,
         associated_token::authority = vault,
@@ -111,7 +110,7 @@ pub struct ClosePosition<'info> {
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
         constraint = vault_treasury_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
@@ -120,7 +119,7 @@ pub struct ClosePosition<'info> {
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = user_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = user_token_b_account.owner == withdrawer.key(),
@@ -129,7 +128,7 @@ pub struct ClosePosition<'info> {
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = user_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = user_token_a_account.owner == withdrawer.key(),
@@ -144,7 +143,7 @@ pub struct ClosePosition<'info> {
         constraint = user_position_nft_account.owner == withdrawer.key(),
         constraint = user_position_nft_account.state == AccountState::Initialized,
         constraint = user_position_nft_account.amount == 1,
-        constraint = user_position_nft_account.delegate.contains(&vault.key()),
+        constraint = user_position_nft_account.delegate.contains(&vault.key()) @ErrorCode::InvalidVaultReference,
         constraint = user_position_nft_account.delegated_amount == 1
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
