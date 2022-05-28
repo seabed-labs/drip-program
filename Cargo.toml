@@ -2,3 +2,12 @@
 members = [
     "programs/*"
 ]
+
+[profile.dev]
+overflow-checks = true
+[profile.release]
+overflow-checks = true
+[profile.test]
+overflow-checks = true
+[profile.bench]
+overflow-checks = true

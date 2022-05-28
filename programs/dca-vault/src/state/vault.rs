@@ -58,7 +58,10 @@ impl<'info> Vault {
     }
 
     pub fn increase_drip_amount(&mut self, extra_drip: u64) {
-        self.drip_amount += extra_drip;
+        self.drip_amount = self
+            .drip_amount
+            .checked_add(extra_drip)
+            .expect("overflow drip amount");
     }
 
     pub fn decrease_drip_amount(&mut self, position_drip: u64) {
