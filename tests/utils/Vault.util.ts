@@ -107,7 +107,6 @@ export class VaultUtil extends TestUtil {
     return await ProgramUtil.vaultProgram.rpc.initVault(
       {
         swaps: swaps ? swaps : [],
-        limitSwaps: false,
       },
       {
         accounts,

@@ -9,7 +9,6 @@ use spl_token::state::AccountState;
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
     swaps: Vec<Pubkey>,
-    limit_swaps: bool,
 }
 
 #[derive(Accounts)]
@@ -96,7 +95,7 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
         ctx.accounts.token_b_account.key(),
         ctx.accounts.treasury_token_b_account.key(),
         swaps,
-        params.limit_swaps,
+        params.swaps.len() > 0,
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;

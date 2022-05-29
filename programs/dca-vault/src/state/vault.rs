@@ -14,7 +14,6 @@ pub struct Vault {
     pub token_b_account: Pubkey,
     pub treasury_token_b_account: Pubkey,
     pub swaps: [Pubkey; 5],
-    // pub swaps: Vec<Pubkey>,
     pub limit_swaps: bool,
 
     // Data
@@ -23,13 +22,6 @@ pub struct Vault {
     pub dca_activation_timestamp: i64,
     pub bump: u8,
 }
-
-// impl Vault {
-//     pub const MAX_SIZE: usize = 32 + 32 + 32 + 32 + 32 + 32 + (1 + 5 * 32) + 8 + 8 + 8 + 1;
-//     pub fn byte_size() -> usize {
-//         return Vault::MAX_SIZE + 8;
-//     }
-// }
 
 impl<'info> Vault {
     pub fn init(
