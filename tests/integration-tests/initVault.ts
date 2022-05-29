@@ -6,6 +6,7 @@ import { Token } from "@solana/spl-token";
 import {
   findAssociatedTokenAddress,
   generatePair,
+  generatePairs,
   getVaultPDA,
   Granularity,
   PDA,
@@ -64,7 +65,8 @@ export function testInitVault() {
       tokenB.publicKey,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      treasuryTokenBAccount
+      treasuryTokenBAccount,
+      undefined
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
@@ -114,6 +116,103 @@ export function testInitVault() {
     vaultAccount.bump.toString().should.equal(vaultPDA.bump.toString());
   });
 
+  it("initializes the vault account with 1 swap", async () => {
+    const swaps = generatePairs(1).map((pair) => pair.publicKey);
+    const vaultPDA = await getVaultPDA(
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultProtoConfigAccount
+    );
+
+    const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+    ]);
+
+    await VaultUtil.initVault(
+      vaultPDA.publicKey,
+      vaultProtoConfigAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      treasuryTokenBAccount,
+      swaps
+    );
+
+    const vaultAccount = await AccountUtil.fetchVaultAccount(
+      vaultPDA.publicKey
+    );
+
+    swaps.forEach((swap) => {
+      vaultAccount.swaps
+        .findIndex((vaultSwap) => vaultSwap.toString() === swap.toString())
+        .should.not.equal(-1);
+    });
+  });
+
+  it("initializes the vault account with 5 swaps", async () => {
+    const swaps = generatePairs(5).map((pair) => pair.publicKey);
+    const vaultPDA = await getVaultPDA(
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultProtoConfigAccount
+    );
+
+    const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+    ]);
+
+    await VaultUtil.initVault(
+      vaultPDA.publicKey,
+      vaultProtoConfigAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      treasuryTokenBAccount,
+      swaps
+    );
+
+    const vaultAccount = await AccountUtil.fetchVaultAccount(
+      vaultPDA.publicKey
+    );
+
+    swaps.forEach((swap) => {
+      vaultAccount.swaps
+        .findIndex((vaultSwap) => vaultSwap.toString() === swap.toString())
+        .should.not.equal(-1);
+    });
+  });
+
+  it("should fail to initialize the vault account with 6 swaps", async () => {
+    const swaps = generatePairs(6).map((pair) => pair.publicKey);
+    const vaultPDA = await getVaultPDA(
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultProtoConfigAccount
+    );
+
+    const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+    ]);
+
+    await VaultUtil.initVault(
+      vaultPDA.publicKey,
+      vaultProtoConfigAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      treasuryTokenBAccount,
+      swaps
+    ).should.rejectedWith(
+      new RegExp(".*A Vault May Limit to a Maximum of 5 Token Swaps")
+    );
+  });
+
   it("should fail to initialize when vault PDA is generated with invalid seeds", async () => {
     // NOTE: swapped tokenA and tokenB
     const vaultPDA = await getVaultPDA(
@@ -134,7 +233,8 @@ export function testInitVault() {
       tokenB.publicKey,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      treasuryTokenBAccount
+      treasuryTokenBAccount,
+      undefined
     ).should.rejectedWith(
       new RegExp(
         ".*Cross-program invocation with unauthorized signer or writable account"
@@ -157,7 +257,8 @@ export function testInitVault() {
       tokenB.publicKey,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      treasuryTokenBAccount
+      treasuryTokenBAccount,
+      undefined
     ).should.rejectedWith(
       new RegExp(
         ".*Cross-program invocation with unauthorized signer or writable account"
@@ -184,7 +285,8 @@ export function testInitVault() {
       tokenB.publicKey,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      treasuryTokenBAccount
+      treasuryTokenBAccount,
+      undefined
     ).should.rejectedWith(
       new RegExp(".*An account required by the instruction is missing")
     );
@@ -216,6 +318,7 @@ export function testInitVault() {
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
+        undefined,
         { systemProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -229,6 +332,7 @@ export function testInitVault() {
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
+        undefined,
         { tokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -242,6 +346,7 @@ export function testInitVault() {
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
+        undefined,
         { associatedTokenProgram: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*Program ID was not as expected"));
     });
@@ -255,6 +360,7 @@ export function testInitVault() {
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
+        undefined,
         { rent: generatePair().publicKey }
       ).should.rejectedWith(new RegExp(".*invalid program argument"));
     });

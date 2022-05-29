@@ -59,7 +59,8 @@ export const deployVault = async (
     tokenBMint,
     vaultTokenA_ATA,
     vaultTokenB_ATA,
-    vaultTreasuryTokenBAccount
+    vaultTreasuryTokenBAccount,
+    null
   );
   return vaultPDA;
 };

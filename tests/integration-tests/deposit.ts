@@ -85,7 +85,8 @@ export async function testDeposit() {
       tokenB.publicKey,
       vaultTokenAAccount,
       vaultTokenBAccount,
-      vaultTreasuryTokenBAccount
+      vaultTreasuryTokenBAccount,
+      undefined
     );
 
     vaultPubkey = vaultPDA.publicKey;

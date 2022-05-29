@@ -8,6 +8,8 @@ import {
 } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
+import { COptionLayout } from "@project-serum/anchor/dist/cjs/coder/spl-token/buffer-layout";
+import * as anchor from "@project-serum/anchor";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
@@ -70,6 +72,7 @@ export class VaultUtil extends TestUtil {
     tokenA_ATA: PublicKey,
     tokenB_ATA: PublicKey,
     treasuryTokenBAccount: PublicKey,
+    swaps: PublicKey[] | null | undefined,
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
@@ -101,9 +104,15 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.initVault({
-      accounts: accounts,
-    });
+    return await ProgramUtil.vaultProgram.rpc.initVault(
+      {
+        swaps: swaps ? swaps : [],
+        limitSwaps: false,
+      },
+      {
+        accounts,
+      }
+    );
   }
 
   static async initVaultPeriod(
