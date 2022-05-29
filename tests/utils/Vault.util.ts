@@ -8,8 +8,6 @@ import {
 } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
-import { COptionLayout } from "@project-serum/anchor/dist/cjs/coder/spl-token/buffer-layout";
-import * as anchor from "@project-serum/anchor";
 
 export type VaultProtoConfig = {
   granularity: Granularity;

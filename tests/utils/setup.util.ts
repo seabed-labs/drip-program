@@ -41,7 +41,8 @@ export const deployVault = async (
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
-  vaultProtoConfigAccount: PublicKey
+  vaultProtoConfigAccount: PublicKey,
+  swaps?: PublicKey[]
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
     tokenAMint,
@@ -60,7 +61,7 @@ export const deployVault = async (
     vaultTokenA_ATA,
     vaultTokenB_ATA,
     vaultTreasuryTokenBAccount,
-    null
+    swaps
   );
   return vaultPDA;
 };

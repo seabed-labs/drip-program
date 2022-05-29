@@ -18,7 +18,7 @@ pub enum ErrorCode {
     InvalidMint,
     #[msg("Spread must be >=0 and <=10000")]
     InvalidSpread,
-    #[msg("Swap Account Does Not Match Vault Swaps")]
+    #[msg("Token Swap is Not Whitelisted")]
     InvalidSwapAccount,
     #[msg("A Vault May Limit to a Maximum of 5 Token Swaps")]
     InvalidNumSwaps,
