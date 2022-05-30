@@ -33,7 +33,6 @@ impl<'info> Vault {
         token_b_account: Pubkey,
         treasury_token_b_account: Pubkey,
         swaps: [Pubkey; 5],
-        // swaps: Vec<Pubkey>,
         limit_swaps: bool,
         granularity: u64,
         bump: Option<&u8>,
