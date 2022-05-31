@@ -267,7 +267,7 @@ export function testTriggerDCA() {
     );
   });
 
-  it("should fail if non whitelisted swaps is used", async () => {
+  it("should fail if non-whitelisted swaps is used", async () => {
     const [
       swap2,
       swapTokenMint2,

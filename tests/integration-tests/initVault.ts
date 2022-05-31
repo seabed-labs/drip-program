@@ -117,7 +117,7 @@ export function testInitVault() {
   });
 
   it("initializes the vault account with 1 swap", async () => {
-    const swaps = generatePairs(1).map((pair) => pair.publicKey);
+    const whitelistedSwaps = generatePairs(1).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
@@ -137,22 +137,22 @@ export function testInitVault() {
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      swaps
+      whitelistedSwaps
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
       vaultPDA.publicKey
     );
 
-    swaps.forEach((swap) => {
-      vaultAccount.swaps
+    whitelistedSwaps.forEach((swap) => {
+      vaultAccount.whitelistedSwaps
         .findIndex((vaultSwap) => vaultSwap.toString() === swap.toString())
         .should.not.equal(-1);
     });
   });
 
-  it("initializes the vault account with 5 swaps", async () => {
-    const swaps = generatePairs(5).map((pair) => pair.publicKey);
+  it("initializes the vault account with 5 whitelistedSwaps", async () => {
+    const whitelistedSwaps = generatePairs(5).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
@@ -172,22 +172,22 @@ export function testInitVault() {
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      swaps
+      whitelistedSwaps
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
       vaultPDA.publicKey
     );
 
-    swaps.forEach((swap) => {
-      vaultAccount.swaps
+    whitelistedSwaps.forEach((swap) => {
+      vaultAccount.whitelistedSwaps
         .findIndex((vaultSwap) => vaultSwap.toString() === swap.toString())
         .should.not.equal(-1);
     });
   });
 
-  it("should fail to initialize the vault account with 6 swaps", async () => {
-    const swaps = generatePairs(6).map((pair) => pair.publicKey);
+  it("should fail to initialize the vault account with 6 whitelistedSwaps", async () => {
+    const whitelistedSwaps = generatePairs(6).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
       tokenA.publicKey,
       tokenB.publicKey,
@@ -207,7 +207,7 @@ export function testInitVault() {
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      swaps
+      whitelistedSwaps
     ).should.rejectedWith(
       new RegExp(".*A Vault May Limit to a Maximum of 5 Token Swaps")
     );

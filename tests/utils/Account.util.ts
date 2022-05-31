@@ -45,7 +45,7 @@ export class AccountUtil extends TestUtil {
       | "dripAmount"
       | "bump"
       | "dcaActivationTimestamp"
-      | "swaps"
+      | "whitelistedSwaps"
     >
   > {
     return await ProgramUtil.vaultProgram.account.vault.fetch(pubkey);
