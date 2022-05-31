@@ -70,7 +70,7 @@ export class VaultUtil extends TestUtil {
     tokenA_ATA: PublicKey,
     tokenB_ATA: PublicKey,
     treasuryTokenBAccount: PublicKey,
-    swaps: PublicKey[] | null | undefined,
+    whitelistedSwaps: PublicKey[] | null | undefined,
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
@@ -104,7 +104,7 @@ export class VaultUtil extends TestUtil {
     // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.initVault(
       {
-        swaps: swaps ? swaps : [],
+        whitelistedSwaps: whitelistedSwaps ? whitelistedSwaps : [],
       },
       {
         accounts,

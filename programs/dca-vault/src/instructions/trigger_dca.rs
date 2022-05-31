@@ -193,7 +193,12 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         return Err(ErrorCode::PeriodicDripAmountIsZero.into());
     }
     if ctx.accounts.vault.limit_swaps {
-        if !ctx.accounts.vault.swaps.contains(ctx.accounts.swap.key) {
+        if !ctx
+            .accounts
+            .vault
+            .whitelisted_swaps
+            .contains(ctx.accounts.swap.key)
+        {
             return Err(ErrorCode::InvalidSwapAccount.into());
         }
     }
