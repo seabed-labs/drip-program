@@ -104,7 +104,7 @@ export class VaultUtil extends TestUtil {
     // console.log(JSON.stringify(accounts, undefined, 2));
     return await ProgramUtil.vaultProgram.rpc.initVault(
       {
-        swaps: swaps ? swaps : [],
+        whitelistedSwaps: swaps ? swaps : [],
       },
       {
         accounts,

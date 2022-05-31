@@ -13,7 +13,7 @@ pub struct Vault {
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
     pub treasury_token_b_account: Pubkey,
-    pub swaps: [Pubkey; 5],
+    pub whitelisted_swaps: [Pubkey; 5],
     pub limit_swaps: bool,
 
     // Data
@@ -32,7 +32,7 @@ impl<'info> Vault {
         token_a_account: Pubkey,
         token_b_account: Pubkey,
         treasury_token_b_account: Pubkey,
-        swaps: [Pubkey; 5],
+        whitelisted_swaps: [Pubkey; 5],
         limit_swaps: bool,
         granularity: u64,
         bump: Option<&u8>,
@@ -43,7 +43,7 @@ impl<'info> Vault {
         self.token_a_account = token_a_account;
         self.token_b_account = token_b_account;
         self.treasury_token_b_account = treasury_token_b_account;
-        self.swaps = swaps;
+        self.whitelisted_swaps = whitelisted_swaps;
         self.limit_swaps = limit_swaps;
 
         self.last_dca_period = 0;

@@ -8,7 +8,7 @@ use spl_token::state::AccountState;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
-    swaps: Vec<Pubkey>,
+    whitelisted_swaps: Vec<Pubkey>,
 }
 
 #[derive(Accounts)]
@@ -78,12 +78,12 @@ pub struct InitializeVault<'info> {
 }
 
 pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
-    if params.swaps.len() > 5 {
+    if params.whitelisted_swaps.len() > 5 {
         return Err(ErrorCode::InvalidNumSwaps.into());
     }
-    let mut swaps: [Pubkey; 5] = Default::default();
-    for (i, s) in params.swaps.iter().enumerate() {
-        swaps[i] = *s;
+    let mut whitelisted_swaps: [Pubkey; 5] = Default::default();
+    for (i, s) in params.whitelisted_swaps.iter().enumerate() {
+        whitelisted_swaps[i] = *s;
     }
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
     /* STATE UPDATES (EFFECTS) */
@@ -94,8 +94,8 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
         ctx.accounts.token_a_account.key(),
         ctx.accounts.token_b_account.key(),
         ctx.accounts.treasury_token_b_account.key(),
-        swaps,
-        params.swaps.len() > 0,
+        whitelisted_swaps,
+        params.whitelisted_swaps.len() > 0,
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;
