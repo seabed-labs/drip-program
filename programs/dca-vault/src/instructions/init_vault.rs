@@ -6,6 +6,11 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct InitializeVaultParams {
+    swaps: Vec<Pubkey>,
+}
+
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
     /* DCAF ACCOUNTS */
@@ -69,10 +74,17 @@ pub struct InitializeVault<'info> {
 
     pub system_program: Program<'info, System>,
 
-    pub rent: Sysvar<'info, Rent>, // TODO(matcha): Add remaining accounts here, if any
+    pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
+pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
+    if params.swaps.len() > 5 {
+        return Err(ErrorCode::InvalidNumSwaps.into());
+    }
+    let mut swaps: [Pubkey; 5] = Default::default();
+    for (i, s) in params.swaps.iter().enumerate() {
+        swaps[i] = *s;
+    }
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
     /* STATE UPDATES (EFFECTS) */
     ctx.accounts.vault.init(
@@ -82,6 +94,8 @@ pub fn handler(ctx: Context<InitializeVault>) -> Result<()> {
         ctx.accounts.token_a_account.key(),
         ctx.accounts.token_b_account.key(),
         ctx.accounts.treasury_token_b_account.key(),
+        swaps,
+        params.swaps.len() > 0,
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;

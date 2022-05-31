@@ -13,6 +13,8 @@ pub struct Vault {
     pub token_a_account: Pubkey,
     pub token_b_account: Pubkey,
     pub treasury_token_b_account: Pubkey,
+    pub swaps: [Pubkey; 5],
+    pub limit_swaps: bool,
 
     // Data
     pub last_dca_period: u64, // 1 to N
@@ -30,6 +32,8 @@ impl<'info> Vault {
         token_a_account: Pubkey,
         token_b_account: Pubkey,
         treasury_token_b_account: Pubkey,
+        swaps: [Pubkey; 5],
+        limit_swaps: bool,
         granularity: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
@@ -39,6 +43,9 @@ impl<'info> Vault {
         self.token_a_account = token_a_account;
         self.token_b_account = token_b_account;
         self.treasury_token_b_account = treasury_token_b_account;
+        self.swaps = swaps;
+        self.limit_swaps = limit_swaps;
+
         self.last_dca_period = 0;
         self.drip_amount = 0;
 
@@ -103,6 +110,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 224);
+        assert_eq!(Vault::byte_size(), 384);
     }
 }

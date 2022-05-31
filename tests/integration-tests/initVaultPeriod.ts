@@ -66,7 +66,8 @@ export function testInitVaultPeriod() {
       tokenB.publicKey,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      treasuryTokenBAccount
+      treasuryTokenBAccount,
+      undefined
     );
 
     vaultPubkey = vaultPDA.publicKey;

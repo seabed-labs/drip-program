@@ -22,6 +22,9 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
 
 export function testTriggerDCA() {
+  let tokenOwnerKeypair: Keypair;
+  let payerKeypair: Keypair;
+
   let user: Keypair;
   let userTokenAAccount: PublicKey;
 
@@ -54,7 +57,7 @@ export function testTriggerDCA() {
 
     user = generatePair();
     bot = generatePair();
-    const [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
+    [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
       SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(0.1)),
       SolUtils.fundAccount(bot.publicKey, SolUtils.solToLamports(0.1)),
@@ -105,7 +108,8 @@ export function testTriggerDCA() {
       tokenA.publicKey,
       tokenB.publicKey,
       vaultTreasuryTokenBAccount,
-      vaultProtoConfig
+      vaultProtoConfig,
+      [swap]
     );
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
@@ -260,6 +264,41 @@ export function testTriggerDCA() {
       vaultPeriods[2].publicKey
     ).should.rejectedWith(
       new RegExp(".*DCA already triggered for the current period")
+    );
+  });
+
+  it("should fail if non whitelisted swaps is used", async () => {
+    const [
+      swap2,
+      swapTokenMint2,
+      swapTokenAAccount2,
+      swapTokenBAccount2,
+      swapFeeAccount2,
+      swapAuthority2,
+    ] = await deploySwap(
+      tokenA,
+      tokenOwnerKeypair,
+      tokenB,
+      tokenOwnerKeypair,
+      payerKeypair
+    );
+    await triggerDCAWrapper(
+      bot,
+      botTokenAAcount,
+      vaultPDA.publicKey,
+      vaultProtoConfig,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      swapTokenMint2,
+      swapTokenAAccount2,
+      swapTokenBAccount2,
+      swapFeeAccount2,
+      swapAuthority2,
+      swap2
+    )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey).should.rejectedWith(
+      new RegExp(".*Token Swap is Not Whitelisted")
     );
   });
 }
