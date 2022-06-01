@@ -16,8 +16,7 @@ pub struct InitializeVault<'info> {
     /* DCAF ACCOUNTS */
     #[account(
         init,
-        // TODO(mocha): verify
-        space = 8 + 384,
+        space = 392,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),

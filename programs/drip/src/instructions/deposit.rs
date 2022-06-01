@@ -48,7 +48,7 @@ pub struct Deposit<'info> {
 
     #[account(
         init,
-        space = 8+120, // TODO(mocha): verify
+        space = 128,
         seeds = [
             b"user_position".as_ref(),
             user_position_nft_mint.key().as_ref()

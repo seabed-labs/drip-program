@@ -5,9 +5,11 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct VaultProtoConfig {
-    pub granularity: u64,
-    pub trigger_dca_spread: u16,
-    pub base_withdrawal_spread: u16,
+    // total space -> 12
+    // allocation needed: ceil( (12+8)/8 )*8 -> 24
+    pub granularity: u64,            // 8
+    pub trigger_dca_spread: u16,     // 2
+    pub base_withdrawal_spread: u16, // 2
 }
 
 impl VaultProtoConfig {
@@ -26,6 +28,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(VaultProtoConfig::byte_size(), 16);
+        assert_eq!(VaultProtoConfig::byte_size(), 24 - 8);
     }
 }

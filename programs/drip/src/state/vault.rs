@@ -6,21 +6,25 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Default)]
 pub struct Vault {
+    // total space -> 378
+    // allocation needed: ceil( (378+8)/8 )*8 -> 392
+
     // Account relations
-    pub proto_config: Pubkey,
-    pub token_a_mint: Pubkey,
-    pub token_b_mint: Pubkey,
-    pub token_a_account: Pubkey,
-    pub token_b_account: Pubkey,
-    pub treasury_token_b_account: Pubkey,
-    pub whitelisted_swaps: [Pubkey; 5],
-    pub limit_swaps: bool,
+    pub proto_config: Pubkey,             // 32
+    pub token_a_mint: Pubkey,             // 32
+    pub token_b_mint: Pubkey,             // 32
+    pub token_a_account: Pubkey,          // 32
+    pub token_b_account: Pubkey,          // 32
+    pub treasury_token_b_account: Pubkey, // 32
+    pub whitelisted_swaps: [Pubkey; 5],   // 32*5
 
     // Data
-    pub last_dca_period: u64, // 1 to N
-    pub drip_amount: u64,
-    pub dca_activation_timestamp: i64,
-    pub bump: u8,
+    // 1 to N
+    pub last_dca_period: u64,          // 8
+    pub drip_amount: u64,              // 8
+    pub dca_activation_timestamp: i64, // 8
+    pub bump: u8,                      // 1
+    pub limit_swaps: bool,             // 1
 }
 
 impl<'info> Vault {
@@ -110,6 +114,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 384);
+        assert_eq!(Vault::byte_size(), 392 - 8);
     }
 }

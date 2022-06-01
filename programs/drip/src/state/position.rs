@@ -6,6 +6,9 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct Position {
+    // total space -> 114
+    // allocation needed: ceil( (114+8)/8 )*8 -> 128
+
     // The A/B/G vault the position belongs to
     pub vault: Pubkey, // 32
     // The position authority NFT mint
@@ -77,6 +80,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 120);
+        assert_eq!(Position::byte_size(), 128 - 8);
     }
 }

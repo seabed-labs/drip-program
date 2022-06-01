@@ -13,8 +13,7 @@ pub struct InitializeVaultPeriodParams {
 pub struct InitializeVaultPeriod<'info> {
     #[account(
         init,
-        // TODO(mocha): verify
-        space = 8+72,
+        space = 80,
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),

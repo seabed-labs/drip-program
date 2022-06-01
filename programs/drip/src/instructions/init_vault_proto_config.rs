@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::ErrorCode;
-use crate::state::{ByteSized, VaultProtoConfig};
+use crate::state::VaultProtoConfig;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitVaultProtoConfigParams {
@@ -16,8 +16,8 @@ pub struct InitVaultProtoConfigParams {
 pub struct InitializeVaultProtoConfig<'info> {
     #[account(
         init,
-        payer = creator,
-        space = 8 + VaultProtoConfig::byte_size()
+        space = 24,
+        payer = creator
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
