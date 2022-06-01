@@ -350,7 +350,10 @@ export function testWithdrawB() {
     try {
       await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
     } catch (e) {
-      findError(e, new RegExp(".*Withdrawable amount is zero"));
+      findError(
+        e,
+        new RegExp(".*Withdrawable amount is zero")
+      ).should.not.be.undefined();
     }
   });
 }

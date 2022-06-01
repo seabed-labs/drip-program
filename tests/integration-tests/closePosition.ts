@@ -425,7 +425,10 @@ export function testClosePosition() {
           vaultPeriods[k].publicKey
         );
       } catch (e) {
-        findError(e, new RegExp(".*Invalid vault-period"));
+        findError(
+          e,
+          new RegExp(".*Invalid vault-period")
+        ).should.not.be.undefined();
       }
     }
     await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
@@ -437,7 +440,10 @@ export function testClosePosition() {
           vaultPeriods[k].publicKey
         );
       } catch (e) {
-        findError(e, new RegExp(".*Invalid vault-period"));
+        findError(
+          e,
+          new RegExp(".*Invalid vault-period")
+        ).should.not.be.undefined();
       }
     }
   });
@@ -470,7 +476,10 @@ export function testClosePosition() {
         vaultPeriods[k].publicKey
       );
     } catch (e) {
-      findError(e, new RegExp(".*Position is already closed"));
+      findError(
+        e,
+        new RegExp(".*Position is already closed")
+      ).should.not.be.undefined();
     }
   });
 }

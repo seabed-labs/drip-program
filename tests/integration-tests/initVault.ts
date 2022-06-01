@@ -13,6 +13,7 @@ import {
 } from "../utils/common.util";
 import { SolUtils } from "../utils/SolUtils";
 import { AnchorError } from "@project-serum/anchor";
+import { findError } from "../utils/error.util";
 
 export function testInitVault() {
   let vaultProtoConfigAccount: PublicKey;
@@ -212,16 +213,10 @@ export function testInitVault() {
         whitelistedSwaps
       );
     } catch (e) {
-      const anchorError = e as AnchorError;
-      anchorError.logs
-        .findIndex((log) => {
-          return (
-            log.match(
-              new RegExp(".*A Vault May Limit to a Maximum of 5 Token Swaps")
-            ) != null
-          );
-        })
-        .should.not.equal(-1);
+      findError(
+        e,
+        new RegExp(".*A Vault May Limit to a Maximum of 5 Token Swaps")
+      ).should.not.be.undefined();
     }
   });
 
@@ -335,14 +330,10 @@ export function testInitVault() {
           { systemProgram: generatePair().publicKey }
         );
       } catch (e) {
-        const anchorError = e as AnchorError;
-        anchorError.logs
-          .findIndex((log) => {
-            return (
-              log.match(new RegExp(".*Program ID was not as expected")) != null
-            );
-          })
-          .should.not.equal(-1);
+        findError(
+          e,
+          new RegExp(".*Program ID was not as expected")
+        ).should.not.be.undefined();
       }
     });
 
@@ -360,14 +351,10 @@ export function testInitVault() {
           { tokenProgram: generatePair().publicKey }
         );
       } catch (e) {
-        const anchorError = e as AnchorError;
-        anchorError.logs
-          .findIndex((log) => {
-            return (
-              log.match(new RegExp(".*Program ID was not as expected")) != null
-            );
-          })
-          .should.not.equal(-1);
+        findError(
+          e,
+          new RegExp(".*Program ID was not as expected")
+        ).should.not.be.undefined();
       }
     });
 
@@ -385,14 +372,10 @@ export function testInitVault() {
           { associatedTokenProgram: generatePair().publicKey }
         );
       } catch (e) {
-        const anchorError = e as AnchorError;
-        anchorError.logs
-          .findIndex((log) => {
-            return (
-              log.match(new RegExp(".*Program ID was not as expected")) != null
-            );
-          })
-          .should.not.equal(-1);
+        findError(
+          e,
+          new RegExp(".*Program ID was not as expected")
+        ).should.not.be.undefined();
       }
     });
 
@@ -410,18 +393,12 @@ export function testInitVault() {
           { rent: generatePair().publicKey }
         );
       } catch (e) {
-        const anchorError = e as AnchorError;
-        anchorError.logs
-          .findIndex((log) => {
-            return (
-              log.match(
-                new RegExp(
-                  ".*The given public key does not match the required sysvar"
-                )
-              ) != null
-            );
-          })
-          .should.not.equal(-1);
+        findError(
+          e,
+          new RegExp(
+            ".*The given public key does not match the required sysvar"
+          )
+        ).should.not.be.undefined();
       }
     });
   });

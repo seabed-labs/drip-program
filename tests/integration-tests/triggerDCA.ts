@@ -255,7 +255,10 @@ export function testTriggerDCA() {
     try {
       await triggerDCA(vaultPeriods[4].publicKey, vaultPeriods[5].publicKey);
     } catch (e) {
-      findError(e, new RegExp(".*Periodic drip amount == 0"));
+      findError(
+        e,
+        new RegExp(".*Periodic drip amount == 0")
+      ).should.not.be.undefined();
     }
   });
 
@@ -267,7 +270,7 @@ export function testTriggerDCA() {
       findError(
         e,
         new RegExp(".*DCA already triggered for the current period")
-      );
+      ).should.not.be.undefined();
     }
   });
 
@@ -304,7 +307,10 @@ export function testTriggerDCA() {
         swap2
       )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     } catch (e) {
-      findError(e, new RegExp(".*Token Swap is Not Whitelisted"));
+      findError(
+        e,
+        new RegExp(".*Token Swap is Not Whitelisted")
+      ).should.not.be.undefined();
     }
   });
 }

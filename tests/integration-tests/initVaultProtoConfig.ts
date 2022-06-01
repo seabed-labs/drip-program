@@ -2,6 +2,7 @@ import { AccountUtil } from "../utils/Account.util";
 import { VaultUtil } from "../utils/Vault.util";
 import { generatePair, Granularity } from "../utils/common.util";
 import { AnchorError } from "@project-serum/anchor";
+import { findError } from "../utils/error.util";
 
 export function testInitVaultProtoConfig() {
   it("initializes the vault proto config account correctly", async () => {
@@ -45,16 +46,10 @@ export function testInitVaultProtoConfig() {
       });
       throw new Error();
     } catch (e) {
-      const anchorError = e as AnchorError;
-      anchorError.logs
-        .findIndex((log) => {
-          return (
-            log.match(
-              new RegExp(".*Granularity must be an integer larger than 0")
-            ) != null
-          );
-        })
-        .should.not.equal(-1);
+      findError(
+        e,
+        new RegExp(".*Granularity must be an integer larger than 0")
+      ).should.not.be.undefined();
     }
   });
 
@@ -102,14 +97,10 @@ export function testInitVaultProtoConfig() {
         baseWithdrawalSpread: 5,
       });
     } catch (e) {
-      const anchorError = e as AnchorError;
-      anchorError.logs
-        .findIndex((log) => {
-          return (
-            log.match(new RegExp(".*Spread must be >=0 and <=10000")) != null
-          );
-        })
-        .should.not.equal(-1);
+      findError(
+        e,
+        new RegExp(".*Spread must be >=0 and <=10000")
+      ).should.not.be.undefined();
     }
   });
 
@@ -122,14 +113,10 @@ export function testInitVaultProtoConfig() {
         baseWithdrawalSpread: 5000,
       });
     } catch (e) {
-      const anchorError = e as AnchorError;
-      anchorError.logs
-        .findIndex((log) => {
-          return (
-            log.match(new RegExp(".*Spread must be >=0 and <=10000")) != null
-          );
-        })
-        .should.not.equal(-1);
+      findError(
+        e,
+        new RegExp(".*Spread must be >=0 and <=10000")
+      ).should.not.be.undefined();
     }
   });
 }
