@@ -1,6 +1,6 @@
 name: Build + Tests
 env:
-  cli-id: anchor-v0.22.dev-7b86aed-solana-1.10.5
+  cli-id: anchor-v0.24.2.dev-7b86aed-solana-1.10.5
   SWAP_PROGRAM_OWNER_FEE_ADDRESS: HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
 
       - id: install-anchor-cli
         if: steps.cache-cli-deps.outputs.cache-hit != 'true'
-        run: cargo install --git https://github.com/project-serum/anchor --tag v0.22.0 anchor-cli --locked
+        run: cargo install --git https://github.com/project-serum/anchor --tag v0.24.2 anchor-cli --locked
 
   build:
     runs-on: ubuntu-latest
@@ -110,4 +110,4 @@ jobs:
           solana-version: "1.10.5"        
           run-mode: "-analyzeAll"         
           cargo-com: "."                  
-          program-path: "programs/dca-vault" 
+          program-path: "programs/drip" 

@@ -23,7 +23,7 @@ pub struct Deposit<'info> {
         // mut needed
         mut,
         seeds = [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
             vault.token_b_mint.as_ref(),
             vault.proto_config.as_ref()
@@ -48,6 +48,7 @@ pub struct Deposit<'info> {
 
     #[account(
         init,
+        space = 8+120, // TODO(mocha): verify
         seeds = [
             b"user_position".as_ref(),
             user_position_nft_mint.key().as_ref()
@@ -187,7 +188,7 @@ fn mint_position_nft<'info>(
                 authority: vault.to_account_info().clone(),
             },
             &[&[
-                b"dca-vault-v1".as_ref(),
+                b"drip-v1".as_ref(),
                 vault.token_a_mint.as_ref(),
                 vault.token_b_mint.as_ref(),
                 vault.proto_config.as_ref(),
@@ -213,7 +214,7 @@ fn mint_position_nft<'info>(
             token_program.to_account_info().clone(),
         ],
         &[&[
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
             vault.token_b_mint.as_ref(),
             vault.proto_config.as_ref(),

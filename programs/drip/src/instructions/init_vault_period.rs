@@ -13,6 +13,8 @@ pub struct InitializeVaultPeriodParams {
 pub struct InitializeVaultPeriod<'info> {
     #[account(
         init,
+        // TODO(mocha): verify
+        space = 8+72,
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
@@ -25,7 +27,7 @@ pub struct InitializeVaultPeriod<'info> {
 
     #[account(
         seeds = [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
             token_b_mint.key().as_ref(),
             vault_proto_config.key().as_ref(),

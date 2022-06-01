@@ -94,7 +94,7 @@ impl<'info> Vault {
 
     pub fn seeds(&self) -> [&[u8]; 4] {
         [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             self.token_a_mint.as_ref(),
             self.token_b_mint.as_ref(),
             self.proto_config.as_ref(),

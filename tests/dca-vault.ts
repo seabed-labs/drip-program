@@ -23,7 +23,7 @@ if (SETUP_BOT) {
   describe("Setup Programs for Keeper Bot", setupKeeperBot);
 } else {
   describe("DCA Vault Program Integration Tests", () => {
-    describe("#initVaultProtoConfig", testInitVaultProtoConfig);
+    describe.only("#initVaultProtoConfig", testInitVaultProtoConfig);
     describe("#initVault", testInitVault);
     describe("#initVaultPeriod", testInitVaultPeriod);
     describe("#deposit", testDeposit);

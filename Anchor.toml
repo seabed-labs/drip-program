@@ -1,5 +1,5 @@
 [programs.localnet]
-dca_vault = { address="AahZjZGD5Lv9HGPYUXZRS5GpeFFF13Wvx1fAFgwUxxDR", idl="./target/idl/dca_vault.json" }
+drip = { address="AahZjZGD5Lv9HGPYUXZRS5GpeFFF13Wvx1fAFgwUxxDR", idl="./target/idl/drip.json" }
 
 [registry]
 url = "https://anchor.projectserum.com"

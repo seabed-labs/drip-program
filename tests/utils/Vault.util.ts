@@ -8,6 +8,7 @@ import {
 } from "@solana/web3.js";
 import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
+import { BN } from "@project-serum/anchor";
 
 export type VaultProtoConfig = {
   granularity: Granularity;
@@ -42,24 +43,19 @@ export class VaultUtil extends TestUtil {
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfig
   ): Promise<TransactionSignature> {
-    const accounts = {
-      vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toString(),
-      creator: this.provider.wallet.publicKey.toString(),
-      systemProgram: ProgramUtil.systemProgram.programId.toString(),
-    };
-
-    // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.initVaultProtoConfig(
-      {
-        granularity: new u64(vaultProtoConfig.granularity),
+    const tx = await ProgramUtil.dripProgram.methods
+      .initVaultProtoConfig({
+        granularity: new BN(vaultProtoConfig.granularity.toString()),
         triggerDcaSpread: vaultProtoConfig.triggerDCASpread,
         baseWithdrawalSpread: vaultProtoConfig.baseWithdrawalSpread,
-      },
-      {
-        accounts,
-        signers: [vaultProtoConfigKeypair],
-      }
-    );
+      })
+      .accounts({
+        vaultProtoConfig: vaultProtoConfigKeypair.publicKey,
+        creator: this.provider.wallet.publicKey,
+        systemProgram: ProgramUtil.systemProgram.programId,
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [vaultProtoConfigKeypair]);
   }
 
   static async initVault(
@@ -102,7 +98,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.initVault(
+    return await ProgramUtil.dripProgram.rpc.initVault(
       {
         whitelistedSwaps: whitelistedSwaps ? whitelistedSwaps : [],
       },
@@ -131,7 +127,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.initVaultPeriod(
+    return await ProgramUtil.dripProgram.rpc.initVaultPeriod(
       {
         periodId: new u64(periodId),
       },
@@ -160,7 +156,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.deposit(
+    return await ProgramUtil.dripProgram.rpc.deposit(
       {
         tokenADepositAmount: input.params.tokenADepositAmount,
         dcaCycles: input.params.dcaCycles,
@@ -216,7 +212,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.triggerDca({
+    return await ProgramUtil.dripProgram.rpc.triggerDca({
       accounts,
       signers: [user],
     });
@@ -257,7 +253,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.withdrawB({
+    return await ProgramUtil.dripProgram.rpc.withdrawB({
       accounts: accounts,
       signers: [withdrawer],
     });
@@ -303,7 +299,7 @@ export class VaultUtil extends TestUtil {
     };
 
     // console.log(JSON.stringify(accounts, undefined, 2));
-    return await ProgramUtil.vaultProgram.rpc.closePosition({
+    return await ProgramUtil.dripProgram.rpc.closePosition({
       accounts,
       signers: [withdrawer],
     });

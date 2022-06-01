@@ -6,32 +6,23 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct Position {
-    // The position authority NFT mint
-    pub position_authority: Pubkey,
-
-    // Total deposited
-    pub deposited_token_a_amount: u64,
-
-    // Total withdrawn B (amount sent to the user + amount sent to the treasury)
-    pub withdrawn_token_b_amount: u64,
-
     // The A/B/G vault the position belongs to
-    pub vault: Pubkey,
-
-    pub deposit_timestamp: i64,
-
+    pub vault: Pubkey, // 32
+    // The position authority NFT mint
+    pub position_authority: Pubkey, // 32
+    // Total deposited
+    pub deposited_token_a_amount: u64, // 8
+    // Total withdrawn B (amount sent to the user + amount sent to the treasury)
+    pub withdrawn_token_b_amount: u64, // 8
+    pub deposit_timestamp: i64,        // 8
     // The DCA period ID of the vault that happened prior to the user opening this position
-    pub dca_period_id_before_deposit: u64,
-
+    pub dca_period_id_before_deposit: u64, // 8
     // Number of DCAs/Swaps that this position will be a part of
-    pub number_of_swaps: u64,
-
+    pub number_of_swaps: u64, // 8
     // deposit_amount_token_a / number_of_swaps
-    pub periodic_drip_amount: u64,
-
-    pub is_closed: bool,
-
-    pub bump: u8,
+    pub periodic_drip_amount: u64, // 8
+    pub is_closed: bool,           // 1
+    pub bump: u8,                  // 1
 }
 
 impl Position {

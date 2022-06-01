@@ -1,5 +1,5 @@
 import { BorshEventCoder } from "@project-serum/anchor";
-import { IDL } from "../target/types/dca_vault";
+import { IDL } from "../target/types/drip";
 
 // Call With: yarn run ts-node ./scripts/deserializeBorsh.ts YLjF84sCWpQFAAAAAAAAAAUAAABoZWxsbw==
 const messages = process.argv.slice(2);
