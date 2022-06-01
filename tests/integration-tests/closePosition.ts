@@ -22,6 +22,7 @@ import {
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
+import { findError } from "../utils/error.util";
 
 export function testClosePosition() {
   let tokenOwnerKeypair: Keypair;
@@ -417,19 +418,27 @@ export function testClosePosition() {
       [1, 0, 0],
     ];
     for (const [i, j, k] of testCases) {
-      await closePosition(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[j].publicKey,
-        vaultPeriods[k].publicKey
-      ).should.be.rejectedWith(new RegExp(".*Invalid vault-period"));
+      try {
+        await closePosition(
+          vaultPeriods[i].publicKey,
+          vaultPeriods[j].publicKey,
+          vaultPeriods[k].publicKey
+        );
+      } catch (e) {
+        findError(e, new RegExp(".*Invalid vault-period"));
+      }
     }
     await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
     for (const [i, j, k] of testCases) {
-      await closePosition(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[j].publicKey,
-        vaultPeriods[k].publicKey
-      ).should.be.rejectedWith(new RegExp(".*Invalid vault-period"));
+      try {
+        await closePosition(
+          vaultPeriods[i].publicKey,
+          vaultPeriods[j].publicKey,
+          vaultPeriods[k].publicKey
+        );
+      } catch (e) {
+        findError(e, new RegExp(".*Invalid vault-period"));
+      }
     }
   });
 
@@ -454,10 +463,14 @@ export function testClosePosition() {
       [user],
       1
     );
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    ).should.be.rejectedWith(new RegExp(".*Position is already closed"));
+    try {
+      await closePosition(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[j].publicKey,
+        vaultPeriods[k].publicKey
+      );
+    } catch (e) {
+      findError(e, new RegExp(".*Position is already closed"));
+    }
   });
 }

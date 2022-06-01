@@ -22,8 +22,8 @@ if (DISABLE_LOGGING) {
 if (SETUP_BOT) {
   describe("Setup Programs for Keeper Bot", setupKeeperBot);
 } else {
-  describe("DCA Vault Program Integration Tests", () => {
-    describe.only("#initVaultProtoConfig", testInitVaultProtoConfig);
+  describe("Drip Program Integration Tests", () => {
+    describe("#initVaultProtoConfig", testInitVaultProtoConfig);
     describe("#initVault", testInitVault);
     describe("#initVaultPeriod", testInitVaultPeriod);
     describe("#deposit", testDeposit);

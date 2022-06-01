@@ -23,6 +23,7 @@ import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../utils/Account.util";
+import { findError } from "../utils/error.util";
 
 export function testWithdrawB() {
   let tokenOwnerKeypair: Keypair;
@@ -191,7 +192,6 @@ export function testWithdrawB() {
       userPositionAccount,
       userPostionNFTAccount,
       userPositionNFTMint,
-      vaultTokenAAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
       tokenB.publicKey,
@@ -335,18 +335,22 @@ export function testWithdrawB() {
     userPositionAccountAfter.withdrawnTokenBAmount
       .toString()
       .should.equal("496517717");
-
-    await withdrawB(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey
-    ).should.be.rejectedWith(new RegExp("Withdrawable amount is zero"));
+    try {
+      await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
+    } catch (e) {
+      findError(
+        e,
+        new RegExp("Withdrawable amount is zero")
+      ).should.not.be.undefined();
+    }
   });
 
   it("should not be able to withdraw when withdrawable amount is 0", async () => {
     let [i, j] = [0, 0];
-    await withdrawB(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey
-    ).should.rejectedWith(new RegExp(".*Withdrawable amount is zero"));
+    try {
+      await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
+    } catch (e) {
+      findError(e, new RegExp(".*Withdrawable amount is zero"));
+    }
   });
 }
