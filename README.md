@@ -8,7 +8,7 @@ Install Rust, Solana, Anchor and Mocha - <br>
 https://project-serum.github.io/anchor/getting-started/installation.html
 
 - solana 1.10.5
-- anchor 0.22.0
+- anchor 0.24.2
 
 1. Clone repo
    1. git submodule update --recursive --remote

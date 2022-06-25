@@ -5,7 +5,6 @@ use crate::math::{
 };
 use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_lang::System;
 use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
@@ -17,7 +16,7 @@ pub struct ClosePosition<'info> {
         // mut neeed
         mut,
         seeds = [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
             vault.token_b_mint.as_ref(),
             vault.proto_config.as_ref()
@@ -296,7 +295,7 @@ fn burn_tokens<'info>(
     token_program: &Program<'info, Token>,
     vault: &mut Account<'info, Vault>,
     mint: &Account<'info, Mint>,
-    to: &Account<'info, TokenAccount>,
+    from: &Account<'info, TokenAccount>,
     amount: u64,
 ) -> Result<()> {
     burn(
@@ -304,11 +303,11 @@ fn burn_tokens<'info>(
             token_program.to_account_info().clone(),
             Burn {
                 mint: mint.to_account_info().clone(),
-                to: to.to_account_info().clone(),
+                from: from.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
             &[&[
-                b"dca-vault-v1".as_ref(),
+                b"drip-v1".as_ref(),
                 vault.token_a_mint.as_ref(),
                 vault.token_b_mint.as_ref(),
                 vault.proto_config.as_ref(),

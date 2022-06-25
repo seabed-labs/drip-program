@@ -21,21 +21,19 @@ export class AccountUtil extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<
-        typeof ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch
+        typeof ProgramUtil.dripProgram.account.vaultProtoConfig.fetch
       >,
       "granularity" | "triggerDcaSpread" | "baseWithdrawalSpread"
     >
   > {
-    return await ProgramUtil.vaultProgram.account.vaultProtoConfig.fetch(
-      pubkey
-    );
+    return await ProgramUtil.dripProgram.account.vaultProtoConfig.fetch(pubkey);
   }
 
   static async fetchVaultAccount(
     pubkey: web3.PublicKey
   ): Promise<
     Pick<
-      AsyncReturnType<typeof ProgramUtil.vaultProgram.account.vault.fetch>,
+      AsyncReturnType<typeof ProgramUtil.dripProgram.account.vault.fetch>,
       | "protoConfig"
       | "tokenAMint"
       | "tokenBMint"
@@ -48,27 +46,25 @@ export class AccountUtil extends TestUtil {
       | "whitelistedSwaps"
     >
   > {
-    return await ProgramUtil.vaultProgram.account.vault.fetch(pubkey);
+    return await ProgramUtil.dripProgram.account.vault.fetch(pubkey);
   }
 
   static async fetchVaultPeriodAccount(
     pubkey: web3.PublicKey
   ): Promise<
     Pick<
-      AsyncReturnType<
-        typeof ProgramUtil.vaultProgram.account.vaultPeriod.fetch
-      >,
+      AsyncReturnType<typeof ProgramUtil.dripProgram.account.vaultPeriod.fetch>,
       "vault" | "periodId" | "twap" | "dar"
     >
   > {
-    return await ProgramUtil.vaultProgram.account.vaultPeriod.fetch(pubkey);
+    return await ProgramUtil.dripProgram.account.vaultPeriod.fetch(pubkey);
   }
 
   static async fetchPositionAccount(
     pubkey: web3.PublicKey
   ): Promise<
     Pick<
-      AsyncReturnType<typeof ProgramUtil.vaultProgram.account.position.fetch>,
+      AsyncReturnType<typeof ProgramUtil.dripProgram.account.position.fetch>,
       | "positionAuthority"
       | "depositedTokenAAmount"
       | "withdrawnTokenBAmount"
@@ -81,6 +77,6 @@ export class AccountUtil extends TestUtil {
       | "bump"
     >
   > {
-    return await ProgramUtil.vaultProgram.account.position.fetch(pubkey);
+    return await ProgramUtil.dripProgram.account.position.fetch(pubkey);
   }
 }

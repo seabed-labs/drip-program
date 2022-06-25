@@ -59,7 +59,7 @@ export type PDA = {
 };
 
 export const CONSTANT_SEEDS = {
-  vault: "dca-vault-v1",
+  vault: "drip-v1",
   tokenAAccount: "token_a_account",
   tokenBAccount: "token_b_account",
   vaultPeriod: "vault_period",
@@ -102,7 +102,7 @@ export const getVaultPDA = async (
   tokenB: PublicKey,
   protoConfig: PublicKey
 ) => {
-  return findPDA(ProgramUtil.vaultProgram.programId, [
+  return findPDA(ProgramUtil.dripProgram.programId, [
     Buffer.from(CONSTANT_SEEDS.vault),
     tokenA.toBuffer(),
     tokenB.toBuffer(),
@@ -111,7 +111,7 @@ export const getVaultPDA = async (
 };
 
 export const getVaultPeriodPDA = async (vault: PublicKey, periodId: number) => {
-  return findPDA(ProgramUtil.vaultProgram.programId, [
+  return findPDA(ProgramUtil.dripProgram.programId, [
     Buffer.from(CONSTANT_SEEDS.vaultPeriod),
     vault.toBuffer(),
     Buffer.from(periodId.toString()),
@@ -119,7 +119,7 @@ export const getVaultPeriodPDA = async (vault: PublicKey, periodId: number) => {
 };
 
 export const getPositionPDA = async (positionNftMint: PublicKey) => {
-  return findPDA(ProgramUtil.vaultProgram.programId, [
+  return findPDA(ProgramUtil.dripProgram.programId, [
     Buffer.from(CONSTANT_SEEDS.userPosition),
     positionNftMint.toBuffer(),
   ]);

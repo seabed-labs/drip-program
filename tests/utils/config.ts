@@ -1,20 +1,20 @@
-import { Provider, setProvider } from "@project-serum/anchor";
+import { AnchorProvider, Provider, setProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection } from "@solana/web3.js";
 
 export class TestConfig {
-  public readonly provider: Provider;
+  public readonly provider: AnchorProvider;
   private static _default = new TestConfig(
     process.env.ENV === "DEVNET"
-      ? new Provider(
+      ? new AnchorProvider(
           new Connection("https://api.devnet.solana.com", "confirmed"),
           NodeWallet.local(),
-          Provider.defaultOptions()
+          AnchorProvider.defaultOptions()
         )
-      : Provider.local()
+      : AnchorProvider.local()
   );
 
-  constructor(provider: Provider) {
+  constructor(provider: AnchorProvider) {
     console.log(process.env.ENV ?? "no environment specified");
     setProvider(provider);
     this.provider = provider;
@@ -26,7 +26,7 @@ export class TestConfig {
 }
 
 export abstract class TestUtil {
-  public static get provider(): Provider {
+  public static get provider(): AnchorProvider {
     return TestConfig.default.provider;
   }
 }

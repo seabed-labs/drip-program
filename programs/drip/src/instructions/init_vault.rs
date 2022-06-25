@@ -16,8 +16,9 @@ pub struct InitializeVault<'info> {
     /* DCAF ACCOUNTS */
     #[account(
         init,
+        space = 392,
         seeds = [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
             token_b_mint.key().as_ref(),
             vault_proto_config.key().as_ref(),

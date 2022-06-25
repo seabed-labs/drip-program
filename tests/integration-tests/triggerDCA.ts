@@ -20,6 +20,7 @@ import {
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
+import { findError } from "../utils/error.util";
 
 export function testTriggerDCA() {
   let tokenOwnerKeypair: Keypair;
@@ -251,20 +252,26 @@ export function testTriggerDCA() {
       );
       await sleep(1500);
     }
-    await triggerDCA(
-      vaultPeriods[4].publicKey,
-      vaultPeriods[5].publicKey
-    ).should.rejectedWith(new RegExp(".*Periodic drip amount == 0"));
+    try {
+      await triggerDCA(vaultPeriods[4].publicKey, vaultPeriods[5].publicKey);
+    } catch (e) {
+      findError(
+        e,
+        new RegExp(".*Periodic drip amount == 0")
+      ).should.not.be.undefined();
+    }
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
     await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
-    await triggerDCA(
-      vaultPeriods[1].publicKey,
-      vaultPeriods[2].publicKey
-    ).should.rejectedWith(
-      new RegExp(".*DCA already triggered for the current period")
-    );
+    try {
+      await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    } catch (e) {
+      findError(
+        e,
+        new RegExp(".*DCA already triggered for the current period")
+      ).should.not.be.undefined();
+    }
   });
 
   it("should fail if non-whitelisted swaps is used", async () => {
@@ -282,23 +289,28 @@ export function testTriggerDCA() {
       tokenOwnerKeypair,
       payerKeypair
     );
-    await triggerDCAWrapper(
-      bot,
-      botTokenAAcount,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      swapTokenMint2,
-      swapTokenAAccount2,
-      swapTokenBAccount2,
-      swapFeeAccount2,
-      swapAuthority2,
-      swap2
-    )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey).should.rejectedWith(
-      new RegExp(".*Token Swap is Not Whitelisted")
-    );
+    try {
+      await triggerDCAWrapper(
+        bot,
+        botTokenAAcount,
+        vaultPDA.publicKey,
+        vaultProtoConfig,
+        vaultTokenAAccount,
+        vaultTokenBAccount,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        swapTokenMint2,
+        swapTokenAAccount2,
+        swapTokenBAccount2,
+        swapFeeAccount2,
+        swapAuthority2,
+        swap2
+      )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    } catch (e) {
+      findError(
+        e,
+        new RegExp(".*Token Swap is Not Whitelisted")
+      ).should.not.be.undefined();
+    }
   });
 }

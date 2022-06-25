@@ -6,16 +6,22 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Default)]
 pub struct VaultPeriod {
+    // total space -> 65
+    // allocation needed: ceil( (65+8)/8 )*8 -> 80
+
     // Account relations
-    pub vault: Pubkey,
+    pub vault: Pubkey, // 32
 
     // Data
-    pub period_id: u64, // The period index/offset from the genesis period of the vault (0, 1, ...)
-    pub twap: u128, // Time weighted average price of asset A expressed in asset B from period 1 to this period
-    pub dar: u64,   // Drip amount to reduce at this period
+    // The period index/offset from the genesis period of the vault (0, 1, ...)
+    pub period_id: u64, // 8
+    // Drip amount to reduce at this period
+    pub dar: u64, // 8
+    // Time weighted average price of asset A expressed in asset B from period 1 to this period
+    pub twap: u128, // 16
 
     // Bump
-    pub bump: u8,
+    pub bump: u8, // 1
 }
 
 impl VaultPeriod {
@@ -61,6 +67,6 @@ mod test {
 
     #[test]
     fn sanity_check_byte_size() {
-        assert_eq!(VaultPeriod::byte_size(), 72);
+        assert_eq!(VaultPeriod::byte_size(), 80 - 8);
     }
 }

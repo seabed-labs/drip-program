@@ -14,7 +14,7 @@ pub struct WithdrawB<'info> {
     /* DCAF ACCOUNTS */
     #[account(
         seeds = [
-            b"dca-vault-v1".as_ref(),
+            b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
             vault.token_b_mint.as_ref(),
             vault.proto_config.as_ref()

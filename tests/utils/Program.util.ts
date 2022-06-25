@@ -3,7 +3,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { DcaVault } from "../../target/types/dca_vault";
+import { Drip } from "../../target/types/drip";
 import { TestUtil } from "./config";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_SWAP_PROGRAM_ID } from "@solana/spl-token-swap";
@@ -13,8 +13,8 @@ export class ProgramUtil extends TestUtil {
     return SystemProgram;
   }
 
-  static get vaultProgram(): Program<DcaVault> {
-    return workspace.DcaVault as Program<DcaVault>;
+  static get dripProgram(): Program<Drip> {
+    return workspace.Drip as Program<Drip>;
   }
 
   static get tokenProgram(): { programId: PublicKey } {

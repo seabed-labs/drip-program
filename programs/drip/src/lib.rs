@@ -11,14 +11,14 @@ pub mod state;
 declare_id!("AahZjZGD5Lv9HGPYUXZRS5GpeFFF13Wvx1fAFgwUxxDR");
 
 #[program]
-pub mod dca_vault {
+pub mod drip {
     use super::*;
 
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfig>,
         params: InitVaultProtoConfigParams,
     ) -> Result<()> {
-        instructions::init_vault_proto_config::handler(ctx, params)
+        init_vault_proto_config::handler(ctx, params)
     }
 
     pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
