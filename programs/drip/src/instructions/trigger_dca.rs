@@ -117,6 +117,7 @@ pub struct TriggerDCA<'info> {
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut needed because we are changing balance
         mut,
         constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = swap_token_a_account.owner == swap_authority.key(),
@@ -125,7 +126,7 @@ pub struct TriggerDCA<'info> {
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = swap_token_b_account.owner == swap_authority.key(),
@@ -134,14 +135,14 @@ pub struct TriggerDCA<'info> {
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = swap_fee_account.mint == swap_token_mint.key()
     )]
     pub swap_fee_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = dca_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = dca_trigger_fee_token_a_account.state == AccountState::Initialized
@@ -363,8 +364,8 @@ fn swap_tokens<'info>(
         &swap_authority_account_info.key(),
         &vault.key(),
         &vault_token_a_account.key(),
-        swap.token_a_account(),
-        swap.token_b_account(),
+        &swap_token_a_account.key(),
+        &swap_token_b_account.key(),
         &vault_token_b_account.key(),
         swap.pool_mint(),
         swap.pool_fee_account(),

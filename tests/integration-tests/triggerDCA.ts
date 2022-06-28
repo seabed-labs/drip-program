@@ -35,7 +35,6 @@ export function testTriggerDCA() {
   let tokenA: Token;
   let tokenB: Token;
 
-  let swap: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
   let vaultPeriods: PDA[];
@@ -43,11 +42,29 @@ export function testTriggerDCA() {
   let vaultTokenBAccount: PublicKey;
   let vaultTreasuryTokenBAccount: PublicKey;
 
+  // tokenA -> token B swap
+  let swap: PublicKey;
   let swapTokenMint: PublicKey;
   let swapTokenAAccount: PublicKey;
   let swapTokenBAccount: PublicKey;
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
+
+  // tokenB -> tokenA swap
+  let swap2: PublicKey;
+  let swapTokenMint2: PublicKey;
+  let swapTokenAAccount2: PublicKey;
+  let swapTokenBAccount2: PublicKey;
+  let swapFeeAccount2: PublicKey;
+  let swapAuthority2: PublicKey;
+
+  // Non-whitelisted tokenA -> tokenB swap
+  let swap3: PublicKey;
+  let swapTokenMint3: PublicKey;
+  let swapTokenAAccount3: PublicKey;
+  let swapTokenBAccount3: PublicKey;
+  let swapFeeAccount3: PublicKey;
+  let swapAuthority3: PublicKey;
 
   let triggerDCA;
 
@@ -98,6 +115,36 @@ export function testTriggerDCA() {
       payerKeypair
     );
 
+    [
+      swap2,
+      swapTokenMint2,
+      swapTokenAAccount2,
+      swapTokenBAccount2,
+      swapFeeAccount2,
+      swapAuthority2,
+    ] = await deploySwap(
+      tokenB,
+      tokenOwnerKeypair,
+      tokenA,
+      tokenOwnerKeypair,
+      payerKeypair
+    );
+
+    [
+      swap3,
+      swapTokenMint3,
+      swapTokenAAccount3,
+      swapTokenBAccount3,
+      swapFeeAccount3,
+      swapAuthority3,
+    ] = await deploySwap(
+      tokenA,
+      tokenOwnerKeypair,
+      tokenB,
+      tokenOwnerKeypair,
+      payerKeypair
+    );
+
     vaultProtoConfig = await deployVaultProtoConfig(1, 5, 5);
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
@@ -110,7 +157,7 @@ export function testTriggerDCA() {
       tokenB.publicKey,
       vaultTreasuryTokenBAccount,
       vaultProtoConfig,
-      [swap]
+      [swap, swap2]
     );
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
@@ -221,6 +268,28 @@ export function testTriggerDCA() {
     lastVaultPeriod.twap.toString().should.equal("18382238052084394572");
   });
 
+  it("should trigger DCA with inverted swap", async () => {
+    await triggerDCAWrapper(
+      bot,
+      botTokenAAcount,
+      vaultPDA.publicKey,
+      vaultProtoConfig,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      swapTokenMint2,
+
+      // Order swapped here
+      swapTokenBAccount2,
+      swapTokenAAccount2,
+
+      swapFeeAccount2,
+      swapAuthority2,
+      swap2
+    )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+  });
+
   it("should trigger DCA dca_cyles number of times", async () => {
     for (let i = 0; i < 4; i++) {
       await triggerDCA(
@@ -275,20 +344,6 @@ export function testTriggerDCA() {
   });
 
   it("should fail if non-whitelisted swaps is used", async () => {
-    const [
-      swap2,
-      swapTokenMint2,
-      swapTokenAAccount2,
-      swapTokenBAccount2,
-      swapFeeAccount2,
-      swapAuthority2,
-    ] = await deploySwap(
-      tokenA,
-      tokenOwnerKeypair,
-      tokenB,
-      tokenOwnerKeypair,
-      payerKeypair
-    );
     try {
       await triggerDCAWrapper(
         bot,
@@ -299,12 +354,12 @@ export function testTriggerDCA() {
         vaultTokenBAccount,
         tokenA.publicKey,
         tokenB.publicKey,
-        swapTokenMint2,
-        swapTokenAAccount2,
-        swapTokenBAccount2,
-        swapFeeAccount2,
-        swapAuthority2,
-        swap2
+        swapTokenMint3,
+        swapTokenAAccount3,
+        swapTokenBAccount3,
+        swapFeeAccount3,
+        swapAuthority3,
+        swap3
       )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     } catch (e) {
       findError(
