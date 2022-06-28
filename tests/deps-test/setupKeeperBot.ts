@@ -75,30 +75,6 @@ export function setupKeeperBot() {
     );
 
     const tokenNames = ["USDC", "SOL", "ETH"];
-    // usdc, sol, 60
-    // usdc, sol, 3600
-    // usdc, sol, 86400
-    // eth, usdc, 60
-    // sol, usdc 3600
-    // eth, usdc 86400
-    // sol, usdc 86400
-    for (const token of tokens) {
-      for (const testWallet of testWallets) {
-        const testTokenAAccount = await token.createAssociatedTokenAccount(
-          new PublicKey(testWallet)
-        );
-        await token.mintTo(
-          testTokenAAccount,
-          tokenOwnerKeypair,
-          [],
-          await TokenUtil.scaleAmount(amount(100, Denom.Thousand), token)
-        );
-        console.log("funded testAccount account with tokens", {
-          wallet: testWallet,
-          mint: token.publicKey.toString(),
-        });
-      }
-    }
 
     const configs = [];
     for (const granularity of [60, 3600, 86400]) {
@@ -196,34 +172,34 @@ export function setupKeeperBot() {
       environment,
       triggerDCA: configs,
     };
-    if (fs.existsSync("../keeper-bot/configs/")) {
-      if (fs.existsSync(`../keeper-bot/configs/${environment}.yaml`)) {
+    if (fs.existsSync("../drip-keeper/configs/")) {
+      if (fs.existsSync(`../drip-keeper/configs/${environment}.yaml`)) {
         fs.renameSync(
-          `../keeper-bot/configs/${environment}.yaml`,
-          `../keeper-bot/configs/${environment}_old.yaml`
+          `../drip-keeper/configs/${environment}.yaml`,
+          `../drip-keeper/configs/${environment}_old.yaml`
         );
       }
       fs.writeFileSync(
-        `../keeper-bot/configs/${environment}.yaml`,
+        `../drip-keeper/configs/${environment}.yaml`,
         YAML.stringify(keeperBotConfig)
       );
     } else {
       fs.writeFileSync(
-        `./keeper-bot_${environment}.yaml`,
+        `./drip-keeper_${environment}.yaml`,
         YAML.stringify(keeperBotConfig)
       );
     }
 
     const frontendConfig = configs;
-    if (fs.existsSync("../frontend/src/")) {
-      if (fs.existsSync(`../frontend/src/config.json`)) {
+    if (fs.existsSync("../drip-frontend/src/")) {
+      if (fs.existsSync(`../drip-frontend/src/config.json`)) {
         fs.renameSync(
-          `../frontend/src/config.json`,
-          `../frontend/src/config_old.json`
+          `../drip-frontend/src/config.json`,
+          `../drip-frontend/src/config_old.json`
         );
       }
       fs.writeFileSync(
-        `../frontend/src/config.json`,
+        `../drip-frontend/src/config.json`,
         JSON.stringify(frontendConfig, null, 2)
       );
     } else {
