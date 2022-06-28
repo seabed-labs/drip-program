@@ -8,7 +8,7 @@ pub mod macros;
 pub mod math;
 pub mod state;
 
-declare_id!("AahZjZGD5Lv9HGPYUXZRS5GpeFFF13Wvx1fAFgwUxxDR");
+declare_id!("GizNF1qvjrTwZy1sFpq5L9cnov2ZB19DAoLKEYCYapwH");
 
 #[program]
 pub mod drip {
