@@ -248,6 +248,7 @@ export function testTriggerDCA() {
     botTokenAAccountAfter.balance.toString().should.equal("125000");
     // Calculated manually by doing b/a
     lastVaultPeriod.twap.toString().should.equal("18386823290694860353");
+    lastVaultPeriod.dcaTimestamp.toString().should.not.equal("0");
 
     await sleep(1500);
     await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);

@@ -32,6 +32,7 @@ granularities.
 To get devnet tokens, use the webapp and self-mint.
 
 ## Deploy New Program
+
 1. Make sure to update anchor CLI `avm install 0.24.2`
 2. Delete target folder
 3. Build The program

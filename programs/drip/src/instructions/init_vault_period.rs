@@ -13,7 +13,7 @@ pub struct InitializeVaultPeriodParams {
 pub struct InitializeVaultPeriod<'info> {
     #[account(
         init,
-        space = 80,
+        space = VaultPeriod::ACCOUNT_SPACE,
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
