@@ -1,5 +1,5 @@
 [programs.localnet]
-drip = { address="AU893kLKn6dYQgh8DWpZeq9h1oRS7fe8qFYhxGd9i7xL", idl="./target/idl/drip.json" }
+drip = { address="4VBtW5cjQJk8tme9fXMiok6xAfDSwv5Qp7LN6arWEP7x", idl="./target/idl/drip.json" }
 
 [registry]
 url = "https://anchor.projectserum.com"
