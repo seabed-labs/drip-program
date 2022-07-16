@@ -107,7 +107,12 @@ export function testWithdrawB() {
       payerKeypair
     );
 
-    vaultProtoConfig = await deployVaultProtoConfig(1, 5, 5);
+    vaultProtoConfig = await deployVaultProtoConfig(
+      1,
+      5,
+      5,
+      tokenOwnerKeypair.publicKey
+    );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,

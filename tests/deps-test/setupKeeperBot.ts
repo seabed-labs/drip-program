@@ -78,7 +78,12 @@ export function setupKeeperBot() {
 
     const configs = [];
     for (const granularity of [60, 3600, 86400]) {
-      const vaultProtoConfig = await deployVaultProtoConfig(granularity, 5, 5);
+      const vaultProtoConfig = await deployVaultProtoConfig(
+        granularity,
+        5,
+        5,
+        tokenOwnerKeypair.publicKey
+      );
       for (let i = 0; i < tokens.length; i++) {
         const tokenB = tokens[i];
         const tokenBSymbol = tokenNames[i];

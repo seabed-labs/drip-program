@@ -10,10 +10,11 @@ import { u64 } from "@solana/spl-token";
 import { Granularity } from "./common.util";
 import { BN } from "@project-serum/anchor";
 
-export type VaultProtoConfig = {
+export type VaultProtoConfigParams = {
   granularity: Granularity;
   triggerDCASpread: number;
   baseWithdrawalSpread: number;
+  admin: PublicKey;
 };
 
 export interface DepositTxParams {
@@ -41,13 +42,14 @@ export interface DepositTxParams {
 export class VaultUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
-    vaultProtoConfig: VaultProtoConfig
+    vaultProtoConfig: VaultProtoConfigParams
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVaultProtoConfig({
         granularity: new BN(vaultProtoConfig.granularity.toString()),
         triggerDcaSpread: vaultProtoConfig.triggerDCASpread,
         baseWithdrawalSpread: vaultProtoConfig.baseWithdrawalSpread,
+        admin: vaultProtoConfig.admin,
       })
       .accounts({
         vaultProtoConfig: vaultProtoConfigKeypair.publicKey,

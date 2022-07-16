@@ -26,13 +26,15 @@ export const sleep = async (ms: number) => {
 export const deployVaultProtoConfig = async (
   granularity: number,
   triggerDCASpread: number,
-  baseWithdrawalSpread: number
+  baseWithdrawalSpread: number,
+  admin: PublicKey
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
   await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
     granularity,
     triggerDCASpread,
     baseWithdrawalSpread,
+    admin,
   });
   return vaultProtoConfigKeypair.publicKey;
 };

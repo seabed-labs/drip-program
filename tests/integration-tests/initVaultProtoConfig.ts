@@ -7,10 +7,12 @@ import { findError } from "../utils/error.util";
 export function testInitVaultProtoConfig() {
   it("initializes the vault proto config account correctly", async () => {
     const vaultProtoConfigKeypair = generatePair();
+    const admin = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       triggerDCASpread: 5,
       baseWithdrawalSpread: 10,
+      admin: admin.publicKey,
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
@@ -20,6 +22,9 @@ export function testInitVaultProtoConfig() {
     vaultProtoConfigAccount.granularity.toString().should.equal("86400");
     vaultProtoConfigAccount.triggerDcaSpread.toString().should.equal("5");
     vaultProtoConfigAccount.baseWithdrawalSpread.toString().should.equal("10");
+    vaultProtoConfigAccount.admin
+      .toString()
+      .should.equal(admin.publicKey.toString());
   });
 
   it("uses absolute value when granularity is negative", async () => {
@@ -28,6 +33,7 @@ export function testInitVaultProtoConfig() {
       granularity: -10,
       triggerDCASpread: 5,
       baseWithdrawalSpread: 5,
+      admin: generatePair().publicKey,
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
@@ -43,6 +49,7 @@ export function testInitVaultProtoConfig() {
         granularity: 0,
         triggerDCASpread: 5,
         baseWithdrawalSpread: 5,
+        admin: generatePair().publicKey,
       });
       throw new Error();
     } catch (e) {
@@ -59,6 +66,7 @@ export function testInitVaultProtoConfig() {
       granularity: "1o" as any as number,
       triggerDCASpread: 5,
       baseWithdrawalSpread: 5,
+      admin: generatePair().publicKey,
     }).should.be.rejectedWith(new RegExp(".*Invalid character"));
   });
 
@@ -68,6 +76,7 @@ export function testInitVaultProtoConfig() {
       granularity: Granularity.MONTHLY,
       triggerDCASpread: 70000,
       baseWithdrawalSpread: 5,
+      admin: generatePair().publicKey,
     }).should.rejectedWith(
       new RegExp(
         '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
@@ -81,6 +90,7 @@ export function testInitVaultProtoConfig() {
       granularity: Granularity.MONTHLY,
       triggerDCASpread: 5,
       baseWithdrawalSpread: 70000,
+      admin: generatePair().publicKey,
     }).should.rejectedWith(
       new RegExp(
         '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
@@ -95,6 +105,7 @@ export function testInitVaultProtoConfig() {
         granularity: Granularity.MONTHLY,
         triggerDCASpread: 5000,
         baseWithdrawalSpread: 5,
+        admin: generatePair().publicKey,
       });
     } catch (e) {
       findError(
@@ -111,6 +122,7 @@ export function testInitVaultProtoConfig() {
         granularity: Granularity.MONTHLY,
         triggerDCASpread: 5,
         baseWithdrawalSpread: 5000,
+        admin: generatePair().publicKey,
       });
     } catch (e) {
       findError(

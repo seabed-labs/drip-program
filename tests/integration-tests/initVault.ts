@@ -33,6 +33,7 @@ export function testInitVault() {
         granularity: Granularity.DAILY,
         triggerDCASpread: 5,
         baseWithdrawalSpread: 5,
+        admin: generatePair().publicKey,
       }),
     ]);
 

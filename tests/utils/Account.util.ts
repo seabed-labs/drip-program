@@ -23,7 +23,7 @@ export class AccountUtil extends TestUtil {
       AsyncReturnType<
         typeof ProgramUtil.dripProgram.account.vaultProtoConfig.fetch
       >,
-      "granularity" | "triggerDcaSpread" | "baseWithdrawalSpread"
+      "granularity" | "triggerDcaSpread" | "baseWithdrawalSpread" | "admin"
     >
   > {
     return await ProgramUtil.dripProgram.account.vaultProtoConfig.fetch(pubkey);

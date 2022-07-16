@@ -10,13 +10,14 @@ pub struct InitVaultProtoConfigParams {
     trigger_dca_spread: u16,
     // spread applied to each withdrawal DCA in bips
     base_withdrawal_spread: u16,
+    admin: Pubkey,
 }
 
 #[derive(Accounts)]
 pub struct InitializeVaultProtoConfig<'info> {
     #[account(
         init,
-        space = 24,
+        space = VaultProtoConfig::ACCOUNT_SPACE,
         payer = creator
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
@@ -45,6 +46,7 @@ pub fn handler(
         params.granularity,
         params.trigger_dca_spread,
         params.base_withdrawal_spread,
+        params.admin,
     );
     Ok(())
 }
