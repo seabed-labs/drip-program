@@ -30,3 +30,14 @@ will deploy a vaults for 3 tokens (6 pairs) with a variety of
 granularities.
 
 To get devnet tokens, use the webapp and self-mint.
+
+## Deploy New Program
+
+1. Make sure to update anchor CLI `avm install 0.24.2`
+2. Delete target folder `rm -rf target`
+3. Build The program `anchor build`
+4. Use `solana account ./target/deploy/drip-keypair.json` to find the pubkey
+5. Update the `declare_id!` and `Anchor.toml` with the new pubkey
+6. Build the program again `anchor build`
+7. Deploy with `anchor deploy --program-name drip --provider.cluster https://api.devnet.solana.com`
+8. Init IDL with `anchor idl init --provider.cluster devnet --filepath target/idl/drip.json DA34Nfa3pnwM8akcciE89LJnafVmnyGvouu7DX13Vy7v`

@@ -314,6 +314,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 
     let current_period_mut = &mut ctx.accounts.current_vault_period;
     current_period_mut.update_twap(&ctx.accounts.last_vault_period, swap_amount, received_b);
+    current_period_mut.update_dca_timestamp();
 
     Ok(())
 }
