@@ -96,5 +96,6 @@ export function testInitVaultPeriod() {
     vaultPeriodAccount.periodId.toString().should.equal("69");
     vaultPeriodAccount.twap.toString().should.equal("0");
     vaultPeriodAccount.dar.toString().should.equal("0");
+    vaultPeriodAccount.dcaTimestamp.toString().should.equal("0");
   });
 }

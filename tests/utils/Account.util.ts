@@ -54,7 +54,7 @@ export class AccountUtil extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<typeof ProgramUtil.dripProgram.account.vaultPeriod.fetch>,
-      "vault" | "periodId" | "twap" | "dar"
+      "vault" | "periodId" | "twap" | "dar" | "dcaTimestamp"
     >
   > {
     return await ProgramUtil.dripProgram.account.vaultPeriod.fetch(pubkey);
