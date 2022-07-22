@@ -1,10 +1,10 @@
+import "should";
 import { DECIMALS, TokenUtil } from "../utils/Token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
 import { VaultUtil } from "../utils/Vault.util";
 import { SolUtils } from "../utils/SolUtils";
 import { AccountUtil } from "../utils/Account.util";
-import should from "should";
 import {
   amount,
   Denom,
@@ -16,10 +16,14 @@ import {
   getVaultPeriodPDA,
   Granularity,
 } from "../utils/common.util";
+import { initLog } from "../utils/log.util";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
+describe("#deposit", testDeposit);
 
 export async function testDeposit() {
+  initLog();
+
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let vaultPeriodPubkey: PublicKey;
@@ -211,8 +215,8 @@ export async function testDeposit() {
 
     await TokenUtil.fetchTokenMintInfo(tokenA.publicKey);
 
-    should(userPositionNftMintAccount.mintAuthority).be.null();
-    should(userPositionNftMintAccount.freezeAuthority).be.null();
+    (userPositionNftMintAccount.mintAuthority == null).should.be.true();
+    (userPositionNftMintAccount.freezeAuthority == null).should.be.true();
     userPositionNftMintAccount.supply.toString().should.equal("1");
     userPositionNftMintAccount.decimals.toString().should.equal("0");
     userPositionNftMintAccount.isInitialized.should.equal(1);
@@ -230,7 +234,7 @@ export async function testDeposit() {
       .toBase58()
       .should.equal(userPositionNft_ATA.toBase58());
     // TODO(matcha): We should probably assign close authority to user WHEN THEY WITHDRAW so that they can close the account
-    should(userPositionNftTokenAccount.closeAuthority).be.null();
+    (userPositionNftTokenAccount.closeAuthority == null).should.be.true();
     // TODO(matcha): Should we just check every single property in the account? First need to understand what they are
   });
 }
