@@ -10,4 +10,11 @@ describe("Test Dependent Programs", () => {
     );
     tokenSwapProgram.should.not.be.undefined();
   });
+
+  it("should have the orca whirlpool program", async () => {
+    const orcaWhirlpoolProgram = await AccountUtil.fetchAccountInfo(
+      new web3.PublicKey(ProgramUtil.orcaWhirlpoolProgram.programId)
+    );
+    orcaWhirlpoolProgram.should.not.be.undefined();
+  });
 });

@@ -15,3 +15,7 @@ test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel tests/integra
 [[test.genesis]]
 address = "SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8"
 program = "./deps/spl_token_swap/spl_token_swap.so"
+
+[[test.genesis]]
+address = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
+program = "./deps/orca_whirlpool/whirlpool.so"

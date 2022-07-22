@@ -35,6 +35,12 @@ export class ProgramUtil extends TestUtil {
     };
   }
 
+  static get orcaWhirlpoolProgram(): { programId: PublicKey } {
+    return {
+      programId: new PublicKey("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"),
+    };
+  }
+
   static get rentProgram(): { programId: PublicKey } {
     return {
       programId: SYSVAR_RENT_PUBKEY,
