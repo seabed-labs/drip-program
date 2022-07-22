@@ -91,7 +91,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
-            ~/.cargo/bin/anchor
+            ./target
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
