@@ -26,7 +26,7 @@ import { initLog } from "../utils/log.util";
 
 describe("#triggerDCA", testTriggerDCA);
 
-export async function testTriggerDCA() {
+export function testTriggerDCA() {
   initLog();
 
   let tokenOwnerKeypair: Keypair;

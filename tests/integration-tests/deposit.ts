@@ -21,7 +21,7 @@ import { initLog } from "../utils/log.util";
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 describe("#deposit", testDeposit);
 
-export async function testDeposit() {
+export function testDeposit() {
   initLog();
 
   let vaultProtoConfigPubkey: PublicKey;

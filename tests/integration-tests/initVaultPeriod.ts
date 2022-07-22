@@ -17,7 +17,7 @@ import { initLog } from "../utils/log.util";
 
 describe("#initVaultPeriod", testInitVaultPeriod);
 
-export async function testInitVaultPeriod() {
+export function testInitVaultPeriod() {
   initLog();
 
   let vaultProtoConfigPubkey: PublicKey;

@@ -29,7 +29,7 @@ import { initLog } from "../utils/log.util";
 
 describe("#withdrawB", testWithdrawB);
 
-export async function testWithdrawB() {
+export function testWithdrawB() {
   initLog();
 
   let tokenOwnerKeypair: Keypair;

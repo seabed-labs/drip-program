@@ -28,7 +28,7 @@ import { initLog } from "../utils/log.util";
 
 describe("#closePosition", testClosePosition);
 
-export async function testClosePosition() {
+export function testClosePosition() {
   initLog();
 
   let tokenOwnerKeypair: Keypair;

@@ -7,7 +7,7 @@ import { initLog } from "../utils/log.util";
 
 describe("#initVaultProtoConfig", testInitVaultProtoConfig);
 
-export async function testInitVaultProtoConfig() {
+export function testInitVaultProtoConfig() {
   initLog();
 
   it("initializes the vault proto config account correctly", async () => {
