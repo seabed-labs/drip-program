@@ -1,8 +1,6 @@
 import { SolUtils } from "../utils/SolUtils";
 import { TokenUtil } from "../utils/Token.util";
 import {
-  amount,
-  Denom,
   findAssociatedTokenAddress,
   generatePairs,
 } from "../utils/common.util";
@@ -13,7 +11,6 @@ import {
   deployVaultProtoConfig,
   sleep,
 } from "../utils/setup.util";
-import { PublicKey } from "@solana/web3.js";
 import fs from "fs";
 import YAML from "yaml";
 

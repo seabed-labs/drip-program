@@ -7,6 +7,9 @@ import { testTriggerDCA } from "./integration-tests/triggerDCA";
 import sinon from "sinon";
 import { testWithdrawB } from "./integration-tests/withdrawB";
 import { setupKeeperBot } from "./deps-test/setupKeeperBot";
+import { AccountUtil } from "./utils/Account.util";
+import { web3 } from "@project-serum/anchor";
+import { ProgramUtil } from "./utils/Program.util";
 
 const DISABLE_LOGGING = !process.env.LOG;
 const SETUP_BOT = process.env.SETUP_BOT;
@@ -30,5 +33,11 @@ if (SETUP_BOT) {
     describe("#withdrawB", testWithdrawB);
     describe("#closePosition", testClosePosition);
     describe("#triggerDCA", testTriggerDCA);
+    it("should have the token swap program", async () => {
+      const tokenSwapProgram = await AccountUtil.fetchAccountInfo(
+        new web3.PublicKey(ProgramUtil.tokenSwapProgram.programId)
+      );
+      tokenSwapProgram.should.not.be.undefined();
+    });
   });
 }
