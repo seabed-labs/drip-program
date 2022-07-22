@@ -75,7 +75,6 @@ jobs:
       - run: yarn
       - run: solana-keygen new --no-bip39-passphrase
       - run: cargo test
-      - run: yarn run build
       - run: anchor test
       - run: cargo fmt -- --check
       - run: yarn run prettier --c ./
