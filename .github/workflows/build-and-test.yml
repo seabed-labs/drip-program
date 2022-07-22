@@ -21,6 +21,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
+            ./target
 
       - id: install-os-deps
         if: steps.cache-cli-deps.outputs.cache-hit != 'true'
@@ -54,6 +55,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
+            ./target
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
