@@ -1,7 +1,7 @@
-import { TestUtil } from "./config";
+import { TestUtil } from "./config.util";
 import { CurveType, TokenSwap } from "@solana/spl-token-swap";
 import { Keypair, PublicKey, Account } from "@solana/web3.js";
-import { ProgramUtil } from "./Program.util";
+import { ProgramUtil } from "./program.util";
 import { PDA } from "./common.util";
 
 export class SwapUtil extends TestUtil {

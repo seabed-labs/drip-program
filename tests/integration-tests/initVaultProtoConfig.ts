@@ -1,6 +1,6 @@
 import "should";
-import { AccountUtil } from "../utils/Account.util";
-import { VaultUtil } from "../utils/Vault.util";
+import { AccountUtil } from "../utils/account.util";
+import { VaultUtil } from "../utils/vault.util";
 import { generatePair, Granularity } from "../utils/common.util";
 import { findError } from "../utils/error.util";
 import { initLog } from "../utils/log.util";

@@ -1,6 +1,6 @@
 import "should";
-import { SolUtils } from "../utils/SolUtils";
-import { TokenUtil } from "../utils/Token.util";
+import { SolUtil } from "../utils/sol.util";
+import { TokenUtil } from "../utils/token.util";
 import {
   amount,
   Denom,
@@ -10,7 +10,7 @@ import {
   PDA,
 } from "../utils/common.util";
 import {
-  deploySwap,
+  deploySPLTokenSwap,
   deployVault,
   deployVaultPeriod,
   deployVaultProtoConfig,
@@ -20,7 +20,7 @@ import {
 } from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { AccountUtil } from "../utils/Account.util";
+import { AccountUtil } from "../utils/account.util";
 import { findError } from "../utils/error.util";
 import { initLog } from "../utils/log.util";
 
@@ -83,12 +83,12 @@ export function testDripSPLTokenSwap() {
     bot = generatePair();
     [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
-      SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(0.1)),
-      SolUtils.fundAccount(bot.publicKey, SolUtils.solToLamports(0.1)),
-      SolUtils.fundAccount(payerKeypair.publicKey, SolUtils.solToLamports(0.1)),
-      SolUtils.fundAccount(
+      SolUtil.fundAccount(user.publicKey, SolUtil.solToLamports(0.1)),
+      SolUtil.fundAccount(bot.publicKey, SolUtil.solToLamports(0.1)),
+      SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
+      SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtils.solToLamports(0.1)
+        SolUtil.solToLamports(0.1)
       ),
     ]);
 
@@ -113,7 +113,7 @@ export function testDripSPLTokenSwap() {
       swapTokenBAccount,
       swapFeeAccount,
       swapAuthority,
-    ] = await deploySwap(
+    ] = await deploySPLTokenSwap(
       tokenA,
       tokenOwnerKeypair,
       tokenB,
@@ -128,7 +128,7 @@ export function testDripSPLTokenSwap() {
       swapTokenBAccount2,
       swapFeeAccount2,
       swapAuthority2,
-    ] = await deploySwap(
+    ] = await deploySPLTokenSwap(
       tokenB,
       tokenOwnerKeypair,
       tokenA,
@@ -143,7 +143,7 @@ export function testDripSPLTokenSwap() {
       swapTokenBAccount3,
       swapFeeAccount3,
       swapAuthority3,
-    ] = await deploySwap(
+    ] = await deploySPLTokenSwap(
       tokenA,
       tokenOwnerKeypair,
       tokenB,

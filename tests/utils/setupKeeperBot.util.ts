@@ -1,8 +1,8 @@
-import { SolUtils } from "./SolUtils";
-import { TokenUtil } from "./Token.util";
+import { SolUtil } from "./sol.util";
+import { TokenUtil } from "./token.util";
 import { findAssociatedTokenAddress, generatePairs } from "./common.util";
 import {
-  deploySwap,
+  deploySPLTokenSwap,
   deployVault,
   deployVaultPeriod,
   deployVaultProtoConfig,
@@ -21,13 +21,13 @@ export function setupKeeperBotUtil() {
 
     const [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
-      await SolUtils.fundAccount(
+      await SolUtil.fundAccount(
         payerKeypair.publicKey,
-        SolUtils.solToLamports(0.5)
+        SolUtil.solToLamports(0.5)
       ),
-      SolUtils.fundAccount(
+      SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtils.solToLamports(0.5)
+        SolUtil.solToLamports(0.5)
       ),
     ]);
 
@@ -109,7 +109,7 @@ export function setupKeeperBotUtil() {
               swapTokenBAccount,
               swapFeeAccount,
               swapAuthority,
-            ] = await deploySwap(
+            ] = await deploySPLTokenSwap(
               tokenA,
               tokenOwnerKeypair,
               tokenB,

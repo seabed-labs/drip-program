@@ -49,8 +49,8 @@ export const generatePairs = (count: number) => {
   return [...Array(count).keys()].map(generatePair);
 };
 
-import { TestUtil } from "./config";
-import { ProgramUtil } from "./Program.util";
+import { TestUtil } from "./config.util";
+import { ProgramUtil } from "./program.util";
 import { PublicKey } from "@solana/web3.js";
 
 export type PDA = {

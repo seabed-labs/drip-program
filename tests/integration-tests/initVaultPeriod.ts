@@ -1,8 +1,8 @@
 import "should";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { VaultUtil } from "../utils/Vault.util";
-import { TokenUtil } from "../utils/Token.util";
-import { AccountUtil } from "../utils/Account.util";
+import { VaultUtil } from "../utils/vault.util";
+import { TokenUtil } from "../utils/token.util";
+import { AccountUtil } from "../utils/account.util";
 import {
   findAssociatedTokenAddress,
   generatePair,
@@ -10,7 +10,7 @@ import {
   getVaultPeriodPDA,
   Granularity,
 } from "../utils/common.util";
-import { SolUtils } from "../utils/SolUtils";
+import { SolUtil } from "../utils/sol.util";
 import { initLog } from "../utils/log.util";
 
 // TODO(matcha): More exhaustive tests
@@ -30,10 +30,7 @@ export function testInitVaultPeriod() {
     const vaultProtoConfigKeypair = generatePair();
     const treasuryOwner = generatePair();
     await Promise.all([
-      SolUtils.fundAccount(
-        treasuryOwner.publicKey,
-        SolUtils.solToLamports(0.1)
-      ),
+      SolUtil.fundAccount(treasuryOwner.publicKey, SolUtil.solToLamports(0.1)),
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,

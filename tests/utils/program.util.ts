@@ -4,7 +4,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { Drip } from "../../target/types/drip";
-import { TestUtil } from "./config";
+import { TestUtil } from "./config.util";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_SWAP_PROGRAM_ID } from "@solana/spl-token-swap";
 

@@ -98,7 +98,7 @@ pub struct DripSPLTokenSwap<'info> {
     pub token_b_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         associated_token::mint = token_a_mint,
         associated_token::authority = vault,

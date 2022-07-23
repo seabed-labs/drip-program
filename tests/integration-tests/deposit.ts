@@ -1,10 +1,10 @@
 import "should";
-import { DECIMALS, TokenUtil } from "../utils/Token.util";
+import { DECIMALS, TokenUtil } from "../utils/token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
-import { VaultUtil } from "../utils/Vault.util";
-import { SolUtils } from "../utils/SolUtils";
-import { AccountUtil } from "../utils/Account.util";
+import { VaultUtil } from "../utils/vault.util";
+import { SolUtil } from "../utils/sol.util";
+import { AccountUtil } from "../utils/account.util";
 import {
   amount,
   Denom,
@@ -39,8 +39,8 @@ export function testDeposit() {
     const treasuryOwner = generatePair();
     [usdcMinter, btcMinter, user] = generatePairs(3);
     await Promise.all([
-      SolUtils.fundAccount(user.publicKey, SolUtils.solToLamports(1)),
-      SolUtils.fundAccount(treasuryOwner.publicKey, SolUtils.solToLamports(1)),
+      SolUtil.fundAccount(user.publicKey, SolUtil.solToLamports(1)),
+      SolUtil.fundAccount(treasuryOwner.publicKey, SolUtil.solToLamports(1)),
     ]);
 
     [tokenA, tokenB] = await TokenUtil.createMints(
