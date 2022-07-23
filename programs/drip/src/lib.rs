@@ -47,4 +47,11 @@ pub mod drip {
     pub fn trigger_dca(ctx: Context<TriggerDCA>) -> Result<()> {
         trigger_dca::handler(ctx)
     }
+
+    pub fn drip_orca_whirlpool(
+        ctx: Context<DripOrcaWhirlpool>,
+        params: DripOrcaWhirlpoolParams,
+    ) -> Result<()> {
+        drip_orca_whirlpool::handler(ctx, params)
+    }
 }
