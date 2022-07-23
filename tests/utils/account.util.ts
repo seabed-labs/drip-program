@@ -1,6 +1,6 @@
 import { web3 } from "@project-serum/anchor";
-import { TestUtil } from "./config";
-import { ProgramUtil } from "./Program.util";
+import { TestUtil } from "./config.util";
+import { ProgramUtil } from "./program.util";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import { AsyncReturnType } from "./common.util";
 

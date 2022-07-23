@@ -1,9 +1,9 @@
-import { TestUtil } from "./config";
-import { ProgramUtil } from "./Program.util";
-import { TransactionUtil } from "./Transaction.util";
+import { TestUtil } from "./config.util";
+import { ProgramUtil } from "./program.util";
+import { TransactionUtil } from "./transaction.util";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
-export class SolUtils extends TestUtil {
+export class SolUtil extends TestUtil {
   static solToLamports(sol: number): number {
     return sol * LAMPORTS_PER_SOL;
   }

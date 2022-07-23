@@ -10,11 +10,11 @@ import {
   getVaultPeriodPDA,
   PDA,
 } from "./common.util";
-import { VaultUtil } from "./Vault.util";
+import { VaultUtil } from "./vault.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { TokenUtil } from "./Token.util";
-import { SolUtils } from "./SolUtils";
-import { SwapUtil } from "./Swap.util";
+import { TokenUtil } from "./token.util";
+import { SolUtil } from "./sol.util";
+import { SwapUtil } from "./swap.util";
 import { Token, u64 } from "@solana/spl-token";
 
 export const sleep = async (ms: number) => {
@@ -104,7 +104,7 @@ export const depositWithNewUserWrapper = (
     mintAmount: number;
   }) => {
     const user2 = generatePair();
-    await SolUtils.fundAccount(user2.publicKey, SolUtils.solToLamports(0.2));
+    await SolUtil.fundAccount(user2.publicKey, SolUtil.solToLamports(0.2));
     const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
       user2.publicKey
     );
@@ -185,7 +185,7 @@ export const depositToVault = async (
   ];
 };
 
-export const deploySwap = async (
+export const deploySPLTokenSwap = async (
   tokenA: Token,
   tokenAMintOwner: Keypair,
   tokenB: Token,
@@ -198,13 +198,13 @@ export const deploySwap = async (
 ): Promise<PublicKey[]> => {
   const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
     generatePairs(5);
-  await SolUtils.fundAccount(
+  await SolUtil.fundAccount(
     swapPayerKeypair.publicKey,
-    SolUtils.solToLamports(0.2)
+    SolUtil.solToLamports(0.2)
   );
-  await SolUtils.fundAccount(
+  await SolUtil.fundAccount(
     swapOwnerKeyPair.publicKey,
-    SolUtils.solToLamports(0.2)
+    SolUtil.solToLamports(0.2)
   );
   const swapAuthorityPDA = await getSwapAuthorityPDA(
     tokenSwapKeypair.publicKey

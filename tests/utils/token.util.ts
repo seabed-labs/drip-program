@@ -5,12 +5,12 @@ import {
   TOKEN_PROGRAM_ID,
   u64,
 } from "@solana/spl-token";
-import { AccountUtil } from "./Account.util";
-import { TestUtil } from "./config";
-import { SolUtils } from "./SolUtils";
+import { AccountUtil } from "./account.util";
+import { TestUtil } from "./config.util";
+import { SolUtil } from "./sol.util";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { generatePair } from "./common.util"; // Look up the token mint on solscan before adding here
-import { ProgramUtil } from "./Program.util";
+import { ProgramUtil } from "./program.util";
 
 // Look up the token mint on solscan before adding here
 export const DECIMALS = {
@@ -43,9 +43,9 @@ export class TokenUtil extends TestUtil {
     shouldFund = true
   ): Promise<Token> {
     if (shouldFund) {
-      await SolUtils.fundAccount(
+      await SolUtil.fundAccount(
         funderKeypair.publicKey,
-        SolUtils.solToLamports(0.2)
+        SolUtil.solToLamports(0.2)
       );
     }
 

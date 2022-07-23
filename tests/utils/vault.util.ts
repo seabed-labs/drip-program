@@ -1,5 +1,5 @@
-import { TestUtil } from "./config";
-import { ProgramUtil } from "./Program.util";
+import { TestUtil } from "./config.util";
+import { ProgramUtil } from "./program.util";
 import {
   Keypair,
   PublicKey,

@@ -1,7 +1,7 @@
 import "should";
-import { AccountUtil } from "../utils/Account.util";
-import { TokenUtil } from "../utils/Token.util";
-import { VaultUtil } from "../utils/Vault.util";
+import { AccountUtil } from "../utils/account.util";
+import { TokenUtil } from "../utils/token.util";
+import { VaultUtil } from "../utils/vault.util";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import {
@@ -12,7 +12,7 @@ import {
   Granularity,
   PDA,
 } from "../utils/common.util";
-import { SolUtils } from "../utils/SolUtils";
+import { SolUtil } from "../utils/sol.util";
 import { findError } from "../utils/error.util";
 import { initLog } from "../utils/log.util";
 
@@ -30,10 +30,7 @@ export function testInitVault() {
     const vaultProtoConfigKeypair = generatePair();
     const treasuryOwner = generatePair();
     await Promise.all([
-      SolUtils.fundAccount(
-        treasuryOwner.publicKey,
-        SolUtils.solToLamports(0.1)
-      ),
+      SolUtil.fundAccount(treasuryOwner.publicKey, SolUtil.solToLamports(0.1)),
       VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,

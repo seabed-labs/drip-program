@@ -1,7 +1,7 @@
 import "should";
 import { web3 } from "@project-serum/anchor";
-import { AccountUtil } from "../utils/Account.util";
-import { ProgramUtil } from "../utils/Program.util";
+import { AccountUtil } from "../utils/account.util";
+import { ProgramUtil } from "../utils/program.util";
 
 describe("Test Dependent Programs", () => {
   it("should have the token swap program", async () => {

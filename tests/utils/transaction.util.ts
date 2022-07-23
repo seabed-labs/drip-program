@@ -1,4 +1,4 @@
-import { TestUtil } from "./config";
+import { TestUtil } from "./config.util";
 import { Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { web3 } from "@project-serum/anchor";
 
