@@ -1,18 +1,120 @@
-import { testTriggerDCA } from "./triggerDCA";
-import { buildWhirlpoolClient } from "@orca-so/whirlpools-sdk";
+import {
+  FundedPositionParams,
+  InitWhirlpoolConfigRes,
+  InitWhirlpoolRes,
+  WhirlpoolUtil,
+} from "../utils/whirlpool.util";
+import { amount, Denom, generatePairs } from "../utils/common.util";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { TokenUtil } from "../utils/token.util";
+import { Token, u64 } from "@solana/spl-token";
+import { TestUtil } from "../utils/config.util";
+import { SolUtil } from "../utils/sol.util";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
 export function testDripOrcaWhirlpool() {
-  // Setup token mints
-  // Setup whirlpool
-  before(async () => {
-  });
+  let tokenOwnerKeypair: Keypair;
+  let whirlpoolKeypair: Keypair;
+  let whirlpoolAuth: Keypair;
 
-  // Setup vaultProtoConfig
-  // Setup vault
-  // Setup user keys
-  beforeEach(async () => {});
+  let tokenA: Token;
+  let tokenB: Token;
+
+  let initWhirlpoolConfigRes: InitWhirlpoolConfigRes;
+  let initWhirlpoolRes: InitWhirlpoolRes;
+  let tickArrays: PublicKey[];
+
+  beforeEach(async () => {
+    [tokenOwnerKeypair, whirlpoolKeypair, whirlpoolAuth] = generatePairs(3);
+    await Promise.all([
+      SolUtil.fundAccount(
+        tokenOwnerKeypair.publicKey,
+        SolUtil.solToLamports(0.1)
+      ),
+    ]);
+
+    [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
+      tokenOwnerKeypair,
+    });
+
+    initWhirlpoolConfigRes = await WhirlpoolUtil.initConfig(
+      whirlpoolKeypair,
+      whirlpoolAuth,
+      whirlpoolAuth.publicKey,
+      whirlpoolAuth.publicKey,
+      {}
+    );
+    // console.log(JSON.stringify(initWhirlpoolConfigRes, undefined, 2))
+
+    initWhirlpoolRes = await WhirlpoolUtil.initPool(
+      initWhirlpoolConfigRes.config,
+      initWhirlpoolConfigRes.feeTier,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      initWhirlpoolConfigRes.tickSpacing,
+      {}
+    );
+
+    // Based off of swap.test.ts swaps across three tick arrays
+    tickArrays = await WhirlpoolUtil.initTickArrayRange(
+      initWhirlpoolRes.whirlpool,
+      27456,
+      5,
+      false
+    );
+
+    // Token A -> USDC
+    const tokenAAccount = await tokenA.createAccount(
+      TestUtil.provider.wallet.publicKey
+    );
+    const mintAmountA = await TokenUtil.scaleAmount(
+      amount(40, Denom.Million),
+      tokenA
+    );
+    await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
+
+    // Token B -> SOL
+    const tokenBAccount = await tokenB.createAccount(
+      TestUtil.provider.wallet.publicKey
+    );
+    const mintAmountB = await TokenUtil.scaleAmount(
+      amount(1, Denom.Million),
+      tokenB
+    );
+    await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
+
+    // Based off of swap.test.ts swaps across three tick arrays
+    const fundParams: FundedPositionParams[] = [
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 27456,
+        tickUpperIndex: 27840,
+      },
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 28864,
+        tickUpperIndex: 28928,
+      },
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 27712,
+        tickUpperIndex: 28928,
+      },
+    ];
+
+    const fundedPositionRes = await WhirlpoolUtil.fundPositions(
+      initWhirlpoolRes.whirlpool,
+      tokenAAccount,
+      tokenBAccount,
+      initWhirlpoolRes.tokenVaultAKeypair,
+      initWhirlpoolRes.tokenVaultBKeypair,
+      initWhirlpoolConfigRes.tickSpacing,
+      initWhirlpoolRes.initSqrtPrice,
+      fundParams
+    );
+    // console.log(JSON.stringify(fundedPositionRes, undefined, 2));
+  });
 
   it("should drip twice with expected TWAP and balance values", async () => {});
 

@@ -45,7 +45,7 @@ export class TokenUtil extends TestUtil {
     if (shouldFund) {
       await SolUtil.fundAccount(
         funderKeypair.publicKey,
-        SolUtil.solToLamports(0.2)
+        SolUtil.solToLamports(0.1)
       );
     }
 
