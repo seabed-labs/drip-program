@@ -1,6 +1,6 @@
 import { AnchorProvider, Provider, setProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 export class TestConfig {
   public readonly provider: AnchorProvider;
@@ -25,8 +25,19 @@ export class TestConfig {
   }
 }
 
+export class BackwardsCompatAnchorProvider extends AnchorProvider {
+  publicKey: PublicKey;
+}
 export abstract class TestUtil {
-  public static get provider(): AnchorProvider {
-    return TestConfig.default.provider;
+  public static get provider(): BackwardsCompatAnchorProvider {
+    // Needed for WhirlpoolContext.withProvider since its using an older anchor version
+    const backwardsCompatAnchorProvider = new BackwardsCompatAnchorProvider(
+      TestConfig.default.provider.connection,
+      NodeWallet.local(),
+      AnchorProvider.defaultOptions()
+    );
+    backwardsCompatAnchorProvider.publicKey =
+      backwardsCompatAnchorProvider.wallet.publicKey;
+    return backwardsCompatAnchorProvider;
   }
 }
