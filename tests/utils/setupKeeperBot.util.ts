@@ -1,23 +1,17 @@
-import { SolUtils } from "../utils/SolUtils";
-import { TokenUtil } from "../utils/Token.util";
-import {
-  amount,
-  Denom,
-  findAssociatedTokenAddress,
-  generatePairs,
-} from "../utils/common.util";
+import { SolUtils } from "./SolUtils";
+import { TokenUtil } from "./Token.util";
+import { findAssociatedTokenAddress, generatePairs } from "./common.util";
 import {
   deploySwap,
   deployVault,
   deployVaultPeriod,
   deployVaultProtoConfig,
   sleep,
-} from "../utils/setup.util";
-import { PublicKey } from "@solana/web3.js";
+} from "./setup.util";
 import fs from "fs";
 import YAML from "yaml";
 
-export function setupKeeperBot() {
+export function setupKeeperBotUtil() {
   before(async () => {
     const testWallets = [
       "8XHtH5q5TyuFCcSkVjKW7jqE26ta2e7rXDnSLEHAgjD2",

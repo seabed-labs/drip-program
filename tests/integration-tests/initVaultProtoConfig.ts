@@ -1,10 +1,15 @@
+import "should";
 import { AccountUtil } from "../utils/Account.util";
 import { VaultUtil } from "../utils/Vault.util";
 import { generatePair, Granularity } from "../utils/common.util";
-import { AnchorError } from "@project-serum/anchor";
 import { findError } from "../utils/error.util";
+import { initLog } from "../utils/log.util";
+
+describe("#initVaultProtoConfig", testInitVaultProtoConfig);
 
 export function testInitVaultProtoConfig() {
+  initLog();
+
   it("initializes the vault proto config account correctly", async () => {
     const vaultProtoConfigKeypair = generatePair();
     const admin = generatePair();

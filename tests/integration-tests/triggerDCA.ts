@@ -1,3 +1,4 @@
+import "should";
 import { SolUtils } from "../utils/SolUtils";
 import { TokenUtil } from "../utils/Token.util";
 import {
@@ -21,8 +22,13 @@ import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../utils/Account.util";
 import { findError } from "../utils/error.util";
+import { initLog } from "../utils/log.util";
+
+describe("#triggerDCA", testTriggerDCA);
 
 export function testTriggerDCA() {
+  initLog();
+
   let tokenOwnerKeypair: Keypair;
   let payerKeypair: Keypair;
 

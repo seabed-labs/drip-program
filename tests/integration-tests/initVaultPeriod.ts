@@ -1,8 +1,8 @@
+import "should";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { VaultUtil } from "../utils/Vault.util";
 import { TokenUtil } from "../utils/Token.util";
 import { AccountUtil } from "../utils/Account.util";
-import "should";
 import {
   findAssociatedTokenAddress,
   generatePair,
@@ -11,10 +11,15 @@ import {
   Granularity,
 } from "../utils/common.util";
 import { SolUtils } from "../utils/SolUtils";
+import { initLog } from "../utils/log.util";
 
 // TODO(matcha): More exhaustive tests
 
+describe("#initVaultPeriod", testInitVaultPeriod);
+
 export function testInitVaultPeriod() {
+  initLog();
+
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let tokenAMint: PublicKey;
