@@ -1,3 +1,4 @@
+import "should";
 import { AccountUtil } from "../utils/Account.util";
 import { TokenUtil } from "../utils/Token.util";
 import { VaultUtil } from "../utils/Vault.util";
@@ -12,10 +13,14 @@ import {
   PDA,
 } from "../utils/common.util";
 import { SolUtils } from "../utils/SolUtils";
-import { AnchorError } from "@project-serum/anchor";
 import { findError } from "../utils/error.util";
+import { initLog } from "../utils/log.util";
+
+describe("#initVault", testInitVault);
 
 export function testInitVault() {
+  initLog();
+
   let vaultProtoConfigAccount: PublicKey;
   let tokenA: Token;
   let tokenB: Token;

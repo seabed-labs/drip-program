@@ -13,7 +13,8 @@ jobs:
   build-cli-deps:
     runs-on: ubuntu-latest
     steps:
-      - id: cache-cli-deps
+      - name: ⚡️ Cache
+        id: cache-cli-deps
         uses: actions/cache@v2
         with:
           key: $${{ env.cli-id }}
@@ -21,7 +22,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
-            ~/.cargo/bin/anchor
+            target
 
       - id: install-os-deps
         if: steps.cache-cli-deps.outputs.cache-hit != 'true'
@@ -47,7 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-cli-deps]
     steps:
-      - id: cache-cli-deps
+      - name: ⚡️ Cache
+        id: cache-cli-deps
         uses: actions/cache@v2
         with:
           key: $${{ env.cli-id }}
@@ -55,7 +57,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
-            ~/.cargo/bin/anchor
+            target
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
@@ -75,7 +77,6 @@ jobs:
       - run: yarn
       - run: solana-keygen new --no-bip39-passphrase
       - run: cargo test
-      - run: yarn run build
       - run: anchor test
       - run: cargo fmt -- --check
       - run: yarn run prettier --c ./
@@ -84,7 +85,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-cli-deps]
     steps:
-      - id: cache-cli-deps
+      - name: ⚡️ Cache
+        id: cache-cli-deps
         uses: actions/cache@v2
         with:
           key: $${{ env.cli-id }}
@@ -92,7 +94,7 @@ jobs:
             ~/.local/share/solana
             ~/.cargo
             ~/.rustup
-            ~/.cargo/bin/anchor
+            target
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 

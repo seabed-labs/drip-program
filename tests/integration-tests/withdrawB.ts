@@ -1,3 +1,4 @@
+import "should";
 import { SolUtils } from "../utils/SolUtils";
 import { TokenUtil } from "../utils/Token.util";
 import {
@@ -24,8 +25,13 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../utils/Account.util";
 import { findError } from "../utils/error.util";
+import { initLog } from "../utils/log.util";
+
+describe("#withdrawB", testWithdrawB);
 
 export function testWithdrawB() {
+  initLog();
+
   let tokenOwnerKeypair: Keypair;
   let payerKeypair: Keypair;
 
