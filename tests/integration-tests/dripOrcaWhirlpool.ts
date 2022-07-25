@@ -44,7 +44,7 @@ export function testDripOrcaWhirlpool() {
 
   it("should drip dca_cyles number of times", async () => {});
 
-  it("should fail to drip if a non-whitelisted swaps is provided", async () => {});
+  it("should fail to drip if a non-whitelisted whirlpool is provided", async () => {});
 
   // The tests below are generic for any drip_xxx instruction variant but we can't really generalize
   // them because each drip_xxx variant has a different interface
