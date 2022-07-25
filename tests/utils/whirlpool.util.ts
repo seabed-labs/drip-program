@@ -21,6 +21,8 @@ import { BN } from "@project-serum/anchor";
 import { ProgramUtil } from "./program.util";
 import { Token, u64 } from "@solana/spl-token";
 import { TokenUtil } from "./token.util";
+import { amount, Denom, generatePair } from "./common.util";
+import { SolUtil } from "./sol.util";
 
 const defaultInitSqrtPrice = PriceMath.tickIndexToSqrtPriceX64(27500);
 const defaultTickSpacing = 8;
@@ -67,13 +69,26 @@ export type FundedPositionRes = {
   tickArrayUpper: PublicKey;
 };
 
+export type DeployWhirlpoolRes = {
+  initWhirlpoolConfigRes: InitWhirlpoolConfigRes;
+  initWhirlpoolRes: InitWhirlpoolRes;
+  tickArrays: PublicKey[];
+  positions: FundedPositionRes[];
+  whirlpoolKeypair: Keypair;
+  whirlpoolAuth: Keypair;
+  tokenOwnerKeypair: Keypair;
+  tokenA: Token;
+  tokenB: Token;
+};
 export class WhirlpoolUtil extends TestUtil {
-  static get whirlpoolCtx(): WhirlpoolContext {
+  private static get whirlpoolCtx(): WhirlpoolContext {
     return WhirlpoolContext.withProvider(
       this.provider,
       ProgramUtil.orcaWhirlpoolProgram.programId
     );
   }
+
+  // Program Wrappers
 
   static async initConfig(
     whirlpoolsConfigKeypair: Keypair,
@@ -309,6 +324,8 @@ export class WhirlpoolUtil extends TestUtil {
     );
   }
 
+  // Helpers
+
   static async initTickArrayRange(
     whirlpool: PublicKey,
     startTickIndex: number,
@@ -370,5 +387,118 @@ export class WhirlpoolUtil extends TestUtil {
     } else {
       return [tokenBMint, tokenAMint];
     }
+  }
+
+  // TODO(Mocha): this technically does not need to be in the static class
+  static async deployWhirlpool({
+    whirlpoolKeypair = generatePair(),
+    whirlpoolAuth = generatePair(),
+    tokenOwnerKeypair = generatePair(),
+    tokenA,
+    tokenB,
+  }: {
+    whirlpoolKeypair?: Keypair;
+    whirlpoolAuth?: Keypair;
+    tokenOwnerKeypair?: Keypair;
+    tokenA?: Token;
+    tokenB?: Token;
+  }): Promise<DeployWhirlpoolRes> {
+    [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
+      tokenOwnerKeypair,
+    });
+    await Promise.all([
+      SolUtil.fundAccount(
+        tokenOwnerKeypair.publicKey,
+        SolUtil.solToLamports(0.1)
+      ),
+    ]);
+
+    const initWhirlpoolConfigRes = await WhirlpoolUtil.initConfig(
+      whirlpoolKeypair,
+      whirlpoolAuth,
+      whirlpoolAuth.publicKey,
+      whirlpoolAuth.publicKey,
+      {}
+    );
+    // console.log(JSON.stringify(initWhirlpoolConfigRes, undefined, 2))
+
+    const initWhirlpoolRes = await WhirlpoolUtil.initPool(
+      initWhirlpoolConfigRes.config,
+      initWhirlpoolConfigRes.feeTier,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      initWhirlpoolConfigRes.tickSpacing,
+      {}
+    );
+
+    // Based off of swap.test.ts swaps across three tick arrays
+    const tickArrays = await WhirlpoolUtil.initTickArrayRange(
+      initWhirlpoolRes.whirlpool,
+      27456,
+      5,
+      false
+    );
+
+    // Token A -> USDC
+    const tokenAAccount = await tokenA.createAccount(
+      TestUtil.provider.wallet.publicKey
+    );
+    const mintAmountA = await TokenUtil.scaleAmount(
+      amount(40, Denom.Million),
+      tokenA
+    );
+    await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
+
+    // Token B -> SOL
+    const tokenBAccount = await tokenB.createAccount(
+      TestUtil.provider.wallet.publicKey
+    );
+    const mintAmountB = await TokenUtil.scaleAmount(
+      amount(1, Denom.Million),
+      tokenB
+    );
+    await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
+
+    // Based off of swap.test.ts swaps across three tick arrays
+    const fundParams: FundedPositionParams[] = [
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 27456,
+        tickUpperIndex: 27840,
+      },
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 28864,
+        tickUpperIndex: 28928,
+      },
+      {
+        liquidityAmount: new u64(100_000_000),
+        tickLowerIndex: 27712,
+        tickUpperIndex: 28928,
+      },
+    ];
+
+    const positions = await WhirlpoolUtil.fundPositions(
+      initWhirlpoolRes.whirlpool,
+      tokenAAccount,
+      tokenBAccount,
+      initWhirlpoolRes.tokenVaultAKeypair,
+      initWhirlpoolRes.tokenVaultBKeypair,
+      initWhirlpoolConfigRes.tickSpacing,
+      initWhirlpoolRes.initSqrtPrice,
+      fundParams
+    );
+
+    return {
+      initWhirlpoolConfigRes,
+      initWhirlpoolRes,
+      tickArrays,
+      positions,
+      tokenOwnerKeypair,
+      whirlpoolKeypair,
+      whirlpoolAuth,
+      tokenA,
+      tokenB,
+    };
   }
 }

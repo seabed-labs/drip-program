@@ -1,4 +1,5 @@
 import {
+  DeployWhirlpoolRes,
   FundedPositionParams,
   InitWhirlpoolConfigRes,
   InitWhirlpoolRes,
@@ -10,110 +11,31 @@ import { TokenUtil } from "../utils/token.util";
 import { Token, u64 } from "@solana/spl-token";
 import { TestUtil } from "../utils/config.util";
 import { SolUtil } from "../utils/sol.util";
+import { deployVaultProtoConfig } from "../utils/setup.util";
+import { DeployVaultRes, VaultUtil } from "../utils/vault.util";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
 export function testDripOrcaWhirlpool() {
-  let tokenOwnerKeypair: Keypair;
-  let whirlpoolKeypair: Keypair;
-  let whirlpoolAuth: Keypair;
+  let deployWhirlpoolRes: DeployWhirlpoolRes;
+  let deployNonWhitelistedWhirlpoolRes: DeployWhirlpoolRes;
+  let deployVaultRes: DeployVaultRes;
 
-  let tokenA: Token;
-  let tokenB: Token;
-
-  let initWhirlpoolConfigRes: InitWhirlpoolConfigRes;
-  let initWhirlpoolRes: InitWhirlpoolRes;
-  let tickArrays: PublicKey[];
+  before(async () => {
+    deployWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({});
+    deployNonWhitelistedWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({
+      tokenA: deployWhirlpoolRes.tokenA,
+      tokenB: deployWhirlpoolRes.tokenB,
+    });
+  });
 
   beforeEach(async () => {
-    [tokenOwnerKeypair, whirlpoolKeypair, whirlpoolAuth] = generatePairs(3);
-    await Promise.all([
-      SolUtil.fundAccount(
-        tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
-      ),
-    ]);
-
-    [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
-      tokenOwnerKeypair,
+    deployVaultRes = await VaultUtil.deployVault({
+      tokenA: deployWhirlpoolRes.tokenA,
+      tokenB: deployWhirlpoolRes.tokenB,
+      whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],
+      tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
     });
-
-    initWhirlpoolConfigRes = await WhirlpoolUtil.initConfig(
-      whirlpoolKeypair,
-      whirlpoolAuth,
-      whirlpoolAuth.publicKey,
-      whirlpoolAuth.publicKey,
-      {}
-    );
-    // console.log(JSON.stringify(initWhirlpoolConfigRes, undefined, 2))
-
-    initWhirlpoolRes = await WhirlpoolUtil.initPool(
-      initWhirlpoolConfigRes.config,
-      initWhirlpoolConfigRes.feeTier,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      initWhirlpoolConfigRes.tickSpacing,
-      {}
-    );
-
-    // Based off of swap.test.ts swaps across three tick arrays
-    tickArrays = await WhirlpoolUtil.initTickArrayRange(
-      initWhirlpoolRes.whirlpool,
-      27456,
-      5,
-      false
-    );
-
-    // Token A -> USDC
-    const tokenAAccount = await tokenA.createAccount(
-      TestUtil.provider.wallet.publicKey
-    );
-    const mintAmountA = await TokenUtil.scaleAmount(
-      amount(40, Denom.Million),
-      tokenA
-    );
-    await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
-
-    // Token B -> SOL
-    const tokenBAccount = await tokenB.createAccount(
-      TestUtil.provider.wallet.publicKey
-    );
-    const mintAmountB = await TokenUtil.scaleAmount(
-      amount(1, Denom.Million),
-      tokenB
-    );
-    await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
-
-    // Based off of swap.test.ts swaps across three tick arrays
-    const fundParams: FundedPositionParams[] = [
-      {
-        liquidityAmount: new u64(100_000_000),
-        tickLowerIndex: 27456,
-        tickUpperIndex: 27840,
-      },
-      {
-        liquidityAmount: new u64(100_000_000),
-        tickLowerIndex: 28864,
-        tickUpperIndex: 28928,
-      },
-      {
-        liquidityAmount: new u64(100_000_000),
-        tickLowerIndex: 27712,
-        tickUpperIndex: 28928,
-      },
-    ];
-
-    const fundedPositionRes = await WhirlpoolUtil.fundPositions(
-      initWhirlpoolRes.whirlpool,
-      tokenAAccount,
-      tokenBAccount,
-      initWhirlpoolRes.tokenVaultAKeypair,
-      initWhirlpoolRes.tokenVaultBKeypair,
-      initWhirlpoolConfigRes.tickSpacing,
-      initWhirlpoolRes.initSqrtPrice,
-      fundParams
-    );
-    // console.log(JSON.stringify(fundedPositionRes, undefined, 2));
   });
 
   it("should drip twice with expected TWAP and balance values", async () => {});
@@ -124,9 +46,10 @@ export function testDripOrcaWhirlpool() {
 
   it("should fail to drip if a non-whitelisted swaps is provided", async () => {});
 
-  // The tests below are generic for any drip_xxx instruction variant
-  // But we can't really generalize them because each drip_xxx variant has a different
-  // interface
+  // The tests below are generic for any drip_xxx instruction variant but we can't really generalize
+  // them because each drip_xxx variant has a different interface
+  // TODO(Mocha): Look into creating a drip_xxx class that abstracts the drip functionality for testing the below
+  // as well as the deposit + close position tests
 
   it("should fail to drip if vault token A balance is less than vault.dripAmount", async () => {});
 

@@ -39,6 +39,9 @@ export const deployVaultProtoConfig = async (
   return vaultProtoConfigKeypair.publicKey;
 };
 
+/**
+ * @deprecated Use VaultUtil.DeployVault
+ */
 export const deployVault = async (
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
@@ -76,8 +79,7 @@ export const deployVaultPeriod = async (
   period: number
 ): Promise<PDA> => {
   const vaultPeriodPDA = await getVaultPeriodPDA(vault, period);
-
-  const txHash = await VaultUtil.initVaultPeriod(
+  await VaultUtil.initVaultPeriod(
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
@@ -118,11 +120,7 @@ export const depositWithNewUserWrapper = (
       [],
       user2MintAmount
     );
-    const [
-      user2PositionNFTMint,
-      user2PositionAccount,
-      user2PositionNFTAccount,
-    ] = await depositToVault(
+    await depositToVault(
       user2,
       tokenA,
       user2MintAmount,
