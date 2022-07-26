@@ -40,7 +40,7 @@ export const deployVaultProtoConfig = async (
 };
 
 /**
- * @deprecated Use VaultUtil.DeployVault
+ * @deprecated Use VaultUtil.deployVault
  */
 export const deployVault = async (
   tokenAMint: PublicKey,
