@@ -12,7 +12,7 @@ pub struct WhirlpoolProgram;
 impl anchor_lang::Id for WhirlpoolProgram {
     fn id() -> Pubkey {
         Pubkey::from_str(&"whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc")
-            .expect("Error creating hardocded pubkey")
+            .expect("Error creating hardcoded pubkey")
     }
 }
 
