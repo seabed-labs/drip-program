@@ -182,7 +182,7 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripSplTokenSwap()
       .accounts({
-        user: user.publicKey.toBase58(),
+        dripTriggerSource: user.publicKey.toBase58(),
         dripTriggerFeeTokenAAccount: dripTriggerFeeTokenAAccount.toBase58(),
         vault: vault.toBase58(),
         vaultProtoConfig: vaultProtoConfig.toBase58(),
