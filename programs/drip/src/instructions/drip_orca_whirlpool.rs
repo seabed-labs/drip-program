@@ -4,13 +4,15 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
+use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct WhirlpoolProgram;
 
 impl anchor_lang::Id for WhirlpoolProgram {
     fn id() -> Pubkey {
-        whirlpool::ID
+        Pubkey::from_str(&"whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc")
+            .expect("Error creating hardocded pubkey")
     }
 }
 
