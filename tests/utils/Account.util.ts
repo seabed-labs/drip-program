@@ -23,7 +23,10 @@ export class AccountUtil extends TestUtil {
       AsyncReturnType<
         typeof ProgramUtil.dripProgram.account.vaultProtoConfig.fetch
       >,
-      "granularity" | "triggerDcaSpread" | "baseWithdrawalSpread" | "admin"
+      | "granularity"
+      | "tokenADripTriggerSpread"
+      | "tokenBWithdrawalSpread"
+      | "admin"
     >
   > {
     return await ProgramUtil.dripProgram.account.vaultProtoConfig.fetch(pubkey);
@@ -39,10 +42,10 @@ export class AccountUtil extends TestUtil {
       | "tokenBMint"
       | "tokenAAccount"
       | "tokenBAccount"
-      | "lastDcaPeriod"
+      | "lastDripPeriod"
       | "dripAmount"
       | "bump"
-      | "dcaActivationTimestamp"
+      | "dripActivationTimestamp"
       | "whitelistedSwaps"
     >
   > {
@@ -54,7 +57,7 @@ export class AccountUtil extends TestUtil {
   ): Promise<
     Pick<
       AsyncReturnType<typeof ProgramUtil.dripProgram.account.vaultPeriod.fetch>,
-      "vault" | "periodId" | "twap" | "dar" | "dcaTimestamp"
+      "vault" | "periodId" | "twap" | "dar" | "dripTimestamp"
     >
   > {
     return await ProgramUtil.dripProgram.account.vaultPeriod.fetch(pubkey);
@@ -70,7 +73,7 @@ export class AccountUtil extends TestUtil {
       | "withdrawnTokenBAmount"
       | "vault"
       | "depositTimestamp"
-      | "dcaPeriodIdBeforeDeposit"
+      | "dripPeriodIdBeforeDeposit"
       | "numberOfSwaps"
       | "periodicDripAmount"
       | "isClosed"

@@ -1,15 +1,15 @@
 use std::convert::TryFrom;
 
-pub fn calculate_periodic_drip_amount(total_amount: u64, dca_cycles: u64) -> u64 {
-    total_amount.checked_div(dca_cycles).unwrap()
+pub fn calculate_periodic_drip_amount(total_amount: u64, number_of_swaps: u64) -> u64 {
+    total_amount.checked_div(number_of_swaps).unwrap()
 }
 
 ///
 /// # Arguments
 ///
-/// * `i`: the last completed period before deposit (dca_period_id_before_deposit)
-/// (at the time of deposit, this should be the same as last_dca_period)
-/// * `j`: the min of vault.last_dca_period, and user position expiry (dca_period_id_before_deposit + number_of_swaps)
+/// * `i`: the last completed period before deposit (drip_period_id_before_deposit)
+/// (at the time of deposit, this should be the same as last_drip_period)
+/// * `j`: the min of vault.last_drip_period, and user position expiry (drip_period_id_before_deposit + number_of_swaps)
 /// * `number_of_swaps`: total number of swaps the user will participate in
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
 ///
@@ -31,14 +31,14 @@ pub fn calculate_withdraw_token_a_amount(
 ///
 /// # Arguments
 ///
-/// * `i`: the last completed period before deposit (dca_period_id_before_deposit)
-/// (at the time of deposit, this should be the same as last_dca_period, also known as i)
-/// * `j`: the min of vault.last_dca_period, and user position expiry (dca_period_id_before_deposit + number_of_swaps)
+/// * `i`: the last completed period before deposit (drip_period_id_before_deposit)
+/// (at the time of deposit, this should be the same as last_drip_period, also known as i)
+/// * `j`: the min of vault.last_drip_period, and user position expiry (drip_period_id_before_deposit + number_of_swaps)
 /// * `number_of_swaps`: total number of swaps the user will participate in
-/// * `twap_i`: the value of twap in the vault period account for period i (dca_period_id_before_deposit)
-/// * `twap_j`: the value of twap in the vault period account for period j (last_dca_period)
+/// * `twap_i`: the value of twap in the vault period account for period i (drip_period_id_before_deposit)
+/// * `twap_j`: the value of twap in the vault period account for period j (last_drip_period)
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
-/// * `trigger_dca_spread`: spread applied in each trigger DCA
+/// * `token_a_drip_trigger_spread`: spread applied in each drip trigger
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_b_amount(
@@ -47,7 +47,7 @@ pub fn calculate_withdraw_token_b_amount(
     twap_i_x64: u128,
     twap_j_x64: u128,
     periodic_drip_amount: u64,
-    trigger_dca_spread: u16,
+    token_a_drip_trigger_spread: u16,
 ) -> u64 {
     if i == j {
         return 0;
@@ -70,10 +70,12 @@ pub fn calculate_withdraw_token_b_amount(
         .checked_mul(j.checked_sub(i).unwrap())
         .unwrap();
     // subtract spreads we've already taken
-    let trigger_dca_spread_amount =
-        calculate_spread_amount(u64::try_from(dripped_so_far).unwrap(), trigger_dca_spread);
+    let drip_trigger_spread_amount = calculate_spread_amount(
+        u64::try_from(dripped_so_far).unwrap(),
+        token_a_drip_trigger_spread,
+    );
     let dripped_so_far = dripped_so_far
-        .checked_sub(trigger_dca_spread_amount.into())
+        .checked_sub(drip_trigger_spread_amount.into())
         .unwrap();
     // average_price_from_start * dripped_so_far
     let amount_x64 = average_price_from_start_x64
@@ -134,27 +136,27 @@ mod test {
     #[test_case(160, 20, 8; "Normal case")]
     fn calculate_periodic_drip_tests(
         total_amount: u64,
-        dca_cycles: u64,
+        number_of_swaps: u64,
         expected_periodic_drip_amount: u64,
     ) {
         assert_eq!(
-            calculate_periodic_drip_amount(total_amount, dca_cycles),
+            calculate_periodic_drip_amount(total_amount, number_of_swaps),
             expected_periodic_drip_amount
         );
     }
 
     #[test_case(0, 0; "Both inputs are 0")]
-    #[test_case(10, 0; "DCA cycles is 0")]
+    #[test_case(10, 0; "Number of swaps is 0")]
     #[should_panic]
-    fn calculate_periodic_drip_panic_tests(total_amount: u64, dca_cycles: u64) {
-        calculate_periodic_drip_amount(total_amount, dca_cycles);
+    fn calculate_periodic_drip_panic_tests(total_amount: u64, number_of_swaps: u64) {
+        calculate_periodic_drip_amount(total_amount, number_of_swaps);
     }
 
-    #[test_case(2, 6, 8, 5, 20; "Can withdraw A in the middle of the DCA")]
-    #[test_case(2, 10, 8, 5, 0; "Can't withdraw A at the end of the DCA")]
-    #[test_case(2, 11, 8, 5, 0; "Can't withdraw A past the end of the DCA")]
+    #[test_case(2, 6, 8, 5, 20; "Can withdraw A in the middle of a position")]
+    #[test_case(2, 10, 8, 5, 0; "Can't withdraw A at the end of a position")]
+    #[test_case(2, 11, 8, 5, 0; "Can't withdraw A past the end of a position")]
     fn calculate_withdraw_token_a_amount_tests(
-        dca_period_id_before_deposit: u64,
+        drip_period_id_before_deposit: u64,
         current_period: u64,
         number_of_swaps: u64,
         periodic_drip_amount: u64,
@@ -162,7 +164,7 @@ mod test {
     ) {
         assert_eq!(
             calculate_withdraw_token_a_amount(
-                dca_period_id_before_deposit,
+                drip_period_id_before_deposit,
                 current_period,
                 number_of_swaps,
                 periodic_drip_amount,
@@ -171,17 +173,17 @@ mod test {
         );
     }
 
-    #[test_case(10, 2, 8, 5; "Can't withdraw when current_period < dca_period_id_before_deposit")]
+    #[test_case(10, 2, 8, 5; "Can't withdraw when current_period < drip_period_id_before_deposit")]
     #[should_panic]
     fn calculate_withdraw_token_a_amount_panic_tests(
-        dca_period_id_before_deposit: u64,
-        last_dca_period: u64,
+        drip_period_id_before_deposit: u64,
+        last_drip_period: u64,
         number_of_swaps: u64,
         periodic_drip_amount: u64,
     ) {
         calculate_withdraw_token_a_amount(
-            dca_period_id_before_deposit,
-            last_dca_period,
+            drip_period_id_before_deposit,
+            last_drip_period,
             number_of_swaps,
             periodic_drip_amount,
         );
@@ -197,22 +199,22 @@ mod test {
     #[test_case(4, 4, 10 << 64, 25 << 64, 4, 0, 0; "Can withdraw 0 B when i equals j")]
     #[test_case(1, 4, 10 << 64, 25 << 64, 4, 10000, 0; "Can withdraw 0 B when spread is 10000")]
     fn calculate_withdraw_token_b_amount_tests(
-        dca_period_id_before_deposit: u64,
-        last_dca_period: u64,
+        drip_period_id_before_deposit: u64,
+        last_drip_period: u64,
         twap_i: u128,
         twap_j: u128,
         periodic_drip_amount: u64,
-        trigger_dca_spread: u16,
+        token_a_drip_trigger_spread: u16,
         expected_withdrawal_b: u64,
     ) {
         assert_eq!(
             calculate_withdraw_token_b_amount(
-                dca_period_id_before_deposit,
-                last_dca_period,
+                drip_period_id_before_deposit,
+                last_drip_period,
                 twap_i,
                 twap_j,
                 periodic_drip_amount,
-                trigger_dca_spread
+                token_a_drip_trigger_spread
             ),
             expected_withdrawal_b,
         );
@@ -227,7 +229,7 @@ mod test {
         twap_i: u128,
         twap_j: u128,
         periodic_drip_amount: u64,
-        trigger_dca_spread: u16,
+        token_a_drip_trigger_spread: u16,
     ) {
         calculate_withdraw_token_b_amount(
             i,
@@ -235,7 +237,7 @@ mod test {
             twap_i,
             twap_j,
             periodic_drip_amount,
-            trigger_dca_spread,
+            token_a_drip_trigger_spread,
         );
     }
 

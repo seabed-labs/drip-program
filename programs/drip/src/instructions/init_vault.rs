@@ -13,7 +13,7 @@ pub struct InitializeVaultParams {
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
-    /* DCAF ACCOUNTS */
+    /* DRIP ACCOUNTS */
     #[account(
         init,
         space = 392,
@@ -30,7 +30,7 @@ pub struct InitializeVault<'info> {
 
     #[account(
         constraint = vault_proto_config.granularity != 0 @ErrorCode::InvalidGranularity,
-        constraint = vault_proto_config.trigger_dca_spread < 5000 && vault_proto_config.base_withdrawal_spread < 5000 @ErrorCode::InvalidSpread,
+        constraint = vault_proto_config.token_a_drip_trigger_spread < 5000 && vault_proto_config.token_b_withdrawal_spread < 5000 @ErrorCode::InvalidSpread,
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 

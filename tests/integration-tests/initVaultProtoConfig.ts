@@ -15,8 +15,8 @@ export function testInitVaultProtoConfig() {
     const admin = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 10,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 10,
       admin: admin.publicKey,
     });
     const vaultProtoConfigAccount =
@@ -25,8 +25,12 @@ export function testInitVaultProtoConfig() {
       );
     // Make sure the granularity is actually 1 day (24 hours) in second
     vaultProtoConfigAccount.granularity.toString().should.equal("86400");
-    vaultProtoConfigAccount.triggerDcaSpread.toString().should.equal("5");
-    vaultProtoConfigAccount.baseWithdrawalSpread.toString().should.equal("10");
+    vaultProtoConfigAccount.tokenADripTriggerSpread
+      .toString()
+      .should.equal("5");
+    vaultProtoConfigAccount.tokenBWithdrawalSpread
+      .toString()
+      .should.equal("10");
     vaultProtoConfigAccount.admin
       .toString()
       .should.equal(admin.publicKey.toString());
@@ -36,8 +40,8 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: -10,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 5,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
     });
     const vaultProtoConfigAccount =
@@ -52,8 +56,8 @@ export function testInitVaultProtoConfig() {
     try {
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: 0,
-        triggerDCASpread: 5,
-        baseWithdrawalSpread: 5,
+        tokenADripTriggerSpread: 5,
+        tokenBWithdrawalSpread: 5,
         admin: generatePair().publicKey,
       });
       throw new Error();
@@ -69,18 +73,18 @@ export function testInitVaultProtoConfig() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: "1o" as any as number,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 5,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
     }).should.be.rejectedWith(new RegExp(".*Invalid character"));
   });
 
-  it("errors when triggerDCASpread is not within u16 bound", async () => {
+  it("errors when token_a_drip_trigger_spread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
-      triggerDCASpread: 70000,
-      baseWithdrawalSpread: 5,
+      tokenADripTriggerSpread: 70000,
+      tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
       new RegExp(
@@ -89,12 +93,12 @@ export function testInitVaultProtoConfig() {
     );
   });
 
-  it("errors when baseWithdrawalSpread is not within u16 bound", async () => {
+  it("errors when token_b_withdrawal_spread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 70000,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 70000,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
       new RegExp(
@@ -103,13 +107,13 @@ export function testInitVaultProtoConfig() {
     );
   });
 
-  it("errors when triggerDCASpread is ge than 5000", async () => {
+  it("errors when token_a_drip_trigger_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
     try {
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.MONTHLY,
-        triggerDCASpread: 5000,
-        baseWithdrawalSpread: 5,
+        tokenADripTriggerSpread: 5000,
+        tokenBWithdrawalSpread: 5,
         admin: generatePair().publicKey,
       });
     } catch (e) {
@@ -120,13 +124,13 @@ export function testInitVaultProtoConfig() {
     }
   });
 
-  it("errors when baseWithdrawalSpread is ge than 5000", async () => {
+  it("errors when token_b_withdrawal_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
     try {
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.MONTHLY,
-        triggerDCASpread: 5,
-        baseWithdrawalSpread: 5000,
+        tokenADripTriggerSpread: 5,
+        tokenBWithdrawalSpread: 5000,
         admin: generatePair().publicKey,
       });
     } catch (e) {

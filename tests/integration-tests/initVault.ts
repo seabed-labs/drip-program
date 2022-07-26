@@ -36,8 +36,8 @@ export function testInitVault() {
       ),
       VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
-        triggerDCASpread: 5,
-        baseWithdrawalSpread: 5,
+        tokenADripTriggerSpread: 5,
+        tokenBWithdrawalSpread: 5,
         admin: generatePair().publicKey,
       }),
     ]);
@@ -85,8 +85,8 @@ export function testInitVault() {
       TokenUtil.fetchTokenAccountInfo(vaultTokenB_ATA),
     ]);
 
-    // TODO(matcha): Somehow test vaultAccount.dcaActivationTimestamp
-    vaultAccount.lastDcaPeriod.toString().should.equal("0");
+    // TODO(matcha): Somehow test vaultAccount.dripActivationTimestamp
+    vaultAccount.lastDripPeriod.toString().should.equal("0");
     vaultAccount.dripAmount.toString().should.equal("0");
 
     vaultAccount.protoConfig

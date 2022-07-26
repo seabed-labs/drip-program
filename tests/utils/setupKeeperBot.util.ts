@@ -169,7 +169,7 @@ export function setupKeeperBotUtil() {
     const environment = process.env.ENV ?? "LOCALNET";
     const keeperBotConfig = {
       environment,
-      triggerDCA: configs,
+      dripSPLTokenSwap: configs,
     };
     if (fs.existsSync("../drip-keeper/configs/")) {
       if (fs.existsSync(`../drip-keeper/configs/${environment}.yaml`)) {

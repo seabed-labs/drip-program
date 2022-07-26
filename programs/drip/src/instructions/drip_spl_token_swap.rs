@@ -21,16 +21,16 @@ use std::ops::Deref;
 #[derive(Clone)]
 pub struct TokenSwap;
 
-impl anchor_lang::Id for TokenSwap {
+impl Id for TokenSwap {
     fn id() -> Pubkey {
         spl_token_swap::ID
     }
 }
 
 #[derive(Accounts)]
-pub struct TriggerDCA<'info> {
-    // User that triggers the DCA
-    pub dca_trigger_source: Signer<'info>,
+pub struct DripSPLTokenSwap<'info> {
+    // User that triggers the Drip
+    pub drip_trigger_source: Signer<'info>,
 
     #[account(
         // mut needed
@@ -58,7 +58,7 @@ pub struct TriggerDCA<'info> {
             last_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = last_vault_period.bump,
-        constraint = last_vault_period.period_id == vault.last_dca_period,
+        constraint = last_vault_period.period_id == vault.last_drip_period,
         constraint = last_vault_period.vault == vault.key()
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
@@ -72,7 +72,7 @@ pub struct TriggerDCA<'info> {
             current_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = current_vault_period.bump,
-        constraint = current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap(),
+        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap(),
         constraint = current_vault_period.vault == vault.key()
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
@@ -144,13 +144,13 @@ pub struct TriggerDCA<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = dca_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
-        constraint = dca_trigger_fee_token_a_account.state == AccountState::Initialized
+        constraint = drip_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = drip_trigger_fee_token_a_account.state == AccountState::Initialized
     )]
-    pub dca_trigger_fee_token_a_account: Box<Account<'info, TokenAccount>>,
+    pub drip_trigger_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
-    // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger DCA source cannot game the system
+    // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger source cannot game the system
     // And add appropriate checks
     #[account(
         constraint = swap.owner == &spl_token_swap::ID
@@ -186,7 +186,7 @@ pub struct TriggerDCA<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
+pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     // TODO(Mocha): We could do this check as an eDSL constraint with custom error
@@ -221,8 +221,8 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         return Err(ErrorCode::InvalidSwapFeeAccount.into());
     }
 
-    if !ctx.accounts.vault.is_dca_activated() {
-        return Err(ErrorCode::DuplicateDCAError.into());
+    if !ctx.accounts.vault.is_drip_activated() {
+        return Err(ErrorCode::DuplicateDripError.into());
     }
 
     /* STATE UPDATES (EFFECTS) */
@@ -239,15 +239,15 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         message: "vault b balance".to_string(),
     });
     // Use drip_amount becasue it may change after process_drip
-    let trigger_spread_amount = calculate_spread_amount(
+    let drip_trigger_spread_amount = calculate_spread_amount(
         ctx.accounts.vault.drip_amount,
-        ctx.accounts.vault_proto_config.trigger_dca_spread,
+        ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
     );
     let swap_amount = ctx
         .accounts
         .vault
         .drip_amount
-        .checked_sub(trigger_spread_amount)
+        .checked_sub(drip_trigger_spread_amount)
         .unwrap();
 
     let vault = &mut ctx.accounts.vault;
@@ -256,11 +256,11 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         ctx.accounts.vault_proto_config.granularity,
     );
 
-    let dca_trigger_fee_transfer = TransferToken::new(
+    let drip_trigger_fee_transfer = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_a_account,
-        &ctx.accounts.dca_trigger_fee_token_a_account,
-        trigger_spread_amount,
+        &ctx.accounts.drip_trigger_fee_token_a_account,
+        drip_trigger_spread_amount,
     );
 
     /* MANUAL CPI (INTERACTIONS) */
@@ -280,16 +280,16 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
         swap_amount,
     )?;
 
-    dca_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
+    drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
 
-    ctx.accounts.dca_trigger_fee_token_a_account.reload()?;
+    ctx.accounts.drip_trigger_fee_token_a_account.reload()?;
     ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
 
-    let new_dca_trigger_fee_balance_a = ctx.accounts.dca_trigger_fee_token_a_account.amount;
+    let new_drip_trigger_fee_balance_a = ctx.accounts.drip_trigger_fee_token_a_account.amount;
     emit!(Log {
-        data: Some(new_dca_trigger_fee_balance_a),
-        message: "new dca trigger fee a balance".to_string(),
+        data: Some(new_drip_trigger_fee_balance_a),
+        message: "new drip trigger fee a balance".to_string(),
     });
 
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
@@ -314,7 +314,7 @@ pub fn handler(ctx: Context<TriggerDCA>) -> Result<()> {
 
     let current_period_mut = &mut ctx.accounts.current_vault_period;
     current_period_mut.update_twap(&ctx.accounts.last_vault_period, swap_amount, received_b);
-    current_period_mut.update_dca_timestamp();
+    current_period_mut.update_drip_timestamp();
 
     Ok(())
 }

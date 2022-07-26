@@ -25,15 +25,15 @@ export const sleep = async (ms: number) => {
 
 export const deployVaultProtoConfig = async (
   granularity: number,
-  triggerDCASpread: number,
-  baseWithdrawalSpread: number,
+  tokenADripTriggerSpread: number,
+  tokenBWithdrawalSpread: number,
   admin: PublicKey
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
   await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
     granularity,
-    triggerDCASpread,
-    baseWithdrawalSpread,
+    tokenADripTriggerSpread,
+    tokenBWithdrawalSpread,
     admin,
   });
   return vaultProtoConfigKeypair.publicKey;
@@ -85,7 +85,6 @@ export const deployVaultPeriod = async (
     tokenBMint,
     period
   );
-  console.log("initVaultPeriod", txHash);
   return vaultPeriodPDA;
 };
 
@@ -93,33 +92,22 @@ export const deployVaultPeriod = async (
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
-  tokenA: Token,
-  shouldLog: boolean = false
+  tokenA: Token
 ) => {
   return async ({
-    dcaCycles,
+    numberOfCycles,
     newUserEndVaultPeriod,
     mintAmount,
   }: {
-    dcaCycles: number;
+    numberOfCycles: number;
     newUserEndVaultPeriod: PublicKey;
     mintAmount: number;
   }) => {
     const user2 = generatePair();
-    if (shouldLog) {
-      console.log(
-        "user2:",
-        user2.publicKey.toBase58(),
-        user2.secretKey.toString()
-      );
-    }
     await SolUtils.fundAccount(user2.publicKey, SolUtils.solToLamports(0.2));
     const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
       user2.publicKey
     );
-    if (shouldLog) {
-      console.log("user2TokenAAccount:", user2TokenAAccount.toBase58());
-    }
     const user2MintAmount = await TokenUtil.scaleAmount(
       amount(mintAmount, Denom.Thousand),
       tokenA
@@ -138,19 +126,11 @@ export const depositWithNewUserWrapper = (
       user2,
       tokenA,
       user2MintAmount,
-      new u64(dcaCycles),
+      new u64(numberOfCycles),
       vault,
       newUserEndVaultPeriod,
       user2TokenAAccount
     );
-    if (shouldLog) {
-      console.log("user2PositionNFTMint:", user2PositionNFTMint.toBase58());
-      console.log("user2PositionAccount:", user2PositionAccount.toBase58());
-      console.log(
-        "user2PositionNFTAccount:",
-        user2PositionNFTAccount.toBase58()
-      );
-    }
   };
 };
 
@@ -158,7 +138,7 @@ export const depositToVault = async (
   user: Keypair,
   tokenA: Token,
   tokenADepositAmount: u64,
-  dcaCycles: u64,
+  numberOfSwaps: u64,
   vault: PublicKey,
   vaultPeriodEnd: PublicKey,
   userTokenAAccount: PublicKey
@@ -179,7 +159,7 @@ export const depositToVault = async (
   await VaultUtil.deposit({
     params: {
       tokenADepositAmount,
-      dcaCycles,
+      numberOfSwaps,
     },
     accounts: {
       vault,
@@ -279,9 +259,9 @@ export const deploySwap = async (
   ];
 };
 
-export const triggerDCAWrapper = (
+export const dripSPLTokenSwapWrapper = (
   user: Keypair,
-  dcaTriggerFeeTokenAAccount: PublicKey,
+  dripTriggerFeeTokenAAccount: PublicKey,
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   vaultTokenA_ATA: PublicKey,
@@ -295,16 +275,19 @@ export const triggerDCAWrapper = (
   swapAuthority: PublicKey,
   swap: PublicKey
 ) => {
-  return async (previousDCAPeriod: PublicKey, currentDCAPeriod: PublicKey) => {
-    await VaultUtil.triggerDCA(
+  return async (
+    previousDripPeriod: PublicKey,
+    currentDripPeriod: PublicKey
+  ) => {
+    await VaultUtil.dripSPLTokenSwap(
       user,
-      dcaTriggerFeeTokenAAccount,
+      dripTriggerFeeTokenAAccount,
       vault,
       vaultProtoConfig,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
-      previousDCAPeriod,
-      currentDCAPeriod,
+      previousDripPeriod,
+      currentDripPeriod,
       tokenAMint,
       tokenBMint,
       swapTokenMint,
@@ -344,7 +327,6 @@ export const withdrawBWrapper = (
       tokenBMint,
       userTokenBAccount
     );
-    console.log("withdrawB", txHash);
   };
 };
 
@@ -386,6 +368,5 @@ export const closePositionWrapper = (
       tokenAMint,
       tokenBMint
     );
-    console.log("closePosition", txHash);
   };
 };

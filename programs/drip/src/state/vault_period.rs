@@ -16,8 +16,8 @@ pub struct VaultPeriod {
     pub dar: u64, // 8
     // Time weighted average price of asset A expressed in asset B from period 1 to this period
     pub twap: u128, // 16
-    // Timestamp for the dca
-    pub dca_timestamp: i64, //8
+    // Timestamp for the drip
+    pub drip_timestamp: i64, //8
     // Bump
     pub bump: u8, // 1
 }
@@ -32,7 +32,7 @@ impl VaultPeriod {
         self.period_id = period_id;
         self.twap = 0;
         self.dar = 0;
-        self.dca_timestamp = 0;
+        self.drip_timestamp = 0;
 
         match bump {
             Some(val) => {
@@ -61,9 +61,9 @@ impl VaultPeriod {
         self.twap = calculate_new_twap_amount(last_period.twap, self.period_id, price);
     }
 
-    pub fn update_dca_timestamp(&mut self) {
+    pub fn update_drip_timestamp(&mut self) {
         let now = Clock::get().unwrap().unix_timestamp;
-        self.dca_timestamp = now;
+        self.drip_timestamp = now;
     }
 }
 

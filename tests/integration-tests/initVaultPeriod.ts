@@ -36,8 +36,8 @@ export function testInitVaultPeriod() {
       ),
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
-        triggerDCASpread: 5,
-        baseWithdrawalSpread: 5,
+        tokenADripTriggerSpread: 5,
+        tokenBWithdrawalSpread: 5,
         admin: generatePair().publicKey,
       }),
     ]);
@@ -101,6 +101,6 @@ export function testInitVaultPeriod() {
     vaultPeriodAccount.periodId.toString().should.equal("69");
     vaultPeriodAccount.twap.toString().should.equal("0");
     vaultPeriodAccount.dar.toString().should.equal("0");
-    vaultPeriodAccount.dcaTimestamp.toString().should.equal("0");
+    vaultPeriodAccount.dripTimestamp.toString().should.equal("0");
   });
 }

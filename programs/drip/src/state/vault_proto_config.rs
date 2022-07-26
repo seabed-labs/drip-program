@@ -5,9 +5,9 @@ use super::traits::ByteSized;
 #[account]
 #[derive(Default)]
 pub struct VaultProtoConfig {
-    pub granularity: u64,            // 8
-    pub trigger_dca_spread: u16,     // 2
-    pub base_withdrawal_spread: u16, // 2
+    pub granularity: u64,                 // 8
+    pub token_a_drip_trigger_spread: u16, // 2
+    pub token_b_withdrawal_spread: u16,   // 2
     // to be used with the vault to modify certain fields (whitelist)
     pub admin: Pubkey, //32
 }
@@ -20,13 +20,13 @@ impl VaultProtoConfig {
     pub fn init(
         &mut self,
         granularity: u64,
-        trigger_dca_spread: u16,
+        drip_trigger_spread: u16,
         base_withdrawal_spread: u16,
         admin: Pubkey,
     ) {
         self.granularity = granularity;
-        self.trigger_dca_spread = trigger_dca_spread;
-        self.base_withdrawal_spread = base_withdrawal_spread;
+        self.token_a_drip_trigger_spread = drip_trigger_spread;
+        self.token_b_withdrawal_spread = base_withdrawal_spread;
         self.admin = admin;
     }
 }
