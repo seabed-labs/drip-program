@@ -5,6 +5,15 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 
+#[derive(Clone)]
+pub struct WhirlpoolProgram;
+
+impl anchor_lang::Id for WhirlpoolProgram {
+    fn id() -> Pubkey {
+        whirlpool::ID
+    }
+}
+
 #[derive(Accounts)]
 pub struct DripOrcaWhirlpool<'info> {
     // User that triggers the DCA
@@ -90,6 +99,7 @@ pub struct DripOrcaWhirlpool<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_a_account.owner == whirlpool.key(),
         constraint = swap_token_a_account.state == AccountState::Initialized,
     )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -98,6 +108,7 @@ pub struct DripOrcaWhirlpool<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = swap_token_b_account.owner == whirlpool.key(),
         constraint = swap_token_b_account.state == AccountState::Initialized
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -115,6 +126,8 @@ pub struct DripOrcaWhirlpool<'info> {
 
     #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
+
+    pub whirlpool_program: Program<'info, WhirlpoolProgram>,
 
     #[account(address = System::id())]
     pub system_program: Program<'info, System>,
