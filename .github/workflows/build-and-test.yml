@@ -32,7 +32,7 @@ jobs:
         if: steps.cache-cli-deps.outputs.cache-hit != 'true'
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.25.1
+          toolchain: 1.32.0
 
       - id: install-solana-tools
         if: steps.cache-cli-deps.outputs.cache-hit != 'true'
