@@ -232,6 +232,56 @@ export class VaultUtil extends TestUtil {
     return await this.provider.sendAndConfirm(tx, [user]);
   }
 
+  static async dripOrcaWhirlpool(params: {
+    user: Keypair | Signer;
+    dripFeeTokenAAccount: PublicKey;
+    vault: PublicKey;
+    vaultProtoConfig: PublicKey;
+    vaultTokenAAccount: PublicKey;
+    vaultTokenBAccount: PublicKey;
+    lastVaultPeriod: PublicKey;
+    currentVaultPeriod: PublicKey;
+    tokenAMint: PublicKey;
+    tokenBMint: PublicKey;
+    swapTokenAAccount: PublicKey;
+    swapTokenBAccount: PublicKey;
+    whirlpool: PublicKey;
+    tickArray0: PublicKey;
+    tickArray1: PublicKey;
+    tickArray2: PublicKey;
+    oracle: PublicKey;
+  }): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .dripOrcaWhirlpool()
+      .accounts({
+        dripTriggerSource: params.user.publicKey.toBase58(),
+        vault: params.vault.toBase58(),
+        vaultProtoConfig: params.vaultProtoConfig.toBase58(),
+        lastVaultPeriod: params.lastVaultPeriod.toBase58(),
+        currentVaultPeriod: params.currentVaultPeriod.toBase58(),
+        tokenAMint: params.tokenAMint.toBase58(),
+        tokenBMint: params.tokenBMint.toBase58(),
+        vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
+        vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
+        swapTokenAAccount: params.swapTokenAAccount.toBase58(),
+        swapTokenBAccount: params.swapTokenBAccount.toBase58(),
+        dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
+        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+        associatedTokenProgram:
+          ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        whirlpoolProgram: ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+        rent: ProgramUtil.rentProgram.programId.toBase58(),
+        whirlpool: params.whirlpool.toBase58(),
+        tickArray0: params.tickArray0.toBase58(),
+        tickArray1: params.tickArray1.toBase58(),
+        tickArray2: params.tickArray2.toBase58(),
+        oracle: params.oracle.toBase58(),
+      })
+      .transaction();
+    return await this.provider.sendAndConfirm(tx, [params.user]);
+  }
+
   static async withdrawB(
     withdrawer: Keypair | Signer,
     vault: PublicKey,
