@@ -70,10 +70,7 @@ export function testClosePosition() {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
     // sleep to progress to the next block
     await sleep(500);
-
-    user = generatePair();
-    bot = generatePair();
-    [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
+    [user, bot, tokenOwnerKeypair, payerKeypair] = generatePairs(4);
     await Promise.all([
       SolUtil.fundAccount(user.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(bot.publicKey, SolUtil.solToLamports(0.1)),

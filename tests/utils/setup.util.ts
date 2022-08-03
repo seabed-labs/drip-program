@@ -259,7 +259,7 @@ export const deploySPLTokenSwap = async (
 
 export const dripSPLTokenSwapWrapper = (
   user: Keypair,
-  dripTriggerFeeTokenAAccount: PublicKey,
+  dripFeeTokenAAccount: PublicKey,
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   vaultTokenA_ATA: PublicKey,
@@ -279,7 +279,7 @@ export const dripSPLTokenSwapWrapper = (
   ) => {
     await VaultUtil.dripSPLTokenSwap(
       user,
-      dripTriggerFeeTokenAAccount,
+      dripFeeTokenAAccount,
       vault,
       vaultProtoConfig,
       vaultTokenA_ATA,

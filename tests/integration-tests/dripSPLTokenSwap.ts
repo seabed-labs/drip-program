@@ -78,7 +78,6 @@ export function testDripSPLTokenSwap() {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
     // sleep to progress to the next block
     await sleep(500);
-
     user = generatePair();
     bot = generatePair();
     [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
@@ -91,21 +90,18 @@ export function testDripSPLTokenSwap() {
         SolUtil.solToLamports(0.1)
       ),
     ]);
-
     tokenA = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
       payerKeypair
     );
-
     tokenB = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
       payerKeypair
     );
-
     [
       swap,
       swapTokenMint,
@@ -170,7 +166,6 @@ export function testDripSPLTokenSwap() {
       vaultProtoConfig,
       [swap, swap2]
     );
-
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
