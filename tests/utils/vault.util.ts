@@ -18,7 +18,7 @@ import {
 } from "./common.util";
 import { BN } from "@project-serum/anchor";
 import { TokenUtil } from "./token.util";
-import { deployVault, deployVaultPeriod, depositToVault } from "./setup.util";
+import { deployVaultPeriod, depositToVault } from "./setup.util";
 import { SolUtil } from "./sol.util";
 
 export type VaultProtoConfigParams = {
@@ -186,7 +186,7 @@ export class VaultUtil extends TestUtil {
 
   static async dripSPLTokenSwap(
     user: Keypair | Signer,
-    dripTriggerFeeTokenAAccount: PublicKey,
+    dripFeeTokenAAccount: PublicKey,
     vault: PublicKey,
     vaultProtoConfig: PublicKey,
     vaultTokenAAccount: PublicKey,
@@ -206,7 +206,7 @@ export class VaultUtil extends TestUtil {
       .dripSplTokenSwap()
       .accounts({
         dripTriggerSource: user.publicKey.toBase58(),
-        dripTriggerFeeTokenAAccount: dripTriggerFeeTokenAAccount.toBase58(),
+        dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
         vault: vault.toBase58(),
         vaultProtoConfig: vaultProtoConfig.toBase58(),
         lastVaultPeriod: lastVaultPeriod.toBase58(),

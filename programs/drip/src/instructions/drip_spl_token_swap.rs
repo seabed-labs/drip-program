@@ -144,10 +144,10 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = drip_trigger_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
-        constraint = drip_trigger_fee_token_a_account.state == AccountState::Initialized
+        constraint = drip_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = drip_fee_token_a_account.state == AccountState::Initialized
     )]
-    pub drip_trigger_fee_token_a_account: Box<Account<'info, TokenAccount>>,
+    pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
     // TODO: Read through process_swap and other IXs in spl-token-swap program and mirror checks here
     // TODO: Hard-code the swap liquidity pool pubkey to the vault account so that trigger source cannot game the system
@@ -259,7 +259,7 @@ pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
     let drip_trigger_fee_transfer = TransferToken::new(
         &ctx.accounts.token_program,
         &ctx.accounts.vault_token_a_account,
-        &ctx.accounts.drip_trigger_fee_token_a_account,
+        &ctx.accounts.drip_fee_token_a_account,
         drip_trigger_spread_amount,
     );
 
@@ -282,11 +282,11 @@ pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
 
     drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
 
-    ctx.accounts.drip_trigger_fee_token_a_account.reload()?;
+    ctx.accounts.drip_fee_token_a_account.reload()?;
     ctx.accounts.vault_token_a_account.reload()?;
     ctx.accounts.vault_token_b_account.reload()?;
 
-    let new_drip_trigger_fee_balance_a = ctx.accounts.drip_trigger_fee_token_a_account.amount;
+    let new_drip_trigger_fee_balance_a = ctx.accounts.drip_fee_token_a_account.amount;
     emit!(Log {
         data: Some(new_drip_trigger_fee_balance_a),
         message: "new drip trigger fee a balance".to_string(),

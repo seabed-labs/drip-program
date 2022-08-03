@@ -39,7 +39,6 @@ export function testInitVaultPeriod() {
       }),
     ]);
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
-
     const [tokenA, tokenB] = await Promise.all([
       TokenUtil.createMockUSDCMint(),
       TokenUtil.createMockBTCMint(),

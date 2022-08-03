@@ -39,10 +39,10 @@ export class TokenUtil extends TestUtil {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey = null,
     decimals: number = 6,
-    funderKeypair: Keypair = generatePair(),
-    shouldFund = true
+    funderKeypair?: Keypair
   ): Promise<Token> {
-    if (shouldFund) {
+    if (!funderKeypair) {
+      funderKeypair = generatePair();
       await SolUtil.fundAccount(
         funderKeypair.publicKey,
         SolUtil.solToLamports(0.1)
