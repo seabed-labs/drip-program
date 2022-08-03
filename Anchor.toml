@@ -9,9 +9,7 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-# TODO(Mocha): Remove below and uncomment the other line
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel tests/integration-tests/dripOrcaWhirlpool.ts"
-#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel tests/integration-tests/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel tests/integration-tests/*.ts"
 
 # Load other programs into anchor
 [[test.genesis]]
