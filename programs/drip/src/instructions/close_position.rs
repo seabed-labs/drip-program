@@ -11,7 +11,7 @@ use spl_token::state::AccountState;
 // TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
-    /* DCAF ACCOUNTS */
+    /* DRIP ACCOUNTS */
     #[account(
         // mut neeed
         mut,
@@ -38,7 +38,7 @@ pub struct ClosePosition<'info> {
             vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_i.bump,
-        constraint = vault_period_i.period_id == user_position.dca_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
         constraint = vault_period_i.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_i: Box<Account<'info, VaultPeriod>>,
@@ -52,8 +52,8 @@ pub struct ClosePosition<'info> {
         ],
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(
-            vault.last_dca_period,
-            user_position.dca_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
+            vault.last_drip_period,
+            user_position.drip_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
         ) @ErrorCode::InvalidVaultPeriod,
         constraint = vault_period_j.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
@@ -69,7 +69,7 @@ pub struct ClosePosition<'info> {
             vault_period_user_expiry.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_user_expiry.bump,
-        constraint = vault_period_user_expiry.period_id == user_position.dca_period_id_before_deposit
+        constraint = vault_period_user_expiry.period_id == user_position.drip_period_id_before_deposit
                 .checked_add(user_position.number_of_swaps)
                 .unwrap() @ErrorCode::InvalidVaultPeriod,
         constraint = vault_period_user_expiry.vault == vault.key() @ErrorCode::InvalidVaultReference
@@ -199,7 +199,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
         ctx.accounts.vault_period_i.twap,
         ctx.accounts.vault_period_j.twap,
         ctx.accounts.user_position.periodic_drip_amount,
-        ctx.accounts.vault_proto_config.trigger_dca_spread,
+        ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
     );
     let withdrawable_amount_b_before_fees = ctx
         .accounts
@@ -209,7 +209,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     // 2. Account for Withdrawal Spread on Token B
     let withdrawal_spread_amount_b = calculate_spread_amount(
         withdrawable_amount_b_before_fees,
-        ctx.accounts.vault_proto_config.base_withdrawal_spread,
+        ctx.accounts.vault_proto_config.token_b_withdrawal_spread,
     );
     let withdrawable_amount_b = withdrawable_amount_b_before_fees
         .checked_sub(withdrawal_spread_amount_b)

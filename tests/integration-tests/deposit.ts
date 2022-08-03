@@ -65,8 +65,8 @@ export function testDeposit() {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
-      triggerDCASpread: 5,
-      baseWithdrawalSpread: 5,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
@@ -146,7 +146,7 @@ export function testDeposit() {
     await VaultUtil.deposit({
       params: {
         tokenADepositAmount: depositAmount,
-        dcaCycles: new u64(69),
+        numberOfSwaps: new u64(69),
       },
       accounts: {
         vault: vaultPubkey,
@@ -187,7 +187,7 @@ export function testDeposit() {
     //   - Floor it to 10 seconds check that its valid (easy solution)
     //   - Figure out how to freeze/set the validator clock time to something manually (ideal solution)
     // positionAccount.depositTimestamp.should.equal("")
-    positionAccount.dcaPeriodIdBeforeDeposit.toString().should.equal("0");
+    positionAccount.dripPeriodIdBeforeDeposit.toString().should.equal("0");
     positionAccount.periodicDripAmount.toString().should.equal("144927536");
     positionAccount.numberOfSwaps.toString().should.equal("69");
     positionAccount.depositedTokenAAmount

@@ -17,7 +17,7 @@ import {
   depositToVault,
   depositWithNewUserWrapper,
   sleep,
-  triggerDCAWrapper,
+  dripSPLTokenSwapWrapper,
   withdrawBWrapper,
 } from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
@@ -62,7 +62,7 @@ export function testWithdrawB() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
-  let triggerDCA;
+  let dripTrigger;
   let withdrawB;
   let depositWithNewUser;
 
@@ -179,7 +179,7 @@ export function testWithdrawB() {
         userTokenAAccount
       );
 
-    triggerDCA = triggerDCAWrapper(
+    dripTrigger = dripSPLTokenSwapWrapper(
       user,
       botTokenAAccount,
       vaultPDA.publicKey,
@@ -216,13 +216,13 @@ export function testWithdrawB() {
     );
   });
 
-  it("should be able to withdraw in the middle of the DCA", async () => {
+  it("should be able to withdraw in the middle of the drip", async () => {
     const [userTokenBAccountBefore] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
     ]);
 
     for (let i = 0; i < 2; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -248,13 +248,13 @@ export function testWithdrawB() {
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
   });
 
-  it("should be able to withdraw at the end of the DCA", async () => {
+  it("should be able to withdraw at the end of the drip", async () => {
     const [userTokenBAccountBefore] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
     ]);
 
     for (let i = 0; i < 4; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -280,9 +280,9 @@ export function testWithdrawB() {
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
   });
 
-  it("should be able to withdraw in the middle of the DCA and at the end", async () => {
+  it("should be able to withdraw in the middle of the drip and at the end", async () => {
     for (let i = 0; i < 2; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -297,7 +297,7 @@ export function testWithdrawB() {
     userTokenBAccountAfter.balance.toString().should.equal("497753433");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
     for (let i = 2; i < 4; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -317,11 +317,11 @@ export function testWithdrawB() {
   it("should not be able to withdraw twice in the same period", async () => {
     await depositWithNewUser({
       mintAmount: 3,
-      dcaCycles: 2,
+      numberOfCycles: 2,
       newUserEndVaultPeriod: vaultPeriods[2].publicKey,
     });
     for (let i = 0; i < 2; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );

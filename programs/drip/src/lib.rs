@@ -44,8 +44,8 @@ pub mod drip {
         withdraw_b::handler(ctx)
     }
 
-    pub fn trigger_dca(ctx: Context<TriggerDCA>) -> Result<()> {
-        trigger_dca::handler(ctx)
+    pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
+        drip_spl_token_swap::handler(ctx)
     }
 
     pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {

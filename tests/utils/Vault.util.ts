@@ -12,8 +12,8 @@ import { BN } from "@project-serum/anchor";
 
 export type VaultProtoConfigParams = {
   granularity: Granularity;
-  triggerDCASpread: number;
-  baseWithdrawalSpread: number;
+  tokenADripTriggerSpread: number;
+  tokenBWithdrawalSpread: number;
   admin: PublicKey;
 };
 
@@ -35,7 +35,7 @@ export interface DepositTxParams {
   };
   params: {
     tokenADepositAmount: u64;
-    dcaCycles: u64;
+    numberOfSwaps: u64;
   };
 }
 
@@ -47,8 +47,8 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .initVaultProtoConfig({
         granularity: new BN(vaultProtoConfig.granularity.toString()),
-        triggerDcaSpread: vaultProtoConfig.triggerDCASpread,
-        baseWithdrawalSpread: vaultProtoConfig.baseWithdrawalSpread,
+        tokenADripTriggerSpread: vaultProtoConfig.tokenADripTriggerSpread,
+        tokenBWithdrawalSpread: vaultProtoConfig.tokenBWithdrawalSpread,
         admin: vaultProtoConfig.admin,
       })
       .accounts({
@@ -135,7 +135,7 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .deposit({
         tokenADepositAmount: input.params.tokenADepositAmount,
-        dcaCycles: input.params.dcaCycles,
+        numberOfSwaps: input.params.numberOfSwaps,
       })
       .accounts({
         vault: input.accounts.vault.toBase58(),
@@ -161,9 +161,9 @@ export class VaultUtil extends TestUtil {
     ]);
   }
 
-  static async triggerDCA(
+  static async dripSPLTokenSwap(
     user: Keypair | Signer,
-    dcaTriggerFeeTokenAAccount: PublicKey,
+    dripTriggerFeeTokenAAccount: PublicKey,
     vault: PublicKey,
     vaultProtoConfig: PublicKey,
     vaultTokenAAccount: PublicKey,
@@ -180,10 +180,10 @@ export class VaultUtil extends TestUtil {
     swap: PublicKey
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
-      .triggerDca()
+      .dripSplTokenSwap()
       .accounts({
-        dcaTriggerSource: user.publicKey.toBase58(),
-        dcaTriggerFeeTokenAAccount: dcaTriggerFeeTokenAAccount.toBase58(),
+        dripTriggerSource: user.publicKey.toBase58(),
+        dripTriggerFeeTokenAAccount: dripTriggerFeeTokenAAccount.toBase58(),
         vault: vault.toBase58(),
         vaultProtoConfig: vaultProtoConfig.toBase58(),
         lastVaultPeriod: lastVaultPeriod.toBase58(),
@@ -207,10 +207,6 @@ export class VaultUtil extends TestUtil {
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [user]);
-    // return await ProgramUtil.dripProgram.rpc.triggerDca({
-    //   accounts,
-    //   signers: [user],
-    // });
   }
 
   static async withdrawB(
@@ -248,11 +244,6 @@ export class VaultUtil extends TestUtil {
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);
-    // // console.log(JSON.stringify(accounts, undefined, 2));
-    // return await ProgramUtil.dripProgram.rpc.withdrawB({
-    //   accounts: accounts,
-    //   signers: [withdrawer],
-    // });
   }
 
   static async closePosition(
@@ -298,10 +289,5 @@ export class VaultUtil extends TestUtil {
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);
-    // console.log(JSON.stringify(accounts, undefined, 2));
-    // return await ProgramUtil.dripProgram.rpc.closePosition({
-    //   accounts,
-    //   signers: [withdrawer],
-    // });
   }
 }

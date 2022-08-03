@@ -8,8 +8,8 @@ pub enum ErrorCode {
     CannotGetVaultBump,
     #[msg("Cannot get vault_period bump")]
     CannotGetVaultPeriodBump,
-    #[msg("DCA already triggered for the current period")]
-    DuplicateDCAError,
+    #[msg("Drip already triggered for the current period")]
+    DuplicateDripError,
     #[msg("Swap did not complete")]
     IncompleteSwapError,
     #[msg("Granularity must be an integer larger than 0")]

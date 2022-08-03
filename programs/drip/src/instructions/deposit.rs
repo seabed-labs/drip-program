@@ -12,7 +12,7 @@ use spl_token::instruction::AuthorityType;
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositParams {
     token_a_deposit_amount: u64,
-    dca_cycles: u64,
+    number_of_swaps: u64,
 }
 
 #[derive(Accounts)]
@@ -39,9 +39,9 @@ pub struct Deposit<'info> {
         mut,
         has_one = vault,
         constraint = {
-            params.dca_cycles > 0 &&
+            params.number_of_swaps > 0 &&
             vault_period_end.period_id > 0 &&
-            vault_period_end.period_id == vault.last_dca_period.checked_add(params.dca_cycles).unwrap()
+            vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap()
         }
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
@@ -127,7 +127,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
     let periodic_drip_amount =
-        calculate_periodic_drip_amount(params.token_a_deposit_amount, params.dca_cycles);
+        calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps);
 
     if periodic_drip_amount == 0 {
         return Err(PeriodicDripAmountIsZero.into());
@@ -152,8 +152,8 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         ctx.accounts.vault.key(),
         ctx.accounts.user_position_nft_mint.key(),
         params.token_a_deposit_amount,
-        ctx.accounts.vault.last_dca_period,
-        params.dca_cycles,
+        ctx.accounts.vault.last_drip_period,
+        params.number_of_swaps,
         periodic_drip_amount,
         ctx.bumps.get("user_position"),
     )?;

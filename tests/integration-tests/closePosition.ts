@@ -18,7 +18,7 @@ import {
   depositToVault,
   depositWithNewUserWrapper,
   sleep,
-  triggerDCAWrapper,
+  dripSPLTokenSwapWrapper,
 } from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -62,7 +62,7 @@ export function testClosePosition() {
   let swapFeeAccount: PublicKey;
   let swapAuthority: PublicKey;
 
-  let triggerDCA;
+  let dripTrigger;
   let closePosition;
   let depositWithNewUser;
 
@@ -181,7 +181,7 @@ export function testClosePosition() {
 
     userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
 
-    triggerDCA = triggerDCAWrapper(
+    dripTrigger = dripSPLTokenSwapWrapper(
       bot,
       botTokenAAccount,
       vaultPDA.publicKey,
@@ -221,7 +221,7 @@ export function testClosePosition() {
     );
   });
 
-  it("should be able to close position before first DCA", async () => {
+  it("should be able to close position before first drip", async () => {
     await userPosition.approve(
       userPositionNFTAccount,
       vaultPDA.publicKey,
@@ -263,9 +263,9 @@ export function testClosePosition() {
     vault_After.dripAmount.toString().should.equal("0");
   });
 
-  it("should be able to close position in the middle of the DCA", async () => {
+  it("should be able to close position in the middle of the drip", async () => {
     for (let i = 0; i < 2; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -313,9 +313,9 @@ export function testClosePosition() {
     vault_After.dripAmount.toString().should.equal("0");
   });
 
-  it("should be able to close position at the end of the DCA", async () => {
+  it("should be able to close position at the end of the drip", async () => {
     for (let i = 0; i < 4; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -363,14 +363,14 @@ export function testClosePosition() {
     vault_After.dripAmount.toString().should.equal("0");
   });
 
-  it("should be able to close position past the end of the DCA", async () => {
+  it("should be able to close position past the end of the drip", async () => {
     await depositWithNewUser({
       mintAmount: 3,
-      dcaCycles: 5,
+      numberOfCycles: 5,
       newUserEndVaultPeriod: vaultPeriods[5].publicKey,
     });
     for (let i = 0; i < 5; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -413,7 +413,7 @@ export function testClosePosition() {
   });
 
   it("should fail if invalid vault periods are provided", async () => {
-    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await dripTrigger(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     await sleep(1500);
     await userPosition.approve(
       userPositionNFTAccount,
@@ -442,7 +442,7 @@ export function testClosePosition() {
         ).should.not.be.undefined();
       }
     }
-    await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    await dripTrigger(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
     for (const [i, j, k] of testCases) {
       try {
         await closePosition(

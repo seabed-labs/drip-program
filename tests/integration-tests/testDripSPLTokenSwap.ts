@@ -16,7 +16,7 @@ import {
   deployVaultProtoConfig,
   depositToVault,
   sleep,
-  triggerDCAWrapper,
+  dripSPLTokenSwapWrapper,
 } from "../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -24,9 +24,9 @@ import { AccountUtil } from "../utils/Account.util";
 import { findError } from "../utils/error.util";
 import { initLog } from "../utils/log.util";
 
-describe("#triggerDCA", testTriggerDCA);
+describe("#dripSPLTokenSwap", testDripSPLTokenSwap);
 
-export function testTriggerDCA() {
+export function testDripSPLTokenSwap() {
   initLog();
 
   let tokenOwnerKeypair: Keypair;
@@ -72,7 +72,7 @@ export function testTriggerDCA() {
   let swapFeeAccount3: PublicKey;
   let swapAuthority3: PublicKey;
 
-  let triggerDCA;
+  let dripTrigger;
 
   beforeEach(async () => {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
@@ -213,7 +213,7 @@ export function testTriggerDCA() {
       userTokenAAccount
     );
 
-    triggerDCA = triggerDCAWrapper(
+    dripTrigger = dripSPLTokenSwapWrapper(
       bot,
       botTokenAAcount,
       vaultPDA.publicKey,
@@ -231,8 +231,8 @@ export function testTriggerDCA() {
     );
   });
 
-  it("should trigger DCA twice with expected TWAP and Balance values", async () => {
-    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+  it("should trigger drip twice with expected TWAP and Balance values", async () => {
+    await dripTrigger(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
 
     let [
       vaultTokenAAccountAfter,
@@ -248,16 +248,16 @@ export function testTriggerDCA() {
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[1].publicKey),
     ]);
 
-    vaultAfter.lastDcaPeriod.toString().should.equal("1");
+    vaultAfter.lastDripPeriod.toString().should.equal("1");
     vaultTokenAAccountAfter.balance.toString().should.equal("750000000");
     vaultTokenBAccountAfter.balance.toString().should.equal("249063328");
     botTokenAAccountAfter.balance.toString().should.equal("125000");
     // Calculated manually by doing b/a
     lastVaultPeriod.twap.toString().should.equal("18386823290694860353");
-    lastVaultPeriod.dcaTimestamp.toString().should.not.equal("0");
+    lastVaultPeriod.dripTimestamp.toString().should.not.equal("0");
 
     await sleep(1500);
-    await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+    await dripTrigger(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
 
     [
       vaultTokenAAccountAfter,
@@ -273,15 +273,15 @@ export function testTriggerDCA() {
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[2].publicKey),
     ]);
 
-    vaultAfter.lastDcaPeriod.toString().should.equal("2");
+    vaultAfter.lastDripPeriod.toString().should.equal("2");
     vaultTokenAAccountAfter.balance.toString().should.equal("500000000");
     vaultTokenBAccountAfter.balance.toString().should.equal("498002435");
     botTokenAAccountAfter.balance.toString().should.equal("250000");
     lastVaultPeriod.twap.toString().should.equal("18382238052084394572");
   });
 
-  it("should trigger DCA with inverted swap", async () => {
-    await triggerDCAWrapper(
+  it("should trigger drip with inverted swap", async () => {
+    await dripSPLTokenSwapWrapper(
       bot,
       botTokenAAcount,
       vaultPDA.publicKey,
@@ -302,9 +302,9 @@ export function testTriggerDCA() {
     )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
   });
 
-  it("should trigger DCA dca_cyles number of times", async () => {
+  it("should trigger drip number_of_cycles number of times", async () => {
     for (let i = 0; i < 4; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
@@ -325,16 +325,16 @@ export function testTriggerDCA() {
     botTokenAAccountAfter.balance.toString().should.equal("500000");
   });
 
-  it("should fail to trigger DCA if vault token A balance is 0", async () => {
+  it("should fail to trigger drip if vault token A balance is 0", async () => {
     for (let i = 0; i < 4; i++) {
-      await triggerDCA(
+      await dripTrigger(
         vaultPeriods[i].publicKey,
         vaultPeriods[i + 1].publicKey
       );
       await sleep(1500);
     }
     try {
-      await triggerDCA(vaultPeriods[4].publicKey, vaultPeriods[5].publicKey);
+      await dripTrigger(vaultPeriods[4].publicKey, vaultPeriods[5].publicKey);
     } catch (e) {
       findError(
         e,
@@ -344,20 +344,20 @@ export function testTriggerDCA() {
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
-    await triggerDCA(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
+    await dripTrigger(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     try {
-      await triggerDCA(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
+      await dripTrigger(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
     } catch (e) {
       findError(
         e,
-        new RegExp(".*DCA already triggered for the current period")
+        new RegExp(".*Drip already triggered for the current period")
       ).should.not.be.undefined();
     }
   });
 
   it("should fail if non-whitelisted swaps is used", async () => {
     try {
-      await triggerDCAWrapper(
+      await dripSPLTokenSwapWrapper(
         bot,
         botTokenAAcount,
         vaultPDA.publicKey,

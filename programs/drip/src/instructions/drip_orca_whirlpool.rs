@@ -18,7 +18,7 @@ impl anchor_lang::Id for WhirlpoolProgram {
 
 #[derive(Accounts)]
 pub struct DripOrcaWhirlpool<'info> {
-    // User that triggers the DCA
+    // User that triggers the Drip
     pub drip_trigger_source: Signer<'info>,
 
     #[account(
@@ -47,7 +47,7 @@ pub struct DripOrcaWhirlpool<'info> {
             last_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = last_vault_period.bump,
-        constraint = last_vault_period.period_id == vault.last_dca_period,
+        constraint = last_vault_period.period_id == vault.last_drip_period,
         constraint = last_vault_period.vault == vault.key()
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
@@ -61,7 +61,7 @@ pub struct DripOrcaWhirlpool<'info> {
             current_vault_period.period_id.to_string().as_bytes().as_ref()
         ],
         bump = current_vault_period.bump,
-        constraint = current_vault_period.period_id == vault.last_dca_period.checked_add(1).unwrap(),
+        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap(),
         constraint = current_vault_period.vault == vault.key()
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,

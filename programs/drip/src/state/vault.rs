@@ -20,11 +20,11 @@ pub struct Vault {
 
     // Data
     // 1 to N
-    pub last_dca_period: u64,          // 8
-    pub drip_amount: u64,              // 8
-    pub dca_activation_timestamp: i64, // 8
-    pub bump: u8,                      // 1
-    pub limit_swaps: bool,             // 1
+    pub last_drip_period: u64,          // 8
+    pub drip_amount: u64,               // 8
+    pub drip_activation_timestamp: i64, // 8
+    pub bump: u8,                       // 1
+    pub limit_swaps: bool,              // 1
 }
 
 impl<'info> Vault {
@@ -50,14 +50,14 @@ impl<'info> Vault {
         self.whitelisted_swaps = whitelisted_swaps;
         self.limit_swaps = limit_swaps;
 
-        self.last_dca_period = 0;
+        self.last_drip_period = 0;
         self.drip_amount = 0;
 
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
         // TODO: Use checked_xyz
-        self.dca_activation_timestamp = now - now % granularity as i64;
+        self.drip_activation_timestamp = now - now % granularity as i64;
 
         match bump {
             Some(val) => {
@@ -81,19 +81,19 @@ impl<'info> Vault {
 
     pub fn process_drip(&mut self, current_period: &Account<VaultPeriod>, granularity: u64) {
         self.drip_amount = self.drip_amount.checked_sub(current_period.dar).unwrap();
-        self.last_dca_period = current_period.period_id;
+        self.last_drip_period = current_period.period_id;
 
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
         // TODO: Use checked_xyz
         // TODO(matcha): Make sure this makes sense (think through it)
-        self.dca_activation_timestamp = (now - now % granularity as i64) + granularity as i64;
+        self.drip_activation_timestamp = (now - now % granularity as i64) + granularity as i64;
     }
 
-    pub fn is_dca_activated(&self) -> bool {
+    pub fn is_drip_activated(&self) -> bool {
         let now = Clock::get().unwrap().unix_timestamp;
-        now >= self.dca_activation_timestamp
+        now >= self.drip_activation_timestamp
     }
 
     pub fn seeds(&self) -> [&[u8]; 4] {

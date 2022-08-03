@@ -18,9 +18,10 @@ pub struct Position {
     // Total withdrawn B (amount sent to the user + amount sent to the treasury)
     pub withdrawn_token_b_amount: u64, // 8
     pub deposit_timestamp: i64,        // 8
-    // The DCA period ID of the vault that happened prior to the user opening this position
-    pub dca_period_id_before_deposit: u64, // 8
-    // Number of DCAs/Swaps that this position will be a part of
+    // The drip period ID of the vault that happened prior to the user opening this position
+    // The drip period ID of the vault that happened prior to the user opening this position
+    pub drip_period_id_before_deposit: u64, // 8
+    // Number of drips/Swaps that this position will be a part of
     pub number_of_swaps: u64, // 8
     // deposit_amount_token_a / number_of_swaps
     pub periodic_drip_amount: u64, // 8
@@ -34,8 +35,8 @@ impl Position {
         vault: Pubkey,
         position_nft: Pubkey,
         deposited_amount: u64,
-        last_dca_period: u64,
-        dca_cycles: u64,
+        last_drip_period: u64,
+        number_of_swaps: u64,
         periodic_drip_amount: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
@@ -44,8 +45,8 @@ impl Position {
         self.deposited_token_a_amount = deposited_amount;
         self.withdrawn_token_b_amount = 0;
         self.deposit_timestamp = Clock::get().unwrap().unix_timestamp;
-        self.dca_period_id_before_deposit = last_dca_period;
-        self.number_of_swaps = dca_cycles;
+        self.drip_period_id_before_deposit = last_drip_period;
+        self.number_of_swaps = number_of_swaps;
         self.periodic_drip_amount = periodic_drip_amount;
         self.is_closed = false;
         match bump {
