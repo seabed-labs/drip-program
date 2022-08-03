@@ -55,6 +55,7 @@ export type DeployVaultRes = {
   vaultProtoConfig: PublicKey;
   vaultPeriods: PublicKey[];
   userTokenAAccount: PublicKey;
+  botKeypair: Keypair;
   botTokenAAcount: PublicKey;
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
@@ -233,7 +234,7 @@ export class VaultUtil extends TestUtil {
   }
 
   static async dripOrcaWhirlpool(params: {
-    user: Keypair | Signer;
+    botKeypair: Keypair | Signer;
     dripFeeTokenAAccount: PublicKey;
     vault: PublicKey;
     vaultProtoConfig: PublicKey;
@@ -254,7 +255,7 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripOrcaWhirlpool()
       .accounts({
-        dripTriggerSource: params.user.publicKey.toBase58(),
+        dripTriggerSource: params.botKeypair.publicKey.toBase58(),
         vault: params.vault.toBase58(),
         vaultProtoConfig: params.vaultProtoConfig.toBase58(),
         lastVaultPeriod: params.lastVaultPeriod.toBase58(),
@@ -279,7 +280,7 @@ export class VaultUtil extends TestUtil {
         oracle: params.oracle.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, [params.user]);
+    return await this.provider.sendAndConfirm(tx, [params.botKeypair]);
   }
 
   static async withdrawB(
@@ -422,8 +423,8 @@ export class VaultUtil extends TestUtil {
       const vaultProtoConfigKeypair = generatePair();
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: 1,
-        triggerDCASpread: 10,
-        baseWithdrawalSpread: 10,
+        tokenADripTriggerSpread: 10,
+        tokenBWithdrawalSpread: 10,
         admin: adminKeypair.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;
@@ -486,6 +487,7 @@ export class VaultUtil extends TestUtil {
       vaultProtoConfig,
       vaultPeriods,
       userTokenAAccount,
+      botKeypair,
       botTokenAAcount,
       vaultTreasuryTokenBAccount,
       vaultTokenAAccount,
