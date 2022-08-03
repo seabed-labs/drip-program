@@ -156,7 +156,11 @@ pub struct DripOrcaWhirlpool<'info> {
     /// CHECK: Temporary
     pub tick_array_2: UncheckedAccount<'info>,
 
-    #[account(seeds = [b"oracle", whirlpool.key().as_ref()], bump)]
+    #[account(
+        seeds = [b"oracle", whirlpool.key().as_ref()], 
+        bump,
+        seeds::program = whirlpool_program.key()
+    )]
     // TODO: Figure this out
     /// Oracle is currently unused and will be enabled on subsequent updates
     /// CHECK: Temporary

@@ -1,18 +1,9 @@
-import {
-  DeployWhirlpoolRes,
-  FundedPositionParams,
-  InitWhirlpoolConfigRes,
-  InitWhirlpoolRes,
-  WhirlpoolUtil,
-} from "../utils/whirlpool.util";
-import { amount, Denom, generatePairs } from "../utils/common.util";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import "should";
+import { DeployWhirlpoolRes, WhirlpoolUtil } from "../utils/whirlpool.util";
 import { TokenUtil } from "../utils/token.util";
-import { Token, u64 } from "@solana/spl-token";
-import { TestUtil } from "../utils/config.util";
-import { SolUtil } from "../utils/sol.util";
-import { deployVaultProtoConfig } from "../utils/setup.util";
+import { dripOrcaWhirlpoolWrapper } from "../utils/setup.util";
 import { DeployVaultRes, VaultUtil } from "../utils/vault.util";
+import { AccountUtil } from "../utils/account.util";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
@@ -20,6 +11,8 @@ export function testDripOrcaWhirlpool() {
   let deployWhirlpoolRes: DeployWhirlpoolRes;
   let deployNonWhitelistedWhirlpoolRes: DeployWhirlpoolRes;
   let deployVaultRes: DeployVaultRes;
+
+  let dripTrigger;
 
   before(async () => {
     deployWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({});
@@ -36,9 +29,78 @@ export function testDripOrcaWhirlpool() {
       whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],
       tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
     });
+
+    dripTrigger = dripOrcaWhirlpoolWrapper(
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      deployWhirlpoolRes.tokenA.publicKey,
+      deployWhirlpoolRes.tokenB.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.tokenVaultAKeypair.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.tokenVaultBKeypair.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.whirlpool,
+      deployWhirlpoolRes.tickArrays[0],
+      deployWhirlpoolRes.tickArrays[1],
+      deployWhirlpoolRes.tickArrays[2],
+      deployWhirlpoolRes.initWhirlpoolRes.oracle
+    );
   });
 
-  it("should drip twice with expected TWAP and balance values", async () => {});
+  it("should drip once", async () => {
+    let [
+      vaultTokenAAccountBefore,
+      vaultTokenBAccountBefore,
+      botTokenAAccountBefore,
+      vaultBefore,
+      period0Before,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
+      AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+    ]);
+    botTokenAAccountBefore.balance.toNumber().should.equal(0);
+    vaultBefore.lastDripPeriod
+      .toNumber()
+      .should.equal(period0Before.periodId.toNumber());
+
+    await dripTrigger(
+      deployVaultRes.vaultPeriods[0],
+      deployVaultRes.vaultPeriods[1]
+    );
+    // let [
+    //   vaultTokenAAccountAfter,
+    //   vaultTokenBAccountAfter,
+    //   botTokenAAccountAfter,
+    //   vaultAfter,
+    //   period0After,
+    //   period1Before,
+    // ] = await Promise.all([
+    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
+    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
+    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
+    //   AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+    //   AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+    //   AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
+    // ]);
+    // vaultTokenAAccountBefore.balance
+    //   .gt(vaultTokenAAccountAfter.balance)
+    //   .should.be.true();
+    // vaultTokenBAccountBefore.balance
+    //   .lt(vaultTokenBAccountAfter.balance)
+    //   .should.be.true();
+    // botTokenAAccountBefore.balance
+    //   .lt(botTokenAAccountAfter.balance)
+    //   .should.be.true();
+    // period0Before.twap.lt(period0After.twap).should.be.true();
+    // vaultAfter.lastDripPeriod
+    //   .toNumber()
+    //   .should.equal(period1Before.periodId.toNumber());
+  });
 
   it("should drip with inverted swap (b to a)", async () => {});
 

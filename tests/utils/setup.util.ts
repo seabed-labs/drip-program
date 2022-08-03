@@ -298,6 +298,50 @@ export const dripSPLTokenSwapWrapper = (
   };
 };
 
+export const dripOrcaWhirlpoolWrapper = (
+  botKeypair: Keypair,
+  dripFeeTokenAAccount: PublicKey,
+  vault: PublicKey,
+  vaultProtoConfig: PublicKey,
+  vaultTokenAAccount: PublicKey,
+  vaultTokenBAccount,
+  tokenAMint: PublicKey,
+  tokenBMint: PublicKey,
+  swapTokenAAccount: PublicKey,
+  swapTokenBAccount: PublicKey,
+  whirlpool: PublicKey,
+  tickArray0: PublicKey,
+  tickArray1: PublicKey,
+  tickArray2: PublicKey,
+  oracle: PublicKey
+) => {
+  return async (lastVaultPeriod: PublicKey, currentVaultPeriod: PublicKey) => {
+    try {
+      await VaultUtil.dripOrcaWhirlpool({
+        botKeypair,
+        dripFeeTokenAAccount,
+        vault,
+        vaultProtoConfig,
+        vaultTokenAAccount,
+        vaultTokenBAccount,
+        lastVaultPeriod,
+        currentVaultPeriod,
+        tokenAMint,
+        tokenBMint,
+        swapTokenAAccount,
+        swapTokenBAccount,
+        whirlpool,
+        tickArray0,
+        tickArray1,
+        tickArray2,
+        oracle,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+};
+
 export const withdrawBWrapper = (
   user: Keypair,
   vault: PublicKey,

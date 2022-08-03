@@ -40,6 +40,7 @@ export type InitWhirlpoolRes = {
   tickSpacing: number;
   tokenVaultAKeypair: Keypair;
   tokenVaultBKeypair: Keypair;
+  oracle: PublicKey;
   txId: string;
 };
 
@@ -175,13 +176,17 @@ export class WhirlpoolUtil extends TestUtil {
       tickSpacing,
       funder: this.provider.wallet.publicKey,
     });
-
+    const oracle = PDAUtil.getOracle(
+      ProgramUtil.orcaWhirlpoolProgram.programId,
+      whirlpoolPda.publicKey
+    ).publicKey;
     return {
       whirlpool: whirlpoolPda.publicKey,
       initSqrtPrice,
       tickSpacing,
       tokenVaultAKeypair,
       tokenVaultBKeypair,
+      oracle,
       txId: await toTx(ctx, initPoolIx).buildAndExecute(),
     };
   }
