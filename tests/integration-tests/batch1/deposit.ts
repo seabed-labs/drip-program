@@ -1,10 +1,10 @@
 import "should";
-import { DECIMALS, TokenUtil } from "../utils/token.util";
+import { DECIMALS, TokenUtil } from "../../utils/token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
-import { VaultUtil } from "../utils/vault.util";
-import { SolUtil } from "../utils/sol.util";
-import { AccountUtil } from "../utils/account.util";
+import { VaultUtil } from "../../utils/vault.util";
+import { SolUtil } from "../../utils/sol.util";
+import { AccountUtil } from "../../utils/account.util";
 import {
   amount,
   Denom,
@@ -15,8 +15,8 @@ import {
   getVaultPDA,
   getVaultPeriodPDA,
   Granularity,
-} from "../utils/common.util";
-import { initLog } from "../utils/log.util";
+} from "../../utils/common.util";
+import { initLog } from "../../utils/log.util";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 describe("#deposit", testDeposit);
