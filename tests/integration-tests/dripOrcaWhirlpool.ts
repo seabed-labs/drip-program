@@ -19,6 +19,7 @@ export function testDripOrcaWhirlpool() {
     deployNonWhitelistedWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({
       tokenA: deployWhirlpoolRes.tokenA,
       tokenB: deployWhirlpoolRes.tokenB,
+      tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
     });
   });
 
