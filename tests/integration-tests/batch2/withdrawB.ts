@@ -1,6 +1,6 @@
 import "should";
-import { SolUtil } from "../utils/sol.util";
-import { TokenUtil } from "../utils/token.util";
+import { SolUtil } from "../../utils/sol.util";
+import { TokenUtil } from "../../utils/token.util";
 import {
   amount,
   Denom,
@@ -8,7 +8,7 @@ import {
   generatePair,
   generatePairs,
   PDA,
-} from "../utils/common.util";
+} from "../../utils/common.util";
 import {
   deploySPLTokenSwap,
   deployVault,
@@ -19,13 +19,13 @@ import {
   sleep,
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
-} from "../utils/setup.util";
+} from "../../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "@project-serum/anchor";
-import { AccountUtil } from "../utils/account.util";
-import { findError } from "../utils/error.util";
-import { initLog } from "../utils/log.util";
+import { AccountUtil } from "../../utils/account.util";
+import { findError } from "../../utils/error.util";
+import { initLog } from "../../utils/log.util";
 
 describe("#withdrawB", testWithdrawB);
 

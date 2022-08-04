@@ -1,7 +1,7 @@
 import "should";
-import { AccountUtil } from "../utils/account.util";
-import { TokenUtil } from "../utils/token.util";
-import { VaultUtil } from "../utils/vault.util";
+import { AccountUtil } from "../../utils/account.util";
+import { TokenUtil } from "../../utils/token.util";
+import { VaultUtil } from "../../utils/vault.util";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import {
@@ -11,10 +11,10 @@ import {
   getVaultPDA,
   Granularity,
   PDA,
-} from "../utils/common.util";
-import { SolUtil } from "../utils/sol.util";
-import { findError } from "../utils/error.util";
-import { initLog } from "../utils/log.util";
+} from "../../utils/common.util";
+import { SolUtil } from "../../utils/sol.util";
+import { findError } from "../../utils/error.util";
+import { initLog } from "../../utils/log.util";
 
 describe("#initVault", testInitVault);
 

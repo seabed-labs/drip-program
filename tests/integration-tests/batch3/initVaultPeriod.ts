@@ -1,17 +1,17 @@
 import "should";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { VaultUtil } from "../utils/vault.util";
-import { TokenUtil } from "../utils/token.util";
-import { AccountUtil } from "../utils/account.util";
+import { VaultUtil } from "../../utils/vault.util";
+import { TokenUtil } from "../../utils/token.util";
+import { AccountUtil } from "../../utils/account.util";
 import {
   findAssociatedTokenAddress,
   generatePair,
   getVaultPDA,
   getVaultPeriodPDA,
   Granularity,
-} from "../utils/common.util";
-import { SolUtil } from "../utils/sol.util";
-import { initLog } from "../utils/log.util";
+} from "../../utils/common.util";
+import { SolUtil } from "../../utils/sol.util";
+import { initLog } from "../../utils/log.util";
 
 // TODO(matcha): More exhaustive tests
 

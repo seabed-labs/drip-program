@@ -1,9 +1,9 @@
 import "should";
-import { DeployWhirlpoolRes, WhirlpoolUtil } from "../utils/whirlpool.util";
-import { TokenUtil } from "../utils/token.util";
-import { dripOrcaWhirlpoolWrapper } from "../utils/setup.util";
-import { DeployVaultRes, VaultUtil } from "../utils/vault.util";
-import { AccountUtil } from "../utils/account.util";
+import { DeployWhirlpoolRes, WhirlpoolUtil } from "../../utils/whirlpool.util";
+import { TokenUtil } from "../../utils/token.util";
+import { dripOrcaWhirlpoolWrapper } from "../../utils/setup.util";
+import { DeployVaultRes, VaultUtil } from "../../utils/vault.util";
+import { AccountUtil } from "../../utils/account.util";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
