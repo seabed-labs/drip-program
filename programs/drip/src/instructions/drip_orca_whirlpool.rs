@@ -1,4 +1,7 @@
 use crate::errors::ErrorCode;
+use crate::events::Log;
+use crate::interactions::transfer_token::TransferToken;
+use crate::math::calculate_spread_amount;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -167,7 +170,107 @@ pub struct DripOrcaWhirlpool<'info> {
     pub oracle: UncheckedAccount<'info>,
 }
 
-pub fn handler(_ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
-    // TODO(matcha)
+// TODO(Mocha/Matcha): Extra common code between drip_* instructions
+pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
+    // TODO(Mocha): We could do this check as an eDSL constraint with custom error
+    if ctx.accounts.vault_token_a_account.amount == 0 {
+        return Err(ErrorCode::PeriodicDripAmountIsZero.into());
+    }
+    if ctx.accounts.vault.limit_swaps {
+        if !ctx
+            .accounts
+            .vault
+            .whitelisted_swaps
+            .contains(ctx.accounts.whirlpool.key)
+        {
+            return Err(ErrorCode::InvalidSwapAccount.into());
+        }
+    }
+    if !ctx.accounts.vault.is_drip_activated() {
+        return Err(ErrorCode::DuplicateDripError.into());
+    }
+
+    /* STATE UPDATES (EFFECTS) */
+
+    let current_balance_a = ctx.accounts.vault_token_a_account.amount;
+    emit!(Log {
+        data: Some(current_balance_a),
+        message: "vault a balance".to_string(),
+    });
+
+    let current_balance_b = ctx.accounts.vault_token_b_account.amount;
+    emit!(Log {
+        data: Some(current_balance_b),
+        message: "vault b balance".to_string(),
+    });
+    // Use drip_amount becasue it may change after process_drip
+    let drip_trigger_spread_amount = calculate_spread_amount(
+        ctx.accounts.vault.drip_amount,
+        ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
+    );
+    let swap_amount = ctx
+        .accounts
+        .vault
+        .drip_amount
+        .checked_sub(drip_trigger_spread_amount)
+        .unwrap();
+    let vault = &mut ctx.accounts.vault;
+    vault.process_drip(
+        &ctx.accounts.current_vault_period,
+        ctx.accounts.vault_proto_config.granularity,
+    );
+
+    let drip_trigger_fee_transfer = TransferToken::new(
+        &ctx.accounts.token_program,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.drip_fee_token_a_account,
+        drip_trigger_spread_amount,
+    );
+
+    /* MANUAL CPI (INTERACTIONS) */
+    // TODO
+    swap_tokens()?;
+
+    drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
+
+    ctx.accounts.drip_fee_token_a_account.reload()?;
+    ctx.accounts.vault_token_a_account.reload()?;
+    ctx.accounts.vault_token_b_account.reload()?;
+
+    let new_drip_trigger_fee_balance_a = ctx.accounts.drip_fee_token_a_account.amount;
+    emit!(Log {
+        data: Some(new_drip_trigger_fee_balance_a),
+        message: "new drip trigger fee a balance".to_string(),
+    });
+
+    let new_balance_a = ctx.accounts.vault_token_a_account.amount;
+    emit!(Log {
+        data: Some(new_balance_a),
+        message: "new vault a balance".to_string(),
+    });
+
+    let new_balance_b = ctx.accounts.vault_token_b_account.amount;
+    emit!(Log {
+        data: Some(new_balance_b),
+        message: "new vault b balance".to_string(),
+    });
+
+    // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
+    let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
+
+    // For some reason swap did not happen ~ because we will never have swap amount of 0.
+    if received_b == 0 {
+        return Err(ErrorCode::IncompleteSwapError.into());
+    }
+
+    let current_period_mut = &mut ctx.accounts.current_vault_period;
+    current_period_mut.update_twap(&ctx.accounts.last_vault_period, swap_amount, received_b);
+    current_period_mut.update_drip_timestamp();
+
+    Ok(())
+}
+
+// TODO
+fn swap_tokens<'info>() -> Result<()> {
     Ok(())
 }
