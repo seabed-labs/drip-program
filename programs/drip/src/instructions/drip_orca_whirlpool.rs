@@ -8,6 +8,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 use std::str::FromStr;
+use whirlpool::state::{TickArray, Whirlpool};
 
 #[derive(Clone)]
 pub struct WhirlpoolProgram;
@@ -140,33 +141,23 @@ pub struct DripOrcaWhirlpool<'info> {
     pub rent: Sysvar<'info, Rent>,
 
     #[account(mut)]
-    // TODO: Figure this out
-    /// CHECK: Temporary
-    pub whirlpool: UncheckedAccount<'info>,
+    pub whirlpool: Box<Account<'info, Whirlpool>>,
 
     #[account(mut)]
-    // TODO: Figure this out
-    /// CHECK: Temporary
-    pub tick_array_0: UncheckedAccount<'info>,
+    pub tick_array_0: AccountLoader<'info, TickArray>,
 
     #[account(mut)]
-    // TODO: Figure this out
-    /// CHECK: Temporary
-    pub tick_array_1: UncheckedAccount<'info>,
+    pub tick_array_1: AccountLoader<'info, TickArray>,
 
     #[account(mut)]
-    // TODO: Figure this out
-    /// CHECK: Temporary
-    pub tick_array_2: UncheckedAccount<'info>,
+    pub tick_array_2: AccountLoader<'info, TickArray>,
 
     #[account(
         seeds = [b"oracle", whirlpool.key().as_ref()], 
         bump,
         seeds::program = whirlpool_program.key()
     )]
-    // TODO: Figure this out
-    /// Oracle is currently unused and will be enabled on subsequent updates
-    /// CHECK: Temporary
+    /// CHECK: Oracle is currently unused and will be enabled on subsequent updates
     pub oracle: UncheckedAccount<'info>,
 }
 
@@ -181,7 +172,7 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
             .accounts
             .vault
             .whitelisted_swaps
-            .contains(ctx.accounts.whirlpool.key)
+            .contains(&ctx.accounts.whirlpool.key().clone())
         {
             return Err(ErrorCode::InvalidSwapAccount.into());
         }
