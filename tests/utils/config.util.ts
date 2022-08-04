@@ -1,6 +1,6 @@
 import { AnchorProvider, Provider, setProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 
 export class TestConfig {
   public readonly provider: AnchorProvider;

@@ -1,5 +1,6 @@
 import sys
-from base58 import b58decode
+from base58 import b58encode
 
-key = b58decode(sys.argv[1])
+key = b58encode(bytearray([]))
+print(key)
 print(list(bytes(key)))
