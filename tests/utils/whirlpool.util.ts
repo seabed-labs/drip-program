@@ -75,7 +75,6 @@ export type FundedPositionRes = {
 export type DeployWhirlpoolRes = {
   initWhirlpoolConfigRes: InitWhirlpoolConfigRes;
   initWhirlpoolRes: InitWhirlpoolRes;
-  tickArrays: PublicKey[];
   positions: FundedPositionRes[];
   whirlpoolKeypair: Keypair;
   whirlpoolAuth: Keypair;
@@ -451,20 +450,19 @@ export class WhirlpoolUtil extends TestUtil {
     const startTickIndex = 0;
 
     // Based off of swap.test.ts swaps across three tick arrays
-    const tickArrays = await WhirlpoolUtil.initTickArrayRange(
+    await WhirlpoolUtil.initTickArrayRange(
       initWhirlpoolRes.whirlpool,
       startTickIndex,
       10,
       true
     );
+
     // Based off of swap.test.ts swaps across three tick arrays
-    tickArrays.push(
-      ...(await WhirlpoolUtil.initTickArrayRange(
-        initWhirlpoolRes.whirlpool,
-        startTickIndex,
-        10,
-        false
-      ))
+    await WhirlpoolUtil.initTickArrayRange(
+      initWhirlpoolRes.whirlpool,
+      startTickIndex,
+      10,
+      false
     );
 
     // Token A -> USDC
@@ -520,7 +518,6 @@ export class WhirlpoolUtil extends TestUtil {
     return {
       initWhirlpoolConfigRes,
       initWhirlpoolRes,
-      tickArrays,
       positions,
       tokenOwnerKeypair,
       whirlpoolKeypair,
