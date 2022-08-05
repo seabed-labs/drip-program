@@ -310,12 +310,15 @@ export const dripOrcaWhirlpoolWrapper = (
   swapTokenAAccount: PublicKey,
   swapTokenBAccount: PublicKey,
   whirlpool: PublicKey,
-  tickArray0: PublicKey,
-  tickArray1: PublicKey,
-  tickArray2: PublicKey,
   oracle: PublicKey
 ) => {
-  return async (lastVaultPeriod: PublicKey, currentVaultPeriod: PublicKey) => {
+  return async (
+    lastVaultPeriod: PublicKey,
+    currentVaultPeriod: PublicKey,
+    tickArray0: PublicKey,
+    tickArray1: PublicKey,
+    tickArray2: PublicKey
+  ) => {
     try {
       await VaultUtil.dripOrcaWhirlpool({
         botKeypair,

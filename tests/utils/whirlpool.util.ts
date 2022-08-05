@@ -84,7 +84,7 @@ export type DeployWhirlpoolRes = {
   tokenB: Token;
 };
 export class WhirlpoolUtil extends TestUtil {
-  private static get whirlpoolCtx(): WhirlpoolContext {
+  static get whirlpoolCtx(): WhirlpoolContext {
     return WhirlpoolContext.withProvider(
       this.provider,
       ProgramUtil.orcaWhirlpoolProgram.programId
@@ -454,7 +454,7 @@ export class WhirlpoolUtil extends TestUtil {
     const tickArrays = await WhirlpoolUtil.initTickArrayRange(
       initWhirlpoolRes.whirlpool,
       startTickIndex,
-      5,
+      10,
       true
     );
     // Based off of swap.test.ts swaps across three tick arrays
@@ -462,7 +462,7 @@ export class WhirlpoolUtil extends TestUtil {
       ...(await WhirlpoolUtil.initTickArrayRange(
         initWhirlpoolRes.whirlpool,
         startTickIndex,
-        5,
+        10,
         false
       ))
     );

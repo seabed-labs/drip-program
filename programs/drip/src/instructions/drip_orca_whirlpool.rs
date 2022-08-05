@@ -2,8 +2,11 @@ use crate::errors::ErrorCode;
 use crate::events::Log;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_spread_amount;
+use crate::sign;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
-use anchor_lang::prelude::*;
+use anchor_lang::solana_program::hash::hashv;
+use anchor_lang::solana_program::instruction::Instruction;
+use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
@@ -220,7 +223,20 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
     // TODO
-    swap_tokens()?;
+    swap_tokens(
+        &ctx.accounts.vault,
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.vault_token_b_account,
+        &ctx.accounts.token_program,
+        &ctx.accounts.whirlpool_program,
+        &ctx.accounts.whirlpool,
+        &ctx.accounts.swap_token_a_account,
+        &ctx.accounts.swap_token_b_account,
+        &ctx.accounts.tick_array_0,
+        &ctx.accounts.tick_array_1,
+        &ctx.accounts.tick_array_2,
+        &ctx.accounts.oracle,
+    )?;
 
     drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
 
@@ -261,7 +277,90 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     Ok(())
 }
 
-// TODO
-fn swap_tokens<'info>() -> Result<()> {
+use borsh::BorshSerialize;
+
+#[derive(BorshSerialize)]
+struct WhirlpoolSwapParams {
+    amount: u64,
+    other_amount_threshold: u64,
+    sqrt_price_limit: u128,
+    amount_specified_is_input: bool,
+    a_to_b: bool, // Zero for one
+}
+
+fn swap_tokens<'info>(
+    vault: &Account<'info, Vault>,
+    vault_token_a_account: &Account<'info, TokenAccount>,
+    vault_token_b_account: &Account<'info, TokenAccount>,
+    token_program: &Program<'info, Token>,
+    whirlpool_program: &Program<'info, WhirlpoolProgram>,
+    whirlpool: &Account<'info, Whirlpool>,
+    whirlpool_token_vault_a: &Account<'info, TokenAccount>,
+    whirlpool_token_vault_b: &Account<'info, TokenAccount>,
+    tick_array_0: &AccountLoader<'info, TickArray>,
+    tick_array_1: &AccountLoader<'info, TickArray>,
+    tick_array_2: &AccountLoader<'info, TickArray>,
+    oracle: &UncheckedAccount<'info>,
+) -> Result<()> {
+    emit!(Log {
+        data: None,
+        message: "starting CPI flow".to_string(),
+    });
+    let a_to_b = if vault_token_a_account.mint.key() == whirlpool_token_vault_a.mint.key() {
+        true
+    } else {
+        false
+    };
+    // TODO: What should the sqrt_price_limit be?
+    let sqrt_price_limit = if a_to_b {
+        4295048016
+    } else {
+        79226673515401279992447579055
+    };
+    let params = WhirlpoolSwapParams {
+        amount: vault.drip_amount,
+        other_amount_threshold: 0,
+        sqrt_price_limit,
+        amount_specified_is_input: true,
+        a_to_b, // Zero for one
+    };
+    let mut buffer: Vec<u8> = Vec::new();
+    params.serialize(&mut buffer).unwrap();
+
+    let ix: Instruction = Instruction {
+        program_id: whirlpool_program.key(),
+        accounts: vec![
+            AccountMeta::new_readonly(*token_program.key, false),
+            AccountMeta::new_readonly(vault.key(), true),
+            AccountMeta::new(whirlpool.key(), false),
+            AccountMeta::new(vault_token_a_account.key(), false),
+            AccountMeta::new(whirlpool_token_vault_a.key(), false),
+            AccountMeta::new(vault_token_b_account.key(), false),
+            AccountMeta::new(whirlpool_token_vault_b.key(), false),
+            AccountMeta::new(tick_array_0.key(), false),
+            AccountMeta::new(tick_array_1.key(), false),
+            AccountMeta::new(tick_array_2.key(), false),
+            AccountMeta::new_readonly(oracle.key(), false),
+        ],
+        data: [hashv(&[b"global:swap"]).to_bytes()[..8].to_vec(), buffer].concat(),
+    };
+
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            token_program.to_account_info().clone(),
+            vault.to_account_info().clone(),
+            whirlpool.to_account_info().clone(),
+            vault_token_a_account.to_account_info().clone(),
+            whirlpool_token_vault_a.to_account_info().clone(),
+            vault_token_b_account.to_account_info().clone(),
+            whirlpool_token_vault_b.to_account_info().clone(),
+            tick_array_0.to_account_info().clone(),
+            tick_array_1.to_account_info().clone(),
+            tick_array_2.to_account_info().clone(),
+            oracle.to_account_info().clone(),
+        ],
+        &[sign!(vault)],
+    )?;
     Ok(())
 }

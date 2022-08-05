@@ -4,6 +4,13 @@ import { TokenUtil } from "../../utils/token.util";
 import { dripOrcaWhirlpoolWrapper } from "../../utils/setup.util";
 import { DeployVaultRes, VaultUtil } from "../../utils/vault.util";
 import { AccountUtil } from "../../utils/account.util";
+import {
+  AccountFetcher,
+  buildWhirlpoolClient,
+  swapQuoteByInputToken,
+} from "@orca-so/whirlpools-sdk";
+import { ProgramUtil } from "../../utils/program.util";
+import { Percentage } from "@orca-so/common-sdk";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
@@ -13,7 +20,7 @@ export function testDripOrcaWhirlpool() {
   let deployVaultRes: DeployVaultRes;
 
   let dripTrigger;
-
+  let fetcher;
   before(async () => {
     deployWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({});
     deployNonWhitelistedWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({
@@ -21,6 +28,7 @@ export function testDripOrcaWhirlpool() {
       tokenB: deployWhirlpoolRes.tokenB,
       tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
     });
+    fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
   });
 
   beforeEach(async () => {
@@ -43,9 +51,6 @@ export function testDripOrcaWhirlpool() {
       deployWhirlpoolRes.initWhirlpoolRes.tokenVaultAKeypair.publicKey,
       deployWhirlpoolRes.initWhirlpoolRes.tokenVaultBKeypair.publicKey,
       deployWhirlpoolRes.initWhirlpoolRes.whirlpool,
-      deployWhirlpoolRes.tickArrays[0],
-      deployWhirlpoolRes.tickArrays[1],
-      deployWhirlpoolRes.tickArrays[2],
       deployWhirlpoolRes.initWhirlpoolRes.oracle
     );
   });
@@ -69,38 +74,55 @@ export function testDripOrcaWhirlpool() {
       .toNumber()
       .should.equal(period0Before.periodId.toNumber());
 
+    const whirlpoolClient = buildWhirlpoolClient(WhirlpoolUtil.whirlpoolCtx);
+    const whirlpool = await whirlpoolClient.getPool(
+      deployWhirlpoolRes.initWhirlpoolRes.whirlpool,
+      false
+    );
+    const quote = await swapQuoteByInputToken(
+      whirlpool,
+      deployWhirlpoolRes.tokenA.publicKey,
+      vaultBefore.dripAmount,
+      Percentage.fromFraction(0, 100),
+      ProgramUtil.orcaWhirlpoolProgram.programId,
+      fetcher,
+      false
+    );
     await dripTrigger(
       deployVaultRes.vaultPeriods[0],
-      deployVaultRes.vaultPeriods[1]
+      deployVaultRes.vaultPeriods[1],
+      quote.tickArray0,
+      quote.tickArray1,
+      quote.tickArray2
     );
-    // let [
-    //   vaultTokenAAccountAfter,
-    //   vaultTokenBAccountAfter,
-    //   botTokenAAccountAfter,
-    //   vaultAfter,
-    //   period0After,
-    //   period1Before,
-    // ] = await Promise.all([
-    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
-    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
-    //   TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
-    //   AccountUtil.fetchVaultAccount(deployVaultRes.vault),
-    //   AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
-    //   AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
-    // ]);
-    // vaultTokenAAccountBefore.balance
-    //   .gt(vaultTokenAAccountAfter.balance)
-    //   .should.be.true();
-    // vaultTokenBAccountBefore.balance
-    //   .lt(vaultTokenBAccountAfter.balance)
-    //   .should.be.true();
-    // botTokenAAccountBefore.balance
-    //   .lt(botTokenAAccountAfter.balance)
-    //   .should.be.true();
-    // period0Before.twap.lt(period0After.twap).should.be.true();
-    // vaultAfter.lastDripPeriod
-    //   .toNumber()
-    //   .should.equal(period1Before.periodId.toNumber());
+    let [
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+      botTokenAAccountAfter,
+      vaultAfter,
+      period0After,
+      period1Before,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
+      AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
+    ]);
+    vaultTokenAAccountBefore.balance
+      .gt(vaultTokenAAccountAfter.balance)
+      .should.be.true();
+    vaultTokenBAccountBefore.balance
+      .lt(vaultTokenBAccountAfter.balance)
+      .should.be.true();
+    botTokenAAccountBefore.balance
+      .lt(botTokenAAccountAfter.balance)
+      .should.be.true();
+    period0Before.twap.lt(period0After.twap).should.be.true();
+    vaultAfter.lastDripPeriod
+      .toNumber()
+      .should.equal(period1Before.periodId.toNumber());
   });
 
   it("should drip with inverted swap (b to a)", async () => {});
