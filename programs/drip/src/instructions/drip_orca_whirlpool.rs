@@ -164,7 +164,7 @@ pub struct DripOrcaWhirlpool<'info> {
     pub oracle: UncheckedAccount<'info>,
 }
 
-// TODO(Mocha/Matcha): Extra common code between drip_* instructions
+// TODO(Mocha/Matcha): extract common code between drip_* instructions
 pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     // TODO(Mocha): We could do this check as an eDSL constraint with custom error
     if ctx.accounts.vault_token_a_account.amount == 0 {
