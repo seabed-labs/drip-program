@@ -1,6 +1,6 @@
 name: CI
 env:
-  cli-id: anchor-v0.24.2.dev-7b86aed-solana-1.10.5
+  cli-id: anchor-v0.25.0.solana-1.10.32
   SWAP_PROGRAM_OWNER_FEE_ADDRESS: HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN
 on:
   push:
@@ -51,7 +51,7 @@ jobs:
       - name: Install Solana Tools
         id: install-solana-tools
         if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: sh -c "$(curl -sSfL https://release.solana.com/v1.10.5/install)"
+        run: sh -c "$(curl -sSfL https://release.solana.com/v1.10.32/install)"
 
       - name: Add Solana Tools to Path
         run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
@@ -274,7 +274,7 @@ jobs:
         continue-on-error: false          
         uses: silas-x/soteria-action@main
         with:                             
-          solana-version: "1.10.5"        
+          solana-version: "1.10.32"        
           run-mode: "-analyzeAll"         
           cargo-com: "."                  
           program-path: "programs/drip" 
