@@ -11,7 +11,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
 use std::str::FromStr;
-use whirlpool::state::{TickArray, Whirlpool};
+use whirlpool::state::Whirlpool;
 
 #[derive(Clone)]
 pub struct WhirlpoolProgram;
@@ -147,13 +147,16 @@ pub struct DripOrcaWhirlpool<'info> {
     pub whirlpool: Box<Account<'info, Whirlpool>>,
 
     #[account(mut)]
-    pub tick_array_0: AccountLoader<'info, TickArray>,
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_0: UncheckedAccount<'info>,
 
     #[account(mut)]
-    pub tick_array_1: AccountLoader<'info, TickArray>,
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_1: UncheckedAccount<'info>,
 
     #[account(mut)]
-    pub tick_array_2: AccountLoader<'info, TickArray>,
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_2: UncheckedAccount<'info>,
 
     #[account(
         seeds = [b"oracle", whirlpool.key().as_ref()], 
@@ -297,9 +300,9 @@ fn swap_tokens<'info>(
     whirlpool: &Account<'info, Whirlpool>,
     whirlpool_token_vault_a: &Account<'info, TokenAccount>,
     whirlpool_token_vault_b: &Account<'info, TokenAccount>,
-    tick_array_0: &AccountLoader<'info, TickArray>,
-    tick_array_1: &AccountLoader<'info, TickArray>,
-    tick_array_2: &AccountLoader<'info, TickArray>,
+    tick_array_0: &UncheckedAccount<'info>,
+    tick_array_1: &UncheckedAccount<'info>,
+    tick_array_2: &UncheckedAccount<'info>,
     oracle: &UncheckedAccount<'info>,
 ) -> Result<()> {
     emit!(Log {

@@ -62,12 +62,14 @@ export function testDripOrcaWhirlpool() {
       botTokenAAccountBefore,
       vaultBefore,
       period0Before,
+      period1Before,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
       AccountUtil.fetchVaultAccount(deployVaultRes.vault),
       AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
     ]);
     botTokenAAccountBefore.balance.toNumber().should.equal(0);
     vaultBefore.lastDripPeriod
@@ -104,7 +106,7 @@ export function testDripOrcaWhirlpool() {
       botTokenAAccountAfter,
       vaultAfter,
       period0After,
-      period1Before,
+      period1After,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
@@ -122,10 +124,11 @@ export function testDripOrcaWhirlpool() {
     botTokenAAccountBefore.balance
       .lt(botTokenAAccountAfter.balance)
       .should.be.true();
-    period0Before.twap.lt(period0After.twap).should.be.true();
+    period0Before.twap.lt(period0After.twap).should.be.false();
+    period1Before.twap.lt(period1After.twap).should.be.true();
     vaultAfter.lastDripPeriod
       .toNumber()
-      .should.equal(period1Before.periodId.toNumber());
+      .should.equal(period1After.periodId.toNumber());
   });
 
   // it("should drip with inverted swap (b to a)", async () => {});
