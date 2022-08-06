@@ -1,6 +1,6 @@
 name: CI
 env:
-  cli-id: anchor-v0.25.0.solana-1.10.32
+  cli-id: anchor-v0.25.0.solana-1.10.32.v1
   SWAP_PROGRAM_OWNER_FEE_ADDRESS: HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN
 on:
   push:
@@ -55,7 +55,7 @@ jobs:
 
       - name: Install Anchor CLI
         id: install-anchor-cli
-        if: steps.cache-cli-deps.outputs.cache-hit != 'true'
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: cargo install --git https://github.com/project-serum/anchor --tag v0.25.0 anchor-cli --locked
 
       - name: Add Solana Tools to Path
