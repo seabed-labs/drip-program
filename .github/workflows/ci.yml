@@ -53,13 +53,17 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: sh -c "$(curl -sSfL https://release.solana.com/v1.10.32/install)"
 
+      - name: Install Anchor CLI
+        id: install-anchor-cli
+        if: steps.cache-cli-deps.outputs.cache-hit != 'true'
+        run: cargo install --git https://github.com/project-serum/anchor --tag v0.25.0 anchor-cli --locked
+
       - name: Add Solana Tools to Path
         run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install Node Deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          npm install -g @project-serum/anchor-cli@0.25.0
           npm install -g typescript
           npm install -g yarn
           npm install -g ts-mocha
