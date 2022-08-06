@@ -59,7 +59,7 @@ jobs:
       - name: Install Node Deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
-          npm install -g @project-serum/anchor-cli@0.24.2
+          npm install -g @project-serum/anchor-cli@0.25.0
           npm install -g typescript
           npm install -g yarn
           npm install -g ts-mocha
