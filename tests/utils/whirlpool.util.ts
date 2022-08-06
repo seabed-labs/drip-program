@@ -1,5 +1,5 @@
 import { TestUtil } from "./config.util";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   increaseLiquidityIx,
   initializeConfigIx,
@@ -329,6 +329,20 @@ export class WhirlpoolUtil extends TestUtil {
             PriceMath.tickIndexToSqrtPriceX64(param.tickUpperIndex),
             true
           );
+          console.log("about to increase liquidity");
+          console.log(
+            `Position Authority: ${ctx.provider.wallet.publicKey.toBase58()}`
+          );
+          console.log(
+            `Position Authority2: ${this.provider.wallet.publicKey.toBase58()}`
+          );
+          console.log(
+            `Position Authority Lamports Balance: ${
+              (await SolUtil.getLamportsBalance(
+                ctx.provider.wallet.publicKey
+              )) / LAMPORTS_PER_SOL
+            }`
+          );
           await toTx(
             ctx,
             increaseLiquidityIx(ctx.program, {
@@ -517,7 +531,7 @@ export class WhirlpoolUtil extends TestUtil {
       TestUtil.provider.wallet.publicKey
     );
     const mintAmountA = await TokenUtil.scaleAmount(
-      amount(1000, Denom.Million),
+      amount(1e4, Denom.Billion),
       tokenA
     );
     await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
@@ -527,7 +541,7 @@ export class WhirlpoolUtil extends TestUtil {
       TestUtil.provider.wallet.publicKey
     );
     const mintAmountB = await TokenUtil.scaleAmount(
-      amount(1000, Denom.Million),
+      amount(1e4, Denom.Billion),
       tokenB
     );
     await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);

@@ -24,4 +24,8 @@ export class SolUtil extends TestUtil {
       })
     );
   }
+
+  static async getLamportsBalance(address: PublicKey): Promise<number> {
+    return await this.provider.connection.getBalance(address);
+  }
 }
