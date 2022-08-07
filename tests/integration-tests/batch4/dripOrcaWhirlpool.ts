@@ -90,7 +90,7 @@ export function testDripOrcaWhirlpool() {
       fetcher,
       false
     );
-    console.log("before swap");
+
     await dripTrigger(
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1],
@@ -98,7 +98,6 @@ export function testDripOrcaWhirlpool() {
       quote.tickArray1,
       quote.tickArray2
     );
-    console.log("after swap");
 
     let [
       vaultTokenAAccountAfter,
@@ -131,7 +130,108 @@ export function testDripOrcaWhirlpool() {
       .should.equal(period1After.periodId.toNumber());
   });
 
-  // it("should drip with inverted swap (b to a)", async () => {});
+  it("should drip with inverted swap (b to a)", async () => {
+    const [tokenA, tokenB] = [
+      deployWhirlpoolRes.tokenB,
+      deployWhirlpoolRes.tokenA,
+    ];
+
+    const deployVaultRes = await VaultUtil.deployVault({
+      tokenA,
+      tokenB,
+      whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],
+      tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
+    });
+
+    const dripTrigger = dripOrcaWhirlpoolWrapper(
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.tokenVaultAKeypair.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.tokenVaultBKeypair.publicKey,
+      deployWhirlpoolRes.initWhirlpoolRes.whirlpool,
+      deployWhirlpoolRes.initWhirlpoolRes.oracle
+    );
+
+    let [
+      vaultTokenAAccountBefore,
+      vaultTokenBAccountBefore,
+      botTokenAAccountBefore,
+      vaultBefore,
+      period0Before,
+      period1Before,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
+      AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
+    ]);
+
+    botTokenAAccountBefore.balance.toString().should.equal("0");
+    vaultBefore.lastDripPeriod
+      .toNumber()
+      .should.equal(period0Before.periodId.toNumber());
+
+    const whirlpoolClient = buildWhirlpoolClient(WhirlpoolUtil.whirlpoolCtx);
+    const whirlpool = await whirlpoolClient.getPool(
+      deployWhirlpoolRes.initWhirlpoolRes.whirlpool,
+      false
+    );
+    const quote = await swapQuoteByInputToken(
+      whirlpool,
+      vaultBefore.tokenAMint,
+      vaultBefore.dripAmount,
+      Percentage.fromFraction(10, 100),
+      ProgramUtil.orcaWhirlpoolProgram.programId,
+      fetcher,
+      false
+    );
+
+    await dripTrigger(
+      deployVaultRes.vaultPeriods[0],
+      deployVaultRes.vaultPeriods[1],
+      quote.tickArray0,
+      quote.tickArray1,
+      quote.tickArray2
+    );
+
+    let [
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+      botTokenAAccountAfter,
+      vaultAfter,
+      period0After,
+      period1After,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.vaultTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
+      AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
+      AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
+    ]);
+    vaultTokenAAccountBefore.balance
+      .gt(vaultTokenAAccountAfter.balance)
+      .should.be.true();
+    vaultTokenBAccountBefore.balance
+      .lt(vaultTokenBAccountAfter.balance)
+      .should.be.true();
+    botTokenAAccountBefore.balance
+      .lt(botTokenAAccountAfter.balance)
+      .should.be.true();
+    period0Before.twap.lt(period0After.twap).should.be.false();
+    period1Before.twap.lt(period1After.twap).should.be.true();
+    vaultAfter.lastDripPeriod
+      .toNumber()
+      .should.equal(period1After.periodId.toNumber());
+  });
 
   // it("should drip dca_cyles number of times", async () => {});
 

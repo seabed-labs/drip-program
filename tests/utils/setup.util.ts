@@ -304,7 +304,7 @@ export const dripOrcaWhirlpoolWrapper = (
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   vaultTokenAAccount: PublicKey,
-  vaultTokenBAccount,
+  vaultTokenBAccount: PublicKey,
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
   swapTokenAAccount: PublicKey,
