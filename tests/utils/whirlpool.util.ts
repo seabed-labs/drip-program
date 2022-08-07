@@ -206,12 +206,7 @@ export class WhirlpoolUtil extends TestUtil {
       whirlpool,
       startTick
     );
-    console.log(
-      "tickArray Pub",
-      tickArrayPda.publicKey.toBase58(),
-      "index",
-      startTick
-    );
+
     const tx = toTx(
       ctx,
       initTickArrayIx(ctx.program, {
@@ -281,7 +276,6 @@ export class WhirlpoolUtil extends TestUtil {
     initSqrtPrice: BN,
     fundParams: FundedPositionParams[]
   ): Promise<FundedPositionRes[]> {
-    console.log(JSON.stringify(fundParams));
     const ctx = this.whirlpoolCtx;
     const fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
     return await Promise.all(
@@ -291,7 +285,6 @@ export class WhirlpoolUtil extends TestUtil {
           param.tickLowerIndex,
           param.tickUpperIndex
         );
-        console.log("after openPosition");
 
         const lowerTick = TickUtil.getStartTickIndex(
           param.tickLowerIndex,
@@ -303,8 +296,6 @@ export class WhirlpoolUtil extends TestUtil {
           lowerTick
         ).publicKey;
         const tickArrayLowerData = await fetcher.getTickArray(tickArrayLower);
-        console.log(tickArrayLowerData);
-        console.log(tickArrayLower.toBase58(), "lowerTick", lowerTick);
 
         const upperTick = TickUtil.getStartTickIndex(
           param.tickUpperIndex,
@@ -316,10 +307,6 @@ export class WhirlpoolUtil extends TestUtil {
           upperTick
         ).publicKey;
         const tickArrayUpperData = await fetcher.getTickArray(tickArrayLower);
-        console.log(tickArrayUpperData);
-        console.log(tickArrayUpper.toBase58(), "upperTick", upperTick);
-
-        console.log("after getting tick array");
 
         if (param.liquidityAmount.gt(new BN(0))) {
           const { tokenA, tokenB } = PoolUtil.getTokenAmountsFromLiquidity(
@@ -329,20 +316,7 @@ export class WhirlpoolUtil extends TestUtil {
             PriceMath.tickIndexToSqrtPriceX64(param.tickUpperIndex),
             true
           );
-          console.log("about to increase liquidity");
-          console.log(
-            `Position Authority: ${ctx.provider.wallet.publicKey.toBase58()}`
-          );
-          console.log(
-            `Position Authority2: ${this.provider.wallet.publicKey.toBase58()}`
-          );
-          console.log(
-            `Position Authority Lamports Balance: ${
-              (await SolUtil.getLamportsBalance(
-                ctx.provider.wallet.publicKey
-              )) / LAMPORTS_PER_SOL
-            }`
-          );
+
           await toTx(
             ctx,
             increaseLiquidityIx(ctx.program, {
@@ -362,7 +336,6 @@ export class WhirlpoolUtil extends TestUtil {
             })
           ).buildAndExecute();
         }
-        console.log("after increasing liquidity");
 
         return {
           publicKey: openPositionRes.position,
@@ -390,16 +363,6 @@ export class WhirlpoolUtil extends TestUtil {
 
     for (let i = 0; i < arrayCount; i++) {
       try {
-        console.log(
-          "startTickIndex",
-          startTickIndex,
-          "direction",
-          direction,
-          "ticksInArray",
-          ticksInArray,
-          "i",
-          i
-        );
         let tickIndex = startTickIndex + direction * ticksInArray * i;
         tickIndex = TickUtil.getStartTickIndex(tickIndex, tickSpacing);
         const initTickArrayRes = await WhirlpoolUtil.initTickArray(
@@ -508,7 +471,6 @@ export class WhirlpoolUtil extends TestUtil {
       false
     );
     const startIndex = whirlpool.getData().tickCurrentIndex;
-    console.log("start index", startIndex);
     // Based off of swap.test.ts swaps across three tick arrays
     await WhirlpoolUtil.initTickArrayRange(
       initWhirlpoolRes.whirlpool,
@@ -547,14 +509,6 @@ export class WhirlpoolUtil extends TestUtil {
     await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
 
     // Based off of swap.test.ts swaps across three tick arrays
-    console.log(
-      "startIndex",
-      startIndex,
-      "tickSpacing",
-      initWhirlpoolConfigRes.tickSpacing,
-      "TIckArraySize",
-      TICK_ARRAY_SIZE
-    );
     const fundParams: FundedPositionParams[] = [
       {
         liquidityAmount: new u64("100000000000000000"),
@@ -589,7 +543,7 @@ export class WhirlpoolUtil extends TestUtil {
       initWhirlpoolRes.initSqrtPrice,
       fundParams
     );
-    console.log("hi");
+
     return {
       initWhirlpoolConfigRes,
       initWhirlpoolRes,

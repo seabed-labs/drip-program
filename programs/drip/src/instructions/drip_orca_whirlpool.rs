@@ -107,7 +107,6 @@ pub struct DripOrcaWhirlpool<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = swap_token_a_account.owner == whirlpool.key(),
         constraint = swap_token_a_account.state == AccountState::Initialized,
     )]
@@ -116,7 +115,6 @@ pub struct DripOrcaWhirlpool<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = swap_token_b_account.owner == whirlpool.key(),
         constraint = swap_token_b_account.state == AccountState::Initialized
     )]
@@ -314,11 +312,32 @@ fn swap_tokens<'info>(
     } else {
         false
     };
+    msg!(&format!("a_to_b: {a_to_b}"));
     // TODO: What should the sqrt_price_limit be?
     let sqrt_price_limit = if a_to_b {
-        4295048016
+        // Price decreases
+        // We want -10% of the current price
+        // new_price = old_price * 0.9
+        // new_sqrt_price = old_sqrt_price * sqrt(0.9)
+        // new_sqrt_price = (old_sqrt_price * 9486) / 1e4
+        whirlpool
+            .sqrt_price
+            .checked_mul(9486)
+            .expect("lower new sqrt price calc failed 1")
+            .checked_div(10000)
+            .expect("lower new sqrt price calc failed 2")
     } else {
-        79226673515401279992447579055
+        // Price increases
+        // We want +10% of the current price
+        // new_price = old_price * 1.1
+        // new_sqrt_price = old_sqrt_price * sqrt(1.1)
+        // new_sqrt_price = (old_sqrt_price * 10488) / 1e4
+        whirlpool
+            .sqrt_price
+            .checked_mul(10488)
+            .expect("higher new sqrt price calc failed 1")
+            .checked_div(10000)
+            .expect("higher new sqrt price calc failed 2")
     };
     let params = WhirlpoolSwapParams {
         amount: vault.drip_amount,
@@ -330,15 +349,21 @@ fn swap_tokens<'info>(
     let mut buffer: Vec<u8> = Vec::new();
     params.serialize(&mut buffer).unwrap();
 
+    let (vault_whirlpool_token_a_account, vault_whirlpool_token_b_account) = if a_to_b {
+        (vault_token_a_account, vault_token_b_account)
+    } else {
+        (vault_token_b_account, vault_token_a_account)
+    };
+
     let ix: Instruction = Instruction {
         program_id: whirlpool_program.key(),
         accounts: vec![
             AccountMeta::new_readonly(*token_program.key, false),
             AccountMeta::new_readonly(vault.key(), true),
             AccountMeta::new(whirlpool.key(), false),
-            AccountMeta::new(vault_token_a_account.key(), false),
+            AccountMeta::new(vault_whirlpool_token_a_account.key(), false),
             AccountMeta::new(whirlpool_token_vault_a.key(), false),
-            AccountMeta::new(vault_token_b_account.key(), false),
+            AccountMeta::new(vault_whirlpool_token_b_account.key(), false),
             AccountMeta::new(whirlpool_token_vault_b.key(), false),
             AccountMeta::new(tick_array_0.key(), false),
             AccountMeta::new(tick_array_1.key(), false),
@@ -354,9 +379,9 @@ fn swap_tokens<'info>(
             token_program.to_account_info().clone(),
             vault.to_account_info().clone(),
             whirlpool.to_account_info().clone(),
-            vault_token_a_account.to_account_info().clone(),
+            vault_whirlpool_token_a_account.to_account_info().clone(),
             whirlpool_token_vault_a.to_account_info().clone(),
-            vault_token_b_account.to_account_info().clone(),
+            vault_whirlpool_token_b_account.to_account_info().clone(),
             whirlpool_token_vault_b.to_account_info().clone(),
             tick_array_0.to_account_info().clone(),
             tick_array_1.to_account_info().clone(),
