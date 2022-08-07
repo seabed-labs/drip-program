@@ -71,7 +71,7 @@ export function testDripOrcaWhirlpool() {
       AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[0]),
       AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[1]),
     ]);
-    botTokenAAccountBefore.balance.toNumber().should.equal(0);
+    botTokenAAccountBefore.balance.toString().should.equal("0");
     vaultBefore.lastDripPeriod
       .toNumber()
       .should.equal(period0Before.periodId.toNumber());
