@@ -10,7 +10,7 @@ pub enum ErrorCode {
     CannotGetVaultPeriodBump,
     #[msg("Drip already triggered for the current period")]
     DuplicateDripError,
-    #[msg("Swap did not complete")]
+    #[msg("Swap did not complete, either received token_b is 0, or swappd token_a is too high")]
     IncompleteSwapError,
     #[msg("Granularity must be an integer larger than 0")]
     InvalidGranularity,
