@@ -62,13 +62,13 @@ export function setupKeeperBot() {
           6,
           payerKeypair
         ),
-        // ETH
-        TokenUtil.createMint(
-          tokenOwnerKeypair.publicKey,
-          null,
-          6,
-          payerKeypair
-        ),
+        // // ETH
+        // TokenUtil.createMint(
+        //   tokenOwnerKeypair.publicKey,
+        //   null,
+        //   6,
+        //   payerKeypair
+        // ),
       ]))
     );
     for (const token of tokens) {
@@ -105,20 +105,20 @@ export function setupKeeperBot() {
     );
     console.log("usdc - btc splTokenSwap", splTokenSwapKeys[0].toString());
 
-    // usdc - eth
-    tokenB = tokens[2];
-    splTokenSwapKeys = await deploySPLTokenSwap(
-      tokenA,
-      tokenOwnerKeypair,
-      tokenB,
-      tokenOwnerKeypair,
-      payerKeypair,
-      {
-        a: 40,
-        b: 1700,
-      }
-    );
-    console.log("usdc - eth splTokenSwap", splTokenSwapKeys[0].toString());
+    // // usdc - eth
+    // tokenB = tokens[2];
+    // splTokenSwapKeys = await deploySPLTokenSwap(
+    //   tokenA,
+    //   tokenOwnerKeypair,
+    //   tokenB,
+    //   tokenOwnerKeypair,
+    //   payerKeypair,
+    //   {
+    //     a: 40,
+    //     b: 1700,
+    //   }
+    // );
+    // console.log("usdc - eth splTokenSwap", splTokenSwapKeys[0].toString());
 
     // deploy whirlpools
     tokenA = tokens[0];
@@ -135,7 +135,7 @@ export function setupKeeperBot() {
       tokenA,
       tokenB,
       tokenOwnerKeypair,
-      initSqrtPrice,
+      // initSqrtPrice, Error: byte array longer than desired length error on devnet
     });
     console.log(
       "usdc - btc whirlpool",
@@ -146,29 +146,30 @@ export function setupKeeperBot() {
       whirlpool.initWhirlpoolRes.tokenMintA.toBase58(),
       whirlpool.initWhirlpoolRes.tokenMintB.toBase58()
     );
-    // usdc - eth
-    tokenB = tokens[1];
-    // Current ETH/USDC price
-    desiredMarketPrice = new Decimal(1700);
-    // Invert due to token mint ordering
-    actualPrice = new Decimal(1).div(desiredMarketPrice);
-    // Shift by 64 bits
-    initSqrtPrice = MathUtil.toX64(actualPrice);
-    whirlpool = await WhirlpoolUtil.deployWhirlpool({
-      tokenA,
-      tokenB,
-      tokenOwnerKeypair,
-      initSqrtPrice,
-    });
-    console.log(
-      "usdc - eth whirlpool",
-      whirlpool.initWhirlpoolRes.whirlpool.toString()
-    );
-    console.log(
-      "minta - mintb",
-      whirlpool.initWhirlpoolRes.tokenMintA.toBase58(),
-      whirlpool.initWhirlpoolRes.tokenMintB.toBase58()
-    );
+
+    // // usdc - eth
+    // tokenB = tokens[1];
+    // // Current ETH/USDC price
+    // desiredMarketPrice = new Decimal(1700);
+    // // Invert due to token mint ordering
+    // actualPrice = new Decimal(1).div(desiredMarketPrice);
+    // // Shift by 64 bits
+    // initSqrtPrice = MathUtil.toX64(actualPrice);
+    // whirlpool = await WhirlpoolUtil.deployWhirlpool({
+    //   tokenA,
+    //   tokenB,
+    //   tokenOwnerKeypair,
+    //   // initSqrtPrice, Error: byte array longer than desired length error on devnet
+    // });
+    // console.log(
+    //   "usdc - eth whirlpool",
+    //   whirlpool.initWhirlpoolRes.whirlpool.toString()
+    // );
+    // console.log(
+    //   "minta - mintb",
+    //   whirlpool.initWhirlpoolRes.tokenMintA.toBase58(),
+    //   whirlpool.initWhirlpoolRes.tokenMintB.toBase58()
+    // );
 
     for (const [granularity, vaultProtoConfig] of Object.entries(
       protoConfigs

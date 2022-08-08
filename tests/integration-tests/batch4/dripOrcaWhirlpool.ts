@@ -16,18 +16,12 @@ describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
 export function testDripOrcaWhirlpool() {
   let deployWhirlpoolRes: DeployWhirlpoolRes;
-  let deployNonWhitelistedWhirlpoolRes: DeployWhirlpoolRes;
   let deployVaultRes: DeployVaultRes;
 
   let dripTrigger;
   let fetcher;
   before(async () => {
     deployWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({});
-    // deployNonWhitelistedWhirlpoolRes = await WhirlpoolUtil.deployWhirlpool({
-    //   tokenA: deployWhirlpoolRes.tokenA,
-    //   tokenB: deployWhirlpoolRes.tokenB,
-    //   tokenOwnerKeypair: deployWhirlpoolRes.tokenOwnerKeypair,
-    // });
     fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
   });
 
