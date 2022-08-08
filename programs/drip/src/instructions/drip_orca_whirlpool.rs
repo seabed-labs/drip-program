@@ -186,21 +186,18 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     }
 
     /* STATE UPDATES (EFFECTS) */
+    msg!("drip_amount {:?}", ctx.accounts.vault.drip_amount);
 
     let current_balance_a = ctx.accounts.vault_token_a_account.amount;
-    emit!(Log {
-        data: Some(current_balance_a),
-        message: "vault a balance".to_string(),
-    });
+    msg!("current_balance_a {:?}", current_balance_a);
 
     let current_balance_b = ctx.accounts.vault_token_b_account.amount;
-    emit!(Log {
-        data: Some(current_balance_b),
-        message: "vault b balance".to_string(),
-    });
+    msg!("current_balance_b {:?}", current_balance_b);
+
     // Use drip_amount becasue it may change after process_drip
+    let current_drip_amount = ctx.accounts.vault.drip_amount;
     let drip_trigger_spread_amount = calculate_spread_amount(
-        ctx.accounts.vault.drip_amount,
+        current_drip_amount,
         ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
     );
     let swap_amount = ctx
@@ -246,28 +243,29 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     ctx.accounts.vault_token_b_account.reload()?;
 
     let new_drip_trigger_fee_balance_a = ctx.accounts.drip_fee_token_a_account.amount;
-    emit!(Log {
-        data: Some(new_drip_trigger_fee_balance_a),
-        message: "new drip trigger fee a balance".to_string(),
-    });
+    msg!(
+        "new_drip_trigger_fee_balance_a {:?}",
+        new_drip_trigger_fee_balance_a
+    );
 
     let new_balance_a = ctx.accounts.vault_token_a_account.amount;
-    emit!(Log {
-        data: Some(new_balance_a),
-        message: "new vault a balance".to_string(),
-    });
+    msg!("new_balance_a {:?}", new_balance_a);
 
     let new_balance_b = ctx.accounts.vault_token_b_account.amount;
-    emit!(Log {
-        data: Some(new_balance_b),
-        message: "new vault b balance".to_string(),
-    });
+    msg!("new_balance_b {:?}", new_balance_b);
 
     // TODO: Think of a way to compute this without actually making the CPI call so that we can follow checks-effects-interactions
     let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
+    let swapped_a = current_balance_a.checked_sub(new_balance_a).unwrap();
 
     // For some reason swap did not happen ~ because we will never have swap amount of 0.
-    if received_b == 0 {
+    // If we ever swap more then the drip amount, we should error out as it will prevent us from doing the last drip
+    if received_b == 0
+        || i128::from(swapped_a)
+            .checked_sub(i128::from(current_drip_amount))
+            .unwrap()
+            > 0
+    {
         return Err(ErrorCode::IncompleteSwapError.into());
     }
 
