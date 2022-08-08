@@ -7,7 +7,7 @@ export class TestConfig {
   private static _default = new TestConfig(
     process.env.ENV === "DEVNET"
       ? new AnchorProvider(
-          new Connection("https://api.devnet.solana.com", "confirmed"),
+          new Connection("https://devnet.genesysgo.net", "confirmed"),
           NodeWallet.local(),
           AnchorProvider.defaultOptions()
         )
