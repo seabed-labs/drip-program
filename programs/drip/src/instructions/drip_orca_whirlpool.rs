@@ -186,7 +186,8 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     }
 
     /* STATE UPDATES (EFFECTS) */
-    msg!("drip_amount {:?}", ctx.accounts.vault.drip_amount);
+    let current_drip_amount = ctx.accounts.vault.drip_amount;
+    msg!("drip_amount {:?}", current_drip_amount);
 
     let current_balance_a = ctx.accounts.vault_token_a_account.amount;
     msg!("current_balance_a {:?}", current_balance_a);
@@ -195,7 +196,6 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     msg!("current_balance_b {:?}", current_balance_b);
 
     // Use drip_amount becasue it may change after process_drip
-    let current_drip_amount = ctx.accounts.vault.drip_amount;
     let drip_trigger_spread_amount = calculate_spread_amount(
         current_drip_amount,
         ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
@@ -234,6 +234,7 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
         &ctx.accounts.tick_array_1,
         &ctx.accounts.tick_array_2,
         &ctx.accounts.oracle,
+        swap_amount,
     )?;
 
     drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
@@ -300,6 +301,7 @@ fn swap_tokens<'info>(
     tick_array_1: &UncheckedAccount<'info>,
     tick_array_2: &UncheckedAccount<'info>,
     oracle: &UncheckedAccount<'info>,
+    swap_amount: u64,
 ) -> Result<()> {
     emit!(Log {
         data: None,
@@ -338,7 +340,7 @@ fn swap_tokens<'info>(
             .expect("higher new sqrt price calc failed 2")
     };
     let params = WhirlpoolSwapParams {
-        amount: vault.drip_amount,
+        amount: swap_amount,
         other_amount_threshold: 0,
         sqrt_price_limit,
         amount_specified_is_input: true,
