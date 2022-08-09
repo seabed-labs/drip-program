@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode::PeriodicDripAmountIsZero;
-use crate::interactions::deposit::mint_position_without_metadata;
+use crate::interactions::deposit::mint_position_with_metadata;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::{Position, Vault, VaultPeriod};
@@ -7,15 +7,11 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct DepositParams {
-    pub token_a_deposit_amount: u64,
-    pub number_of_swaps: u64,
-}
+use super::deposit::DepositParams;
 
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
-pub struct Deposit<'info> {
+pub struct DepositWithMetadata<'info> {
     // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
         // mut needed
@@ -106,21 +102,26 @@ pub struct Deposit<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
+    /// CHECK: checked via the Metadata CPI call
+    /// https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L873
+    #[account(mut)]
+    pub position_metadata_account: UncheckedAccount<'info>,
+
     // Other
     // mut neeed because we are initing accounts
     #[account(mut)]
     pub depositor: Signer<'info>,
 
-    #[account(address = Token::id())]
+    /// CHECK: checked via account constraints
+    #[account(address = mpl_token_metadata::ID)]
+    pub metadata_program: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
-    #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
-    #[account(address = System::id())]
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
+pub fn handler(ctx: Context<DepositWithMetadata>, params: DepositParams) -> Result<()> {
     // TODO(matcha): Do validations that are not possible via eDSL
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
 
@@ -160,11 +161,16 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
 
     token_transfer.execute(&ctx.accounts.vault)?;
 
-    mint_position_without_metadata(
+    mint_position_with_metadata(
         &ctx.accounts.vault,
         &ctx.accounts.user_position_nft_mint,
         &ctx.accounts.user_position_nft_account,
+        &ctx.accounts.position_metadata_account,
+        &ctx.accounts.depositor,
+        &ctx.accounts.metadata_program,
         &ctx.accounts.token_program,
+        &ctx.accounts.system_program,
+        &ctx.accounts.rent,
     )?;
 
     Ok(())

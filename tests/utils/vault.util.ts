@@ -50,6 +50,29 @@ export interface DepositTxParams {
   };
 }
 
+export interface DepositWithMetadataTxParams {
+  accounts: {
+    vault: PublicKey;
+    vaultPeriodEnd: PublicKey;
+    userPosition: PublicKey;
+    tokenAMint: PublicKey;
+    userPositionNftMint: PublicKey;
+    vaultTokenAAccount: PublicKey;
+    userTokenAAccount: PublicKey;
+    userPositionNftAccount: PublicKey;
+    positionMetadataAccount: PublicKey;
+    depositor: PublicKey;
+  };
+  signers: {
+    depositor: Signer;
+    userPositionNftMint: Signer;
+  };
+  params: {
+    tokenADepositAmount: u64;
+    numberOfSwaps: u64;
+  };
+}
+
 export type DeployVaultRes = {
   vault: PublicKey;
   vaultProtoConfig: PublicKey;
@@ -172,6 +195,41 @@ export class VaultUtil extends TestUtil {
         userPositionNftAccount:
           input.accounts.userPositionNftAccount.toBase58(),
         depositor: input.accounts.depositor.toBase58(),
+        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+        associatedTokenProgram:
+          ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        rent: ProgramUtil.rentProgram.programId.toBase58(),
+        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+      })
+      .transaction();
+    return await this.provider.sendAndConfirm(tx, [
+      input.signers.userPositionNftMint,
+      input.signers.depositor,
+    ]);
+  }
+
+  static async depositWithMetadata(
+    input: DepositWithMetadataTxParams
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .depositWithMetadata({
+        tokenADepositAmount: input.params.tokenADepositAmount,
+        numberOfSwaps: input.params.numberOfSwaps,
+      })
+      .accounts({
+        vault: input.accounts.vault.toBase58(),
+        vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
+        userPosition: input.accounts.userPosition.toBase58(),
+        tokenAMint: input.accounts.tokenAMint.toBase58(),
+        userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
+        vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
+        userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
+        userPositionNftAccount:
+          input.accounts.userPositionNftAccount.toBase58(),
+        positionMetadataAccount:
+          input.accounts.positionMetadataAccount.toBase58(),
+        depositor: input.accounts.depositor.toBase58(),
+        metadataProgram: ProgramUtil.metadataProgram.programId.toBase58(),
         tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
         associatedTokenProgram:
           ProgramUtil.associatedTokenProgram.programId.toBase58(),
