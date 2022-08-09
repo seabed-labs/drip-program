@@ -14,6 +14,7 @@ import {
   WhirlpoolIx,
 } from "@orca-so/whirlpools-sdk";
 import { ProgramUtil } from "./program.util";
+import { amount, Denom } from "./common.util";
 
 describe("#setupWhirlpool", setupWhirlpool);
 
