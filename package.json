@@ -40,6 +40,7 @@
     "test:detach:log": "LOG=true yarn test:detach",
     "test:setupkeeperbot": "ENV=DEVNET anchor test tests/utils/setupKeeperBot.ts",
     "test:setupWhirlpool": "ENV=DEVNET anchor test tests/utils/setupWhirlpool.ts",
+    "test:setupMPLTokenMetadata": "ENV=DEVNET anchor test tests/utils/setupMPLTokenMetadata.ts",
     "build": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build"
   }
 }
