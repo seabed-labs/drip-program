@@ -8,6 +8,7 @@ use spl_token::state::AccountState;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
+    max_slippage_bps: u16,
     whitelisted_swaps: Vec<Pubkey>,
 }
 
@@ -97,6 +98,7 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
         ctx.accounts.treasury_token_b_account.key(),
         whitelisted_swaps,
         params.whitelisted_swaps.len() > 0,
+        params.max_slippage_bps,
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;

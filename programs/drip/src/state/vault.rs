@@ -25,6 +25,7 @@ pub struct Vault {
     pub drip_activation_timestamp: i64, // 8
     pub bump: u8,                       // 1
     pub limit_swaps: bool,              // 1
+    pub max_slippage_bps: u16,          // 2
 }
 
 impl<'info> Vault {
@@ -38,6 +39,7 @@ impl<'info> Vault {
         treasury_token_b_account: Pubkey,
         whitelisted_swaps: [Pubkey; 5],
         limit_swaps: bool,
+        max_slippage_bps: u16,
         granularity: u64,
         bump: Option<&u8>,
     ) -> Result<()> {
@@ -49,6 +51,7 @@ impl<'info> Vault {
         self.treasury_token_b_account = treasury_token_b_account;
         self.whitelisted_swaps = whitelisted_swaps;
         self.limit_swaps = limit_swaps;
+        self.max_slippage_bps = max_slippage_bps;
 
         self.last_drip_period = 0;
         self.drip_amount = 0;

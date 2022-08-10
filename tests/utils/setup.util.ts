@@ -66,7 +66,9 @@ export const deployVault = async (
     vaultTokenA_ATA,
     vaultTokenB_ATA,
     vaultTreasuryTokenBAccount,
-    whitelistedSwaps
+    {
+      whitelistedSwaps,
+    }
   );
   return vaultPDA;
 };
