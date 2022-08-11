@@ -1,5 +1,6 @@
 [programs.localnet]
 drip = { address="dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk", idl="./target/idl/drip.json" }
+whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc" 
 
 [registry]
 url = "https://anchor.projectserum.com"
