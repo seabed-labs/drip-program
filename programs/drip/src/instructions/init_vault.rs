@@ -1,5 +1,4 @@
 use crate::errors::ErrorCode;
-use crate::events::Log;
 use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -17,7 +16,7 @@ pub struct InitializeVault<'info> {
     /* DRIP ACCOUNTS */
     #[account(
         init,
-        space = 392,
+        space = Vault::ACCOUNT_SPACE,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
@@ -29,10 +28,6 @@ pub struct InitializeVault<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    #[account(
-        constraint = vault_proto_config.granularity != 0 @ErrorCode::InvalidGranularity,
-        constraint = vault_proto_config.token_a_drip_trigger_spread < 5000 && vault_proto_config.token_b_withdrawal_spread < 5000 @ErrorCode::InvalidSpread,
-    )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     /* TOKEN ACCOUNTS */
@@ -65,13 +60,11 @@ pub struct InitializeVault<'info> {
 
     /* MISC */
     // mut neeed because we are initing accounts
-    #[account(mut)]
+    #[account(mut, address = vault_proto_config.admin @ErrorCode::OnlyAdminCanInitVault)]
     pub creator: Signer<'info>,
 
-    #[account(address = anchor_spl::token::ID)]
     pub token_program: Program<'info, Token>,
 
-    #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
     pub system_program: Program<'info, System>,
@@ -102,10 +95,9 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;
-    emit!(Log {
-        data: None,
-        message: "initialized Vault".to_string(),
-    });
+
+    msg!(&format!("Initialized Vault"));
+
     /* MANUAL CPI (INTERACTIONS) */
     Ok(())
 }

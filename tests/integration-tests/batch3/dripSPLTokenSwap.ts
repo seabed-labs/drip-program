@@ -23,6 +23,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
 
 describe("#dripSPLTokenSwap", testDripSPLTokenSwap);
 
@@ -151,7 +152,7 @@ export function testDripSPLTokenSwap() {
       1,
       5,
       5,
-      tokenOwnerKeypair.publicKey
+      TestUtil.provider.wallet.publicKey
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(

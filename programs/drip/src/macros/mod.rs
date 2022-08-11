@@ -14,7 +14,7 @@ macro_rules! test_account_size {
             use crate::constants::ANCHOR_DISCRIMINATOR_SIZE;
             use crate::state::traits::ByteSized;
 
-            impl ByteSized for VaultProtoConfig {}
+            impl ByteSized for $x {}
 
             #[test]
             fn sanity_check_byte_size() {

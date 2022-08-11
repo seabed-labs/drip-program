@@ -17,6 +17,7 @@ import {
   Granularity,
 } from "../../utils/common.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 describe("#deposit", testDeposit);
@@ -67,7 +68,7 @@ export function testDeposit() {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
-      admin: generatePair().publicKey,
+      admin: TestUtil.provider.wallet.publicKey,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 

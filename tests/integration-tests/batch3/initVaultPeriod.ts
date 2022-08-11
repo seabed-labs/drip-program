@@ -12,6 +12,7 @@ import {
 } from "../../utils/common.util";
 import { SolUtil } from "../../utils/sol.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
 
 // TODO(matcha): More exhaustive tests
 
@@ -35,7 +36,7 @@ export function testInitVaultPeriod() {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
-        admin: generatePair().publicKey,
+        admin: TestUtil.provider.wallet.publicKey,
       }),
     ]);
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;

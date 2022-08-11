@@ -492,7 +492,7 @@ export class VaultUtil extends TestUtil {
         granularity: 1,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
-        admin: adminKeypair.publicKey,
+        admin: TestUtil.provider.wallet.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;
     }
