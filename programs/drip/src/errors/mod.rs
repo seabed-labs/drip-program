@@ -40,4 +40,6 @@ pub enum ErrorCode {
     PositionAlreadyClosed,
     #[msg("Withdrawable amount is zero")]
     WithdrawableAmountIsZero,
+    #[msg("Cannot initialize a vault period lesser than vault's current period")]
+    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod,
 }
