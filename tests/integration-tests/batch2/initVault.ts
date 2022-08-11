@@ -2,7 +2,7 @@ import "should";
 import { AccountUtil } from "../../utils/account.util";
 import { TokenUtil } from "../../utils/token.util";
 import { VaultUtil } from "../../utils/vault.util";
-import { PublicKey, Keypair } from "@solana/web3.js";
+import { PublicKey, Keypair, Transaction } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import {
   findAssociatedTokenAddress,
@@ -15,6 +15,9 @@ import {
 import { SolUtil } from "../../utils/sol.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
+import { ProgramUtil } from "../../utils/program.util";
+import { BN } from "@project-serum/anchor";
 
 describe("#initVault", testInitVault);
 
@@ -35,7 +38,7 @@ export function testInitVault() {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
-        admin: generatePair().publicKey,
+        admin: TestUtil.provider.wallet.publicKey,
       }),
     ]);
 
@@ -208,25 +211,18 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    try {
-      await VaultUtil.initVault(
-        vaultPDA.publicKey,
-        vaultProtoConfigAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
-        vaultTokenA_ATA,
-        vaultTokenB_ATA,
-        treasuryTokenBAccount,
-        {
-          whitelistedSwaps,
-        }
-      );
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*A Vault May Limit to a Maximum of 5 Token Swaps")
-      ).should.not.be.undefined();
-    }
+    await VaultUtil.initVault(
+      vaultPDA.publicKey,
+      vaultProtoConfigAccount,
+      tokenA.publicKey,
+      tokenB.publicKey,
+      vaultTokenA_ATA,
+      vaultTokenB_ATA,
+      treasuryTokenBAccount,
+      {
+        whitelistedSwaps,
+      }
+    ).should.be.rejectedWith(/0x1779/);
   });
 
   it("should fail to initialize when vault PDA is generated with invalid seeds", async () => {
@@ -252,9 +248,7 @@ export function testInitVault() {
       treasuryTokenBAccount,
       undefined
     ).should.rejectedWith(
-      new RegExp(
-        ".*Cross-program invocation with unauthorized signer or writable account"
-      )
+      /Cross-program invocation with unauthorized signer or writable account/
     );
   });
 
@@ -276,9 +270,7 @@ export function testInitVault() {
       treasuryTokenBAccount,
       undefined
     ).should.rejectedWith(
-      new RegExp(
-        ".*Cross-program invocation with unauthorized signer or writable account"
-      )
+      /Cross-program invocation with unauthorized signer or writable account/
     );
   });
 
@@ -303,9 +295,140 @@ export function testInitVault() {
       vaultTokenB_ATA,
       treasuryTokenBAccount,
       undefined
-    ).should.rejectedWith(
-      new RegExp(".*An account required by the instruction is missing")
-    );
+    ).should.rejectedWith(/An account required by the instruction is missing/);
+  });
+
+  context("admin", () => {
+    let whitelistedSwaps: PublicKey[];
+    let vaultProtoConfigKeypair: Keypair;
+    let adminKeypair: Keypair;
+    let vaultPDA: PDA;
+    let vaultTokenAAta: PublicKey, vaultTokenBAta: PublicKey;
+    let treasuryTokenBAccount: PublicKey;
+    let makeInitVaultTx: (creatorPubkey: PublicKey) => Promise<Transaction>;
+    let makeInitVaultProtoConfigTx: (
+      adminPubkey: PublicKey
+    ) => Promise<Transaction>;
+
+    beforeEach(async () => {
+      whitelistedSwaps = generatePairs(5).map((pair) => pair.publicKey);
+      vaultProtoConfigKeypair = generatePair();
+      adminKeypair = generatePair();
+      await SolUtil.fundAccount(
+        adminKeypair.publicKey,
+        SolUtil.solToLamports(1)
+      );
+      vaultPDA = await getVaultPDA(
+        tokenA.publicKey,
+        tokenB.publicKey,
+        vaultProtoConfigKeypair.publicKey
+      );
+      [vaultTokenAAta, vaultTokenBAta] = await Promise.all([
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      ]);
+      treasuryTokenBAccount = await tokenB.createAccount(
+        adminKeypair.publicKey
+      );
+
+      makeInitVaultTx = async (creatorPubkey: PublicKey) =>
+        await ProgramUtil.dripProgram.methods
+          .initVault({
+            whitelistedSwaps,
+            maxSlippageBps: 1_000,
+          })
+          .accounts({
+            vault: vaultPDA.publicKey.toBase58(),
+            vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toBase58(),
+            tokenAMint: tokenA.publicKey.toBase58(),
+            tokenBMint: tokenB.publicKey.toBase58(),
+            tokenAAccount: vaultTokenAAta.toBase58(),
+            tokenBAccount: vaultTokenBAta.toBase58(),
+            treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
+            creator: creatorPubkey,
+            systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+            tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+            associatedTokenProgram:
+              ProgramUtil.associatedTokenProgram.programId.toBase58(),
+            rent: ProgramUtil.rentProgram.programId.toBase58(),
+          })
+          .transaction();
+
+      makeInitVaultProtoConfigTx = async (
+        adminPubkey: PublicKey
+      ): Promise<Transaction> => {
+        return await ProgramUtil.dripProgram.methods
+          .initVaultProtoConfig({
+            granularity: new BN(Granularity.DAILY),
+            tokenADripTriggerSpread: 100,
+            tokenBWithdrawalSpread: 100,
+            admin: adminPubkey,
+          })
+          .accounts({
+            vaultProtoConfig: vaultProtoConfigKeypair.publicKey,
+            creator: TestUtil.provider.wallet.publicKey,
+            systemProgram: ProgramUtil.systemProgram.programId,
+          })
+          .transaction();
+      };
+
+      const initVaultProtoConfigTx = await makeInitVaultProtoConfigTx(
+        adminKeypair.publicKey
+      );
+
+      await TestUtil.provider.sendAndConfirm(initVaultProtoConfigTx, [
+        vaultProtoConfigKeypair,
+      ]);
+    });
+
+    it("vault_proto_config.admin can initialize a vault", async () => {
+      const vaultProtoConfig = await AccountUtil.fetchVaultProtoConfigAccount(
+        vaultProtoConfigKeypair.publicKey
+      );
+
+      vaultProtoConfig.admin
+        .toBase58()
+        .should.equal(adminKeypair.publicKey.toBase58());
+
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      (
+        await TestUtil.provider.connection
+          .sendTransaction(await makeInitVaultTx(adminKeypair.publicKey), [
+            adminKeypair,
+          ])
+          .then((tx) =>
+            TestUtil.provider.connection.confirmTransaction(
+              {
+                signature: tx,
+                ...blockhash,
+              },
+              "finalized"
+            )
+          )
+      ).should.not.throw();
+    });
+
+    it("non vault_proto_config.admin cannot initialize a vault", async () => {
+      const vaultProtoConfig = await AccountUtil.fetchVaultProtoConfigAccount(
+        vaultProtoConfigKeypair.publicKey
+      );
+
+      vaultProtoConfig.admin
+        .toBase58()
+        .should.equal(adminKeypair.publicKey.toBase58());
+
+      const randoKeypair = generatePair();
+      await SolUtil.fundAccount(
+        randoKeypair.publicKey,
+        SolUtil.solToLamports(1)
+      );
+
+      const initVaultTx = await makeInitVaultTx(randoKeypair.publicKey);
+
+      await TestUtil.provider.connection
+        .sendTransaction(initVaultTx, [randoKeypair])
+        .should.be.rejectedWith(/0x177f/);
+    });
   });
 
   describe("test invalid program id's", () => {
@@ -326,89 +449,59 @@ export function testInitVault() {
     });
 
     it("should fail to initialize when system program is passed in", async () => {
-      try {
-        await VaultUtil.initVault(
-          vaultPDA.publicKey,
-          vaultProtoConfigAccount,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          vaultTokenA_ATA,
-          vaultTokenB_ATA,
-          treasuryTokenBAccount,
-          undefined,
-          { systemProgram: generatePair().publicKey }
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(".*Program ID was not as expected")
-        ).should.not.be.undefined();
-      }
+      await VaultUtil.initVault(
+        vaultPDA.publicKey,
+        vaultProtoConfigAccount,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        vaultTokenA_ATA,
+        vaultTokenB_ATA,
+        treasuryTokenBAccount,
+        undefined,
+        { systemProgram: generatePair().publicKey }
+      ).should.be.rejectedWith(/0xbc0/);
     });
 
     it("should fail to initialize when invalid token program is passed in", async () => {
-      try {
-        await VaultUtil.initVault(
-          vaultPDA.publicKey,
-          vaultProtoConfigAccount,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          vaultTokenA_ATA,
-          vaultTokenB_ATA,
-          treasuryTokenBAccount,
-          undefined,
-          { tokenProgram: generatePair().publicKey }
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(".*Program ID was not as expected")
-        ).should.not.be.undefined();
-      }
+      await VaultUtil.initVault(
+        vaultPDA.publicKey,
+        vaultProtoConfigAccount,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        vaultTokenA_ATA,
+        vaultTokenB_ATA,
+        treasuryTokenBAccount,
+        undefined,
+        { tokenProgram: generatePair().publicKey }
+      ).should.be.rejectedWith(/0xbc0/);
     });
 
     it("should fail to initialize when invalid associated token program is passed in", async () => {
-      try {
-        await VaultUtil.initVault(
-          vaultPDA.publicKey,
-          vaultProtoConfigAccount,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          vaultTokenA_ATA,
-          vaultTokenB_ATA,
-          treasuryTokenBAccount,
-          undefined,
-          { associatedTokenProgram: generatePair().publicKey }
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(".*Program ID was not as expected")
-        ).should.not.be.undefined();
-      }
+      await VaultUtil.initVault(
+        vaultPDA.publicKey,
+        vaultProtoConfigAccount,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        vaultTokenA_ATA,
+        vaultTokenB_ATA,
+        treasuryTokenBAccount,
+        undefined,
+        { associatedTokenProgram: generatePair().publicKey }
+      ).should.be.rejectedWith(/0xbc0/);
     });
 
     it("should fail to initialize when invalid rent program is passed in", async () => {
-      try {
-        await VaultUtil.initVault(
-          vaultPDA.publicKey,
-          vaultProtoConfigAccount,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          vaultTokenA_ATA,
-          vaultTokenB_ATA,
-          treasuryTokenBAccount,
-          undefined,
-          { rent: generatePair().publicKey }
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(
-            ".*The given public key does not match the required sysvar"
-          )
-        ).should.not.be.undefined();
-      }
+      await VaultUtil.initVault(
+        vaultPDA.publicKey,
+        vaultProtoConfigAccount,
+        tokenA.publicKey,
+        tokenB.publicKey,
+        vaultTokenA_ATA,
+        vaultTokenB_ATA,
+        treasuryTokenBAccount,
+        undefined,
+        { rent: generatePair().publicKey }
+      ).should.be.rejectedWith(/0xbc7/);
     });
   });
 }

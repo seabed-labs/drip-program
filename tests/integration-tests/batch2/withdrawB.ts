@@ -26,6 +26,7 @@ import { BN } from "@project-serum/anchor";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
 
 describe("#withdrawB", testWithdrawB);
 
@@ -117,7 +118,7 @@ export function testWithdrawB() {
       1,
       5,
       5,
-      tokenOwnerKeypair.publicKey
+      TestUtil.provider.wallet.publicKey
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(

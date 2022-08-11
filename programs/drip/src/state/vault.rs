@@ -1,6 +1,6 @@
-use super::traits::ByteSized;
 use crate::errors::ErrorCode::CannotGetVaultBump;
 use crate::state::VaultPeriod;
+use crate::test_account_size;
 use anchor_lang::prelude::*;
 
 #[account]
@@ -28,7 +28,11 @@ pub struct Vault {
     pub max_slippage_bps: u16,          // 2
 }
 
-impl<'info> Vault {
+impl Vault {
+    // total space -> 378
+    // allocation needed: ceil( (378+8)/8 )*8 -> 392
+    pub const ACCOUNT_SPACE: usize = 392;
+
     pub fn init(
         &mut self,
         proto_config: Pubkey,
@@ -60,7 +64,9 @@ impl<'info> Vault {
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
         // TODO: Use checked_xyz
-        self.drip_activation_timestamp = now - now % granularity as i64;
+        self.drip_activation_timestamp = now
+            .checked_sub(now % granularity as i64)
+            .expect("drip_activation_timestamp math failed");
 
         match bump {
             Some(val) => {
@@ -109,14 +115,4 @@ impl<'info> Vault {
     }
 }
 
-impl ByteSized for Vault {}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn sanity_check_byte_size() {
-        assert_eq!(Vault::byte_size(), 392 - 8);
-    }
-}
+test_account_size!(Vault);

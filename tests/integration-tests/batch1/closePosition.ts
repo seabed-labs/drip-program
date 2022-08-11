@@ -25,6 +25,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
+import { TestUtil } from "../../utils/config.util";
 
 describe("#closePosition", testClosePosition);
 
@@ -114,7 +115,7 @@ export function testClosePosition() {
       1,
       5,
       5,
-      tokenOwnerKeypair.publicKey
+      TestUtil.provider.wallet.publicKey
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(

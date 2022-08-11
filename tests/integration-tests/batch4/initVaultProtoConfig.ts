@@ -53,30 +53,22 @@ export function testInitVaultProtoConfig() {
 
   it("errors when granularity is 0", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    try {
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-        granularity: 0,
-        tokenADripTriggerSpread: 5,
-        tokenBWithdrawalSpread: 5,
-        admin: generatePair().publicKey,
-      });
-      throw new Error();
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Granularity must be an integer larger than 0")
-      ).should.not.be.undefined();
-    }
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: 0,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 5,
+      admin: generatePair().publicKey,
+    }).should.be.rejectedWith(/0x1775/);
   });
 
   it("errors when granularity is not a number", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: "1o" as any as number,
+      granularity: "1o" as any,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
-    }).should.be.rejectedWith(new RegExp(".*Invalid character"));
+    }).should.be.rejectedWith(/Invalid character/);
   });
 
   it("errors when token_a_drip_trigger_spread is not within u16 bound", async () => {
@@ -87,9 +79,7 @@ export function testInitVaultProtoConfig() {
       tokenBWithdrawalSpread: 5,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
-      new RegExp(
-        '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
-      )
+      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/
     );
   });
 
@@ -101,43 +91,27 @@ export function testInitVaultProtoConfig() {
       tokenBWithdrawalSpread: 70000,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
-      new RegExp(
-        '.*The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000'
-      )
+      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/
     );
   });
 
   it("errors when token_a_drip_trigger_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    try {
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-        granularity: Granularity.MONTHLY,
-        tokenADripTriggerSpread: 5000,
-        tokenBWithdrawalSpread: 5,
-        admin: generatePair().publicKey,
-      });
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Spread must be >=0 and <=10000")
-      ).should.not.be.undefined();
-    }
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      tokenADripTriggerSpread: 5000,
+      tokenBWithdrawalSpread: 5,
+      admin: generatePair().publicKey,
+    }).should.be.rejectedWith(/0x1777/);
   });
 
   it("errors when token_b_withdrawal_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    try {
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-        granularity: Granularity.MONTHLY,
-        tokenADripTriggerSpread: 5,
-        tokenBWithdrawalSpread: 5000,
-        admin: generatePair().publicKey,
-      });
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Spread must be >=0 and <=10000")
-      ).should.not.be.undefined();
-    }
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.MONTHLY,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 5000,
+      admin: generatePair().publicKey,
+    }).should.be.rejectedWith(/0x1777/);
   });
 }

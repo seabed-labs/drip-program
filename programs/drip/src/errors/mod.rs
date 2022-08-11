@@ -16,7 +16,7 @@ pub enum ErrorCode {
     InvalidGranularity,
     #[msg("Token mint does not match expected value")]
     InvalidMint,
-    #[msg("Spread must be >=0 and <=10000")]
+    #[msg("Spread must be >=0 and <5000")]
     InvalidSpread,
     #[msg("Token Swap is Not Whitelisted")]
     InvalidSwapAccount,
@@ -32,6 +32,8 @@ pub enum ErrorCode {
     InvalidVaultPeriod,
     #[msg("Provided account references the wrong vault")]
     InvalidVaultReference,
+    #[msg("Only admin can init vault")]
+    OnlyAdminCanInitVault,
     #[msg("Periodic drip amount == 0")]
     PeriodicDripAmountIsZero,
     #[msg("Position is already closed")]
