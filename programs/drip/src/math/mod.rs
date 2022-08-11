@@ -34,9 +34,9 @@ pub fn calculate_sqrt_price_limit(
     let factor = (factor * (precision as f64)).floor() as u128;
     current_sqrt_price
         .checked_mul(factor)
-        .expect("lower new sqrt price calc failed 1")
+        .expect("new sqrt price calc failed 1")
         .checked_div(precision as u128)
-        .expect("lower new sqrt price calc failed 2")
+        .expect("new sqrt price calc failed 2")
 }
 
 pub fn calculate_periodic_drip_amount(total_amount: u64, number_of_swaps: u64) -> u64 {
