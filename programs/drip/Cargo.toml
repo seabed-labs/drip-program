@@ -21,7 +21,7 @@ anchor-spl = "0.25.0"
 spl-token = { version = "3.2.0", features = ["no-entrypoint"] }
 spl-token-swap = { version = "2.0.0", features = ["no-entrypoint", "production"] }
 mpl-token-metadata = { version = "1.3.3", features = ["no-entrypoint"] }
-whirlpool = { path = "../whirlpool", features = ["no-entrypoint"]}
+whirlpool = { path = "../whirlpool", features = ["no-entrypoint"] }
 
 [dev-dependencies]
 test-case = "2.0.0"

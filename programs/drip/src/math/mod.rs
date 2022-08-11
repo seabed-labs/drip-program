@@ -2,10 +2,22 @@ use std::{convert::TryFrom, u128};
 
 fn calculate_slippage_factor(max_slippage_bps: u16, a_to_b: bool) -> f64 {
     if a_to_b {
+        // Example
+        // Price decreases
+        // We want -10% of the current price
+        // new_price = old_price * 0.9
+        // new_sqrt_price = old_sqrt_price * sqrt(0.9)
+        // new_sqrt_price = (old_sqrt_price * 9486) / 1e4
         let factor = 1.0 - 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
         factor
     } else {
+        // Example
+        // Price increases
+        // We want +10% of the current price
+        // new_price = old_price * 1.1
+        // new_sqrt_price = old_sqrt_price * sqrt(1.1)
+        // new_sqrt_price = (old_sqrt_price * 10488) / 1e4
         let factor = 1.0 + 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
         factor
@@ -20,31 +32,11 @@ pub fn calculate_sqrt_price_limit(
     let precision = 10000;
     let factor = calculate_slippage_factor(max_slippage_bps, a_to_b);
     let factor = (factor * (precision as f64)).floor() as u128;
-    if a_to_b {
-        // Example
-        // Price decreases
-        // We want -10% of the current price
-        // new_price = old_price * 0.9
-        // new_sqrt_price = old_sqrt_price * sqrt(0.9)
-        // new_sqrt_price = (old_sqrt_price * 9486) / 1e4
-        current_sqrt_price
-            .checked_mul(factor)
-            .expect("lower new sqrt price calc failed 1")
-            .checked_div(precision as u128)
-            .expect("lower new sqrt price calc failed 2")
-    } else {
-        // Example
-        // Price increases
-        // We want +10% of the current price
-        // new_price = old_price * 1.1
-        // new_sqrt_price = old_sqrt_price * sqrt(1.1)
-        // new_sqrt_price = (old_sqrt_price * 10488) / 1e4
-        current_sqrt_price
-            .checked_mul(factor)
-            .expect("higher new sqrt price calc failed 1")
-            .checked_div(precision as u128)
-            .expect("higher new sqrt price calc failed 2")
-    }
+    current_sqrt_price
+        .checked_mul(factor)
+        .expect("lower new sqrt price calc failed 1")
+        .checked_div(precision as u128)
+        .expect("lower new sqrt price calc failed 2")
 }
 
 pub fn calculate_periodic_drip_amount(total_amount: u64, number_of_swaps: u64) -> u64 {
