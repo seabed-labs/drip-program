@@ -444,6 +444,7 @@ export class VaultUtil extends TestUtil {
     vaultProtoConfig,
     whitelistedSwaps,
     tokenOwnerKeypair,
+    maxSlippageBps = 1000,
     adminKeypair = generatePair(),
     botKeypair = generatePair(),
     userKeypair = generatePair(),
@@ -452,6 +453,7 @@ export class VaultUtil extends TestUtil {
     tokenA: Token;
     tokenB: Token;
     tokenOwnerKeypair: Keypair;
+    maxSlippageBps?: number;
     adminKeypair?: Keypair;
     botKeypair?: Keypair;
     userKeypair?: Keypair;
@@ -515,7 +517,10 @@ export class VaultUtil extends TestUtil {
       vaultTokenAAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      whitelistedSwaps
+      {
+        whitelistedSwaps,
+        maxSlippageBps,
+      }
     );
 
     const vaultPeriods = (

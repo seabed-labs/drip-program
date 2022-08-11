@@ -1,14 +1,16 @@
 use std::{convert::TryFrom, u128};
 
-fn calculate_slippage_factor(max_slippage_bps: u16, precision: u16, a_to_b: bool) -> u128 {
+use anchor_lang::solana_program::msg;
+
+fn calculate_slippage_factor(max_slippage_bps: u16, a_to_b: bool) -> f64 {
     if a_to_b {
         let factor = 1.0 - 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
-        (factor * (precision as f64)).round() as u128
+        factor
     } else {
         let factor = 1.0 + 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
-        (factor * (precision as f64)).floor() as u128
+        factor
     }
 }
 
@@ -18,7 +20,11 @@ pub fn calculate_sqrt_price_limit(
     a_to_b: bool,
 ) -> u128 {
     let precision = 10000;
-    let factor = calculate_slippage_factor(max_slippage_bps, precision, a_to_b);
+    msg!("max_slippage_bps: {:?}", max_slippage_bps);
+    let factor = calculate_slippage_factor(max_slippage_bps, a_to_b);
+    msg!("factor {:?}", factor);
+    let factor = (factor * (precision as f64)).floor() as u128;
+    msg!("factor {:?}", factor);
     if a_to_b {
         // Example
         // Price decreases
@@ -174,16 +180,15 @@ mod test {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(1000, 10000, true, 9487; "a_to_b = true")]
-    #[test_case(1000, 10000, false, 10488; "a_to_b = false")]
+    #[test_case(1000, true, 0.9486832980505138; "a_to_b = true")]
+    #[test_case(1000, false, 1.0488088481701516; "a_to_b = false")]
     fn calculate_slippage_factor_tests(
         max_slippage_bps: u16,
-        precission: u16,
         a_to_b: bool,
-        expected_slippage_factor: u128,
+        expected_slippage_factor: f64,
     ) {
         assert_eq!(
-            calculate_slippage_factor(max_slippage_bps, precission, a_to_b),
+            calculate_slippage_factor(max_slippage_bps, a_to_b),
             expected_slippage_factor
         );
     }
