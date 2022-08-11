@@ -1,5 +1,4 @@
 use crate::errors::ErrorCode;
-use crate::events::Log;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::{calculate_spread_amount, calculate_sqrt_price_limit};
 use crate::sign;
@@ -261,10 +260,6 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
 
     // For some reason swap did not happen ~ because we will never have swap amount of 0.
     // If we ever swap more then the drip amount, we should error out as it will prevent us from doing the last drip
-    msg!("received_b {:?}", received_b);
-    msg!("extra {:?}", i128::from(swapped_a)
-    .checked_sub(i128::from(current_drip_amount))
-    .unwrap());
     if received_b == 0
         || i128::from(swapped_a)
             .checked_sub(i128::from(current_drip_amount))
@@ -307,20 +302,14 @@ fn swap_tokens<'info>(
     oracle: &UncheckedAccount<'info>,
     swap_amount: u64,
 ) -> Result<()> {
-    emit!(Log {
-        data: None,
-        message: "starting CPI flow".to_string(),
-    });
     let a_to_b = if vault_token_a_account.mint.key() == whirlpool_token_vault_a.mint.key() {
         true
     } else {
         false
     };
     msg!(&format!("a_to_b: {a_to_b}"));
-    msg!("sqrt_price_limit_old {:?}", whirlpool.sqrt_price);
     let sqrt_price_limit =
         calculate_sqrt_price_limit(whirlpool.sqrt_price, vault.max_slippage_bps, a_to_b);
-    msg!(&format!("sqrt_price_limit: {sqrt_price_limit}"));
     let params = WhirlpoolSwapParams {
         amount: swap_amount,
         other_amount_threshold: 0,
