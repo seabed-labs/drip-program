@@ -115,7 +115,13 @@ export class VaultUtil extends TestUtil {
     tokenA_ATA: PublicKey,
     tokenB_ATA: PublicKey,
     treasuryTokenBAccount: PublicKey,
-    whitelistedSwaps: PublicKey[] | null | undefined,
+    params: {
+      whitelistedSwaps: PublicKey[] | null | undefined;
+      maxSlippageBps?: number;
+    } = {
+      whitelistedSwaps: undefined,
+      maxSlippageBps: 1000,
+    },
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
@@ -125,7 +131,8 @@ export class VaultUtil extends TestUtil {
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVault({
-        whitelistedSwaps: whitelistedSwaps ? whitelistedSwaps : [],
+        whitelistedSwaps: params.whitelistedSwaps ?? [],
+        maxSlippageBps: params.maxSlippageBps,
       })
       .accounts({
         vault: vaultPubkey.toBase58(),
@@ -435,6 +442,7 @@ export class VaultUtil extends TestUtil {
     vaultProtoConfig,
     whitelistedSwaps,
     tokenOwnerKeypair,
+    maxSlippageBps = 1000,
     adminKeypair = generatePair(),
     botKeypair = generatePair(),
     userKeypair = generatePair(),
@@ -443,6 +451,7 @@ export class VaultUtil extends TestUtil {
     tokenA: Token;
     tokenB: Token;
     tokenOwnerKeypair: Keypair;
+    maxSlippageBps?: number;
     adminKeypair?: Keypair;
     botKeypair?: Keypair;
     userKeypair?: Keypair;
@@ -506,7 +515,10 @@ export class VaultUtil extends TestUtil {
       vaultTokenAAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      whitelistedSwaps
+      {
+        whitelistedSwaps,
+        maxSlippageBps,
+      }
     );
 
     const vaultPeriods = (

@@ -142,7 +142,9 @@ export function testInitVault() {
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      whitelistedSwaps
+      {
+        whitelistedSwaps,
+      }
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
@@ -177,7 +179,9 @@ export function testInitVault() {
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      whitelistedSwaps
+      {
+        whitelistedSwaps,
+      }
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
@@ -213,7 +217,9 @@ export function testInitVault() {
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
-        whitelistedSwaps
+        {
+          whitelistedSwaps,
+        }
       );
     } catch (e) {
       findError(

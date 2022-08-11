@@ -1,7 +1,6 @@
 use crate::errors::ErrorCode;
-use crate::events::Log;
 use crate::interactions::transfer_token::TransferToken;
-use crate::math::calculate_spread_amount;
+use crate::math::{calculate_spread_amount, calculate_sqrt_price_limit};
 use crate::sign;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::solana_program::hash::hashv;
@@ -303,42 +302,14 @@ fn swap_tokens<'info>(
     oracle: &UncheckedAccount<'info>,
     swap_amount: u64,
 ) -> Result<()> {
-    emit!(Log {
-        data: None,
-        message: "starting CPI flow".to_string(),
-    });
     let a_to_b = if vault_token_a_account.mint.key() == whirlpool_token_vault_a.mint.key() {
         true
     } else {
         false
     };
     msg!(&format!("a_to_b: {a_to_b}"));
-    // TODO: What should the sqrt_price_limit be?
-    let sqrt_price_limit = if a_to_b {
-        // Price decreases
-        // We want -10% of the current price
-        // new_price = old_price * 0.9
-        // new_sqrt_price = old_sqrt_price * sqrt(0.9)
-        // new_sqrt_price = (old_sqrt_price * 9486) / 1e4
-        whirlpool
-            .sqrt_price
-            .checked_mul(9486)
-            .expect("lower new sqrt price calc failed 1")
-            .checked_div(10000)
-            .expect("lower new sqrt price calc failed 2")
-    } else {
-        // Price increases
-        // We want +10% of the current price
-        // new_price = old_price * 1.1
-        // new_sqrt_price = old_sqrt_price * sqrt(1.1)
-        // new_sqrt_price = (old_sqrt_price * 10488) / 1e4
-        whirlpool
-            .sqrt_price
-            .checked_mul(10488)
-            .expect("higher new sqrt price calc failed 1")
-            .checked_div(10000)
-            .expect("higher new sqrt price calc failed 2")
-    };
+    let sqrt_price_limit =
+        calculate_sqrt_price_limit(whirlpool.sqrt_price, vault.max_slippage_bps, a_to_b);
     let params = WhirlpoolSwapParams {
         amount: swap_amount,
         other_amount_threshold: 0,

@@ -15,7 +15,9 @@ export class TestConfig {
   );
 
   constructor(provider: AnchorProvider) {
-    console.log(process.env.ENV ?? "no environment specified");
+    if (process.env.ENV) {
+      console.log(process.env.ENV);
+    }
     setProvider(provider);
     this.provider = provider;
   }

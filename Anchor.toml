@@ -1,5 +1,6 @@
 [programs.localnet]
 drip = { address="dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk", idl="./target/idl/drip.json" }
+whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc" 
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -9,7 +10,6 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel tests/integration-tests/*.ts"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 --parallel"
 
 # Load other programs into anchor

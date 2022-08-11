@@ -17,4 +17,11 @@ describe("Test Dependent Programs", () => {
     );
     orcaWhirlpoolProgram.should.not.be.undefined();
   });
+
+  it("should have the metaplex token metadata program", async () => {
+    const metadataProgram = await AccountUtil.fetchAccountInfo(
+      new web3.PublicKey(ProgramUtil.metadataProgram.programId)
+    );
+    metadataProgram.should.not.be.undefined();
+  });
 });
