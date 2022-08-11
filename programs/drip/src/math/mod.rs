@@ -1,14 +1,14 @@
 use std::{convert::TryFrom, u128};
 
-fn calculate_slippage_factor(max_slippage_bps: u16, precision: u16,  a_to_b: bool) -> u128 {
+fn calculate_slippage_factor(max_slippage_bps: u16, precision: u16, a_to_b: bool) -> u128 {
     if a_to_b {
-        let factor = 1.0-0.0001*f64::from(max_slippage_bps);
+        let factor = 1.0 - 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
-        (factor*(precision as f64)).round() as u128
+        (factor * (precision as f64)).round() as u128
     } else {
-        let factor = 1.0+0.0001*f64::from(max_slippage_bps);
+        let factor = 1.0 + 0.0001 * f64::from(max_slippage_bps);
         let factor = f64::sqrt(factor);
-        (factor*(precision as f64)).round() as u128
+        (factor * (precision as f64)).floor() as u128
     }
 }
 
