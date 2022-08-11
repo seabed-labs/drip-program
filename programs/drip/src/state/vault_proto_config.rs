@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use super::traits::ByteSized;
+use crate::test_account_size;
 
 #[account]
 #[derive(Default)]
@@ -31,17 +31,4 @@ impl VaultProtoConfig {
     }
 }
 
-impl ByteSized for VaultProtoConfig {}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn sanity_check_byte_size() {
-        assert_eq!(
-            VaultProtoConfig::byte_size(),
-            VaultProtoConfig::ACCOUNT_SPACE - 8
-        );
-    }
-}
+test_account_size!(VaultProtoConfig);
