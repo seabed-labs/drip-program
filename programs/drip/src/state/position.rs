@@ -4,9 +4,6 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Default)]
 pub struct Position {
-    // total space -> 114
-    // allocation needed: ceil( (114+8)/8 )*8 -> 128
-
     // The A/B/G vault the position belongs to
     pub vault: Pubkey, // 32
     // The position authority NFT mint
@@ -27,6 +24,8 @@ pub struct Position {
 }
 
 impl Position {
+    // total space -> 114
+    // allocation needed: ceil( (114+8)/8 )*8 -> 128
     pub const ACCOUNT_SPACE: usize = 128;
 
     pub fn init(
