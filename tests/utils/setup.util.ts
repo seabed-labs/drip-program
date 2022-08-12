@@ -68,6 +68,7 @@ export const deployVault = async (
     vaultTreasuryTokenBAccount,
     {
       whitelistedSwaps,
+      maxSlippageBps: 1000,
     }
   );
   return vaultPDA;

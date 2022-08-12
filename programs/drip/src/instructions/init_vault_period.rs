@@ -21,7 +21,7 @@ pub struct InitializeVaultPeriod<'info> {
         ],
         bump,
         payer = creator,
-        constraint = params.period_id > vault.last_drip_period @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
+        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
     )]
     vault_period: Account<'info, VaultPeriod>,
 
