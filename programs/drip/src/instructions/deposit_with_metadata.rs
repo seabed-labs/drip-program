@@ -112,6 +112,7 @@ pub struct DepositWithMetadata<'info> {
     pub system_program: Program<'info, System>,
 
     /// CHECK: Checked by metaplex's program
+    #[account(mut)]
     pub position_metadata_account: UncheckedAccount<'info>,
     pub metadata_program: Program<'info, MetaplexTokenMetadata>,
 }
