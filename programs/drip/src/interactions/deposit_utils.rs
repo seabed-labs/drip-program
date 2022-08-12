@@ -11,9 +11,15 @@ use anchor_spl::token::{Mint, MintTo, Token, TokenAccount};
 use mpl_token_metadata::instruction::create_metadata_accounts_v3;
 use spl_token::instruction::AuthorityType;
 
-const DRIP_METADATA_NAME: &str = "Dcaf Drip Position";
-const DRIP_METADATA_SYMBOL: &str = "DDP";
-const DRIP_METADATA_URI: &str = "https://api.drip.dcaf.so/v1/drip/positionmetadata";
+const DRIP_METADATA_NAME: &str = "Drip Position";
+const DRIP_METADATA_SYMBOL: &str = "DP";
+
+fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
+    format!(
+        "https://api.drip.dcaf.so/v1/drip/position/{}/metadata",
+        position_nft_mint_pubkey.to_string()
+    )
+}
 
 pub fn handle_deposit<'info>(
     // Accounts
@@ -130,10 +136,10 @@ pub fn mint_position_with_metadata<'info>(
             vault.key(),
             DRIP_METADATA_NAME.to_string(),
             DRIP_METADATA_SYMBOL.to_string(),
-            DRIP_METADATA_URI.to_string(),
+            get_metadata_url(&mint.key()),
             None,
             0,
-            false,
+            true,
             true,
             None,
             None,
