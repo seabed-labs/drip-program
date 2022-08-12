@@ -103,6 +103,7 @@ pub struct WithdrawB<'info> {
     /* MINTS */
     #[account(
         constraint = user_position_nft_mint.supply == 1,
+        constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint,
         constraint = user_position_nft_mint.mint_authority.is_none(),
         constraint = user_position_nft_mint.decimals == 0,
         constraint = user_position_nft_mint.is_initialized,

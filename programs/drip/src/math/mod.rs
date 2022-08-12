@@ -49,21 +49,23 @@ pub fn calculate_periodic_drip_amount(total_amount: u64, number_of_swaps: u64) -
 /// * `i`: the last completed period before deposit (drip_period_id_before_deposit)
 /// (at the time of deposit, this should be the same as last_drip_period)
 /// * `j`: the min of vault.last_drip_period, and user position expiry (drip_period_id_before_deposit + number_of_swaps)
-/// * `number_of_swaps`: total number of swaps the user will participate in
+/// * `user_position_number_of_swaps`: total number of swaps the user will participate in
 /// * `periodic_drip_amount`: amount of asset a used in each period to buy asset b
 ///
 /// returns: u64
 pub fn calculate_withdraw_token_a_amount(
     i: u64,
     j: u64,
-    number_of_swaps: u64,
+    user_position_number_of_swaps: u64,
     periodic_drip_amount: u64,
 ) -> u64 {
-    let completed_swaps = j.checked_sub(i).unwrap();
-    if number_of_swaps <= completed_swaps {
+    let swaps_completed_since_user_deposit = j.checked_sub(i).unwrap();
+    if user_position_number_of_swaps <= swaps_completed_since_user_deposit {
         return 0;
     }
-    let remaining_swaps = number_of_swaps.checked_sub(completed_swaps).unwrap();
+    let remaining_swaps = user_position_number_of_swaps
+        .checked_sub(swaps_completed_since_user_deposit)
+        .unwrap();
     remaining_swaps.checked_mul(periodic_drip_amount).unwrap()
 }
 
