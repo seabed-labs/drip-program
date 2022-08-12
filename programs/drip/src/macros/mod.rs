@@ -11,8 +11,8 @@ macro_rules! test_account_size {
         #[cfg(test)]
         mod test {
             use super::*;
-            use crate::constants::ANCHOR_DISCRIMINATOR_SIZE;
-            use crate::state::traits::ByteSized;
+            use $crate::constants::ANCHOR_DISCRIMINATOR_SIZE;
+            use $crate::state::traits::ByteSized;
 
             impl ByteSized for $x {}
 

@@ -1,4 +1,4 @@
-use crate::events::Log;
+use crate::errors::ErrorCode;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
@@ -17,10 +17,11 @@ pub struct InitializeVaultPeriod<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            params.period_id.to_string().as_bytes().as_ref()
+            params.period_id.to_string().as_bytes()
         ],
         bump,
-        payer = creator
+        payer = creator,
+        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
     )]
     vault_period: Account<'info, VaultPeriod>,
 
@@ -36,25 +37,21 @@ pub struct InitializeVaultPeriod<'info> {
     vault: Account<'info, Vault>,
 
     #[account(
-        constraint = {
-            token_a_mint.key() == vault.token_a_mint
-        },
+        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
     )]
     pub token_a_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = {
-            token_b_mint.key() == vault.token_b_mint
-        },
+        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint
     )]
     pub token_b_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = vault_proto_config.granularity != 0
+        constraint = vault_proto_config.key() == vault.proto_config
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
-    // mut neeed because we are initing accounts
+    // mut needed because we are initing accounts
     #[account(mut)]
     pub creator: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -72,9 +69,6 @@ pub fn handler(
         ctx.bumps.get("vault_period"),
     )?;
 
-    emit!(Log {
-        data: None,
-        message: "initialized VaultPeriod".to_string(),
-    });
+    msg!("Initialized VaultPeriod");
     Ok(())
 }

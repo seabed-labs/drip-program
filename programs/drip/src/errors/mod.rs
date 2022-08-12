@@ -10,7 +10,7 @@ pub enum ErrorCode {
     CannotGetVaultPeriodBump,
     #[msg("Drip already triggered for the current period")]
     DuplicateDripError,
-    #[msg("Swap did not complete, either received token_b is 0, or swappd token_a is too high")]
+    #[msg("Swap did not complete, either received token_b is 0")]
     IncompleteSwapError,
     #[msg("Granularity must be an integer larger than 0")]
     InvalidGranularity,
@@ -24,8 +24,10 @@ pub enum ErrorCode {
     InvalidNumSwaps,
     #[msg("Provided account references the wrong vault-proto-config")]
     InvalidVaultProtoConfigReference,
+    // TODO: Delete the error below
     #[msg("Invalid swap authority account")]
     InvalidSwapAuthorityAccount,
+    // TODO: Delete the error below
     #[msg("Invalid swap fee account")]
     InvalidSwapFeeAccount,
     #[msg("Invalid vault-period")]
@@ -40,4 +42,10 @@ pub enum ErrorCode {
     PositionAlreadyClosed,
     #[msg("Withdrawable amount is zero")]
     WithdrawableAmountIsZero,
+    #[msg("Cannot initialize a vault period lesser than vault's current period")]
+    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod,
+    #[msg("Invalid value for vault.max_slippage_bps")]
+    InvalidVaultMaxSlippage,
+    #[msg("Swapped more than vault's drip amount")]
+    SwappedMoreThanVaultDripAmount,
 }

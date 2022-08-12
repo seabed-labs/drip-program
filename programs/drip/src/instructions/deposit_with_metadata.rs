@@ -1,13 +1,10 @@
-use crate::errors::ErrorCode::PeriodicDripAmountIsZero;
-use crate::interactions::deposit::mint_position_with_metadata;
-use crate::interactions::transfer_token::TransferToken;
-use crate::math::calculate_periodic_drip_amount;
+use crate::errors::ErrorCode;
+use crate::interactions::deposit_utils::{handle_deposit, MetaplexTokenMetadata};
 use crate::state::{Position, Vault, VaultPeriod};
+use crate::DepositParams;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-
-use super::deposit::DepositParams;
 
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
@@ -18,8 +15,8 @@ pub struct DepositWithMetadata<'info> {
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            vault.token_a_mint.as_ref(),
-            vault.token_b_mint.as_ref(),
+            token_a_mint.key().as_ref(),
+            vault.token_b_mint.key().as_ref(),
             vault.proto_config.as_ref()
         ],
         bump = vault.bump
@@ -32,11 +29,17 @@ pub struct DepositWithMetadata<'info> {
         // mut needed because we are changing state
         mut,
         has_one = vault,
+        seeds = [
+            b"vault_period".as_ref(),
+            vault.key().as_ref(),
+            vault_period_end.period_id.to_string().as_bytes()
+        ],
+        bump = vault_period_end.bump,
         constraint = {
             params.number_of_swaps > 0 &&
             vault_period_end.period_id > 0 &&
             vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap()
-        }
+        } @ErrorCode::InvalidVaultPeriod
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
@@ -54,9 +57,7 @@ pub struct DepositWithMetadata<'info> {
 
     // Token mints
     #[account(
-        constraint = {
-            token_a_mint.key() == vault.token_a_mint
-        },
+        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
     )]
     pub token_a_mint: Box<Account<'info, Mint>>,
 
@@ -68,10 +69,9 @@ pub struct DepositWithMetadata<'info> {
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
 
-    // TODO(matcha): Verify that this is an ATA (and all other places too)
     // Token accounts
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = {
             vault_token_a_account.mint == vault.token_a_mint &&
@@ -80,16 +80,15 @@ pub struct DepositWithMetadata<'info> {
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    // TODO(matcha): Revisit this and make sure this constraint makes sense
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
         constraint = {
             user_token_a_account.mint == vault.token_a_mint &&
             user_token_a_account.owner == depositor.key() &&
             user_token_a_account.delegate.contains(&vault.key()) &&
-            user_token_a_account.delegated_amount == params.token_a_deposit_amount &&
-            params.token_a_deposit_amount > 0
+            params.token_a_deposit_amount > 0 &&
+            user_token_a_account.delegated_amount >= params.token_a_deposit_amount
         }
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -102,76 +101,40 @@ pub struct DepositWithMetadata<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: checked via the Metadata CPI call
-    /// https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L873
-    #[account(mut)]
-    pub position_metadata_account: UncheckedAccount<'info>,
-
     // Other
-    // mut neeed because we are initing accounts
+    // mut needed because we are initing accounts
     #[account(mut)]
     pub depositor: Signer<'info>,
 
-    /// CHECK: checked via account constraints
-    #[account(address = mpl_token_metadata::ID)]
-    pub metadata_program: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
+
+    /// CHECK: Checked by metaplex's program
+    #[account(mut)]
+    pub position_metadata_account: UncheckedAccount<'info>,
+    pub metadata_program: Program<'info, MetaplexTokenMetadata>,
 }
 
 pub fn handler(ctx: Context<DepositWithMetadata>, params: DepositParams) -> Result<()> {
-    // TODO(matcha): Do validations that are not possible via eDSL
-    /* MANUAL CHECKS + COMPUTE (CHECKS) */
-
-    let periodic_drip_amount =
-        calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps);
-
-    if periodic_drip_amount == 0 {
-        return Err(PeriodicDripAmountIsZero.into());
-    }
-
-    let token_transfer = TransferToken::new(
-        &ctx.accounts.token_program,
-        &ctx.accounts.user_token_a_account,
-        &ctx.accounts.vault_token_a_account,
-        params.token_a_deposit_amount,
-    );
-
-    /* STATE UPDATES (EFFECTS) */
-
-    let vault_mut = &mut ctx.accounts.vault;
-    let vault_period_end_mut = &mut ctx.accounts.vault_period_end;
-    let position_mut = &mut ctx.accounts.user_position;
-
-    vault_mut.increase_drip_amount(periodic_drip_amount);
-    vault_period_end_mut.increase_drip_amount_to_reduce(periodic_drip_amount);
-    position_mut.init(
-        ctx.accounts.vault.key(),
-        ctx.accounts.user_position_nft_mint.key(),
-        params.token_a_deposit_amount,
-        ctx.accounts.vault.last_drip_period,
-        params.number_of_swaps,
-        periodic_drip_amount,
-        ctx.bumps.get("user_position"),
-    )?;
-
-    /* MANUAL CPI (INTERACTIONS) */
-
-    token_transfer.execute(&ctx.accounts.vault)?;
-
-    mint_position_with_metadata(
-        &ctx.accounts.vault,
-        &ctx.accounts.user_position_nft_mint,
-        &ctx.accounts.user_position_nft_account,
-        &ctx.accounts.position_metadata_account,
+    handle_deposit(
         &ctx.accounts.depositor,
-        &ctx.accounts.metadata_program,
+        &ctx.accounts.rent,
         &ctx.accounts.token_program,
         &ctx.accounts.system_program,
-        &ctx.accounts.rent,
-    )?;
-
-    Ok(())
+        &ctx.accounts.vault_token_a_account,
+        &ctx.accounts.user_token_a_account,
+        &ctx.accounts.user_position_nft_mint,
+        &ctx.accounts.user_position_nft_account,
+        &mut ctx.accounts.vault,
+        &mut ctx.accounts.vault_period_end,
+        &mut ctx.accounts.user_position,
+        ctx.bumps.get("user_position"),
+        params,
+        Some((
+            &ctx.accounts.metadata_program,
+            &ctx.accounts.position_metadata_account,
+        )),
+    )
 }

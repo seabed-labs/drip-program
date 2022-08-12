@@ -147,6 +147,7 @@ export function testInitVault() {
       treasuryTokenBAccount,
       {
         whitelistedSwaps,
+        maxSlippageBps: 1000,
       }
     );
 
@@ -184,6 +185,7 @@ export function testInitVault() {
       treasuryTokenBAccount,
       {
         whitelistedSwaps,
+        maxSlippageBps: 1000,
       }
     );
 

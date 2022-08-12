@@ -95,9 +95,13 @@ impl Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-        // TODO: Use checked_xyz
         // TODO(matcha): Make sure this makes sense (think through it)
-        self.drip_activation_timestamp = (now - now % granularity as i64) + granularity as i64;
+        // Snap it back to the correct activation time stamp
+        self.drip_activation_timestamp = now
+            .checked_sub(now % granularity as i64)
+            .expect("drip_activation_timestamp math process_drip sub")
+            .checked_add(granularity as i64)
+            .expect("drip_activation_timestamp math process_drip add");
     }
 
     pub fn is_drip_activated(&self) -> bool {

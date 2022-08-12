@@ -3,23 +3,23 @@ use crate::interactions::transfer_token::TransferToken;
 use crate::math::{
     calculate_spread_amount, calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount,
 };
+use crate::sign;
 use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
-use spl_token::state::AccountState;
 
 // TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
     /* DRIP ACCOUNTS */
     #[account(
-        // mut neeed
+        // mut needed because we are changing state
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            vault.token_a_mint.as_ref(),
-            vault.token_b_mint.as_ref(),
-            vault.proto_config.as_ref()
+            token_a_mint.key().as_ref(),
+            token_b_mint.key().as_ref(),
+            vault_proto_config.key().as_ref()
         ],
         bump = vault.bump
     )]
@@ -34,12 +34,11 @@ pub struct ClosePosition<'info> {
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault_period_i.vault.as_ref(),
-            vault_period_i.period_id.to_string().as_bytes().as_ref(),
+            vault.key().as_ref(),
+            vault_period_i.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_i.bump,
         constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_i.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_i: Box<Account<'info, VaultPeriod>>,
 
@@ -47,47 +46,44 @@ pub struct ClosePosition<'info> {
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault_period_j.vault.as_ref(),
-            vault_period_j.period_id.to_string().as_bytes().as_ref(),
+            vault.key().as_ref(),
+            vault_period_j.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(
             vault.last_drip_period,
             user_position.drip_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
         ) @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_j.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_j: Box<Account<'info, VaultPeriod>>,
 
     #[account(
-        // mut neeed because we are changing state
+        // mut needed because we are changing state
         mut,
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault_period_user_expiry.vault.as_ref(),
-            vault_period_user_expiry.period_id.to_string().as_bytes().as_ref(),
+            vault.key().as_ref(),
+            vault_period_user_expiry.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_user_expiry.bump,
         constraint = vault_period_user_expiry.period_id == user_position.drip_period_id_before_deposit
                 .checked_add(user_position.number_of_swaps)
                 .unwrap() @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_user_expiry.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
     #[account(
-        // mut neeed because we are changing state
+        // mut needed because we are changing state
         mut,
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
-            user_position.position_authority.as_ref()
+            user_position_nft_mint.key().as_ref()
         ],
         bump = user_position.bump,
         constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
         constraint = user_position.position_authority == user_position_nft_mint.key(),
-        constraint = user_position.vault == vault.key() @ErrorCode::InvalidVaultReference
     )]
     pub user_position: Box<Account<'info, Position>>,
 
@@ -95,16 +91,18 @@ pub struct ClosePosition<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        associated_token::mint = token_a_mint,
-        associated_token::authority = vault,
+        constraint = vault_token_a_account.key() == vault.token_a_account,
+        constraint = vault_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_a_account.owner == vault.key()
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        associated_token::mint = token_b_mint,
-        associated_token::authority = vault,
+        constraint = vault_token_b_account.key() == vault.token_b_account,
+        constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.owner == vault.key()
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
@@ -112,35 +110,31 @@ pub struct ClosePosition<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-        constraint = vault_treasury_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = vault_treasury_token_b_account.state == AccountState::Initialized
+        constraint = vault_treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
     )]
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = user_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = user_token_b_account.owner == withdrawer.key(),
-        constraint = user_token_b_account.state == AccountState::Initialized
+        constraint = user_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = user_token_b_account.owner == withdrawer.key()
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = user_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
-        constraint = user_token_a_account.owner == withdrawer.key(),
-        constraint = user_token_a_account.state == AccountState::Initialized
+        constraint = user_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = user_token_a_account.owner == withdrawer.key()
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        // mut neeed because we are changing balance
+        // mut needed because we are changing balance
         mut,
-        constraint = user_position_nft_account.mint == user_position.position_authority @ErrorCode::InvalidMint,
+        constraint = user_position_nft_account.mint == user_position_nft_mint.key() @ErrorCode::InvalidMint,
         constraint = user_position_nft_account.owner == withdrawer.key(),
-        constraint = user_position_nft_account.state == AccountState::Initialized,
         constraint = user_position_nft_account.amount == 1,
         constraint = user_position_nft_account.delegate.contains(&vault.key()) @ErrorCode::InvalidVaultReference,
         constraint = user_position_nft_account.delegated_amount == 1
@@ -149,13 +143,14 @@ pub struct ClosePosition<'info> {
 
     /* MINTS */
     #[account(
-        // mut neeed because we are burning the users NFT
+        // mut needed because we are burning the users NFT
         mut,
         constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint,
         constraint = user_position_nft_mint.supply == 1,
         constraint = user_position_nft_mint.decimals == 0,
-        constraint = user_position_nft_mint.is_initialized == true,
-        constraint = user_position_nft_mint.mint_authority.is_none()
+        constraint = user_position_nft_mint.is_initialized,
+        constraint = user_position_nft_mint.mint_authority.is_none(),
+        constraint = user_position_nft_mint.freeze_authority.is_none()
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
 
@@ -174,10 +169,8 @@ pub struct ClosePosition<'info> {
     /* MISC */
     pub withdrawer: Signer<'info>,
 
-    #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
 
-    #[account(address = System::id())]
     pub system_program: Program<'info, System>,
 }
 
@@ -282,7 +275,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
     // 6. Burn the users position NFT
     burn_tokens(
         &ctx.accounts.token_program,
-        &mut ctx.accounts.vault,
+        &ctx.accounts.vault,
         &ctx.accounts.user_position_nft_mint,
         &ctx.accounts.user_position_nft_account,
         1,
@@ -293,7 +286,7 @@ pub fn handler(ctx: Context<ClosePosition>) -> Result<()> {
 
 fn burn_tokens<'info>(
     token_program: &Program<'info, Token>,
-    vault: &mut Account<'info, Vault>,
+    vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
     from: &Account<'info, TokenAccount>,
     amount: u64,
@@ -306,13 +299,7 @@ fn burn_tokens<'info>(
                 from: from.to_account_info().clone(),
                 authority: vault.to_account_info().clone(),
             },
-            &[&[
-                b"drip-v1".as_ref(),
-                vault.token_a_mint.as_ref(),
-                vault.token_b_mint.as_ref(),
-                vault.proto_config.as_ref(),
-                &[vault.bump],
-            ]],
+            &[sign!(vault)],
         ),
         amount,
     )

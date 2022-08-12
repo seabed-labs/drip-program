@@ -76,6 +76,11 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
     if params.whitelisted_swaps.len() > 5 {
         return Err(ErrorCode::InvalidNumSwaps.into());
     }
+
+    if params.max_slippage_bps == 0 || params.max_slippage_bps >= 10_000 {
+        return Err(ErrorCode::InvalidVaultMaxSlippage.into());
+    }
+
     let mut whitelisted_swaps: [Pubkey; 5] = Default::default();
     for (i, s) in params.whitelisted_swaps.iter().enumerate() {
         whitelisted_swaps[i] = *s;
@@ -90,13 +95,13 @@ pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> 
         ctx.accounts.token_b_account.key(),
         ctx.accounts.treasury_token_b_account.key(),
         whitelisted_swaps,
-        params.whitelisted_swaps.len() > 0,
+        !params.whitelisted_swaps.is_empty(),
         params.max_slippage_bps,
         ctx.accounts.vault_proto_config.granularity,
         ctx.bumps.get("vault"),
     )?;
 
-    msg!(&format!("Initialized Vault"));
+    msg!("Initialized Vault");
 
     /* MANUAL CPI (INTERACTIONS) */
     Ok(())
