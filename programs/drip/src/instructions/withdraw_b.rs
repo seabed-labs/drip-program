@@ -5,10 +5,7 @@ use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use spl_token::state::AccountState;
 
-// TODO(matcha): Make sure the NFT account supply is one always
-// TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
     /* DRIP ACCOUNTS */
@@ -16,15 +13,15 @@ pub struct WithdrawB<'info> {
         seeds = [
             b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
-            vault.token_b_mint.as_ref(),
-            vault.proto_config.as_ref()
+            token_b_mint.key().as_ref(),
+            vault_proto_config.key().as_ref()
         ],
         bump = vault.bump
     )]
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config
+        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -32,12 +29,11 @@ pub struct WithdrawB<'info> {
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault_period_i.vault.as_ref(),
+            vault.key().as_ref(),
             vault_period_i.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_i.bump,
         constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_i.vault == vault.key()
     )]
     pub vault_period_i: Account<'info, VaultPeriod>,
 
@@ -45,7 +41,7 @@ pub struct WithdrawB<'info> {
         has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
-            vault_period_j.vault.as_ref(),
+            vault.key().as_ref(),
             vault_period_j.period_id.to_string().as_bytes().as_ref(),
         ],
         bump = vault_period_j.bump,
@@ -53,44 +49,37 @@ pub struct WithdrawB<'info> {
             vault.last_drip_period,
             user_position.drip_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
         ) @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_j.vault == vault.key()
     )]
     pub vault_period_j: Account<'info, VaultPeriod>,
 
-    // TODO(matcha) | TODO(mocha): Ensure that there's no way for user to exploit the accounts
-    // passed in here to steal funds that do not belong to them by faking accounts
-    // Pre-requisite to ^: Ensure that users can't pass in a constructed PDA
     #[account(
         // mut needed because we are updating withdrawn amount
         mut,
         has_one = vault,
         seeds = [
             b"user_position".as_ref(),
-            user_position.position_authority.as_ref()
+            user_position_nft_mint.key().as_ref()
         ],
         bump = user_position.bump,
-        constraint = user_position.position_authority == user_position_nft_account.mint @ErrorCode::InvalidMint,
+        constraint = user_position.position_authority == user_position_nft_mint.key() @ErrorCode::InvalidMint,
         constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
     )]
     pub user_position: Account<'info, Position>,
 
     /* TOKEN ACCOUNTS */
     #[account(
-        constraint = user_position_nft_account.mint == user_position.position_authority,
+        constraint = user_position_nft_account.mint == user_position_nft_mint.key() @ErrorCode::InvalidMint,
         constraint = user_position_nft_account.owner == withdrawer.key(),
         constraint = user_position_nft_account.amount == 1,
-        constraint = user_position_nft_account.state == AccountState::Initialized
     )]
     pub user_position_nft_account: Account<'info, TokenAccount>,
 
-    // TODO(matcha): Make sure this actually verifies that its an ATA
-    // TODO(matcha): ALSO, make sure that this ATA verification happens in other places where an ATA is passed in
     #[account(
         // mut needed because we are changing the balance
         mut,
-        associated_token::mint = token_b_mint,
-        associated_token::authority = vault,
-        // TODO: Add integration test to verify that this ATA check actually works
+        constraint = vault_token_b_account.owner == vault.key(),
+        constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.key() == vault.token_b_account,
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
@@ -98,8 +87,7 @@ pub struct WithdrawB<'info> {
         // mut needed because we are changing the balance
         mut,
         constraint = user_token_b_account.owner == withdrawer.key(),
-        constraint = user_token_b_account.mint == vault.token_b_mint @ ErrorCode::InvalidMint,
-        constraint = user_token_b_account.state == AccountState::Initialized
+        constraint = user_token_b_account.mint == token_b_mint.key() @ ErrorCode::InvalidMint,
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
@@ -107,8 +95,8 @@ pub struct WithdrawB<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-        constraint = vault_treasury_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = vault_treasury_token_b_account.state == AccountState::Initialized
+        constraint = vault_token_b_account.owner == vault.key(),
+        constraint = vault_treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
     )]
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
@@ -131,10 +119,8 @@ pub struct WithdrawB<'info> {
     /* MISC */
     pub withdrawer: Signer<'info>,
 
-    #[account(address = Token::id())]
     pub token_program: Program<'info, Token>,
 
-    #[account(address = anchor_spl::associated_token::ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
