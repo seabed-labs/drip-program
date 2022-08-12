@@ -42,4 +42,6 @@ pub enum ErrorCode {
     WithdrawableAmountIsZero,
     #[msg("Cannot initialize a vault period lesser than vault's current period")]
     CannotInitializeVaultPeriodLessThanVaultCurrentPeriod,
+    #[msg("Invalid value for vault.max_slippage_bps")]
+    InvalidVaultMaxSlippage,
 }

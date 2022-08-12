@@ -1,7 +1,5 @@
-use crate::errors::ErrorCode::CannotGetPositionBump;
+use crate::{errors::ErrorCode::CannotGetPositionBump, test_account_size};
 use anchor_lang::prelude::*;
-
-use super::traits::ByteSized;
 
 #[account]
 #[derive(Default)]
@@ -19,7 +17,6 @@ pub struct Position {
     pub withdrawn_token_b_amount: u64, // 8
     pub deposit_timestamp: i64,        // 8
     // The drip period ID of the vault that happened prior to the user opening this position
-    // The drip period ID of the vault that happened prior to the user opening this position
     pub drip_period_id_before_deposit: u64, // 8
     // Number of drips/Swaps that this position will be a part of
     pub number_of_swaps: u64, // 8
@@ -30,6 +27,8 @@ pub struct Position {
 }
 
 impl Position {
+    pub const ACCOUNT_SPACE: usize = 128;
+
     pub fn init(
         &mut self,
         vault: Pubkey,
@@ -73,14 +72,4 @@ impl Position {
     }
 }
 
-impl ByteSized for Position {}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn sanity_check_byte_size() {
-        assert_eq!(Position::byte_size(), 128 - 8);
-    }
-}
+test_account_size!(Position);

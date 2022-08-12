@@ -8,6 +8,7 @@ pub mod interactions;
 pub mod macros;
 pub mod math;
 pub mod state;
+use crate::interactions::deposit_utils::DepositParams;
 
 declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
 
@@ -33,23 +34,23 @@ pub mod drip {
         init_vault_period::handler(ctx, params)
     }
 
-    pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
-        close_position::handler(ctx)
-    }
-
     pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         deposit::handler(ctx, params)
     }
 
-    pub fn deposit_with_metadata(
-        ctx: Context<DepositWithMetadata>,
-        params: DepositParams,
-    ) -> Result<()> {
-        deposit_with_metadata::handler(ctx, params)
-    }
+    // pub fn deposit_with_metadata(
+    //     ctx: Context<DepositWithMetadata>,
+    //     params: DepositParams,
+    // ) -> Result<()> {
+    //     deposit_with_metadata::handler(ctx, params)
+    // }
 
     pub fn withdraw_b(ctx: Context<WithdrawB>) -> Result<()> {
         withdraw_b::handler(ctx)
+    }
+
+    pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
+        close_position::handler(ctx)
     }
 
     pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwap>) -> Result<()> {

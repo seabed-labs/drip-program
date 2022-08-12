@@ -9,7 +9,6 @@ use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token::state::AccountState;
-use std::str::FromStr;
 use whirlpool::state::Whirlpool;
 
 #[derive(Clone)]
@@ -17,8 +16,7 @@ pub struct WhirlpoolProgram;
 
 impl anchor_lang::Id for WhirlpoolProgram {
     fn id() -> Pubkey {
-        Pubkey::from_str(&"whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc")
-            .expect("Error creating hardcoded pubkey")
+        whirlpool::ID
     }
 }
 
