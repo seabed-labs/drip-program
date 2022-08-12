@@ -91,18 +91,18 @@ pub struct ClosePosition<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_treasury_token_b_account.key() == vault.token_a_account,
-        constraint = vault_treasury_token_b_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
-        constraint = vault_treasury_token_b_account.owner == vault.key()
+        constraint = vault_token_a_account.key() == vault.token_a_account,
+        constraint = vault_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_a_account.owner == vault.key()
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_treasury_token_b_account.key() == vault.token_b_account,
-        constraint = vault_treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
-        constraint = vault_treasury_token_b_account.owner == vault.key()
+        constraint = vault_token_b_account.key() == vault.token_b_account,
+        constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.owner == vault.key()
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
