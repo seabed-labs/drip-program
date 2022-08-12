@@ -35,7 +35,7 @@ pub struct ClosePosition<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_i.period_id.to_string().as_bytes().as_ref(),
+            vault_period_i.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_i.bump,
         constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
@@ -47,7 +47,7 @@ pub struct ClosePosition<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_j.period_id.to_string().as_bytes().as_ref(),
+            vault_period_j.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(
@@ -64,7 +64,7 @@ pub struct ClosePosition<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_user_expiry.period_id.to_string().as_bytes().as_ref(),
+            vault_period_user_expiry.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_user_expiry.bump,
         constraint = vault_period_user_expiry.period_id == user_position.drip_period_id_before_deposit
@@ -149,7 +149,7 @@ pub struct ClosePosition<'info> {
         constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint,
         constraint = user_position_nft_mint.supply == 1,
         constraint = user_position_nft_mint.decimals == 0,
-        constraint = user_position_nft_mint.is_initialized == true,
+        constraint = user_position_nft_mint.is_initialized,
         constraint = user_position_nft_mint.mint_authority.is_none(),
         constraint = user_position_nft_mint.freeze_authority.is_none()
     )]

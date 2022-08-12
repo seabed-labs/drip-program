@@ -17,7 +17,7 @@ pub struct InitializeVaultPeriod<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            params.period_id.to_string().as_bytes().as_ref()
+            params.period_id.to_string().as_bytes()
         ],
         bump,
         payer = creator,

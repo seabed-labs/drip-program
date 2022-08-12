@@ -32,7 +32,7 @@ pub struct DepositWithMetadata<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_end.period_id.to_string().as_bytes().as_ref()
+            vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
         constraint = {

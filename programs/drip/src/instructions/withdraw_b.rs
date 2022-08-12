@@ -30,7 +30,7 @@ pub struct WithdrawB<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_i.period_id.to_string().as_bytes().as_ref(),
+            vault_period_i.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_i.bump,
         constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
@@ -42,7 +42,7 @@ pub struct WithdrawB<'info> {
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
-            vault_period_j.period_id.to_string().as_bytes().as_ref(),
+            vault_period_j.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_j.bump,
         constraint = vault_period_j.period_id == std::cmp::min(

@@ -1,16 +1,14 @@
 use std::{convert::TryFrom, u128};
 
 fn calculate_slippage_factor(max_slippage_bps: u16, a_to_b: bool) -> f64 {
-    if a_to_b {
+    let factor = if a_to_b {
         // Example
         // Price decreases
         // We want -10% of the current price
         // new_price = old_price * 0.9
         // new_sqrt_price = old_sqrt_price * sqrt(0.9)
         // new_sqrt_price = (old_sqrt_price * 9486) / 1e4
-        let factor = 1.0 - 0.0001 * f64::from(max_slippage_bps);
-        let factor = f64::sqrt(factor);
-        factor
+        1.0 - 0.0001 * f64::from(max_slippage_bps)
     } else {
         // Example
         // Price increases
@@ -18,10 +16,10 @@ fn calculate_slippage_factor(max_slippage_bps: u16, a_to_b: bool) -> f64 {
         // new_price = old_price * 1.1
         // new_sqrt_price = old_sqrt_price * sqrt(1.1)
         // new_sqrt_price = (old_sqrt_price * 10488) / 1e4
-        let factor = 1.0 + 0.0001 * f64::from(max_slippage_bps);
-        let factor = f64::sqrt(factor);
-        factor
-    }
+        1.0 + 0.0001 * f64::from(max_slippage_bps)
+    };
+
+    f64::sqrt(factor)
 }
 
 pub fn calculate_sqrt_price_limit(

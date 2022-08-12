@@ -17,7 +17,7 @@ const DRIP_METADATA_SYMBOL: &str = "DP";
 fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
     format!(
         "https://api.drip.dcaf.so/v1/drip/position/{}/metadata",
-        position_nft_mint_pubkey.to_string()
+        position_nft_mint_pubkey
     )
 }
 
@@ -27,13 +27,13 @@ pub fn handle_deposit<'info>(
     rent: &Sysvar<'info, Rent>,
     token_program: &Program<'info, Token>,
     system_program: &Program<'info, System>,
-    vault_token_a_account: &Box<Account<'info, TokenAccount>>,
-    user_token_a_account: &Box<Account<'info, TokenAccount>>,
-    user_position_nft_mint: &Box<Account<'info, Mint>>,
-    user_position_nft_account: &Box<Account<'info, TokenAccount>>,
-    vault: &mut Box<Account<'info, Vault>>,
-    vault_period_end: &mut Box<Account<'info, VaultPeriod>>,
-    user_position: &mut Box<Account<'info, Position>>,
+    vault_token_a_account: &Account<'info, TokenAccount>,
+    user_token_a_account: &Account<'info, TokenAccount>,
+    user_position_nft_mint: &Account<'info, Mint>,
+    user_position_nft_account: &Account<'info, TokenAccount>,
+    vault: &mut Account<'info, Vault>,
+    vault_period_end: &mut Account<'info, VaultPeriod>,
+    user_position: &mut Account<'info, Position>,
     user_position_pda_bump: Option<&u8>,
     // Params
     params: DepositParams,
