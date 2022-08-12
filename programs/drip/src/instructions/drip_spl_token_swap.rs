@@ -101,7 +101,6 @@ pub struct DripSPLTokenSwap<'info> {
         mut,
         constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
         constraint = vault_token_b_account.owner == vault.key(),
-        constraint = vault_token_b_account.amount >= vault.drip_amount
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
