@@ -18,10 +18,10 @@ export function setupTokenMetadata() {
     );
 
     const usdtPubkey = new PublicKey(
-      "8ULDKGmKJJaZa32eiL36ARr6cFaZaoAXAosWeg5r17ra"
+      "H9gBUJs5Kc5zyiKRTzZcYom4Hpj9VPHLy4VzExTVPgxa"
     );
     const btcPubkey = new PublicKey(
-      "5nY3xT4PJe7NU41zqBx5UACHDckrimmfwznv4uLenrQg"
+      "7ihthG4cFydyDnuA3zmJrX13ePGpLcANf3tHLmKLPN7M"
     );
 
     const usdtPositionMetadataAccount =
@@ -37,30 +37,30 @@ export function setupTokenMetadata() {
       btcPositionMetadataAccount.toBase58()
     );
 
-    // const usdtIx = await createCreateMetadataAccountV3Instruction(
-    //   {
-    //     metadata: usdtPositionMetadataAccount,
-    //     mint: usdtPubkey,
-    //     mintAuthority: tokenOwnerKeypair.publicKey,
-    //     payer: TestUtil.provider.wallet.publicKey,
-    //     updateAuthority: tokenOwnerKeypair.publicKey,
-    //   },
-    //   {
-    //     createMetadataAccountArgsV3: {
-    //       data: {
-    //         name: "USDT (Drip)",
-    //         symbol: "USDT",
-    //         uri: "https://devnet.api.drip.dcaf.so/v1/drip/8ULDKGmKJJaZa32eiL36ARr6cFaZaoAXAosWeg5r17ra/tokenmetadata",
-    //         sellerFeeBasisPoints: 0,
-    //         creators: undefined,
-    //         collection: undefined,
-    //         uses: undefined,
-    //       },
-    //       isMutable: true,
-    //       collectionDetails: undefined,
-    //     },
-    //   }
-    // );
+    const usdtIx = await createCreateMetadataAccountV3Instruction(
+      {
+        metadata: usdtPositionMetadataAccount,
+        mint: usdtPubkey,
+        mintAuthority: tokenOwnerKeypair.publicKey,
+        payer: TestUtil.provider.wallet.publicKey,
+        updateAuthority: tokenOwnerKeypair.publicKey,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          data: {
+            name: "USDT (Drip)",
+            symbol: "USDT",
+            uri: `https://devnet.api.drip.dcaf.so/v1/drip/${usdtPubkey.toBase58()}/tokenmetadata`,
+            sellerFeeBasisPoints: 0,
+            creators: undefined,
+            collection: undefined,
+            uses: undefined,
+          },
+          isMutable: true,
+          collectionDetails: undefined,
+        },
+      }
+    );
     const usdtTokenStandardIx = createSetTokenStandardInstruction({
       metadata: usdtPositionMetadataAccount,
       updateAuthority: tokenOwnerKeypair.publicKey,
@@ -68,38 +68,39 @@ export function setupTokenMetadata() {
     });
     // createMetadataAccountV2
 
-    // const btcIx = await createCreateMetadataAccountV3Instruction(
-    //   {
-    //     metadata: btcPositionMetadataAccount,
-    //     mint: btcPubkey,
-    //     mintAuthority: tokenOwnerKeypair.publicKey,
-    //     payer: TestUtil.provider.wallet.publicKey,
-    //     updateAuthority: tokenOwnerKeypair.publicKey,
-    //   },
-    //   {
-    //     createMetadataAccountArgsV3: {
-    //       data: {
-    //         name: "BTC (Drip)",
-    //         symbol: "BTC",
-    //         uri: "https://devnet.api.drip.dcaf.so/v1/drip/5nY3xT4PJe7NU41zqBx5UACHDckrimmfwznv4uLenrQg/tokenmetadata",
-    //         sellerFeeBasisPoints: 0,
-    //         creators: undefined,
-    //         collection: undefined,
-    //         uses: undefined,
-    //       },
-    //       isMutable: true,
-    //       collectionDetails: undefined,
-    //     },
-    //   }
-    // );
+    const btcIx = await createCreateMetadataAccountV3Instruction(
+      {
+        metadata: btcPositionMetadataAccount,
+        mint: btcPubkey,
+        mintAuthority: tokenOwnerKeypair.publicKey,
+        payer: TestUtil.provider.wallet.publicKey,
+        updateAuthority: tokenOwnerKeypair.publicKey,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          data: {
+            name: "BTC (Drip)",
+            symbol: "BTC",
+            uri: `https://devnet.api.drip.dcaf.so/v1/drip/${btcPubkey.toBase58()}/tokenmetadata`,
+            sellerFeeBasisPoints: 0,
+            creators: undefined,
+            collection: undefined,
+            uses: undefined,
+          },
+          isMutable: true,
+          collectionDetails: undefined,
+        },
+      }
+    );
     const btcTokenStandardIx = createSetTokenStandardInstruction({
       metadata: btcPositionMetadataAccount,
       updateAuthority: tokenOwnerKeypair.publicKey,
       mint: btcPubkey,
     });
 
-    // const tx = new Transaction().add(usdtIx).add(btcIx);
     const tx = new Transaction()
+      .add(usdtIx)
+      .add(btcIx)
       .add(usdtTokenStandardIx)
       .add(btcTokenStandardIx);
     const txId = await TestUtil.provider.sendAndConfirm(tx, [

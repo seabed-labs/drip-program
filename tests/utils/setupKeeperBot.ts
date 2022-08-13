@@ -125,67 +125,67 @@ export function setupKeeperBot() {
       whirlpool.initWhirlpoolRes.tokenMintB.toBase58()
     );
 
-    for (const [granularity, vaultProtoConfig] of Object.entries(
-      protoConfigs
-    )) {
-      for (let i = 0; i < tokens.length; i++) {
-        const tokenA = tokens[i];
-        const tokenASymbol = tokenNames[i];
-        for (let j = 0; j < tokens.length; j++) {
-          await sleep(500);
-          if (i == j) continue;
-          const tokenB = tokens[j];
-          const tokenBSymbol = tokenNames[j];
+    // for (const [granularity, vaultProtoConfig] of Object.entries(
+    //   protoConfigs
+    // )) {
+    //   for (let i = 0; i < tokens.length; i++) {
+    //     const tokenA = tokens[i];
+    //     const tokenASymbol = tokenNames[i];
+    //     for (let j = 0; j < tokens.length; j++) {
+    //       await sleep(500);
+    //       if (i == j) continue;
+    //       const tokenB = tokens[j];
+    //       const tokenBSymbol = tokenNames[j];
 
-          try {
-            const vaultTreasuryTokenBAccount =
-              await TokenUtil.createTokenAccount(
-                tokenB,
-                payerKeypair.publicKey
-              );
-            console.log(
-              "creating config",
-              tokenA.publicKey.toBase58(),
-              tokenASymbol,
-              tokenB.publicKey.toBase58(),
-              tokenBSymbol,
-              vaultProtoConfig.toBase58(),
-              granularity
-            );
+    //       try {
+    //         const vaultTreasuryTokenBAccount =
+    //           await TokenUtil.createTokenAccount(
+    //             tokenB,
+    //             payerKeypair.publicKey
+    //           );
+    //         console.log(
+    //           "creating config",
+    //           tokenA.publicKey.toBase58(),
+    //           tokenASymbol,
+    //           tokenB.publicKey.toBase58(),
+    //           tokenBSymbol,
+    //           vaultProtoConfig.toBase58(),
+    //           granularity
+    //         );
 
-            const vaultPDA = await deployVault(
-              tokenA.publicKey,
-              tokenB.publicKey,
-              vaultTreasuryTokenBAccount,
-              vaultProtoConfig
-            );
-            await deployVaultPeriod(
-              vaultProtoConfig,
-              vaultPDA.publicKey,
-              tokenA.publicKey,
-              tokenB.publicKey,
-              0
-            );
+    //         const vaultPDA = await deployVault(
+    //           tokenA.publicKey,
+    //           tokenB.publicKey,
+    //           vaultTreasuryTokenBAccount,
+    //           vaultProtoConfig
+    //         );
+    //         await deployVaultPeriod(
+    //           vaultProtoConfig,
+    //           vaultPDA.publicKey,
+    //           tokenA.publicKey,
+    //           tokenB.publicKey,
+    //           0
+    //         );
 
-            console.log(
-              "token A",
-              tokenA.publicKey.toBase58(),
-              tokenASymbol,
-              "token b",
-              tokenB.publicKey.toBase58(),
-              tokenBSymbol,
-              "protoConfig",
-              vaultProtoConfig.toBase58(),
-              granularity,
-              "vault",
-              vaultPDA.publicKey.toBase58()
-            );
-          } catch (e) {
-            console.log("error deploying", e);
-          }
-        }
-      }
-    }
+    //         console.log(
+    //           "token A",
+    //           tokenA.publicKey.toBase58(),
+    //           tokenASymbol,
+    //           "token b",
+    //           tokenB.publicKey.toBase58(),
+    //           tokenBSymbol,
+    //           "protoConfig",
+    //           vaultProtoConfig.toBase58(),
+    //           granularity,
+    //           "vault",
+    //           vaultPDA.publicKey.toBase58()
+    //         );
+    //       } catch (e) {
+    //         console.log("error deploying", e);
+    //       }
+    //     }
+    //   }
+    // }
   });
 
   it("setup vaults", async () => {
