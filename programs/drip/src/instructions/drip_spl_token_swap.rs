@@ -68,26 +68,6 @@ pub struct DripSPLTokenSwap<'info> {
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
     #[account(
-        // mut needed for CPI
-        mut,
-        constraint = swap_token_mint.mint_authority.contains(&swap_authority.key()),
-        constraint = swap_token_mint.is_initialized
-    )]
-    pub swap_token_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint,
-        constraint = token_a_mint.is_initialized
-    )]
-    pub token_a_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = token_b_mint.is_initialized
-    )]
-    pub token_b_mint: Box<Account<'info, Mint>>,
-
-    #[account(
         // mut needed because we are changing balance
         mut,
         constraint = vault_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
@@ -107,6 +87,9 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
+        // TODO(mocha): do we want to do this check? 
+        // Keeping the check makes this not-in sync with drip_orca_whirlpool
+        // it's also not necessary
         constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = swap_token_a_account.owner == swap_authority.key()
     )]
@@ -115,6 +98,9 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
+        // TODO(mocha): do we want to do this check? 
+        // Keeping the check makes this not-in sync with drip_orca_whirlpool
+        // it's also not necessary
         constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = swap_token_b_account.owner == swap_authority.key()
     )]
@@ -123,24 +109,9 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = swap_fee_account.mint == swap_token_mint.key()
-    )]
-    pub swap_fee_account: Box<Account<'info, TokenAccount>>,
-
-    #[account(
-        // mut needed because we are changing balance
-        mut,
         constraint = drip_fee_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
     )]
     pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
-
-    /// CHECK: Checked by token-swap program
-    pub swap: UncheckedAccount<'info>,
-
-    /// CHECK: Checked by token-swap program
-    pub swap_authority: UncheckedAccount<'info>,
-
-    pub token_swap_program: Program<'info, TokenSwap>,
 
     pub token_program: Program<'info, Token>,
 
@@ -149,6 +120,46 @@ pub struct DripSPLTokenSwap<'info> {
     pub system_program: Program<'info, System>,
 
     pub rent: Sysvar<'info, Rent>,
+
+    // SPL Token Swap Specific Accounts
+    /// CHECK: Checked by token-swap program
+    pub swap: UncheckedAccount<'info>,
+
+    #[account(
+        // mut needed for CPI
+        mut,
+        // TODO(mocha): spl token swap should check auth
+        constraint = swap_token_mint.mint_authority.contains(&swap_authority.key()),
+        constraint = swap_token_mint.is_initialized
+    )]
+    pub swap_token_mint: Box<Account<'info, Mint>>,
+
+    #[account(
+        // TODO(mocha): spl token swap should check mint
+        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = token_a_mint.is_initialized
+    )]
+    pub token_a_mint: Box<Account<'info, Mint>>,
+
+    #[account(
+        // TODO(mocha): spl token swap should check mint  
+        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = token_b_mint.is_initialized
+    )]
+    pub token_b_mint: Box<Account<'info, Mint>>,
+
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        // TODO(mocha): spl token swap should check this
+        constraint = swap_fee_account.mint == swap_token_mint.key()
+    )]
+    pub swap_fee_account: Box<Account<'info, TokenAccount>>,
+
+    /// CHECK: Checked by token-swap program
+    pub swap_authority: UncheckedAccount<'info>,
+
+    pub token_swap_program: Program<'info, TokenSwap>,
 }
 
 pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
