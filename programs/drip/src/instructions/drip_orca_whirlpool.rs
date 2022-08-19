@@ -110,12 +110,11 @@ pub struct DripOrcaWhirlpool<'info> {
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 
-    pub whirlpool_program: Program<'info, WhirlpoolProgram>,
-
     pub system_program: Program<'info, System>,
 
     pub rent: Sysvar<'info, Rent>,
 
+    // Orca Whirlpool Specific Accounts
     #[account(mut)]
     pub whirlpool: Box<Account<'info, Whirlpool>>,
 
@@ -133,6 +132,8 @@ pub struct DripOrcaWhirlpool<'info> {
 
     /// CHECK: Checked by Whirlpool
     pub oracle: UncheckedAccount<'info>,
+
+    pub whirlpool_program: Program<'info, WhirlpoolProgram>,
 }
 
 // TODO(Mocha/Matcha): extract common code between drip_* instructions
