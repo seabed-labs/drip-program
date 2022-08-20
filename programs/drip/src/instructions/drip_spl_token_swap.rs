@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::interactions::drip_utils::handle_drip;
+use crate::interactions::drip_utils::{handle_drip, SPLTokenSwapParams};
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -148,13 +148,13 @@ pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
         &mut ctx.accounts.swap_token_a_account,
         &mut ctx.accounts.swap_token_b_account,
         &ctx.accounts.token_program,
-        Some((
-            &ctx.accounts.swap,
-            &ctx.accounts.swap_token_mint,
-            &ctx.accounts.swap_fee_account,
-            &ctx.accounts.swap_authority,
-            &ctx.accounts.token_swap_program,
-        )),
+        Some(SPLTokenSwapParams {
+            swap: &ctx.accounts.swap,
+            swap_token_mint: &ctx.accounts.swap_token_mint,
+            swap_fee_account: &ctx.accounts.swap_fee_account,
+            swap_authority: &ctx.accounts.swap_authority,
+            token_swap_program: &ctx.accounts.token_swap_program,
+        }),
         None,
     )
 }

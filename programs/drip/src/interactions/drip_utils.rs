@@ -12,7 +12,24 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use borsh::BorshSerialize;
 use whirlpool::state::Whirlpool;
 
-pub fn handle_drip<'info>(
+pub struct OrcaWhirlpoolParams<'info, 'drip> {
+    pub whirlpool: &'drip Account<'info, Whirlpool>,
+    pub tick_array_0: &'drip UncheckedAccount<'info>,
+    pub tick_array_1: &'drip UncheckedAccount<'info>,
+    pub tick_array_2: &'drip UncheckedAccount<'info>,
+    pub oracle: &'drip UncheckedAccount<'info>,
+    pub whirlpool_program: &'drip Program<'info, WhirlpoolProgram>,
+}
+
+pub struct SPLTokenSwapParams<'info, 'drip> {
+    pub swap: &'drip UncheckedAccount<'info>,
+    pub swap_token_mint: &'drip Account<'info, Mint>,
+    pub swap_fee_account: &'drip Account<'info, TokenAccount>,
+    pub swap_authority: &'drip UncheckedAccount<'info>,
+    pub token_swap_program: &'drip Program<'info, TokenSwap>,
+}
+
+pub fn handle_drip<'info, 'drip>(
     // Accounts
     vault: &mut Account<'info, Vault>,
     vault_proto_config: &Account<'info, VaultProtoConfig>,
@@ -24,30 +41,17 @@ pub fn handle_drip<'info>(
     swap_token_a_account: &mut Account<'info, TokenAccount>,
     swap_token_b_account: &mut Account<'info, TokenAccount>,
     token_program: &Program<'info, Token>,
-    with_spl_token_swap: Option<(
-        &UncheckedAccount<'info>,      // swap
-        &Account<'info, Mint>,         // swap_token_mint
-        &Account<'info, TokenAccount>, // swap_fee_account
-        &UncheckedAccount<'info>,      // swap_authority
-        &Program<'info, TokenSwap>,    // token_swap_program
-    )>,
-    with_orca_whirlpool: Option<(
-        &Account<'info, Whirlpool>,        // whirlpool
-        &UncheckedAccount<'info>,          // tick_array_0
-        &UncheckedAccount<'info>,          // tick_array_1
-        &UncheckedAccount<'info>,          // tick_array_2
-        &UncheckedAccount<'info>,          // oracle
-        &Program<'info, WhirlpoolProgram>, // whirlpool_program
-    )>,
+    with_spl_token_swap: Option<SPLTokenSwapParams<'info, 'drip>>,
+    with_orca_whirlpool: Option<OrcaWhirlpoolParams<'info, 'drip>>,
 ) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
     if vault_token_a_account.amount == 0 || vault.drip_amount == 0 {
         return Err(ErrorCode::PeriodicDripAmountIsZero.into());
     }
-    let pubkey_for_whitelist = if let Some(swap) = with_spl_token_swap {
-        *swap.0.key
-    } else if let Some(whirlpool) = with_orca_whirlpool {
-        whirlpool.0.key()
+    let pubkey_for_whitelist = if let Some(ref params) = with_spl_token_swap {
+        *params.swap.key
+    } else if let Some(ref params) = with_orca_whirlpool {
+        params.whirlpool.key()
     } else {
         Pubkey::default()
     };
@@ -80,60 +84,50 @@ pub fn handle_drip<'info>(
         .checked_sub(drip_trigger_spread_amount)
         .unwrap();
 
-    vault.process_drip(&current_vault_period, vault_proto_config.granularity);
+    vault.process_drip(current_vault_period, vault_proto_config.granularity);
 
     let drip_trigger_fee_transfer = TransferToken::new(
-        &token_program,
-        &vault_token_a_account,
-        &drip_fee_token_a_account,
+        token_program,
+        vault_token_a_account,
+        drip_fee_token_a_account,
         drip_trigger_spread_amount,
     );
 
     /* MANUAL CPI (INTERACTIONS) */
-    if let Some((swap, swap_token_mint, swap_fee_account, swap_authority, token_swap_program)) =
-        with_spl_token_swap
-    {
+    if let Some(ref params) = with_spl_token_swap {
         spl_token_swap_swap_tokens(
-            &token_program,
-            &token_swap_program,
-            &vault,
-            &vault_token_a_account,
-            &vault_token_b_account,
-            &swap_authority,
-            &swap,
-            &swap_token_a_account,
-            &swap_token_b_account,
-            &swap_token_mint,
-            &swap_fee_account,
+            token_program,
+            params.token_swap_program,
+            vault,
+            vault_token_a_account,
+            vault_token_b_account,
+            params.swap_authority,
+            params.swap,
+            swap_token_a_account,
+            swap_token_b_account,
+            params.swap_token_mint,
+            params.swap_fee_account,
             swap_amount,
         )?;
-    } else if let Some((
-        whirlpool,
-        tick_array_0,
-        tick_array_1,
-        tick_array_2,
-        oracle,
-        whirlpool_program,
-    )) = with_orca_whirlpool
-    {
+    } else if let Some(ref params) = with_orca_whirlpool {
         orca_whirlpool_swap_tokens(
-            &vault,
-            &vault_token_a_account,
-            &vault_token_b_account,
-            &token_program,
-            &whirlpool_program,
-            &whirlpool,
-            &swap_token_a_account,
-            &swap_token_b_account,
-            &tick_array_0,
-            &tick_array_1,
-            &tick_array_2,
-            &oracle,
+            vault,
+            vault_token_a_account,
+            vault_token_b_account,
+            token_program,
+            params.whirlpool_program,
+            params.whirlpool,
+            swap_token_a_account,
+            swap_token_b_account,
+            params.tick_array_0,
+            params.tick_array_1,
+            params.tick_array_2,
+            params.oracle,
             swap_amount,
         )?;
     }
 
-    drip_trigger_fee_transfer.execute(&vault)?;
+    drip_trigger_fee_transfer.execute(vault)?;
 
     drip_fee_token_a_account.reload()?;
     vault_token_a_account.reload()?;
@@ -164,7 +158,7 @@ pub fn handle_drip<'info>(
     }
 
     let current_period_mut = current_vault_period;
-    current_period_mut.update_twap(&last_vault_period, swap_amount, received_b);
+    current_period_mut.update_twap(last_vault_period, swap_amount, received_b);
     current_period_mut.update_drip_timestamp();
 
     Ok(())
