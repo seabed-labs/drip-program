@@ -166,7 +166,6 @@ export const depositToVault = async (
       vault,
       vaultPeriodEnd,
       userPosition: positionPDA.publicKey,
-      tokenAMint: tokenA.publicKey,
       userPositionNftMint: userPositionNftMint.publicKey,
       vaultTokenAAccount,
       userTokenAAccount,

@@ -11,13 +11,15 @@ use anchor_spl::token::{Token, TokenAccount};
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
 pub struct Deposit<'info> {
-    // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
+    #[account(mut)]
+    pub depositor: Signer<'info>,
+
     #[account(
         // mut needed
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            token_a_mint.key().as_ref(),
+            vault_token_a_account.mint.as_ref(),
             vault.token_b_mint.key().as_ref(),
             vault.proto_config.as_ref()
         ],
@@ -25,8 +27,6 @@ pub struct Deposit<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
-    // TODO(matcha): Add PDA seed validation here
     #[account(
         // mut needed because we are changing state
         mut,
@@ -37,13 +37,31 @@ pub struct Deposit<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = {
-            params.number_of_swaps > 0 &&
-            vault_period_end.period_id > 0 &&
-            vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap()
-        } @ErrorCode::InvalidVaultPeriod
+        constraint = params.number_of_swaps > 0 @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_end.period_id > 0 @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @ErrorCode::InvalidVaultPeriod
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
+
+    // Token accounts
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = vault_token_a_account.mint == vault.token_a_mint,
+        constraint = vault_token_a_account.owner == vault.key()
+    )]
+    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = user_token_a_account.mint == vault.token_a_mint,
+        constraint = user_token_a_account.owner == depositor.key(),
+        constraint = user_token_a_account.delegate.contains(&vault.key()),
+        constraint = params.token_a_deposit_amount > 0,
+        constraint = user_token_a_account.delegated_amount >= params.token_a_deposit_amount
+    )]
+    pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -57,12 +75,6 @@ pub struct Deposit<'info> {
     )]
     pub user_position: Box<Account<'info, Position>>,
 
-    // Token mints
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
-    )]
-    pub token_a_mint: Box<Account<'info, Mint>>,
-
     #[account(
         init,
         mint::authority = vault,
@@ -70,30 +82,6 @@ pub struct Deposit<'info> {
         payer = depositor
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
-
-    // Token accounts
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = {
-            vault_token_a_account.mint == vault.token_a_mint &&
-            vault_token_a_account.owner == vault.key()
-        },
-    )]
-    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
-
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = {
-            user_token_a_account.mint == vault.token_a_mint &&
-            user_token_a_account.owner == depositor.key() &&
-            user_token_a_account.delegate.contains(&vault.key()) &&
-            params.token_a_deposit_amount > 0 &&
-            user_token_a_account.delegated_amount >= params.token_a_deposit_amount
-        }
-    )]
-    pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -105,9 +93,6 @@ pub struct Deposit<'info> {
 
     // Other
     // mut needed because we are initing accounts
-    #[account(mut)]
-    pub depositor: Signer<'info>,
-
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
