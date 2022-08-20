@@ -83,10 +83,6 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        // TODO(mocha): do we want to do this check? 
-        // Keeping the check makes this not-in sync with drip_orca_whirlpool
-        // it's also not necessary
-        constraint = swap_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = swap_token_a_account.owner == swap_authority.key()
     )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -94,10 +90,6 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        // TODO(mocha): do we want to do this check? 
-        // Keeping the check makes this not-in sync with drip_orca_whirlpool
-        // it's also not necessary
-        constraint = swap_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = swap_token_b_account.owner == swap_authority.key()
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -165,109 +157,4 @@ pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
         )),
         None,
     )
-    // /* MANUAL CHECKS + COMPUTE (CHECKS) */
-    // if ctx.accounts.vault_token_a_account.amount == 0 || ctx.accounts.vault.drip_amount == 0 {
-    //     return Err(ErrorCode::PeriodicDripAmountIsZero.into());
-    // }
-    //
-    // if ctx.accounts.vault.limit_swaps
-    //     && !ctx
-    //         .accounts
-    //         .vault
-    //         .whitelisted_swaps
-    //         .contains(ctx.accounts.swap.key)
-    // {
-    //     return Err(ErrorCode::InvalidSwapAccount.into());
-    // }
-    //
-    // if !ctx.accounts.vault.is_drip_activated() {
-    //     return Err(ErrorCode::DuplicateDripError.into());
-    // }
-    //
-    // /* STATE UPDATES (EFFECTS) */
-    // let current_drip_amount = ctx.accounts.vault.drip_amount;
-    // msg!("drip_amount {:?}", current_drip_amount);
-    //
-    // let current_balance_a = ctx.accounts.vault_token_a_account.amount;
-    // msg!("current_balance_a {:?}", current_balance_a);
-    //
-    // let current_balance_b = ctx.accounts.vault_token_b_account.amount;
-    // msg!("current_balance_b {:?}", current_balance_b);
-    //
-    // // Use drip_amount because it may change after process_drip
-    // let drip_trigger_spread_amount = calculate_spread_amount(
-    //     current_drip_amount,
-    //     ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
-    // );
-    //
-    // let swap_amount = ctx
-    //     .accounts
-    //     .vault
-    //     .drip_amount
-    //     .checked_sub(drip_trigger_spread_amount)
-    //     .unwrap();
-    //
-    // ctx.accounts.vault.process_drip(
-    //     &ctx.accounts.current_vault_period,
-    //     ctx.accounts.vault_proto_config.granularity,
-    // );
-    //
-    // let drip_trigger_fee_transfer = TransferToken::new(
-    //     &ctx.accounts.token_program,
-    //     &ctx.accounts.vault_token_a_account,
-    //     &ctx.accounts.drip_fee_token_a_account,
-    //     drip_trigger_spread_amount,
-    // );
-    //
-    // /* MANUAL CPI (INTERACTIONS) */
-    // swap_tokens(
-    //     &ctx.accounts.token_program,
-    //     &ctx.accounts.token_swap_program,
-    //     &ctx.accounts.vault,
-    //     &ctx.accounts.vault_token_a_account,
-    //     &ctx.accounts.vault_token_b_account,
-    //     &ctx.accounts.swap_authority,
-    //     &ctx.accounts.swap,
-    //     &ctx.accounts.swap_token_a_account,
-    //     &ctx.accounts.swap_token_b_account,
-    //     &ctx.accounts.swap_token_mint,
-    //     &ctx.accounts.swap_fee_account,
-    //     swap_amount,
-    // )?;
-    //
-    // drip_trigger_fee_transfer.execute(&ctx.accounts.vault)?;
-    //
-    // ctx.accounts.drip_fee_token_a_account.reload()?;
-    // ctx.accounts.vault_token_a_account.reload()?;
-    // ctx.accounts.vault_token_b_account.reload()?;
-    //
-    // let new_drip_trigger_fee_balance_a = ctx.accounts.drip_fee_token_a_account.amount;
-    // msg!(
-    //     "new_drip_trigger_fee_balance_a {:?}",
-    //     new_drip_trigger_fee_balance_a
-    // );
-    //
-    // let new_balance_a = ctx.accounts.vault_token_a_account.amount;
-    // msg!("new_balance_a {:?}", new_balance_a);
-    //
-    // let new_balance_b = ctx.accounts.vault_token_b_account.amount;
-    // msg!("new_balance_b {:?}", new_balance_b);
-    //
-    // let received_b = new_balance_b.checked_sub(current_balance_b).unwrap();
-    // let swapped_a = current_balance_a.checked_sub(new_balance_a).unwrap();
-    //
-    // // For some reason swap did not happen ~ because we will never have swap amount of 0.
-    // if received_b == 0 {
-    //     return Err(ErrorCode::IncompleteSwapError.into());
-    // }
-    //
-    // if swapped_a > current_drip_amount {
-    //     return Err(ErrorCode::SwappedMoreThanVaultDripAmount.into());
-    // }
-    //
-    // let current_period_mut = &mut ctx.accounts.current_vault_period;
-    // current_period_mut.update_twap(&ctx.accounts.last_vault_period, swap_amount, received_b);
-    // current_period_mut.update_drip_timestamp();
-    //
-    // Ok(())
 }
