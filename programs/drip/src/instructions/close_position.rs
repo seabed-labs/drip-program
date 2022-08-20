@@ -11,17 +11,19 @@ use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
 // TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
+    pub withdrawer: Signer<'info>,
+
     /* DRIP ACCOUNTS */
     #[account(
-        // mut needed because we are changing state
+        // mut needed because we're changing state
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            token_a_mint.key().as_ref(),
-            token_b_mint.key().as_ref(),
+            vault_token_a_account.mint.as_ref(),
+            vault_token_b_account.mint.as_ref(),
             vault_proto_config.key().as_ref()
         ],
-        bump = vault.bump
+        bump = vault.bump,
     )]
     pub vault: Box<Account<'info, Vault>>,
 
@@ -92,7 +94,7 @@ pub struct ClosePosition<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_token_a_account.key() == vault.token_a_account,
-        constraint = vault_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = vault_token_a_account.owner == vault.key()
     )]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -101,7 +103,7 @@ pub struct ClosePosition<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_token_b_account.key() == vault.token_b_account,
-        constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = vault_token_b_account.owner == vault.key()
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -110,14 +112,14 @@ pub struct ClosePosition<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-        constraint = vault_treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_treasury_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
     )]
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = user_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = user_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
         constraint = user_token_b_account.owner == withdrawer.key()
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -125,7 +127,7 @@ pub struct ClosePosition<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = user_token_a_account.mint == token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = user_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
         constraint = user_token_a_account.owner == withdrawer.key()
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
@@ -154,21 +156,7 @@ pub struct ClosePosition<'info> {
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
 
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint,
-        constraint = token_a_mint.is_initialized
-    )]
-    pub token_a_mint: Box<Account<'info, Mint>>,
-
-    #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = token_b_mint.is_initialized
-    )]
-    pub token_b_mint: Box<Account<'info, Mint>>,
-
     /* MISC */
-    pub withdrawer: Signer<'info>,
-
     pub token_program: Program<'info, Token>,
 
     pub system_program: Program<'info, System>,
