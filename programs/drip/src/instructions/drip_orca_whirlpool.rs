@@ -25,8 +25,8 @@ pub struct DripOrcaWhirlpool<'info> {
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            vault.token_a_mint.as_ref(),
-            vault.token_b_mint.as_ref(),
+            vault_token_a_account.mint.as_ref(),
+            vault_token_b_account.mint.as_ref(),
             vault_proto_config.key().as_ref()
         ],
         bump = vault.bump,
