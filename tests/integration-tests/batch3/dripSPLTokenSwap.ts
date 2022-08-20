@@ -216,8 +216,6 @@ export function testDripSPLTokenSwap() {
       vaultProtoConfig,
       vaultTokenAAccount,
       vaultTokenBAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
       swapTokenMint,
       swapTokenAAccount,
       swapTokenBAccount,
@@ -284,8 +282,6 @@ export function testDripSPLTokenSwap() {
       vaultProtoConfig,
       vaultTokenAAccount,
       vaultTokenBAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
       swapTokenMint2,
 
       // Order swapped here
@@ -360,8 +356,6 @@ export function testDripSPLTokenSwap() {
         vaultProtoConfig,
         vaultTokenAAccount,
         vaultTokenBAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
         swapTokenMint3,
         swapTokenAAccount3,
         swapTokenBAccount3,

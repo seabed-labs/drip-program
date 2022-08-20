@@ -259,8 +259,6 @@ export class VaultUtil extends TestUtil {
     vaultTokenBAccount: PublicKey,
     lastVaultPeriod: PublicKey,
     currentVaultPeriod: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey,
     swapTokenMint: PublicKey,
     swapTokenAAccount: PublicKey,
     swapTokenBAccount: PublicKey,
@@ -278,8 +276,6 @@ export class VaultUtil extends TestUtil {
         lastVaultPeriod: lastVaultPeriod.toBase58(),
         currentVaultPeriod: currentVaultPeriod.toBase58(),
         swapTokenMint: swapTokenMint.toBase58(),
-        tokenAMint: tokenAMint.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),
         vaultTokenBAccount: vaultTokenBAccount.toBase58(),
         swapTokenAAccount: swapTokenAAccount.toBase58(),
@@ -307,8 +303,6 @@ export class VaultUtil extends TestUtil {
     vaultTokenBAccount: PublicKey;
     lastVaultPeriod: PublicKey;
     currentVaultPeriod: PublicKey;
-    tokenAMint: PublicKey;
-    tokenBMint: PublicKey;
     swapTokenAAccount: PublicKey;
     swapTokenBAccount: PublicKey;
     whirlpool: PublicKey;
@@ -325,8 +319,6 @@ export class VaultUtil extends TestUtil {
         vaultProtoConfig: params.vaultProtoConfig.toBase58(),
         lastVaultPeriod: params.lastVaultPeriod.toBase58(),
         currentVaultPeriod: params.currentVaultPeriod.toBase58(),
-        tokenAMint: params.tokenAMint.toBase58(),
-        tokenBMint: params.tokenBMint.toBase58(),
         vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
         vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
         swapTokenAAccount: params.swapTokenAAccount.toBase58(),

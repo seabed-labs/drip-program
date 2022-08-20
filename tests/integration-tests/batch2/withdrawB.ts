@@ -187,8 +187,6 @@ export function testWithdrawB() {
       vaultProtoConfig,
       vaultTokenAAccount,
       vaultTokenBAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
       swapTokenMint,
       swapTokenAAccount,
       swapTokenBAccount,

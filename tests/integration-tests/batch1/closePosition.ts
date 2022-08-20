@@ -186,8 +186,6 @@ export function testClosePosition() {
       vaultProtoConfig,
       vaultTokenAAccount,
       vaultTokenBAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
       swapTokenMint,
       swapTokenAAccount,
       swapTokenBAccount,
