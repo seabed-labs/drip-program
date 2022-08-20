@@ -5,7 +5,7 @@ use crate::state::vault::Vault;
 use crate::state::{VaultPeriod, VaultProtoConfig};
 use crate::{sign, TokenSwap, WhirlpoolProgram};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::blake3::hashv;
+use anchor_lang::solana_program::hash::hashv;
 use anchor_lang::solana_program::instruction::Instruction;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{Mint, Token, TokenAccount};
