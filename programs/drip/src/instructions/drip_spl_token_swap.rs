@@ -45,8 +45,8 @@ pub struct DripSPLTokenSwap<'info> {
             last_vault_period.period_id.to_string().as_bytes()
         ],
         bump = last_vault_period.bump,
-        constraint = last_vault_period.period_id == vault.last_drip_period,
-        constraint = last_vault_period.vault == vault.key()
+        constraint = last_vault_period.period_id == vault.last_drip_period @ErrorCode::InvalidVaultPeriod,
+        constraint = last_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -59,8 +59,8 @@ pub struct DripSPLTokenSwap<'info> {
             current_vault_period.period_id.to_string().as_bytes()
         ],
         bump = current_vault_period.bump,
-        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap(),
-        constraint = current_vault_period.vault == vault.key()
+        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap() @ErrorCode::InvalidVaultPeriod,
+        constraint = current_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 

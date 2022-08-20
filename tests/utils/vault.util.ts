@@ -33,7 +33,6 @@ export interface DepositTxParams {
     vault: PublicKey;
     vaultPeriodEnd: PublicKey;
     userPosition: PublicKey;
-    tokenAMint: PublicKey;
     userPositionNftMint: PublicKey;
     vaultTokenAAccount: PublicKey;
     userTokenAAccount: PublicKey;
@@ -195,7 +194,6 @@ export class VaultUtil extends TestUtil {
         vault: input.accounts.vault.toBase58(),
         vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
         userPosition: input.accounts.userPosition.toBase58(),
-        tokenAMint: input.accounts.tokenAMint.toBase58(),
         userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
         vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
         userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
