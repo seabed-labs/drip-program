@@ -43,6 +43,11 @@ jobs:
         with:
           toolchain: 1.32.0
 
+      - name: Setup Clippy
+        id: install-clippy
+#        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: rustup component add clippy
+
       - name: Install OS Deps
         id: install-os-deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
@@ -126,7 +131,11 @@ jobs:
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
-      - run: cargo test
+      - name: clippy
+        run: cargo clippy -- -D warnings --A clippy::too_many_arguments
+
+      - name: unit test
+        run: cargo test
 
   test-integration-batch-1:
     runs-on: ubuntu-latest
