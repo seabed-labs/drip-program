@@ -79,9 +79,9 @@ pub fn handle_withdraw<'info, 'withdraw>(
             None
         } else {
             Some(TransferToken::new(
-                &token_program,
-                &close_position_accounts.vault_token_a_account,
-                &close_position_accounts.user_token_a_account,
+                token_program,
+                close_position_accounts.vault_token_a_account,
+                close_position_accounts.user_token_a_account,
                 withdrawable_amount_a,
             ))
         }
@@ -93,9 +93,9 @@ pub fn handle_withdraw<'info, 'withdraw>(
         None
     } else {
         Some(TransferToken::new(
-            &token_program,
-            &vault_token_b_account,
-            &user_token_b_account,
+            token_program,
+            vault_token_b_account,
+            user_token_b_account,
             withdrawable_amount_b,
         ))
     };
@@ -104,9 +104,9 @@ pub fn handle_withdraw<'info, 'withdraw>(
         None
     } else {
         Some(TransferToken::new(
-            &token_program,
-            &vault_token_b_account,
-            &vault_treasury_token_b_account,
+            token_program,
+            vault_token_b_account,
+            vault_treasury_token_b_account,
             withdrawal_spread_amount_b,
         ))
     };
@@ -131,21 +131,21 @@ pub fn handle_withdraw<'info, 'withdraw>(
 
     // 4. Invoke the token transfer IX's
     if let Some(transfer) = transfer_a_to_user {
-        transfer.execute(&vault)?;
+        transfer.execute(vault)?;
     }
     if let Some(transfer) = transfer_b_to_user {
-        transfer.execute(&vault)?;
+        transfer.execute(vault)?;
     }
     if let Some(transfer) = transfer_b_to_treasury {
-        transfer.execute(&vault)?;
+        transfer.execute(vault)?;
     }
     if let Some(ref close_position_accounts) = with_close_position {
         // 6. Burn the users position NFT
         burn_tokens(
-            &token_program,
-            &vault,
-            &close_position_accounts.user_position_nft_mint,
-            &user_position_nft_account,
+            token_program,
+            vault,
+            close_position_accounts.user_position_nft_mint,
+            user_position_nft_account,
             1,
         )?;
     }
