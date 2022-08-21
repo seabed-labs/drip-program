@@ -12,7 +12,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use borsh::BorshSerialize;
 use whirlpool::state::Whirlpool;
 
-pub struct OrcaWhirlpoolParams<'info, 'drip> {
+pub struct OrcaWhirlpoolAccounts<'info, 'drip> {
     pub whirlpool: &'drip Account<'info, Whirlpool>,
     pub tick_array_0: &'drip UncheckedAccount<'info>,
     pub tick_array_1: &'drip UncheckedAccount<'info>,
@@ -21,7 +21,7 @@ pub struct OrcaWhirlpoolParams<'info, 'drip> {
     pub whirlpool_program: &'drip Program<'info, WhirlpoolProgram>,
 }
 
-pub struct SPLTokenSwapParams<'info, 'drip> {
+pub struct SPLTokenSwapAccounts<'info, 'drip> {
     pub swap: &'drip UncheckedAccount<'info>,
     pub swap_token_mint: &'drip Account<'info, Mint>,
     pub swap_fee_account: &'drip Account<'info, TokenAccount>,
@@ -41,8 +41,8 @@ pub fn handle_drip<'info, 'drip>(
     swap_token_a_account: &mut Account<'info, TokenAccount>,
     swap_token_b_account: &mut Account<'info, TokenAccount>,
     token_program: &Program<'info, Token>,
-    with_spl_token_swap: Option<SPLTokenSwapParams<'info, 'drip>>,
-    with_orca_whirlpool: Option<OrcaWhirlpoolParams<'info, 'drip>>,
+    with_spl_token_swap: Option<SPLTokenSwapAccounts<'info, 'drip>>,
+    with_orca_whirlpool: Option<OrcaWhirlpoolAccounts<'info, 'drip>>,
 ) -> Result<()> {
     /* MANUAL CHECKS + COMPUTE (CHECKS) */
     if vault_token_a_account.amount == 0 || vault.drip_amount == 0 {

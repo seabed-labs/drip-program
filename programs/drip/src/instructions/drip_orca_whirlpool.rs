@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::interactions::drip_utils::{handle_drip, OrcaWhirlpoolParams};
+use crate::interactions::drip_utils::{handle_drip, OrcaWhirlpoolAccounts};
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -146,7 +146,7 @@ pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
         &mut ctx.accounts.swap_token_b_account,
         &ctx.accounts.token_program,
         None,
-        Some(OrcaWhirlpoolParams {
+        Some(OrcaWhirlpoolAccounts {
             whirlpool: &ctx.accounts.whirlpool,
             tick_array_0: &ctx.accounts.tick_array_0,
             tick_array_1: &ctx.accounts.tick_array_1,
