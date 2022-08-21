@@ -160,10 +160,58 @@ pub fn calculate_spread_amount(amount: u64, spread: u16) -> u64 {
     .unwrap()
 }
 
+pub fn calculate_drip_activation_timestamp(
+    current_time: i64,
+    granularity: u64,
+    should_snap_forward: bool,
+) -> i64 {
+    let current_drip_activation_timestamp = current_time
+        .checked_sub(current_time % granularity as i64)
+        .expect("drip_activation_timestamp math process_drip sub");
+    if should_snap_forward {
+        current_drip_activation_timestamp
+            .checked_add(granularity as i64)
+            .expect("drip_activation_timestamp math process_drip add")
+    } else {
+        current_drip_activation_timestamp
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use test_case::test_case;
+
+    #[test_case(1661120813, 86400, true, 1661126400)]
+    #[test_case(1661120813, 86400, false, 1661040000)]
+    #[test_case(1661120813, 3600, true, 1661122800)]
+    #[test_case(1661120813, 3600, false, 1661119200)]
+    #[test_case(1661120813, 60, true, 1661120820)]
+    #[test_case(1661120813, 60, false, 1661120760)]
+    #[test_case(1661120813, 1, true, 1661120814)]
+    #[test_case(1661120813, 1, false, 1661120813)]
+    fn calculate_drip_activation_timestamp_tests(
+        current_time: i64,
+        granularity: u64,
+        should_snap_forward: bool,
+        expected_next_timestamp: i64,
+    ) {
+        assert_eq!(
+            calculate_drip_activation_timestamp(current_time, granularity, should_snap_forward),
+            expected_next_timestamp
+        );
+    }
+
+    #[test_case(1661120813, 0, true)]
+    #[test_case(1661120813, 0, false)]
+    #[should_panic]
+    fn calculate_drip_activation_timestamp_panic_tests(
+        current_time: i64,
+        granularity: u64,
+        should_snap_forward: bool,
+    ) {
+        calculate_drip_activation_timestamp(current_time, granularity, should_snap_forward);
+    }
 
     #[test_case(0, 1, 0)]
     #[test_case(1, 1, 18446744073709551616)] // 1 << 64 is 18446744073709551616

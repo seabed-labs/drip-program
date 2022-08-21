@@ -1,4 +1,5 @@
 use crate::errors::ErrorCode::CannotGetVaultBump;
+use crate::math::calculate_drip_activation_timestamp;
 use crate::state::VaultPeriod;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
@@ -60,12 +61,10 @@ impl Vault {
         self.last_drip_period = 0;
         self.drip_amount = 0;
 
+        // snap to a timestamp for this granularity, either now or the past
         let now = Clock::get().unwrap().unix_timestamp;
-        // TODO(matcha): Abstract away this date flooring math and add unit tests
-        // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-        self.drip_activation_timestamp = now
-            .checked_sub(now % granularity as i64)
-            .expect("drip_activation_timestamp math failed");
+        self.drip_activation_timestamp =
+            calculate_drip_activation_timestamp(now, granularity, false);
 
         match bump {
             Some(val) => {
@@ -91,16 +90,10 @@ impl Vault {
         self.drip_amount = self.drip_amount.checked_sub(current_period.dar).unwrap();
         self.last_drip_period = current_period.period_id;
 
+        // snap to a timestamp for this granularity, either now or in the future
         let now = Clock::get().unwrap().unix_timestamp;
-        // TODO(matcha): Abstract away this date flooring math and add unit tests
-        // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-        // TODO(matcha): Make sure this makes sense (think through it)
-        // Snap it back to the correct activation time stamp
-        self.drip_activation_timestamp = now
-            .checked_sub(now % granularity as i64)
-            .expect("drip_activation_timestamp math process_drip sub")
-            .checked_add(granularity as i64)
-            .expect("drip_activation_timestamp math process_drip add");
+        self.drip_activation_timestamp =
+            calculate_drip_activation_timestamp(now, granularity, true);
     }
 
     pub fn is_drip_activated(&self) -> bool {
