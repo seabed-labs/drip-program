@@ -140,7 +140,6 @@ pub fn handle_withdraw<'info, 'withdraw>(
         transfer.execute(vault)?;
     }
     if let Some(ref close_position_accounts) = with_close_position {
-        // 6. Burn the users position NFT
         burn_tokens(
             token_program,
             vault,
