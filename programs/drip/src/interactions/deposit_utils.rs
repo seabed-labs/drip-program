@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::interactions::transfer_token::TransferToken;
+use crate::interactions::token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::sign;
 use crate::state::vault::Vault;

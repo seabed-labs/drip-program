@@ -345,7 +345,6 @@ export const withdrawBWrapper = (
   vaultProtoConfig: PublicKey,
   positionAccount: PublicKey,
   userPostionNFTAccount: PublicKey,
-  userPositionNFTMint: PublicKey,
   vaultTokenB: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
   userTokenBAccount: PublicKey
@@ -357,7 +356,6 @@ export const withdrawBWrapper = (
       vaultProtoConfig,
       positionAccount,
       userPostionNFTAccount,
-      userPositionNFTMint,
       vaultTokenB,
       vaultTreasuryTokenBAccount,
       vaultPeriodI,

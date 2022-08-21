@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::interactions::transfer_token::TransferToken;
+use crate::interactions::token::TransferToken;
 use crate::math::{calculate_spread_amount, calculate_sqrt_price_limit};
 use crate::state::vault::Vault;
 use crate::state::{VaultPeriod, VaultProtoConfig};

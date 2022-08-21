@@ -1,7 +1,7 @@
 use crate::sign;
 use crate::state::Vault;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
 
 pub struct TransferToken<'info> {
     token_program: Program<'info, Token>,
@@ -12,7 +12,7 @@ pub struct TransferToken<'info> {
 
 impl<'info> TransferToken<'info> {
     pub fn new(
-        token_program: &Program<'info, anchor_spl::token::Token>,
+        token_program: &Program<'info, Token>,
         from: &Account<'info, anchor_spl::token::TokenAccount>,
         to: &Account<'info, anchor_spl::token::TokenAccount>,
         amount: u64,
@@ -39,4 +39,25 @@ impl<'info> TransferToken<'info> {
             self.amount,
         )
     }
+}
+
+pub fn burn_tokens<'info>(
+    token_program: &Program<'info, Token>,
+    vault: &Account<'info, Vault>,
+    mint: &Account<'info, Mint>,
+    from: &Account<'info, TokenAccount>,
+    amount: u64,
+) -> Result<()> {
+    burn(
+        CpiContext::new_with_signer(
+            token_program.to_account_info().clone(),
+            Burn {
+                mint: mint.to_account_info().clone(),
+                from: from.to_account_info().clone(),
+                authority: vault.to_account_info().clone(),
+            },
+            &[sign!(vault)],
+        ),
+        amount,
+    )
 }

@@ -201,7 +201,6 @@ export function testWithdrawB() {
       vaultProtoConfig,
       userPositionAccount,
       userPostionNFTAccount,
-      userPositionNFTMint,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
       userTokenBAccount
