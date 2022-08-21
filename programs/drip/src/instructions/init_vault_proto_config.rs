@@ -37,7 +37,6 @@ pub fn handler(
     if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
-    // TODO(Mocha): Flush this out
     if params.token_a_drip_trigger_spread >= 5000 || params.token_b_withdrawal_spread >= 5000 {
         return Err(ErrorCode::InvalidSpread.into());
     }
