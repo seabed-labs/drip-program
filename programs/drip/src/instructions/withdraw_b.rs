@@ -28,25 +28,25 @@ pub struct WithdrawB<'info> {
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
     #[account(
-        has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
             vault_period_i.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_i.bump,
+        constraint = vault_period_i.vault == vault.key() @ErrorCode::InvalidVaultReference,
         constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @ErrorCode::InvalidVaultPeriod,
     )]
     pub vault_period_i: Account<'info, VaultPeriod>,
 
     #[account(
-        has_one = vault,
         seeds = [
             b"vault_period".as_ref(),
             vault.key().as_ref(),
             vault_period_j.period_id.to_string().as_bytes(),
         ],
         bump = vault_period_j.bump,
+        constraint = vault_period_j.vault == vault.key() @ErrorCode::InvalidVaultReference,
         constraint = vault_period_j.period_id == std::cmp::min(
             vault.last_drip_period,
             user_position.drip_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
@@ -57,12 +57,12 @@ pub struct WithdrawB<'info> {
     #[account(
         // mut needed because we are updating withdrawn amount
         mut,
-        has_one = vault,
         seeds = [
             b"user_position".as_ref(),
             user_position_nft_mint.key().as_ref()
         ],
         bump = user_position.bump,
+        constraint = user_position.vault == vault.key() @ErrorCode::InvalidVaultReference,
         constraint = user_position.position_authority == user_position_nft_mint.key() @ErrorCode::InvalidMint,
         constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
     )]
@@ -84,19 +84,19 @@ pub struct WithdrawB<'info> {
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
+    )]
+    pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
         // mut needed because we are changing the balance
         mut,
         constraint = user_token_b_account.owner == withdrawer.key(),
         constraint = user_token_b_account.mint == vault_token_b_account.mint @ ErrorCode::InvalidMint,
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
-
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-    )]
-    pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     /* MINTS */
     #[account(
