@@ -116,17 +116,12 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed for CPI
         mut,
-        // TODO(mocha): spl token swap should check auth
-        constraint = swap_token_mint.mint_authority.contains(&swap_authority.key()),
-        constraint = swap_token_mint.is_initialized
     )]
     pub swap_token_mint: Box<Account<'info, Mint>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        // TODO(mocha): spl token swap should check this
-        constraint = swap_fee_account.mint == swap_token_mint.key()
     )]
     pub swap_fee_account: Box<Account<'info, TokenAccount>>,
 
