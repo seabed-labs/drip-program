@@ -45,7 +45,7 @@ jobs:
 
       - name: Setup Clippy
         id: install-clippy
-#        if: steps.cache-deps.outputs.cache-hit != 'true'
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: rustup component add clippy
 
       - name: Install OS Deps
@@ -79,6 +79,9 @@ jobs:
 
       - name: Build Programs
         run: anchor build
+
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings --A clippy::too_many_arguments
 
   lint:
     runs-on: ubuntu-latest
@@ -130,9 +133,6 @@ jobs:
           node-version: '16.13.0'
 
       - run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
-
-      - name: clippy
-        run: cargo clippy -- -D warnings --A clippy::too_many_arguments
 
       - name: unit test
         run: cargo test
