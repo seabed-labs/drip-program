@@ -205,9 +205,7 @@ export function testClosePosition() {
       userTokenAAccount,
       userTokenBAccount,
       userPositionNFTAccount,
-      userPositionNFTMint,
-      tokenA.publicKey,
-      tokenB.publicKey
+      userPositionNFTMint
     );
 
     depositWithNewUser = depositWithNewUserWrapper(
