@@ -132,7 +132,6 @@ pub struct DripOrcaWhirlpool<'info> {
     pub whirlpool_program: Program<'info, WhirlpoolProgram>,
 }
 
-// TODO(Mocha/Matcha): extract common code between drip_* instructions
 pub fn handler(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
     handle_drip(
         &mut ctx.accounts.vault,

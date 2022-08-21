@@ -215,7 +215,7 @@ fn revoke_position_nft_auth<'info>(
 #[derive(Clone)]
 pub struct MetaplexTokenMetadata;
 
-impl anchor_lang::Id for MetaplexTokenMetadata {
+impl Id for MetaplexTokenMetadata {
     fn id() -> Pubkey {
         mpl_token_metadata::ID
     }
@@ -239,7 +239,6 @@ pub struct DepositParams {
 //         #[derive(Accounts)]
 //         #[instruction(params: DepositParams)]
 //         pub struct $ix_name<'info> {
-//             // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
 //             #[account(
 //                 // mut needed
 //                 mut,
@@ -253,8 +252,6 @@ pub struct DepositParams {
 //             )]
 //             pub vault: Box<Account<'info, Vault>>,
 //
-//             // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
-//             // TODO(matcha): Add PDA seed validation here
 //             #[account(
 //                 // mut needed because we are changing state
 //                 mut,
