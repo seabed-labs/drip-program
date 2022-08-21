@@ -37,7 +37,7 @@ pub struct Deposit<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = params.number_of_swaps > 0 @ErrorCode::InvalidVaultPeriod,
+        constraint = params.number_of_swaps > 0 @ErrorCode::NumSwapsIsZero,
         constraint = vault_period_end.period_id > 0 @ErrorCode::InvalidVaultPeriod,
         constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @ErrorCode::InvalidVaultPeriod
     )]

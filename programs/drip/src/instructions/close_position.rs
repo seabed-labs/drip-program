@@ -5,7 +5,6 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::interactions::withdraw_utils::{handle_withdraw, ClosePositionAccounts};
 
-// TODO(Mocha): remove has_one=vault
 #[derive(Accounts)]
 pub struct ClosePosition<'info> {
     pub withdrawer: Signer<'info>,

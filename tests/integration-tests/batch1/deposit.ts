@@ -153,7 +153,6 @@ export function testDeposit() {
         vault: vaultPubkey,
         vaultPeriodEnd: vaultPeriodPubkey,
         userPosition: positionPDA.publicKey,
-        tokenAMint: tokenA.publicKey,
         userPositionNftMint: positionNftMintKeypair.publicKey,
         vaultTokenAAccount: vaultTokenAAccount,
         userTokenAAccount: userTokenAAccount,

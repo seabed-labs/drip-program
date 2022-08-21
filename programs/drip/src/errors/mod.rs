@@ -42,4 +42,6 @@ pub enum ErrorCode {
     InvalidVaultMaxSlippage,
     #[msg("Swapped more than vault's drip amount")]
     SwappedMoreThanVaultDripAmount,
+    #[msg("Number of swaps is zero")]
+    NumSwapsIsZero,
 }
