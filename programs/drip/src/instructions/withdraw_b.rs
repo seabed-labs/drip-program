@@ -1,10 +1,9 @@
 use crate::errors::ErrorCode;
-use crate::interactions::transfer_token::TransferToken;
-use crate::math::{calculate_spread_amount, calculate_withdraw_token_b_amount};
+use crate::interactions::withdraw_utils::handle_withdraw;
 use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
@@ -59,18 +58,17 @@ pub struct WithdrawB<'info> {
         mut,
         seeds = [
             b"user_position".as_ref(),
-            user_position_nft_mint.key().as_ref()
+            user_position.position_authority.as_ref()
         ],
         bump = user_position.bump,
         constraint = user_position.vault == vault.key() @ErrorCode::InvalidVaultReference,
-        constraint = user_position.position_authority == user_position_nft_mint.key() @ErrorCode::InvalidMint,
         constraint = !user_position.is_closed @ErrorCode::PositionAlreadyClosed,
     )]
     pub user_position: Account<'info, Position>,
 
     /* TOKEN ACCOUNTS */
     #[account(
-        constraint = user_position_nft_account.mint == user_position_nft_mint.key() @ErrorCode::InvalidMint,
+        constraint = user_position_nft_account.mint == user_position.position_authority @ErrorCode::InvalidMint,
         constraint = user_position_nft_account.owner == withdrawer.key(),
         constraint = user_position_nft_account.amount == 1,
     )]
@@ -94,15 +92,9 @@ pub struct WithdrawB<'info> {
         // mut needed because we are changing the balance
         mut,
         constraint = user_token_b_account.owner == withdrawer.key(),
-        constraint = user_token_b_account.mint == vault_token_b_account.mint @ ErrorCode::InvalidMint,
+        constraint = user_token_b_account.mint == vault_token_b_account.mint @ErrorCode::InvalidMint,
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
-
-    /* MINTS */
-    #[account(
-        constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint
-    )]
-    pub user_position_nft_mint: Account<'info, Mint>,
 
     /* MISC */
     pub token_program: Program<'info, Token>,
@@ -111,69 +103,82 @@ pub struct WithdrawB<'info> {
 }
 
 pub fn handler(ctx: Context<WithdrawB>) -> Result<()> {
-    /* MANUAL CHECKS + COMPUTE (CHECKS) */
-
-    // 1. Get max withdrawable Token B amount for this user
-    let max_withdrawable_amount_b = calculate_withdraw_token_b_amount(
-        ctx.accounts.vault_period_i.period_id,
-        ctx.accounts.vault_period_j.period_id,
-        ctx.accounts.vault_period_i.twap,
-        ctx.accounts.vault_period_j.twap,
-        ctx.accounts.user_position.periodic_drip_amount,
-        ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
-    );
-    let withdrawable_amount_b_before_fees = ctx
-        .accounts
-        .user_position
-        .get_withdrawable_amount_with_max(max_withdrawable_amount_b);
-
-    // 2. Account for Withdrawal Spread on Token B
-    let withdrawal_spread_amount_b = calculate_spread_amount(
-        withdrawable_amount_b_before_fees,
-        ctx.accounts.vault_proto_config.token_b_withdrawal_spread,
-    );
-    let withdrawable_amount_b = withdrawable_amount_b_before_fees
-        .checked_sub(withdrawal_spread_amount_b)
-        .unwrap();
-
-    // 3. No point in completing IX if there's nothing happening
-    if withdrawable_amount_b == 0 {
-        return Err(ErrorCode::WithdrawableAmountIsZero.into());
-    }
-
-    // 4. Transfer tokens (these are lazily executed below)
-    let transfer_b_to_user = TransferToken::new(
-        &ctx.accounts.token_program,
+    handle_withdraw(
+        &mut ctx.accounts.vault,
+        &ctx.accounts.vault_proto_config,
+        &ctx.accounts.vault_period_i,
+        &ctx.accounts.vault_period_j,
+        &mut ctx.accounts.user_position,
+        &ctx.accounts.user_position_nft_account,
         &ctx.accounts.vault_token_b_account,
+        &ctx.accounts.vault_treasury_token_b_account,
         &ctx.accounts.user_token_b_account,
-        withdrawable_amount_b,
-    );
-
-    let transfer_b_to_treasury = if withdrawal_spread_amount_b == 0 {
-        None
-    } else {
-        Some(TransferToken::new(
-            &ctx.accounts.token_program,
-            &ctx.accounts.vault_token_b_account,
-            &ctx.accounts.vault_treasury_token_b_account,
-            withdrawal_spread_amount_b,
-        ))
-    };
-
-    /* STATE UPDATES (EFFECTS) */
-
-    // 5. Update the user's position state to reflect the newly withdrawn amount
-    ctx.accounts
-        .user_position
-        .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
-
-    /* MANUAL CPI (INTERACTIONS) */
-
-    // 6. Invoke the token transfer IX's
-    transfer_b_to_user.execute(&ctx.accounts.vault)?;
-    if let Some(transfer) = transfer_b_to_treasury {
-        transfer.execute(&ctx.accounts.vault)?;
-    }
-
-    Ok(())
+        &ctx.accounts.token_program,
+        None,
+    )
+    // /* MANUAL CHECKS + COMPUTE (CHECKS) */
+    //
+    // // 1. Get max withdrawable Token B amount for this user
+    // let max_withdrawable_amount_b = calculate_withdraw_token_b_amount(
+    //     ctx.accounts.vault_period_i.period_id,
+    //     ctx.accounts.vault_period_j.period_id,
+    //     ctx.accounts.vault_period_i.twap,
+    //     ctx.accounts.vault_period_j.twap,
+    //     ctx.accounts.user_position.periodic_drip_amount,
+    //     ctx.accounts.vault_proto_config.token_a_drip_trigger_spread,
+    // );
+    // let withdrawable_amount_b_before_fees = ctx
+    //     .accounts
+    //     .user_position
+    //     .get_withdrawable_amount_with_max(max_withdrawable_amount_b);
+    //
+    // // 2. Account for Withdrawal Spread on Token B
+    // let withdrawal_spread_amount_b = calculate_spread_amount(
+    //     withdrawable_amount_b_before_fees,
+    //     ctx.accounts.vault_proto_config.token_b_withdrawal_spread,
+    // );
+    // let withdrawable_amount_b = withdrawable_amount_b_before_fees
+    //     .checked_sub(withdrawal_spread_amount_b)
+    //     .unwrap();
+    //
+    // // 3. No point in completing IX if there's nothing happening
+    // if withdrawable_amount_b == 0 {
+    //     return Err(ErrorCode::WithdrawableAmountIsZero.into());
+    // }
+    //
+    // // 4. Transfer tokens (these are lazily executed below)
+    // let transfer_b_to_user = TransferToken::new(
+    //     &ctx.accounts.token_program,
+    //     &ctx.accounts.vault_token_b_account,
+    //     &ctx.accounts.user_token_b_account,
+    //     withdrawable_amount_b,
+    // );
+    //
+    // let transfer_b_to_treasury = if withdrawal_spread_amount_b == 0 {
+    //     None
+    // } else {
+    //     Some(TransferToken::new(
+    //         &ctx.accounts.token_program,
+    //         &ctx.accounts.vault_token_b_account,
+    //         &ctx.accounts.vault_treasury_token_b_account,
+    //         withdrawal_spread_amount_b,
+    //     ))
+    // };
+    //
+    // /* STATE UPDATES (EFFECTS) */
+    //
+    // // 5. Update the user's position state to reflect the newly withdrawn amount
+    // ctx.accounts
+    //     .user_position
+    //     .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
+    //
+    // /* MANUAL CPI (INTERACTIONS) */
+    //
+    // // 6. Invoke the token transfer IX's
+    // transfer_b_to_user.execute(&ctx.accounts.vault)?;
+    // if let Some(transfer) = transfer_b_to_treasury {
+    //     transfer.execute(&ctx.accounts.vault)?;
+    // }
+    //
+    // Ok(())
 }
