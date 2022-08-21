@@ -63,7 +63,6 @@ impl Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         // TODO(matcha): Abstract away this date flooring math and add unit tests
         // TODO(matcha): Figure out how to test this on integration tests without replicating the logic
-        // TODO: Use checked_xyz
         self.drip_activation_timestamp = now
             .checked_sub(now % granularity as i64)
             .expect("drip_activation_timestamp math failed");

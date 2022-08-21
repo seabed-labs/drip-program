@@ -23,8 +23,6 @@ pub struct DepositWithMetadata<'info> {
     )]
     pub vault: Box<Account<'info, Vault>>,
 
-    // TODO(matcha): Maybe move the constraint here to the handler and throw a custom error
-    // TODO(matcha): Add PDA seed validation here
     #[account(
         // mut needed because we are changing state
         mut,
@@ -35,11 +33,9 @@ pub struct DepositWithMetadata<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = {
-            params.number_of_swaps > 0 &&
-            vault_period_end.period_id > 0 &&
-            vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap()
-        } @ErrorCode::InvalidVaultPeriod
+        constraint = params.number_of_swaps > 0 @ErrorCode::NumSwapsIsZero,
+        constraint = vault_period_end.period_id > 0 @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @ErrorCode::InvalidVaultPeriod
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
