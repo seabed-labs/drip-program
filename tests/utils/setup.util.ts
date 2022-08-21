@@ -348,7 +348,6 @@ export const withdrawBWrapper = (
   userPositionNFTMint: PublicKey,
   vaultTokenB: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
-  tokenBMint: PublicKey,
   userTokenBAccount: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
@@ -363,7 +362,6 @@ export const withdrawBWrapper = (
       vaultTreasuryTokenBAccount,
       vaultPeriodI,
       vaultPeriodJ,
-      tokenBMint,
       userTokenBAccount
     );
   };
@@ -380,9 +378,7 @@ export const closePositionWrapper = (
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
-  userPositionNftMint: PublicKey,
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey
+  userPositionNftMint: PublicKey
 ) => {
   return async (
     vaultPeriodI: PublicKey,
@@ -403,9 +399,7 @@ export const closePositionWrapper = (
       userTokenAAccount,
       userTokenBAccount,
       userPositionNftAccount,
-      userPositionNftMint,
-      tokenAMint,
-      tokenBMint
+      userPositionNftMint
     );
   };
 };

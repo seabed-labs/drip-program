@@ -204,7 +204,6 @@ export function testWithdrawB() {
       userPositionNFTMint,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      tokenB.publicKey,
       userTokenBAccount
     );
 

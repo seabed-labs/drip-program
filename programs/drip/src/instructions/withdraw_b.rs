@@ -8,12 +8,14 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct WithdrawB<'info> {
+    pub withdrawer: Signer<'info>,
+
     /* DRIP ACCOUNTS */
     #[account(
         seeds = [
             b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
-            token_b_mint.key().as_ref(),
+            vault_token_b_account.mint.as_ref(),
             vault_proto_config.key().as_ref()
         ],
         bump = vault.bump
@@ -77,8 +79,6 @@ pub struct WithdrawB<'info> {
     #[account(
         // mut needed because we are changing the balance
         mut,
-        constraint = vault_token_b_account.owner == vault.key(),
-        constraint = vault_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
         constraint = vault_token_b_account.key() == vault.token_b_account,
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -87,7 +87,7 @@ pub struct WithdrawB<'info> {
         // mut needed because we are changing the balance
         mut,
         constraint = user_token_b_account.owner == withdrawer.key(),
-        constraint = user_token_b_account.mint == token_b_mint.key() @ ErrorCode::InvalidMint,
+        constraint = user_token_b_account.mint == vault_token_b_account.mint @ ErrorCode::InvalidMint,
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
@@ -95,31 +95,16 @@ pub struct WithdrawB<'info> {
         // mut needed because we are changing balance
         mut,
         constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-        constraint = vault_token_b_account.owner == vault.key(),
-        constraint = vault_treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
     )]
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     /* MINTS */
     #[account(
-        constraint = user_position_nft_mint.supply == 1,
-        constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint,
-        constraint = user_position_nft_mint.mint_authority.is_none(),
-        constraint = user_position_nft_mint.decimals == 0,
-        constraint = user_position_nft_mint.is_initialized,
-        constraint = user_position_nft_mint.freeze_authority.is_none()
+        constraint = user_position_nft_mint.key() == user_position.position_authority @ErrorCode::InvalidMint
     )]
     pub user_position_nft_mint: Account<'info, Mint>,
 
-    #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint,
-        constraint = token_b_mint.is_initialized
-    )]
-    pub token_b_mint: Box<Account<'info, Mint>>,
-
     /* MISC */
-    pub withdrawer: Signer<'info>,
-
     pub token_program: Program<'info, Token>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,

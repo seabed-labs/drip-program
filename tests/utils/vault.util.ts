@@ -349,7 +349,6 @@ export class VaultUtil extends TestUtil {
     vaultTreasuryTokenBAccount: PublicKey,
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
-    tokenBMint: PublicKey,
     userTokenBAccount: PublicKey
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
@@ -364,7 +363,6 @@ export class VaultUtil extends TestUtil {
         userPositionNftAccount: userPositionNftAccount.toBase58(),
         userPositionNftMint: userPositionNftMint.toBase58(),
         vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
         vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
         userTokenBAccount: userTokenBAccount.toBase58(),
         tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
@@ -389,9 +387,7 @@ export class VaultUtil extends TestUtil {
     userTokenAAccount: PublicKey,
     userTokenBAccount: PublicKey,
     userPositionNftAccount: PublicKey,
-    userPositionNftMint: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey
+    userPositionNftMint: PublicKey
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .closePosition()
@@ -409,8 +405,6 @@ export class VaultUtil extends TestUtil {
         userTokenBAccount: userTokenBAccount.toBase58(),
         userPositionNftAccount: userPositionNftAccount.toBase58(),
         userPositionNftMint: userPositionNftMint.toBase58(),
-        tokenAMint: tokenAMint.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
         withdrawer: withdrawer.publicKey.toBase58(),
         tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
