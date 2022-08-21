@@ -2,7 +2,6 @@ import "should";
 import { AccountUtil } from "../../utils/account.util";
 import { VaultUtil } from "../../utils/vault.util";
 import { generatePair, Granularity } from "../../utils/common.util";
-import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 
 describe("#initVaultProtoConfig", testInitVaultProtoConfig);
@@ -49,6 +48,24 @@ export function testInitVaultProtoConfig() {
         vaultProtoConfigKeypair.publicKey
       );
     vaultProtoConfigAccount.granularity.toString().should.equal("10");
+  });
+
+  it("errors when passed in account is already initialized", async () => {
+    const vaultProtoConfigKeypair = generatePair();
+    const admin = generatePair();
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.DAILY,
+      tokenADripTriggerSpread: 5,
+      tokenBWithdrawalSpread: 10,
+      admin: admin.publicKey,
+    });
+
+    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      granularity: Granularity.HOURLY,
+      tokenADripTriggerSpread: 100,
+      tokenBWithdrawalSpread: 100,
+      admin: generatePair().publicKey,
+    }).should.be.rejectedWith(/0x0/);
   });
 
   it("errors when granularity is 0", async () => {
