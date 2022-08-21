@@ -24,12 +24,6 @@ pub enum ErrorCode {
     InvalidNumSwaps,
     #[msg("Provided account references the wrong vault-proto-config")]
     InvalidVaultProtoConfigReference,
-    // TODO: Delete the error below
-    #[msg("Invalid swap authority account")]
-    InvalidSwapAuthorityAccount,
-    // TODO: Delete the error below
-    #[msg("Invalid swap fee account")]
-    InvalidSwapFeeAccount,
     #[msg("Invalid vault-period")]
     InvalidVaultPeriod,
     #[msg("Provided account references the wrong vault")]
