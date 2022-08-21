@@ -53,7 +53,7 @@ pub fn handle_drip<'info, 'drip>(
     } else if let Some(ref params) = with_orca_whirlpool {
         params.whirlpool.key()
     } else {
-        Pubkey::default()
+        panic!("un-reachable code path, whitelist check")
     };
     if vault.limit_swaps && !vault.whitelisted_swaps.contains(&pubkey_for_whitelist) {
         return Err(ErrorCode::InvalidSwapAccount.into());
@@ -125,6 +125,8 @@ pub fn handle_drip<'info, 'drip>(
             params.oracle,
             swap_amount,
         )?;
+    } else {
+        panic!("un-reachable code path, swap tokens")
     }
 
     drip_trigger_fee_transfer.execute(vault)?;
