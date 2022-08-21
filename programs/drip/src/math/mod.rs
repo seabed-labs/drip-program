@@ -136,11 +136,9 @@ pub fn calculate_new_twap_amount(twap_i_minus_1: u128, i: u64, price_i: u128) ->
         .unwrap()
 }
 
-// TODO: Add unit tests
 pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
     let numerator_x64 = u128::from(token_b_amount).checked_shl(64).unwrap();
     let denominator = u128::from(token_a_amount);
-
     numerator_x64.checked_div(denominator).unwrap()
 }
 
@@ -166,6 +164,21 @@ pub fn calculate_spread_amount(amount: u64, spread: u16) -> u64 {
 mod test {
     use super::*;
     use test_case::test_case;
+
+    #[test_case(0, 1, 0)]
+    #[test_case(1, 1, 18446744073709551616)] // 1 << 64 is 18446744073709551616
+    fn compute_price_tests(token_b_amount: u64, token_a_amount: u64, expected_x64_price: u128) {
+        assert_eq!(
+            compute_price(token_b_amount, token_a_amount),
+            expected_x64_price
+        );
+    }
+
+    #[test_case(1, 0)]
+    #[should_panic]
+    fn compute_price_panic_tests(token_b_amount: u64, token_a_amount: u64) {
+        compute_price(token_b_amount, token_a_amount);
+    }
 
     #[test_case(1000, true, 0.9486832980505138; "a_to_b = true")]
     #[test_case(1000, false, 1.0488088481701516; "a_to_b = false")]
