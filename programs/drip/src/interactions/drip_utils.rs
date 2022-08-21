@@ -169,7 +169,6 @@ pub fn handle_drip<'info, 'drip>(
     Invokes CPI to SPL's Token Swap
     swap ix requires lot other authority accounts for verification; add them later
 */
-// TODO(mocha): should each individual drip utils live somewhere else?
 fn spl_token_swap_swap_tokens<'info>(
     token_program: &Program<'info, Token>,
     token_swap_program: &Program<'info, TokenSwap>,
@@ -268,7 +267,7 @@ struct WhirlpoolSwapParams {
     amount_specified_is_input: bool,
     a_to_b: bool, // Zero for one
 }
-// TODO(mocha): should each individual drip utils live somewhere else?
+
 fn orca_whirlpool_swap_tokens<'info>(
     vault: &Account<'info, Vault>,
     vault_token_a_account: &Account<'info, TokenAccount>,
