@@ -157,9 +157,8 @@ pub fn handle_drip<'info, 'drip>(
         return Err(ErrorCode::SwappedMoreThanVaultDripAmount.into());
     }
 
-    let current_period_mut = current_vault_period;
-    current_period_mut.update_twap(last_vault_period, swap_amount, received_b);
-    current_period_mut.update_drip_timestamp();
+    current_vault_period.update_twap(last_vault_period, swap_amount, received_b);
+    current_vault_period.update_drip_timestamp();
 
     Ok(())
 }
