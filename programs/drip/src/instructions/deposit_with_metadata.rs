@@ -9,7 +9,6 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
 pub struct DepositWithMetadata<'info> {
-    // TODO(matcha): Move other IX's vault validation to self-contained like this instead of passing in mints and proto config just to validate vault
     #[account(
         // mut needed
         mut,
