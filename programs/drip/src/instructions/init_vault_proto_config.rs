@@ -13,16 +13,16 @@ pub struct InitVaultProtoConfigParams {
 
 #[derive(Accounts)]
 pub struct InitializeVaultProtoConfig<'info> {
+    // mut needed because we are initializing the account
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
     #[account(
         init,
         space = VaultProtoConfig::ACCOUNT_SPACE,
         payer = creator
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
-
-    // mut needed because we are initializing the account
-    #[account(mut)]
-    pub creator: Signer<'info>,
 
     pub system_program: Program<'info, System>,
 }
