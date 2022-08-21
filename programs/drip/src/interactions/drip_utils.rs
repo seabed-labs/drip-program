@@ -183,19 +183,6 @@ fn spl_token_swap_swap_tokens<'info>(
     swap_fee_account: &Account<'info, TokenAccount>,
     swap_amount: u64,
 ) -> Result<()> {
-    // Get swap's token A balance = X
-    // Get swap's token B balance = Y
-    // Invariant of a Univ2 style swap: XY = K
-    // TODO: K = XY
-    // Swapping x -> y
-    // (X + x)(Y - y) = K // Derivation
-    // (Y - y) = K/(X + x) // Derivation
-    // TODO: y = Y - (K / (X + x))
-    // Define slippage tolerance = s denominated in %
-    // slippage = 10%
-    // y_min = (y * (100 - 10)) / 100 => y * 90/100 = 90% of y (which is the same as 10% slippage)
-    // TODO: y_min = (y * (100 - s))
-    // TODO: Encapsulate all the logic above into a function like the one below
     let min_amount_out = spl_token_swap_get_minimum_out(swap_amount);
 
     let ix = spl_token_swap::instruction::swap(
@@ -253,9 +240,22 @@ fn spl_token_swap_swap_tokens<'info>(
     Ok(())
 }
 
-// TODO (matcha) Do the math
-// TODO(matcha) Move this to the math lib
 fn spl_token_swap_get_minimum_out(_amount_in: u64) -> u64 {
+    // TODO (matcha) Do the math
+    // TODO(matcha) Move this to the math lib
+    // Get swap's token A balance = X
+    // Get swap's token B balance = Y
+    // Invariant of a Univ2 style swap: XY = K
+    // TODO: K = XY
+    // Swapping x -> y
+    // (X + x)(Y - y) = K // Derivation
+    // (Y - y) = K/(X + x) // Derivation
+    // TODO: y = Y - (K / (X + x))
+    // Define slippage tolerance = s denominated in %
+    // slippage = 10%
+    // y_min = (y * (100 - 10)) / 100 => y * 90/100 = 90% of y (which is the same as 10% slippage)
+    // TODO: y_min = (y * (100 - s))
+    // TODO: Encapsulate all the logic above into a function like the one below
     1 // fake value for now
 }
 
