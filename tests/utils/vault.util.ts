@@ -4,6 +4,7 @@ import {
   Keypair,
   PublicKey,
   Signer,
+  Transaction,
   TransactionSignature,
 } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
@@ -157,6 +158,53 @@ export class VaultUtil extends TestUtil {
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, undefined);
+  }
+
+  static async updateVaultWhitelistedSwaps(
+    vaultPubkey: PublicKey,
+    vaultProtoConfigPubkey: PublicKey,
+    admin?: Keypair,
+    params: {
+      whitelistedSwaps: PublicKey[] | null | undefined;
+    } = {
+      whitelistedSwaps: undefined,
+    },
+    programs?: {
+      systemProgram?: PublicKey;
+    }
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .updateVaultWhitelistedSwaps({
+        whitelistedSwaps: params.whitelistedSwaps ?? [],
+      })
+      .accounts({
+        vault: vaultPubkey.toBase58(),
+        vaultProtoConfig: vaultProtoConfigPubkey.toBase58(),
+        admin:
+          admin?.publicKey.toBase58() ??
+          this.provider.wallet.publicKey.toBase58(),
+        systemProgram:
+          programs?.systemProgram?.toBase58() ??
+          ProgramUtil.systemProgram.programId.toBase58(),
+      })
+      .transaction();
+    if (admin) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        admin,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+      // return TestUtil.provider.connection.sendTransaction(tx, [admin]);
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
   }
 
   static async initVaultPeriod(
