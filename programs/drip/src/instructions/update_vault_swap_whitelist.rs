@@ -9,12 +9,11 @@ pub struct UpdateVaultWhitelistedSwapsParams {
 
 #[derive(Accounts)]
 pub struct UpdateVaultWhitelistedSwaps<'info> {
-    // mut needed because we are initializing the account
     #[account(mut, address = vault_proto_config.admin @ErrorCode::SignerIsNotAdmin)]
     pub admin: Signer<'info>,
 
     #[account(
-        // mut needed
+        // mut needed because we are changing state
         mut,
         seeds = [
             b"drip-v1".as_ref(),
