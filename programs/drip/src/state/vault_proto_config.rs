@@ -5,9 +5,11 @@ use crate::test_account_size;
 #[account]
 #[derive(Default)]
 pub struct VaultProtoConfig {
-    pub granularity: u64,                 // 8
+    pub granularity: u64, // 8
+    // spread applied to each drip trigger in bps
     pub token_a_drip_trigger_spread: u16, // 2
-    pub token_b_withdrawal_spread: u16,   // 2
+    // spread applied to each withdrawal in bps
+    pub token_b_withdrawal_spread: u16, // 2
     // to be used with the vault to modify certain fields (whitelist)
     pub admin: Pubkey, //32
 }
