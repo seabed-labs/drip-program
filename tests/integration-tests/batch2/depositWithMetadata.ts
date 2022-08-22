@@ -154,7 +154,6 @@ export function testDepositWithMetadata() {
         vault: vaultPubkey,
         vaultPeriodEnd: vaultPeriodPubkey,
         userPosition: positionPDA.publicKey,
-        tokenAMint: tokenA.publicKey,
         userPositionNftMint: positionNftMintKeypair.publicKey,
         vaultTokenAAccount: vaultTokenAAccount,
         userTokenAAccount: userTokenAAccount,

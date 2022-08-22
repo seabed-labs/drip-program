@@ -14,7 +14,7 @@ pub struct DepositWithMetadata<'info> {
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            token_a_mint.key().as_ref(),
+            vault.token_a_mint.key().as_ref(),
             vault.token_b_mint.key().as_ref(),
             vault.proto_config.as_ref()
         ],
@@ -51,11 +51,6 @@ pub struct DepositWithMetadata<'info> {
     pub user_position: Box<Account<'info, Position>>,
 
     // Token mints
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
-    )]
-    pub token_a_mint: Box<Account<'info, Mint>>,
-
     #[account(
         init,
         mint::authority = vault,
