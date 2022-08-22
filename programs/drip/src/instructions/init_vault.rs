@@ -13,6 +13,10 @@ pub struct InitializeVaultParams {
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
+    // mut needed because we are initializing the account
+    #[account(mut, address = vault_proto_config.admin @ErrorCode::OnlyAdminCanInitVault)]
+    pub creator: Signer<'info>,
+
     /* DRIP ACCOUNTS */
     #[account(
         init,
@@ -59,10 +63,6 @@ pub struct InitializeVault<'info> {
     pub token_b_mint: Box<Account<'info, Mint>>,
 
     /* MISC */
-    // mut neeed because we are initing accounts
-    #[account(mut, address = vault_proto_config.admin @ErrorCode::OnlyAdminCanInitVault)]
-    pub creator: Signer<'info>,
-
     pub token_program: Program<'info, Token>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,

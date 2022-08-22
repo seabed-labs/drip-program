@@ -42,11 +42,14 @@ export class AccountUtil extends TestUtil {
       | "tokenBMint"
       | "tokenAAccount"
       | "tokenBAccount"
+      | "treasuryTokenBAccount"
+      | "whitelistedSwaps"
       | "lastDripPeriod"
       | "dripAmount"
-      | "bump"
       | "dripActivationTimestamp"
-      | "whitelistedSwaps"
+      | "bump"
+      | "limitSwaps"
+      | "maxSlippageBps"
     >
   > {
     return await ProgramUtil.dripProgram.account.vault.fetch(pubkey);

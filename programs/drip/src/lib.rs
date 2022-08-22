@@ -15,16 +15,15 @@ declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
 #[program]
 pub mod drip {
     use super::*;
+    use crate::update_vault_swap_whitelist::{
+        UpdateVaultWhitelistedSwaps, UpdateVaultWhitelistedSwapsParams,
+    };
 
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfig>,
         params: InitVaultProtoConfigParams,
     ) -> Result<()> {
         init_vault_proto_config::handler(ctx, params)
-    }
-
-    pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
-        init_vault::handler(ctx, params)
     }
 
     pub fn init_vault_period(
@@ -59,5 +58,18 @@ pub mod drip {
 
     pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
         drip_orca_whirlpool::handler(ctx)
+    }
+
+    // Admin Ix's
+
+    pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
+        init_vault::handler(ctx, params)
+    }
+
+    pub fn update_vault_whitelisted_swaps(
+        ctx: Context<UpdateVaultWhitelistedSwaps>,
+        params: UpdateVaultWhitelistedSwapsParams,
+    ) -> Result<()> {
+        update_vault_swap_whitelist::handler(ctx, params)
     }
 }

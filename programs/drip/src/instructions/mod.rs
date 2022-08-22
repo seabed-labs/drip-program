@@ -6,6 +6,7 @@ pub mod drip_spl_token_swap;
 pub mod init_vault;
 pub mod init_vault_period;
 pub mod init_vault_proto_config;
+pub mod update_vault_swap_whitelist;
 pub mod withdraw_b;
 
 pub use close_position::*;
@@ -16,4 +17,5 @@ pub use drip_spl_token_swap::*;
 pub use init_vault::*;
 pub use init_vault_period::*;
 pub use init_vault_proto_config::*;
+pub use update_vault_swap_whitelist::*;
 pub use withdraw_b::*;

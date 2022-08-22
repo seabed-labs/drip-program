@@ -44,4 +44,6 @@ pub enum ErrorCode {
     SwappedMoreThanVaultDripAmount,
     #[msg("Number of swaps is zero")]
     NumSwapsIsZero,
+    #[msg("Signer is not admin")]
+    SignerIsNotAdmin,
 }
