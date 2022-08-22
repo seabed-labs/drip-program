@@ -368,7 +368,7 @@ export function testUpdateVaultWhitelistedSwaps() {
         whitelistedSwaps: newWhitelistedSwaps,
       },
       {}
-    ).should.be.rejectedWith(/0x177d/);
+    ).should.be.rejectedWith(/0x1785/);
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
     vaultAccountAfter.should.deepEqual(vaultAccountBefore);
