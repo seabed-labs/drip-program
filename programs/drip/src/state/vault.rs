@@ -96,6 +96,11 @@ impl Vault {
             calculate_drip_activation_timestamp(now, granularity, true);
     }
 
+    pub fn update_whitelisted_swaps(&mut self, whitelisted_swaps: [Pubkey; 5], limit_swaps: bool) {
+        self.limit_swaps = limit_swaps;
+        self.whitelisted_swaps = whitelisted_swaps;
+    }
+
     pub fn is_drip_activated(&self) -> bool {
         let now = Clock::get().unwrap().unix_timestamp;
         now >= self.drip_activation_timestamp
