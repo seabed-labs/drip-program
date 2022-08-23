@@ -14,7 +14,7 @@ pub struct DepositWithMetadata<'info> {
         mut,
         seeds = [
             b"drip-v1".as_ref(),
-            vault.token_a_mint.key().as_ref(),
+            vault_token_a_account.mint.as_ref(),
             vault.token_b_mint.key().as_ref(),
             vault.proto_config.as_ref()
         ],
