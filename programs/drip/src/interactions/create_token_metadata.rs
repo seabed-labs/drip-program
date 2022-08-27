@@ -1,6 +1,7 @@
 use crate::sign;
 use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{self, Mint};
 use anchor_spl::token::{Token, TokenAccount};
 
@@ -22,40 +23,71 @@ pub struct CreateTokenMetadata<'info> {
     mint: Account<'info, Mint>,
     to: Account<'info, TokenAccount>,
     authority: AccountInfo<'info>,
-    amount: u64,
+    payer: AccountInfo<'info>,
+    rent: Sysvar<'info, Rent>,
+    metadata_uri: String,
 }
 
-impl<'info> MintToken<'info> {
+impl<'info> CreateTokenMetadata<'info> {
     pub fn new(
-        token_program: &Program<'info, Token>,
-        mint: &Account<'info, Mint>,
-        to: &Account<'info, TokenAccount>,
-        authority: &AccountInfo<'info>,
-        amount: u64,
+        metadata_program: Program<'info, MetaplexTokenMetadata>,
+        token_program: Program<'info, Token>,
+        system_program: Program<'info, System>,
+        position_metadata_account: AccountInfo<'info>,
+        mint: Account<'info, Mint>,
+        to: Account<'info, TokenAccount>,
+        authority: AccountInfo<'info>,
+        payer: AccountInfo<'info>,
+        rent: Sysvar<'info, Rent>,
+        metadata_uri: String,
     ) -> Self {
-        MintToken {
-            token_program: token_program.clone(),
-            mint: mint.clone(),
-            to: to.clone(),
-            authority: authority.clone(),
-            amount,
+        CreateTokenMetadata {
+            metadata_program,
+            token_program,
+            system_program,
+            position_metadata_account,
+            mint,
+            to,
+            authority,
+            payer,
+            rent,
+            metadata_uri,
         }
     }
 }
 
-impl<'info> CPI for MintToken<'info> {
+impl<'info> CPI for CreateTokenMetadata<'info> {
     fn execute(self, signer: &impl PDA) -> Result<()> {
-      token::mint_to(
-          CpiContext::new_with_signer(
-              self.token_program.to_account_info(),
-              token::MintTo {
-                  mint: self.mint.to_account_info(),
-                  to: self.to.to_account_info(),
-                  authority: self.authority,
-              },
-              &[sign!(signer)],
-          ),
-          self.amount,
-      )
+        invoke_signed(
+            &create_metadata_accounts_v3(
+                metadata_program.key(),
+                position_metadata_account.key(),
+                mint.key(),
+                vault.key(),
+                funder.key(),
+                vault.key(),
+                DRIP_METADATA_NAME.to_string(),
+                DRIP_METADATA_SYMBOL.to_string(),
+                get_metadata_url(&mint.key()),
+                None,
+                0,
+                true,
+                true,
+                None,
+                None,
+                None,
+            ),
+            &[
+                position_metadata_account.to_account_info(),
+                mint.to_account_info(),
+                vault.to_account_info(),
+                vault.to_account_info(),
+                funder.to_account_info(),
+                metadata_program.to_account_info(),
+                system_program.to_account_info(),
+                rent.to_account_info(),
+            ],
+            &[sign!(signer)],
+        )
     }
 }
