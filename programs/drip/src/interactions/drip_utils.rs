@@ -89,9 +89,9 @@ pub fn handle_drip<'info, 'drip>(
     vault.process_drip(current_vault_period, vault_proto_config.granularity);
 
     let drip_trigger_fee_transfer = TransferToken::new(
-        &token_program,
-        &vault_token_a_account,
-        &drip_fee_token_a_account,
+        token_program,
+        vault_token_a_account,
+        drip_fee_token_a_account,
         &vault.to_account_info(),
         drip_trigger_spread_amount,
     );

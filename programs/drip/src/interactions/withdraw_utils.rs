@@ -110,17 +110,15 @@ pub fn handle_withdraw<'info, 'withdraw>(
         ))
     };
 
-    let burn_position_nft = if let Some(ref close_position_accounts) = with_close_position {
-        Some(BurnToken::new(
+    let burn_position_nft = with_close_position.as_ref().map(|close_position_accounts| {
+        BurnToken::new(
             token_program,
             close_position_accounts.user_position_nft_mint,
             user_position_nft_account,
             &vault.to_account_info(),
             1,
-        ))
-    } else {
-        None
-    };
+        )
+    });
 
     /* STATE UPDATES (EFFECTS) */
 

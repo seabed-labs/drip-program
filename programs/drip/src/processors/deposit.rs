@@ -60,9 +60,9 @@ pub fn handle_deposit<'info>(
     }
 
     let token_transfer = TransferToken::new(
-        &token_program,
-        &user_token_a_account,
-        &vault_token_a_account,
+        token_program,
+        user_token_a_account,
+        vault_token_a_account,
         &vault.to_account_info(),
         params.token_a_deposit_amount,
     );
