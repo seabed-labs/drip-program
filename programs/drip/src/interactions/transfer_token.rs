@@ -7,6 +7,7 @@ pub struct TransferToken<'info> {
     token_program: Program<'info, Token>,
     from: Account<'info, TokenAccount>,
     to: Account<'info, TokenAccount>,
+    /// CHECK: Suppress anchor error, this isn't an IX context struct
     authority: AccountInfo<'info>,
     amount: u64,
 }

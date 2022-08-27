@@ -28,9 +28,12 @@ impl Id for MetaplexTokenMetadata {
 pub struct CreateTokenMetadata<'info> {
     metadata_program: Program<'info, MetaplexTokenMetadata>,
     system_program: Program<'info, System>,
+    /// CHECK: Suppress anchor error, this isn't an IX context struct
     position_metadata_account: AccountInfo<'info>,
     mint: Account<'info, Mint>,
+    /// CHECK: Suppress anchor error, this isn't an IX context struct
     authority: AccountInfo<'info>,
+    /// CHECK: Suppress anchor error, this isn't an IX context struct
     payer: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
     metadata_uri: String,

@@ -8,6 +8,7 @@ pub struct BurnToken<'info> {
     token_program: Program<'info, Token>,
     mint: Account<'info, Mint>,
     from: Account<'info, TokenAccount>,
+    /// CHECK: Suppress anchor error, this isn't an IX context struct
     authority: AccountInfo<'info>,
     amount: u64,
 }
