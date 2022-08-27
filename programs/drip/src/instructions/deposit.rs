@@ -8,13 +8,13 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct DepositParams {
+pub struct DepositParamsOld {
     pub token_a_deposit_amount: u64,
     pub number_of_swaps: u64,
 }
 
 #[derive(Accounts)]
-#[instruction(params: DepositParams)]
+#[instruction(params: DepositParamsOld)]
 pub struct Deposit<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
@@ -104,7 +104,7 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
+pub fn handler(ctx: Context<Deposit>, params: DepositParamsOld) -> Result<()> {
     handle_deposit(
         &ctx.accounts.depositor,
         &ctx.accounts.rent,

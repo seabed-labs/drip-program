@@ -1,5 +1,5 @@
 use crate::errors::ErrorCode;
-use crate::instructions::deposit::DepositParams;
+use crate::instructions::deposit::DepositParamsOld;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::sign;
@@ -38,7 +38,7 @@ pub fn handle_deposit<'info>(
     user_position: &mut Account<'info, Position>,
     user_position_pda_bump: Option<&u8>,
     // Params
-    params: DepositParams,
+    params: DepositParamsOld,
     // With/Without Metadata
     with_metadata: Option<(
         &Program<'info, MetaplexTokenMetadata>,
