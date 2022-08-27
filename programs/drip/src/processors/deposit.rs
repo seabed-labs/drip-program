@@ -3,6 +3,7 @@ use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::sign;
 use crate::state::traits::CPI;
+use crate::state::traits::PDA;
 use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
@@ -199,6 +200,7 @@ fn revoke_position_nft_auth<'info>(
     vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
 ) -> Result<()> {
+    let signer: &Vault = vault;
     // Set the mint authority for this position NFT mint to None so that new tokens cannot be minted
     invoke_signed(
         &spl_token::instruction::set_authority(
@@ -214,7 +216,7 @@ fn revoke_position_nft_auth<'info>(
             vault.to_account_info(),
             token_program.to_account_info(),
         ],
-        &[sign!(vault)],
+        &[sign!(signer)],
     )?;
 
     Ok(())

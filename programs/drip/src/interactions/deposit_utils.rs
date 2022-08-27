@@ -133,6 +133,7 @@ pub fn mint_position_with_metadata<'info>(
     system_program: &Program<'info, System>,
     rent: &Sysvar<'info, Rent>,
 ) -> Result<()> {
+    let signer: &Vault = vault;
     mint_position_nft(vault, mint, to, token_program)?;
 
     invoke_signed(
@@ -164,7 +165,7 @@ pub fn mint_position_with_metadata<'info>(
             system_program.to_account_info(),
             rent.to_account_info(),
         ],
-        &[sign!(vault)],
+        &[sign!(signer)],
     )?;
 
     revoke_position_nft_auth(token_program, vault, mint)?;
@@ -200,6 +201,7 @@ fn revoke_position_nft_auth<'info>(
     vault: &Account<'info, Vault>,
     mint: &Account<'info, Mint>,
 ) -> Result<()> {
+    let signer: &Vault = vault;
     // Set the mint authority for this position NFT mint to None so that new tokens cannot be minted
     invoke_signed(
         &spl_token::instruction::set_authority(
@@ -215,7 +217,7 @@ fn revoke_position_nft_auth<'info>(
             vault.to_account_info(),
             token_program.to_account_info(),
         ],
-        &[sign!(vault)],
+        &[sign!(signer)],
     )?;
 
     Ok(())
