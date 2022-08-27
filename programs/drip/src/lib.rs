@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 // use instructions::*;
 use state::traits::*;
 use instruction_accounts::*;
-use processors::*;
+use actions::*;
 pub mod constants;
 pub mod errors;
 pub mod events;
@@ -10,7 +10,7 @@ pub mod instructions;
 pub mod interactions;
 pub mod macros;
 pub mod math;
-pub mod processors;
+pub mod actions;
 pub mod instruction_accounts;
 pub mod state;
 
