@@ -9,7 +9,6 @@ pub mod macros;
 pub mod math;
 pub mod processors;
 pub mod state;
-use crate::interactions::deposit_utils::DepositParams;
 
 declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
 

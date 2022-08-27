@@ -1,4 +1,5 @@
 use crate::errors::ErrorCode;
+use crate::instructions::deposit::DepositParams;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::sign;
@@ -14,12 +15,6 @@ use spl_token::instruction::AuthorityType;
 
 const DRIP_METADATA_NAME: &str = "Drip Position";
 const DRIP_METADATA_SYMBOL: &str = "DP";
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct DepositParams {
-    pub token_a_deposit_amount: u64,
-    pub number_of_swaps: u64,
-}
 
 fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
     format!(

@@ -1,12 +1,17 @@
 use crate::errors::ErrorCode;
 use crate::interactions::deposit_utils::handle_deposit;
-use crate::interactions::deposit_utils::DepositParams;
 use crate::state::Position;
 use crate::state::{Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct DepositParams {
+    pub token_a_deposit_amount: u64,
+    pub number_of_swaps: u64,
+}
 
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
