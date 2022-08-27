@@ -264,7 +264,7 @@ fn spl_token_swap_get_minimum_out(_amount_in: u64) -> u64 {
 }
 
 #[derive(BorshSerialize)]
-struct WhirlpoolSwapParams {
+pub struct WhirlpoolSwapParams {
     amount: u64,
     other_amount_threshold: u64,
     sqrt_price_limit: u128,
