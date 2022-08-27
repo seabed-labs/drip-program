@@ -1,12 +1,13 @@
 use crate::sign;
-use crate::state::Vault;
+use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
-use anchor_spl::token::{burn, Burn, Mint, Token, TokenAccount};
+use anchor_spl::token::{Token, TokenAccount};
 
 pub struct TransferToken<'info> {
     token_program: Program<'info, Token>,
     from: Account<'info, TokenAccount>,
     to: Account<'info, TokenAccount>,
+    authority: AccountInfo<'info>,
     amount: u64,
 }
 
@@ -15,49 +16,32 @@ impl<'info> TransferToken<'info> {
         token_program: &Program<'info, Token>,
         from: &Account<'info, anchor_spl::token::TokenAccount>,
         to: &Account<'info, anchor_spl::token::TokenAccount>,
+        authority: &AccountInfo<'info>,
         amount: u64,
     ) -> Self {
         TransferToken {
             token_program: token_program.clone(),
             from: from.clone(),
             to: to.clone(),
+            authority: authority.clone(),
             amount,
         }
     }
+}
 
-    pub fn execute(self, vault: &Account<'info, Vault>) -> Result<()> {
+impl<'info> CPI for TransferToken<'info> {
+    fn execute(self, signer: &impl PDA) -> Result<()> {
         anchor_spl::token::transfer(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 anchor_spl::token::Transfer {
                     from: self.from.to_account_info(),
                     to: self.to.to_account_info(),
-                    authority: vault.to_account_info().clone(),
+                    authority: self.authority.to_account_info().clone(),
                 },
-                &[sign!(vault)],
+                &[sign!(signer)],
             ),
             self.amount,
         )
     }
-}
-
-pub fn burn_tokens<'info>(
-    token_program: &Program<'info, Token>,
-    vault: &Account<'info, Vault>,
-    mint: &Account<'info, Mint>,
-    from: &Account<'info, TokenAccount>,
-    amount: u64,
-) -> Result<()> {
-    burn(
-        CpiContext::new_with_signer(
-            token_program.to_account_info().clone(),
-            Burn {
-                mint: mint.to_account_info().clone(),
-                from: from.to_account_info().clone(),
-                authority: vault.to_account_info().clone(),
-            },
-            &[sign!(vault)],
-        ),
-        amount,
-    )
 }

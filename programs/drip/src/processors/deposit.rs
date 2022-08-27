@@ -2,9 +2,8 @@ use crate::errors::ErrorCode;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::sign;
-use crate::state::traits::{CPI, PDA};
-use crate::state::vault::Vault;
-use crate::state::{Position, VaultPeriod};
+use crate::state::traits::CPI;
+use crate::state::{Position, Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token;
@@ -83,7 +82,7 @@ pub fn handle_deposit<'info>(
 
     /* MANUAL CPI (INTERACTIONS) */
 
-    let signer: &Vault = vault.as_ref();
+    let signer: &Vault = vault;
     token_transfer.execute(signer)?;
 
     if let Some((metadata_program, position_metadata_account)) = with_metadata {

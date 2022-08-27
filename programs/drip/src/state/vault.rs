@@ -1,5 +1,6 @@
 use crate::errors::ErrorCode::CannotGetVaultBump;
 use crate::math::calculate_drip_activation_timestamp;
+use crate::state::traits::PDA;
 use crate::state::VaultPeriod;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
@@ -105,14 +106,20 @@ impl Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         now >= self.drip_activation_timestamp
     }
+}
 
-    pub fn seeds(&self) -> [&[u8]; 4] {
-        [
+impl PDA for Vault {
+    fn seeds(&self) -> Vec<&[u8]> {
+        vec![
             b"drip-v1".as_ref(),
             self.token_a_mint.as_ref(),
             self.token_b_mint.as_ref(),
             self.proto_config.as_ref(),
         ]
+    }
+
+    fn bump(&self) -> u8 {
+        self.bump
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::errors::ErrorCode;
-use crate::interactions::token::TransferToken;
+use crate::interactions::transfer_token::TransferToken;
 use crate::math::{calculate_spread_amount, calculate_sqrt_price_limit};
+use crate::state::traits::CPI;
 use crate::state::vault::Vault;
 use crate::state::{VaultPeriod, VaultProtoConfig};
 use crate::{sign, TokenSwap, WhirlpoolProgram};
@@ -87,9 +88,10 @@ pub fn handle_drip<'info, 'drip>(
     vault.process_drip(current_vault_period, vault_proto_config.granularity);
 
     let drip_trigger_fee_transfer = TransferToken::new(
-        token_program,
-        vault_token_a_account,
-        drip_fee_token_a_account,
+        &token_program,
+        &vault_token_a_account,
+        &drip_fee_token_a_account,
+        &vault.to_account_info(),
         drip_trigger_spread_amount,
     );
 
@@ -129,7 +131,8 @@ pub fn handle_drip<'info, 'drip>(
         panic!("un-reachable code path, swap tokens")
     }
 
-    drip_trigger_fee_transfer.execute(vault)?;
+    let signer: &Vault = vault.as_ref();
+    drip_trigger_fee_transfer.execute(signer)?;
 
     drip_fee_token_a_account.reload()?;
     vault_token_a_account.reload()?;

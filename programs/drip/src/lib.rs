@@ -7,6 +7,7 @@ pub mod instructions;
 pub mod interactions;
 pub mod macros;
 pub mod math;
+pub mod processors;
 pub mod state;
 use crate::interactions::deposit_utils::DepositParams;
 
