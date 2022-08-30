@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
 // use instructions::*;
-use state::traits::*;
-use instruction_accounts::*;
 use actions::*;
+use instruction_accounts::*;
+use state::traits::*;
+pub mod actions;
 pub mod constants;
 pub mod errors;
 pub mod events;
+pub mod instruction_accounts;
 pub mod instructions;
 pub mod interactions;
 pub mod macros;
 pub mod math;
-pub mod actions;
-pub mod instruction_accounts;
 pub mod state;
 
 declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
@@ -65,11 +65,22 @@ pub mod drip {
     // }
 
     pub fn deposit(ctx: Context<DepositAccounts>, params: DepositParams) -> Result<()> {
-        Deposit::WithoutMetadata { accounts: ctx.accounts, params }.execute()
+        Deposit::WithoutMetadata {
+            accounts: ctx.accounts,
+            params,
+        }
+        .execute()
     }
 
-    pub fn deposit_with_metadata(ctx: Context<DepositWithMetadataAccounts>, params: DepositParams) -> Result<()> {
-        Deposit::WithMetadata { accounts: ctx.accounts, params }.execute()
+    pub fn deposit_with_metadata(
+        ctx: Context<DepositWithMetadataAccounts>,
+        params: DepositParams,
+    ) -> Result<()> {
+        Deposit::WithMetadata {
+            accounts: ctx.accounts,
+            params,
+        }
+        .execute()
     }
 
     // Admin Ix's

@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{TokenAccount, Mint, Token};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::errors::ErrorCode;
 use crate::interactions::create_token_metadata::MetaplexTokenMetadata;
-use crate::state::{Vault, VaultPeriod, Position};
+use crate::state::{Position, Vault, VaultPeriod};
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositParams {
