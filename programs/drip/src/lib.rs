@@ -64,6 +64,39 @@ pub mod drip {
     //     drip_orca_whirlpool::handler(ctx)
     // }
 
+    pub fn init_vault_proto_config(
+        ctx: Context<InitializeVaultProtoConfigAccounts>,
+        params: InitializeVaultProtoConfigParams,
+    ) -> Result<()> {
+        Init::VaultProtoConfig {
+            accounts: ctx.accounts,
+            params,
+        }
+        .execute()
+    }
+
+    pub fn init_vault(
+        ctx: Context<InitializeVaultAccounts>,
+        params: InitializeVaultParams,
+    ) -> Result<()> {
+        Init::Vault {
+            accounts: ctx.accounts,
+            params,
+        }
+        .execute()
+    }
+
+    pub fn init_vault_period(
+        ctx: Context<InitializeVaultPeriodAccounts>,
+        params: InitializeVaultPeriodParams,
+    ) -> Result<()> {
+        Init::VaultPeriod {
+            accounts: ctx.accounts,
+            params,
+        }
+        .execute()
+    }
+
     pub fn deposit(ctx: Context<DepositAccounts>, params: DepositParams) -> Result<()> {
         Deposit::WithoutMetadata {
             accounts: ctx.accounts,
@@ -79,6 +112,20 @@ pub mod drip {
         Deposit::WithMetadata {
             accounts: ctx.accounts,
             params,
+        }
+        .execute()
+    }
+
+    pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwapAccounts>) -> Result<()> {
+        Drip::SPLTokenSwap {
+            accounts: ctx.accounts,
+        }
+        .execute()
+    }
+
+    pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpoolAccounts>) -> Result<()> {
+        Drip::OrcaWhirlpool {
+            accounts: ctx.accounts,
         }
         .execute()
     }
