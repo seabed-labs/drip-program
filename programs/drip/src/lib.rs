@@ -102,17 +102,6 @@ pub mod drip {
             params,
         })
     }
-
-    // pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
-    //     init_vault::handler(ctx, params)
-    // }
-
-    // pub fn update_vault_whitelisted_swaps(
-    //     ctx: Context<UpdateVaultWhitelistedSwaps>,
-    //     params: UpdateVaultWhitelistedSwapsParams,
-    // ) -> Result<()> {
-    //     update_vault_swap_whitelist::handler(ctx, params)
-    // }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {
