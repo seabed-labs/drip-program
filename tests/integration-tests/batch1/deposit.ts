@@ -103,8 +103,6 @@ export function testDeposit() {
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
       69
     );
 

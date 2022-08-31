@@ -4,7 +4,6 @@ import {
   Keypair,
   PublicKey,
   Signer,
-  Transaction,
   TransactionSignature,
 } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
@@ -210,8 +209,6 @@ export class VaultUtil extends TestUtil {
     vault: PublicKey,
     vaultPeriod: PublicKey,
     vaultProtoConfig: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey,
     periodId: number
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
@@ -222,8 +219,6 @@ export class VaultUtil extends TestUtil {
         vault: vault.toBase58(),
         vaultPeriod: vaultPeriod.toBase58(),
         vaultProtoConfig: vaultProtoConfig.toBase58(),
-        tokenAMint: tokenAMint.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
         creator: this.provider.wallet.publicKey.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })

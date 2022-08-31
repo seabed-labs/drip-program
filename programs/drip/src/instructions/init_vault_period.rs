@@ -1,7 +1,6 @@
 use crate::errors::ErrorCode;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultPeriodParams {
@@ -28,23 +27,13 @@ pub struct InitializeVaultPeriod<'info> {
     #[account(
         seeds = [
             b"drip-v1".as_ref(),
-            token_a_mint.key().as_ref(),
-            token_b_mint.key().as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
             vault_proto_config.key().as_ref(),
         ],
         bump = vault.bump
     )]
     vault: Account<'info, Vault>,
-
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
-    )]
-    pub token_a_mint: Account<'info, Mint>,
-
-    #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint
-    )]
-    pub token_b_mint: Account<'info, Mint>,
 
     #[account(
         constraint = vault_proto_config.key() == vault.proto_config

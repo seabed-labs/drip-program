@@ -104,8 +104,6 @@ export function testDepositWithMetadata() {
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
       69
     );
 

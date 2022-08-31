@@ -86,8 +86,6 @@ export function testInitVaultPeriod() {
       vaultPubkey,
       vaultPeriodPubkey,
       vaultProtoConfigPubkey,
-      tokenAMint,
-      tokenBMint,
       69
     );
     const vaultPeriodAccount = await AccountUtil.fetchVaultPeriodAccount(

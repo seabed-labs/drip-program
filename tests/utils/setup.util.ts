@@ -86,8 +86,6 @@ export const deployVaultPeriod = async (
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
-    tokenAMint,
-    tokenBMint,
     period
   );
   return vaultPeriodPDA;
