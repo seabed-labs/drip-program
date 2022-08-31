@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{
     state::traits::{Executable, Validatable},
-    UpdateVaultWhitelistedSwapsAccounts, UpdateVaultWhitelistedSwapsParams,
+    InitializeVaultAccounts, InitializeVaultParams, UpdateVaultWhitelistedSwapsAccounts,
+    UpdateVaultWhitelistedSwapsParams,
 };
 
 pub enum Admin<'a, 'info> {
@@ -10,12 +11,17 @@ pub enum Admin<'a, 'info> {
         accounts: &'a mut UpdateVaultWhitelistedSwapsAccounts<'info>,
         params: UpdateVaultWhitelistedSwapsParams,
     },
+    InitVault {
+        accounts: &'a mut InitializeVaultAccounts<'info>,
+        params: InitializeVaultParams,
+    },
 }
 
 impl<'a, 'info> Validatable for Admin<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Admin::UpdateVaultWhitelistedSwaps { .. } => todo!(),
+            Admin::InitVault { .. } => todo!(),
         }
     }
 }
@@ -26,6 +32,7 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
             Admin::UpdateVaultWhitelistedSwaps { accounts, params } => {
                 update_vault_whitelisted_swaps(accounts, params)
             }
+            Admin::InitVault { accounts, params } => init_vault(accounts, params),
         }
     }
 }
@@ -33,6 +40,13 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
 fn update_vault_whitelisted_swaps(
     _accounts: &mut UpdateVaultWhitelistedSwapsAccounts,
     _params: UpdateVaultWhitelistedSwapsParams,
+) -> Result<()> {
+    todo!()
+}
+
+fn init_vault(
+    _accounts: &mut InitializeVaultAccounts,
+    _params: InitializeVaultParams,
 ) -> Result<()> {
     todo!()
 }

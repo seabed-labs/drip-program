@@ -30,16 +30,6 @@ pub mod drip {
         })
     }
 
-    pub fn init_vault(
-        ctx: Context<InitializeVaultAccounts>,
-        params: InitializeVaultParams,
-    ) -> Result<()> {
-        handle_action(Init::Vault {
-            accounts: ctx.accounts,
-            params,
-        })
-    }
-
     pub fn init_vault_period(
         ctx: Context<InitializeVaultPeriodAccounts>,
         params: InitializeVaultPeriodParams,
@@ -92,6 +82,16 @@ pub mod drip {
     }
 
     // Admin Ix's
+
+    pub fn init_vault(
+        ctx: Context<InitializeVaultAccounts>,
+        params: InitializeVaultParams,
+    ) -> Result<()> {
+        handle_action(Admin::InitVault {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
 
     pub fn update_vault_whitelisted_swaps(
         ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
