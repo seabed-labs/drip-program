@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    instruction_accounts::deposit::{DepositAccounts, DepositParams, DepositWithMetadataAccounts},
+    instruction_accounts::ia_deposit::{
+        DepositAccounts, DepositParams, DepositWithMetadataAccounts,
+    },
     state::traits::{Executable, Validatable},
 };
 
