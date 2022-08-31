@@ -1,11 +1,11 @@
-mod ia_admin;
-pub mod ia_deposit;
-pub mod ia_drip;
-pub mod ia_init;
-mod ia_withdraw;
+mod admin;
+pub mod deposit;
+pub mod drip;
+pub mod init;
+mod withdraw;
 
-pub use ia_admin::*;
-pub use ia_deposit::*;
-pub use ia_drip::*;
-pub use ia_init::*;
-pub use ia_withdraw::*;
+pub use admin::*;
+pub use deposit::*;
+pub use drip::*;
+pub use init::*;
+pub use withdraw::*;
