@@ -93,6 +93,16 @@ pub mod drip {
 
     // Admin Ix's
 
+    pub fn update_vault_whitelisted_swaps(
+        ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
+        params: UpdateVaultWhitelistedSwapsParams,
+    ) -> Result<()> {
+        handle_action(Admin::UpdateVaultWhitelistedSwaps {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
+
     // pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
     //     init_vault::handler(ctx, params)
     // }
