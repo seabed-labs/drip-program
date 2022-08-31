@@ -79,6 +79,18 @@ pub mod drip {
         })
     }
 
+    pub fn close_position(ctx: Context<ClosePositionAccounts>) -> Result<()> {
+        handle_action(Withdraw::ClosePosition {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
+        handle_action(Withdraw::WithdrawB {
+            accounts: ctx.accounts,
+        })
+    }
+
     // Admin Ix's
 
     // pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
