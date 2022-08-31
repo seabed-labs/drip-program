@@ -5,7 +5,6 @@ use state::traits::*;
 pub mod actions;
 pub mod constants;
 pub mod errors;
-pub mod events;
 pub mod instruction_accounts;
 pub mod instructions;
 pub mod interactions;
