@@ -1,6 +1,8 @@
 pub mod close_position;
 pub mod deposit;
 pub mod deposit_with_metadata;
+pub mod deposit_with_metadata_with_referral;
+pub mod deposit_with_referral;
 pub mod drip_orca_whirlpool;
 pub mod drip_spl_token_swap;
 pub mod init_vault;
@@ -12,6 +14,8 @@ pub mod withdraw_b;
 pub use close_position::*;
 pub use deposit::*;
 pub use deposit_with_metadata::*;
+pub use deposit_with_metadata_with_referral::*;
+pub use deposit_with_referral::*;
 pub use drip_orca_whirlpool::*;
 pub use drip_spl_token_swap::*;
 pub use init_vault::*;

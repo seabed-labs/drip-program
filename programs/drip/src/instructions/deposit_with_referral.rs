@@ -10,7 +10,7 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
-pub struct Deposit<'info> {
+pub struct DepositWithReferral<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
 
@@ -91,6 +91,13 @@ pub struct Deposit<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = referral.mint == vault.token_b_mint,
+    )]
+    pub referral: Box<Account<'info, TokenAccount>>,
+
     // Other
     // mut needed because we are initing accounts
     pub token_program: Program<'info, Token>,
@@ -99,7 +106,7 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
+pub fn handler(ctx: Context<DepositWithReferral>, params: DepositParams) -> Result<()> {
     handle_deposit(
         &ctx.accounts.depositor,
         &ctx.accounts.rent,
@@ -113,7 +120,7 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         &mut ctx.accounts.vault_period_end,
         &mut ctx.accounts.user_position,
         ctx.bumps.get("user_position"),
-        None,
+        Some(&ctx.accounts.referral),
         params,
         None,
     )

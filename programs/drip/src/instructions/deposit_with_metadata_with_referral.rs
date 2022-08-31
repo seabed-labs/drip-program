@@ -1,19 +1,14 @@
 use crate::errors::ErrorCode;
-use crate::interactions::deposit_utils::handle_deposit;
-use crate::interactions::deposit_utils::DepositParams;
-use crate::state::Position;
-use crate::state::{Vault, VaultPeriod};
+use crate::interactions::deposit_utils::{handle_deposit, MetaplexTokenMetadata};
+use crate::state::{Position, Vault, VaultPeriod};
+use crate::DepositParams;
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::Mint;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 #[instruction(params: DepositParams)]
-pub struct Deposit<'info> {
-    #[account(mut)]
-    pub depositor: Signer<'info>,
-
+pub struct DepositWithMetadataWithReferral<'info> {
     #[account(
         // mut needed
         mut,
@@ -43,26 +38,6 @@ pub struct Deposit<'info> {
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
-    // Token accounts
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = vault_token_a_account.mint == vault.token_a_mint,
-        constraint = vault_token_a_account.owner == vault.key()
-    )]
-    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
-
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = user_token_a_account.mint == vault.token_a_mint,
-        constraint = user_token_a_account.owner == depositor.key(),
-        constraint = user_token_a_account.delegate.contains(&vault.key()),
-        constraint = params.token_a_deposit_amount > 0,
-        constraint = user_token_a_account.delegated_amount >= params.token_a_deposit_amount
-    )]
-    pub user_token_a_account: Box<Account<'info, TokenAccount>>,
-
     #[account(
         init,
         space = Position::ACCOUNT_SPACE,
@@ -75,6 +50,7 @@ pub struct Deposit<'info> {
     )]
     pub user_position: Box<Account<'info, Position>>,
 
+    // Token mints
     #[account(
         init,
         mint::authority = vault,
@@ -82,6 +58,30 @@ pub struct Deposit<'info> {
         payer = depositor
     )]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
+
+    // Token accounts
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = {
+            vault_token_a_account.mint == vault.token_a_mint &&
+            vault_token_a_account.owner == vault.key()
+        },
+    )]
+    pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = {
+            user_token_a_account.mint == vault.token_a_mint &&
+            user_token_a_account.owner == depositor.key() &&
+            user_token_a_account.delegate.contains(&vault.key()) &&
+            params.token_a_deposit_amount > 0 &&
+            user_token_a_account.delegated_amount >= params.token_a_deposit_amount
+        }
+    )]
+    pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init,
@@ -91,15 +91,29 @@ pub struct Deposit<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
+    #[account(
+        // mut needed because we are changing balance
+        mut,
+        constraint = referral.mint == vault.token_b_mint,
+    )]
+    pub referral: Box<Account<'info, TokenAccount>>,
     // Other
     // mut needed because we are initing accounts
+    #[account(mut)]
+    pub depositor: Signer<'info>,
+
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
+
+    /// CHECK: Checked by metaplex's program
+    #[account(mut)]
+    pub position_metadata_account: UncheckedAccount<'info>,
+    pub metadata_program: Program<'info, MetaplexTokenMetadata>,
 }
 
-pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
+pub fn handler(ctx: Context<DepositWithMetadataWithReferral>, params: DepositParams) -> Result<()> {
     handle_deposit(
         &ctx.accounts.depositor,
         &ctx.accounts.rent,
@@ -113,8 +127,11 @@ pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
         &mut ctx.accounts.vault_period_end,
         &mut ctx.accounts.user_position,
         ctx.bumps.get("user_position"),
-        None,
+        Some(&ctx.accounts.referral),
         params,
-        None,
+        Some((
+            &ctx.accounts.metadata_program,
+            &ctx.accounts.position_metadata_account,
+        )),
     )
 }

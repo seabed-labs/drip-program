@@ -8,6 +8,9 @@ pub struct Position {
     pub vault: Pubkey, // 32
     // The position authority NFT mint
     pub position_authority: Pubkey, // 32
+    // Optional referral
+    // TODO(Mocha): should we have a referral_source as well?
+    pub referral: Option<Pubkey>,
     // Total deposited
     pub deposited_token_a_amount: u64, // 8
     // Total withdrawn B (amount sent to the user + amount sent to the treasury)
@@ -36,6 +39,7 @@ impl Position {
         last_drip_period: u64,
         number_of_swaps: u64,
         periodic_drip_amount: u64,
+        referral: Option<Pubkey>,
         bump: Option<&u8>,
     ) -> Result<()> {
         self.vault = vault;
@@ -46,6 +50,7 @@ impl Position {
         self.drip_period_id_before_deposit = last_drip_period;
         self.number_of_swaps = number_of_swaps;
         self.periodic_drip_amount = periodic_drip_amount;
+        self.referral = referral;
         self.is_closed = false;
         match bump {
             Some(val) => {

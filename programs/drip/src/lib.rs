@@ -44,6 +44,20 @@ pub mod drip {
         deposit_with_metadata::handler(ctx, params)
     }
 
+    pub fn deposit_with_referral(
+        ctx: Context<DepositWithReferral>,
+        params: DepositParams,
+    ) -> Result<()> {
+        deposit_with_referral::handler(ctx, params)
+    }
+
+    pub fn deposit_with_metadata_with_referral(
+        ctx: Context<DepositWithMetadataWithReferral>,
+        params: DepositParams,
+    ) -> Result<()> {
+        deposit_with_metadata_with_referral::handler(ctx, params)
+    }
+
     pub fn withdraw_b(ctx: Context<WithdrawB>) -> Result<()> {
         withdraw_b::handler(ctx)
     }

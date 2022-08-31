@@ -121,6 +121,7 @@ pub fn handler(ctx: Context<DepositWithMetadata>, params: DepositParams) -> Resu
         &mut ctx.accounts.vault_period_end,
         &mut ctx.accounts.user_position,
         ctx.bumps.get("user_position"),
+        None,
         params,
         Some((
             &ctx.accounts.metadata_program,

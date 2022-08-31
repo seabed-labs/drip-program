@@ -35,6 +35,7 @@ pub fn handle_deposit<'info>(
     vault_period_end: &mut Account<'info, VaultPeriod>,
     user_position: &mut Account<'info, Position>,
     user_position_pda_bump: Option<&u8>,
+    referral: Option<&Account<'info, TokenAccount>>,
     // Params
     params: DepositParams,
     // With/Without Metadata
@@ -58,7 +59,11 @@ pub fn handle_deposit<'info>(
         vault_token_a_account,
         params.token_a_deposit_amount,
     );
-
+    let referral_pubkey = if let Some(referral) = referral {
+        Some(referral.key())
+    } else {
+        None
+    };
     /* STATE UPDATES (EFFECTS) */
 
     vault.increase_drip_amount(periodic_drip_amount);
@@ -70,6 +75,7 @@ pub fn handle_deposit<'info>(
         vault.last_drip_period,
         params.number_of_swaps,
         periodic_drip_amount,
+        referral_pubkey,
         user_position_pda_bump,
     )?;
 
