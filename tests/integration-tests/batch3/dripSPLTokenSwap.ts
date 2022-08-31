@@ -152,6 +152,7 @@ export function testDripSPLTokenSwap() {
       1,
       5,
       5,
+      10,
       TestUtil.provider.wallet.publicKey
     );
 

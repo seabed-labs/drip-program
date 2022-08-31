@@ -27,6 +27,7 @@ export const deployVaultProtoConfig = async (
   granularity: number,
   tokenADripTriggerSpread: number,
   tokenBWithdrawalSpread: number,
+  tokenBReferralSpread: number,
   admin: PublicKey
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
@@ -34,6 +35,7 @@ export const deployVaultProtoConfig = async (
     granularity,
     tokenADripTriggerSpread,
     tokenBWithdrawalSpread,
+    tokenBReferralSpread,
     admin,
   });
   return vaultProtoConfigKeypair.publicKey;
