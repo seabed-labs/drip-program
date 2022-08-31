@@ -118,6 +118,7 @@ export function testWithdrawB() {
       1,
       5,
       5,
+      10,
       TestUtil.provider.wallet.publicKey
     );
 

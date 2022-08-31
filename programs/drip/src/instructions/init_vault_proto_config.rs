@@ -8,6 +8,7 @@ pub struct InitVaultProtoConfigParams {
     granularity: u64,
     token_a_drip_trigger_spread: u16,
     token_b_withdrawal_spread: u16,
+    token_b_referral_spread: u16,
     admin: Pubkey,
 }
 
@@ -35,7 +36,10 @@ pub fn handler(
     if params.granularity == 0 {
         return Err(ErrorCode::InvalidGranularity.into());
     }
-    if params.token_a_drip_trigger_spread >= 5000 || params.token_b_withdrawal_spread >= 5000 {
+    if params.token_a_drip_trigger_spread >= 5000
+        || params.token_b_withdrawal_spread >= 5000
+        || params.token_b_referral_spread >= 5000
+    {
         return Err(ErrorCode::InvalidSpread.into());
     }
     /* STATE UPDATES (EFFECTS) */
@@ -43,6 +47,7 @@ pub fn handler(
         params.granularity,
         params.token_a_drip_trigger_spread,
         params.token_b_withdrawal_spread,
+        params.token_b_referral_spread,
         params.admin,
     );
     Ok(())

@@ -115,6 +115,7 @@ export function testClosePosition() {
       1,
       5,
       5,
+      10,
       TestUtil.provider.wallet.publicKey
     );
 

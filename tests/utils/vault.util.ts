@@ -25,6 +25,7 @@ export type VaultProtoConfigParams = {
   granularity: Granularity;
   tokenADripTriggerSpread: number;
   tokenBWithdrawalSpread: number;
+  tokenBReferralSpread: number;
   admin: PublicKey;
 };
 
@@ -94,6 +95,7 @@ export class VaultUtil extends TestUtil {
         granularity: new BN(vaultProtoConfig.granularity.toString()),
         tokenADripTriggerSpread: vaultProtoConfig.tokenADripTriggerSpread,
         tokenBWithdrawalSpread: vaultProtoConfig.tokenBWithdrawalSpread,
+        tokenBReferralSpread: vaultProtoConfig.tokenBReferralSpread,
         admin: vaultProtoConfig.admin,
       })
       .accounts({
@@ -515,6 +517,7 @@ export class VaultUtil extends TestUtil {
         granularity: 1,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
+        tokenBReferralSpread: 10,
         admin: TestUtil.provider.wallet.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;

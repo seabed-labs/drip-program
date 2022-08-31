@@ -68,6 +68,7 @@ export function testDeposit() {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
+      tokenBReferralSpread: 10,
       admin: TestUtil.provider.wallet.publicKey,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
