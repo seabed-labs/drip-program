@@ -6,7 +6,7 @@ use crate::{
         InitializeVaultPeriodParams, InitializeVaultProtoConfigAccounts,
         InitializeVaultProtoConfigParams,
     },
-    state::traits::Execute,
+    state::traits::{Executable, Validatable},
 };
 
 pub enum Init<'a, 'info> {
@@ -24,7 +24,17 @@ pub enum Init<'a, 'info> {
     },
 }
 
-impl<'a, 'info> Execute for Init<'a, 'info> {
+impl<'a, 'info> Validatable for Init<'a, 'info> {
+    fn validate(&self) -> Result<()> {
+        match self {
+            Init::VaultProtoConfig { .. } => todo!(),
+            Init::Vault { .. } => todo!(),
+            Init::VaultPeriod { .. } => todo!(),
+        }
+    }
+}
+
+impl<'a, 'info> Executable for Init<'a, 'info> {
     fn execute(self) -> Result<()> {
         match self {
             Init::VaultProtoConfig { accounts, params } => {

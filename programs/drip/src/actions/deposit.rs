@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{
     instruction_accounts::deposit::{DepositAccounts, DepositParams, DepositWithMetadataAccounts},
-    state::traits::Execute,
+    state::traits::{Executable, Validatable},
 };
 
 pub enum Deposit<'a, 'info> {
@@ -16,7 +16,16 @@ pub enum Deposit<'a, 'info> {
     },
 }
 
-impl<'a, 'info> Execute for Deposit<'a, 'info> {
+impl<'a, 'info> Validatable for Deposit<'a, 'info> {
+    fn validate(&self) -> Result<()> {
+        match self {
+            Deposit::WithoutMetadata { .. } => todo!(),
+            Deposit::WithMetadata { .. } => todo!(),
+        }
+    }
+}
+
+impl<'a, 'info> Executable for Deposit<'a, 'info> {
     fn execute(self) -> Result<()> {
         match self {
             Deposit::WithoutMetadata { accounts, params } => {

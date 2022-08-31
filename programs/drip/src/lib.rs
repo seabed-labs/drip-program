@@ -19,115 +19,64 @@ declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
 #[program]
 pub mod drip {
     use super::*;
-    // use crate::{update_vault_swap_whitelist::{
-    //     UpdateVaultWhitelistedSwaps, UpdateVaultWhitelistedSwapsParams,
-    // }, state::traits::IxProcessor};
-
-    // pub fn init_vault_proto_config(
-    //     ctx: Context<InitializeVaultProtoConfig>,
-    //     params: InitVaultProtoConfigParams,
-    // ) -> Result<()> {
-    //     init_vault_proto_config::handler(ctx, params)
-    // }
-
-    // pub fn init_vault_period(
-    //     ctx: Context<InitializeVaultPeriod>,
-    //     params: InitializeVaultPeriodParams,
-    // ) -> Result<()> {
-    //     init_vault_period::handler(ctx, params)
-    // }
-
-    // pub fn deposit(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
-    //     deposit::handler(ctx, params)
-    // }
-
-    // pub fn deposit_with_metadata(
-    //     ctx: Context<DepositWithMetadata>,
-    //     params: DepositParams,
-    // ) -> Result<()> {
-    //     deposit_with_metadata::handler(ctx, params)
-    // }
-
-    // pub fn withdraw_b(ctx: Context<WithdrawB>) -> Result<()> {
-    //     withdraw_b::handler(ctx)
-    // }
-
-    // pub fn close_position(ctx: Context<ClosePosition>) -> Result<()> {
-    //     close_position::handler(ctx)
-    // }
-
-    // pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
-    //     drip_spl_token_swap::handler(ctx)
-    // }
-
-    // pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpool>) -> Result<()> {
-    //     drip_orca_whirlpool::handler(ctx)
-    // }
 
     pub fn init_vault_proto_config(
         ctx: Context<InitializeVaultProtoConfigAccounts>,
         params: InitializeVaultProtoConfigParams,
     ) -> Result<()> {
-        Init::VaultProtoConfig {
+        handle_action(Init::VaultProtoConfig {
             accounts: ctx.accounts,
             params,
-        }
-        .execute()
+        })
     }
 
     pub fn init_vault(
         ctx: Context<InitializeVaultAccounts>,
         params: InitializeVaultParams,
     ) -> Result<()> {
-        Init::Vault {
+        handle_action(Init::Vault {
             accounts: ctx.accounts,
             params,
-        }
-        .execute()
+        })
     }
 
     pub fn init_vault_period(
         ctx: Context<InitializeVaultPeriodAccounts>,
         params: InitializeVaultPeriodParams,
     ) -> Result<()> {
-        Init::VaultPeriod {
+        handle_action(Init::VaultPeriod {
             accounts: ctx.accounts,
             params,
-        }
-        .execute()
+        })
     }
 
     pub fn deposit(ctx: Context<DepositAccounts>, params: DepositParams) -> Result<()> {
-        Deposit::WithoutMetadata {
+        handle_action(Deposit::WithoutMetadata {
             accounts: ctx.accounts,
             params,
-        }
-        .execute()
+        })
     }
 
     pub fn deposit_with_metadata(
         ctx: Context<DepositWithMetadataAccounts>,
         params: DepositParams,
     ) -> Result<()> {
-        Deposit::WithMetadata {
+        handle_action(Deposit::WithMetadata {
             accounts: ctx.accounts,
             params,
-        }
-        .execute()
+        })
     }
 
     pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwapAccounts>) -> Result<()> {
-        Drip::SPLTokenSwap {
+        handle_action(Drip::SPLTokenSwap {
             accounts: ctx.accounts,
-        }
-        .execute()
+        })
     }
 
     pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpoolAccounts>) -> Result<()> {
-        Drip::OrcaWhirlpool {
+        handle_action(Drip::OrcaWhirlpool {
             accounts: ctx.accounts,
-        }
-        .execute()
+        })
     }
 
     // Admin Ix's
@@ -142,4 +91,9 @@ pub mod drip {
     // ) -> Result<()> {
     //     update_vault_swap_whitelist::handler(ctx, params)
     // }
+}
+
+fn handle_action(action: impl Validatable + Executable) -> Result<()> {
+    action.validate()?;
+    action.execute()
 }

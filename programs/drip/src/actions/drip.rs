@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{
     instruction_accounts::{DripOrcaWhirlpoolAccounts, DripSPLTokenSwapAccounts},
-    state::traits::Execute,
+    state::traits::{Executable, Validatable},
 };
 
 pub enum Drip<'a, 'info> {
@@ -14,7 +14,16 @@ pub enum Drip<'a, 'info> {
     },
 }
 
-impl<'a, 'info> Execute for Drip<'a, 'info> {
+impl<'a, 'info> Validatable for Drip<'a, 'info> {
+    fn validate(&self) -> Result<()> {
+        match self {
+            Drip::SPLTokenSwap { .. } => todo!(),
+            Drip::OrcaWhirlpool { .. } => todo!(),
+        }
+    }
+}
+
+impl<'a, 'info> Executable for Drip<'a, 'info> {
     fn execute(self) -> Result<()> {
         match self {
             Drip::SPLTokenSwap { accounts } => drip_spl_token_swap(accounts),

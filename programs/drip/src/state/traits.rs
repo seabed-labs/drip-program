@@ -18,6 +18,10 @@ pub trait CPI {
     fn execute(self, signer: &impl PDA) -> Result<()>;
 }
 
-pub trait Execute {
+pub trait Validatable {
+    fn validate(&self) -> Result<()>;
+}
+
+pub trait Executable {
     fn execute(self) -> Result<()>;
 }
