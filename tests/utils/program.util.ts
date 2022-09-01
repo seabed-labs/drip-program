@@ -3,10 +3,12 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { Drip } from "../../target/types/drip";
+import { Drip, IDL } from "./idl/drip";
 import { TestUtil } from "./config.util";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_SWAP_PROGRAM_ID } from "@solana/spl-token-swap";
+
+export const DRIP_PROGRAM_ID = "dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk";
 
 export class ProgramUtil extends TestUtil {
   static get systemProgram(): typeof SystemProgram {
@@ -14,7 +16,7 @@ export class ProgramUtil extends TestUtil {
   }
 
   static get dripProgram(): Program<Drip> {
-    return workspace.Drip as Program<Drip>;
+    return new Program(IDL, DRIP_PROGRAM_ID, this.provider);
   }
 
   static get tokenProgram(): { programId: PublicKey } {
