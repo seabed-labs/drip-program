@@ -1,6 +1,5 @@
-use anchor_lang::prelude::*;
-// use instructions::*;
 use actions::*;
+use anchor_lang::prelude::*;
 use instruction_accounts::*;
 use state::traits::*;
 pub mod actions;
@@ -8,7 +7,6 @@ pub mod constants;
 pub mod errors;
 pub mod events;
 pub mod instruction_accounts;
-pub mod instructions;
 pub mod interactions;
 pub mod macros;
 pub mod math;
