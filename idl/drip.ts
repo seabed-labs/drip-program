@@ -518,6 +518,39 @@ export type Drip = {
           };
         }
       ];
+    },
+    {
+      name: "updateVaultWhitelistedSwaps";
+      accounts: [
+        {
+          name: "admin";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "vault";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "vaultProtoConfig";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "UpdateVaultWhitelistedSwapsParams";
+          };
+        }
+      ];
     }
   ];
   accounts: [
@@ -690,6 +723,38 @@ export type Drip = {
   ];
   types: [
     {
+      name: "InitializeVaultParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "maxSlippageBps";
+            type: "u16";
+          },
+          {
+            name: "whitelistedSwaps";
+            type: {
+              vec: "publicKey";
+            };
+          }
+        ];
+      };
+    },
+    {
+      name: "UpdateVaultWhitelistedSwapsParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "whitelistedSwaps";
+            type: {
+              vec: "publicKey";
+            };
+          }
+        ];
+      };
+    },
+    {
       name: "DepositParams";
       type: {
         kind: "struct";
@@ -725,24 +790,6 @@ export type Drip = {
           {
             name: "admin";
             type: "publicKey";
-          }
-        ];
-      };
-    },
-    {
-      name: "InitializeVaultParams";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "maxSlippageBps";
-            type: "u16";
-          },
-          {
-            name: "whitelistedSwaps";
-            type: {
-              vec: "publicKey";
-            };
           }
         ];
       };
@@ -1414,6 +1461,39 @@ export const IDL: Drip = {
         },
       ],
     },
+    {
+      name: "updateVaultWhitelistedSwaps",
+      accounts: [
+        {
+          name: "admin",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "vault",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "vaultProtoConfig",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "UpdateVaultWhitelistedSwapsParams",
+          },
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -1585,6 +1665,38 @@ export const IDL: Drip = {
   ],
   types: [
     {
+      name: "InitializeVaultParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "maxSlippageBps",
+            type: "u16",
+          },
+          {
+            name: "whitelistedSwaps",
+            type: {
+              vec: "publicKey",
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: "UpdateVaultWhitelistedSwapsParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "whitelistedSwaps",
+            type: {
+              vec: "publicKey",
+            },
+          },
+        ],
+      },
+    },
+    {
       name: "DepositParams",
       type: {
         kind: "struct",
@@ -1620,24 +1732,6 @@ export const IDL: Drip = {
           {
             name: "admin",
             type: "publicKey",
-          },
-        ],
-      },
-    },
-    {
-      name: "InitializeVaultParams",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "maxSlippageBps",
-            type: "u16",
-          },
-          {
-            name: "whitelistedSwaps",
-            type: {
-              vec: "publicKey",
-            },
           },
         ],
       },
