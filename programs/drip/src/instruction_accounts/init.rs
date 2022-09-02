@@ -98,7 +98,7 @@ pub struct InitializeVaultAccounts<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultPeriodParams {
-    period_id: u64,
+    pub period_id: u64,
 }
 
 #[derive(Accounts)]
@@ -116,7 +116,7 @@ pub struct InitializeVaultPeriodAccounts<'info> {
         payer = creator,
         constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
     )]
-    vault_period: Account<'info, VaultPeriod>,
+    pub vault_period: Account<'info, VaultPeriod>,
 
     #[account(
         seeds = [
@@ -127,7 +127,7 @@ pub struct InitializeVaultPeriodAccounts<'info> {
         ],
         bump = vault.bump
     )]
-    vault: Account<'info, Vault>,
+    pub vault: Account<'info, Vault>,
 
     #[account(
         constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint

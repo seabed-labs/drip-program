@@ -35,6 +35,7 @@ pub mod drip {
         handle_action(Init::VaultPeriod {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 

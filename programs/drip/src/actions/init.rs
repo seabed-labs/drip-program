@@ -7,6 +7,7 @@ use crate::{
     state::traits::{Executable, Validatable},
 };
 use anchor_lang::prelude::*;
+use std::collections::BTreeMap;
 
 pub enum Init<'a, 'info> {
     VaultProtoConfig {
@@ -16,6 +17,7 @@ pub enum Init<'a, 'info> {
     VaultPeriod {
         accounts: &'a mut InitializeVaultPeriodAccounts<'info>,
         params: InitializeVaultPeriodParams,
+        bumps: BTreeMap<String, u8>,
     },
 }
 
@@ -33,7 +35,19 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 }
                 Ok(())
             }
-            Init::VaultPeriod { .. } => todo!(),
+            Init::VaultPeriod {
+                accounts, params, ..
+            } => {
+                // TODO(Mocha): do we even need this for init_vault_period?
+                if !(params.period_id > accounts.vault.last_drip_period
+                    || (params.period_id == 0 && accounts.vault.last_drip_period == 0))
+                {
+                    return Err(
+                        ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod.into(),
+                    );
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -44,7 +58,11 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
             Init::VaultProtoConfig { accounts, params } => {
                 init_vault_proto_config(accounts, params)
             }
-            Init::VaultPeriod { accounts, params } => init_vault_period(accounts, params),
+            Init::VaultPeriod {
+                accounts,
+                params,
+                bumps,
+            } => init_vault_period(accounts, params, bumps),
         }
     }
 }
@@ -63,8 +81,16 @@ fn init_vault_proto_config(
 }
 
 fn init_vault_period(
-    _accounts: &mut InitializeVaultPeriodAccounts,
-    _params: InitializeVaultPeriodParams,
+    accounts: &mut InitializeVaultPeriodAccounts,
+    params: InitializeVaultPeriodParams,
+    bumps: BTreeMap<String, u8>,
 ) -> Result<()> {
-    todo!()
+    accounts.vault_period.init(
+        accounts.vault.key(),
+        params.period_id,
+        bumps.get("vault_period"),
+    )?;
+
+    msg!("Initialized VaultPeriod");
+    Ok(())
 }
