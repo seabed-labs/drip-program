@@ -570,7 +570,7 @@ export type Drip = {
       };
     },
     {
-      name: "vaultperiod";
+      name: "vaultPeriod";
       type: {
         kind: "struct";
         fields: [
@@ -602,7 +602,7 @@ export type Drip = {
       };
     },
     {
-      name: "vaultprotoconfig";
+      name: "vaultProtoConfig";
       type: {
         kind: "struct";
         fields: [
@@ -1465,7 +1465,7 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "vaultperiod",
+      name: "vaultPeriod",
       type: {
         kind: "struct",
         fields: [
@@ -1497,7 +1497,7 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "vaultprotoconfig",
+      name: "vaultProtoConfig",
       type: {
         kind: "struct",
         fields: [
