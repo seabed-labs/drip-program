@@ -2,9 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{
     instruction_accounts::{
-        InitializeVaultAccounts, InitializeVaultParams, InitializeVaultPeriodAccounts,
-        InitializeVaultPeriodParams, InitializeVaultProtoConfigAccounts,
-        InitializeVaultProtoConfigParams,
+        InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
+        InitializeVaultProtoConfigAccounts, InitializeVaultProtoConfigParams,
     },
     state::traits::{Executable, Validatable},
 };
@@ -13,10 +12,6 @@ pub enum Init<'a, 'info> {
     VaultProtoConfig {
         accounts: &'a mut InitializeVaultProtoConfigAccounts<'info>,
         params: InitializeVaultProtoConfigParams,
-    },
-    Vault {
-        accounts: &'a mut InitializeVaultAccounts<'info>,
-        params: InitializeVaultParams,
     },
     VaultPeriod {
         accounts: &'a mut InitializeVaultPeriodAccounts<'info>,
@@ -28,7 +23,6 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Init::VaultProtoConfig { .. } => todo!(),
-            Init::Vault { .. } => todo!(),
             Init::VaultPeriod { .. } => todo!(),
         }
     }
@@ -40,7 +34,6 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
             Init::VaultProtoConfig { accounts, params } => {
                 init_vault_proto_config(accounts, params)
             }
-            Init::Vault { accounts, params } => init_vault(accounts, params),
             Init::VaultPeriod { accounts, params } => init_vault_period(accounts, params),
         }
     }
@@ -49,13 +42,6 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
 fn init_vault_proto_config(
     _accounts: &mut InitializeVaultProtoConfigAccounts,
     _params: InitializeVaultProtoConfigParams,
-) -> Result<()> {
-    todo!()
-}
-
-fn init_vault(
-    _accounts: &mut InitializeVaultAccounts,
-    _params: InitializeVaultParams,
 ) -> Result<()> {
     todo!()
 }

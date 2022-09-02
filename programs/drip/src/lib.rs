@@ -28,16 +28,6 @@ pub mod drip {
         })
     }
 
-    pub fn init_vault(
-        ctx: Context<InitializeVaultAccounts>,
-        params: InitializeVaultParams,
-    ) -> Result<()> {
-        handle_action(Init::Vault {
-            accounts: ctx.accounts,
-            params,
-        })
-    }
-
     pub fn init_vault_period(
         ctx: Context<InitializeVaultPeriodAccounts>,
         params: InitializeVaultPeriodParams,
@@ -78,6 +68,16 @@ pub mod drip {
     }
 
     // Admin Ix's
+
+    pub fn init_vault(
+        ctx: Context<InitializeVaultAccounts>,
+        params: InitializeVaultParams,
+    ) -> Result<()> {
+        handle_action(Admin::Vault {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
 
     // pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
     //     init_vault::handler(ctx, params)

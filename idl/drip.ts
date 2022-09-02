@@ -31,79 +31,6 @@ export type Drip = {
       ];
     },
     {
-      name: "initVault";
-      accounts: [
-        {
-          name: "creator";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "vault";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultProtoConfig";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenAAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tokenBAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "treasuryTokenBAccount";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenAMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenBMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "associatedTokenProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "rent";
-          isMut: false;
-          isSigner: false;
-        }
-      ];
-      args: [
-        {
-          name: "params";
-          type: {
-            defined: "InitializeVaultParams";
-          };
-        }
-      ];
-    },
-    {
       name: "initVaultPeriod";
       accounts: [
         {
@@ -518,6 +445,79 @@ export type Drip = {
         }
       ];
       args: [];
+    },
+    {
+      name: "initVault";
+      accounts: [
+        {
+          name: "creator";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "vault";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "vaultProtoConfig";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenAAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tokenBAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "treasuryTokenBAccount";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenAMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenBMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "associatedTokenProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "rent";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "InitializeVaultParams";
+          };
+        }
+      ];
     }
   ];
   accounts: [
@@ -921,79 +921,6 @@ export const IDL: Drip = {
           name: "params",
           type: {
             defined: "InitializeVaultProtoConfigParams",
-          },
-        },
-      ],
-    },
-    {
-      name: "initVault",
-      accounts: [
-        {
-          name: "creator",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "vault",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenAAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tokenBAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "treasuryTokenBAccount",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenAMint",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenBMint",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "associatedTokenProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "rent",
-          isMut: false,
-          isSigner: false,
-        },
-      ],
-      args: [
-        {
-          name: "params",
-          type: {
-            defined: "InitializeVaultParams",
           },
         },
       ],
@@ -1413,6 +1340,79 @@ export const IDL: Drip = {
         },
       ],
       args: [],
+    },
+    {
+      name: "initVault",
+      accounts: [
+        {
+          name: "creator",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "vault",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "vaultProtoConfig",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenAAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tokenBAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "treasuryTokenBAccount",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenAMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "associatedTokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "rent",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "InitializeVaultParams",
+          },
+        },
+      ],
     },
   ],
   accounts: [
