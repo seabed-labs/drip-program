@@ -74,7 +74,7 @@ pub mod drip {
         ctx: Context<InitializeVaultAccounts>,
         params: InitializeVaultParams,
     ) -> Result<()> {
-        handle_action(Admin::Vault {
+        handle_action(Admin::InitVault {
             accounts: ctx.accounts,
             params,
             bumps: ctx.bumps,

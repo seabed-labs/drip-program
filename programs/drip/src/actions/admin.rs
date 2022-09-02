@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 use std::collections::BTreeMap;
 
 pub enum Admin<'a, 'info> {
-    Vault {
+    InitVault {
         accounts: &'a mut InitializeVaultAccounts<'info>,
         params: InitializeVaultParams,
         bumps: BTreeMap<String, u8>,
@@ -17,7 +17,7 @@ pub enum Admin<'a, 'info> {
 impl<'a, 'info> Validatable for Admin<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
-            Admin::Vault { params, .. } => {
+            Admin::InitVault { params, .. } => {
                 if params.whitelisted_swaps.len() > 5 {
                     return Err(ErrorCode::InvalidNumSwaps.into());
                 }
@@ -34,7 +34,7 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
 impl<'a, 'info> Executable for Admin<'a, 'info> {
     fn execute(self) -> Result<()> {
         match self {
-            Admin::Vault {
+            Admin::InitVault {
                 accounts,
                 params,
                 bumps,
