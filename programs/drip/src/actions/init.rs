@@ -50,10 +50,16 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
 }
 
 fn init_vault_proto_config(
-    _accounts: &mut InitializeVaultProtoConfigAccounts,
-    _params: InitializeVaultProtoConfigParams,
+    accounts: &mut InitializeVaultProtoConfigAccounts,
+    params: InitializeVaultProtoConfigParams,
 ) -> Result<()> {
-    todo!()
+    accounts.vault_proto_config.init(
+        params.granularity,
+        params.token_a_drip_trigger_spread,
+        params.token_b_withdrawal_spread,
+        params.admin,
+    );
+    Ok(())
 }
 
 fn init_vault_period(
