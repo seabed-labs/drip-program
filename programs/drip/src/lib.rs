@@ -77,6 +77,7 @@ pub mod drip {
         handle_action(Admin::Vault {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 

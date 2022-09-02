@@ -31,8 +31,8 @@ pub struct InitializeVaultProtoConfigAccounts<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
-    max_slippage_bps: u16,
-    whitelisted_swaps: Vec<Pubkey>,
+    pub max_slippage_bps: u16,
+    pub whitelisted_swaps: Vec<Pubkey>,
 }
 
 #[derive(Accounts)]
