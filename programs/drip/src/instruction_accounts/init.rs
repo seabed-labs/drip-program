@@ -7,10 +7,10 @@ use spl_token::state::AccountState;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultProtoConfigParams {
-    granularity: u64,
-    token_a_drip_trigger_spread: u16,
-    token_b_withdrawal_spread: u16,
-    admin: Pubkey,
+    pub granularity: u64,
+    pub token_a_drip_trigger_spread: u16,
+    pub token_b_withdrawal_spread: u16,
+    pub admin: Pubkey,
 }
 
 #[derive(Accounts)]

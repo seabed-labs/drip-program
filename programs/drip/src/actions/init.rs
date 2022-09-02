@@ -1,5 +1,4 @@
-use anchor_lang::prelude::*;
-
+use crate::errors::ErrorCode;
 use crate::{
     instruction_accounts::{
         InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
@@ -7,6 +6,7 @@ use crate::{
     },
     state::traits::{Executable, Validatable},
 };
+use anchor_lang::prelude::*;
 
 pub enum Init<'a, 'info> {
     VaultProtoConfig {
@@ -22,7 +22,17 @@ pub enum Init<'a, 'info> {
 impl<'a, 'info> Validatable for Init<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
-            Init::VaultProtoConfig { .. } => todo!(),
+            Init::VaultProtoConfig { params, .. } => {
+                if params.granularity == 0 {
+                    return Err(ErrorCode::InvalidGranularity.into());
+                }
+                if params.token_a_drip_trigger_spread >= 5000
+                    || params.token_b_withdrawal_spread >= 5000
+                {
+                    return Err(ErrorCode::InvalidSpread.into());
+                }
+                Ok(())
+            }
             Init::VaultPeriod { .. } => todo!(),
         }
     }
