@@ -38,6 +38,11 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
             Init::VaultPeriod {
                 accounts, params, ..
             } => {
+                // Relation Checks
+                if accounts.vault_proto_config.key() != accounts.vault.proto_config {
+                    return Err(ErrorCode::InvalidVaultProtoConfigReference.into());
+                }
+                // Business Checks
                 // TODO(Mocha): do we even need this for init_vault_period?
                 if !(params.period_id > accounts.vault.last_drip_period
                     || (params.period_id == 0 && accounts.vault.last_drip_period == 0))
