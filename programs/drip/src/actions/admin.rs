@@ -1,10 +1,12 @@
 use crate::errors::ErrorCode;
+use crate::ProgramError::UninitializedAccount;
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
     state::traits::{Executable, Validatable},
     UpdateVaultWhitelistedSwapsAccounts, UpdateVaultWhitelistedSwapsParams,
 };
 use anchor_lang::prelude::*;
+use spl_token::state::AccountState;
 use std::collections::BTreeMap;
 
 pub enum Admin<'a, 'info> {
@@ -22,11 +24,30 @@ pub enum Admin<'a, 'info> {
 impl<'a, 'info> Validatable for Admin<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
-            Admin::InitVault { params, .. } => {
+            Admin::InitVault {
+                accounts, params, ..
+            } => {
+                // Relation Checks
+                if accounts.creator.key() != accounts.vault_proto_config.admin {
+                    // TODO: change to SignerIsNotAdmin
+                    return Err(ErrorCode::OnlyAdminCanInitVault.into());
+                }
+                if accounts.token_a_account.mint != accounts.token_a_mint.key() {
+                    return Err(ErrorCode::InvalidMint.into());
+                }
+                if accounts.token_b_account.mint != accounts.token_b_mint.key() {
+                    return Err(ErrorCode::InvalidMint.into());
+                }
+                if accounts.treasury_token_b_account.mint != accounts.token_b_mint.key() {
+                    return Err(ErrorCode::InvalidMint.into());
+                }
+                // Business Checks
+                if accounts.treasury_token_b_account.state != AccountState::Initialized {
+                    return Err(UninitializedAccount.into());
+                }
                 if params.whitelisted_swaps.len() > 5 {
                     return Err(ErrorCode::InvalidNumSwaps.into());
                 }
-
                 if params.max_slippage_bps == 0 || params.max_slippage_bps >= 10_000 {
                     return Err(ErrorCode::InvalidVaultMaxSlippage.into());
                 }
