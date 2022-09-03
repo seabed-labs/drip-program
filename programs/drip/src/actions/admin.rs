@@ -53,7 +53,17 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 }
                 Ok(())
             }
-            Admin::UpdateVaultWhitelistedSwaps { params, .. } => {
+            Admin::UpdateVaultWhitelistedSwaps {
+                accounts, params, ..
+            } => {
+                // Relation Checks
+                if accounts.admin.key() != accounts.vault_proto_config.admin {
+                    return Err(ErrorCode::SignerIsNotAdmin.into());
+                }
+                if accounts.vault_proto_config.key() != accounts.vault.proto_config {
+                    return Err(ErrorCode::InvalidVaultProtoConfigReference.into());
+                }
+                // Business Checks
                 if params.whitelisted_swaps.len() > 5 {
                     return Err(ErrorCode::InvalidNumSwaps.into());
                 }
