@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum ErrorCode {
+pub enum DripError {
     #[msg("Cannot get position bump")]
     CannotGetPositionBump,
     #[msg("Cannot get vault bump")]

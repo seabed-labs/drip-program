@@ -1,4 +1,6 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
+use crate::state::VAULT_SWAP_WHITELIST_SIZE;
+use crate::validate;
 use crate::ProgramError::UninitializedAccount;
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
@@ -28,45 +30,59 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 accounts, params, ..
             } => {
                 // Relation Checks
-                if accounts.creator.key() != accounts.vault_proto_config.admin {
-                    // TODO: change to SignerIsNotAdmin
-                    return Err(ErrorCode::OnlyAdminCanInitVault.into());
-                }
-                if accounts.token_a_account.mint != accounts.token_a_mint.key() {
-                    return Err(ErrorCode::InvalidMint.into());
-                }
-                if accounts.token_b_account.mint != accounts.token_b_mint.key() {
-                    return Err(ErrorCode::InvalidMint.into());
-                }
-                if accounts.treasury_token_b_account.mint != accounts.token_b_mint.key() {
-                    return Err(ErrorCode::InvalidMint.into());
-                }
+                validate!(
+                    accounts.creator.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
+                validate!(
+                    accounts.token_a_account.mint == accounts.token_a_mint.key(),
+                    DripError::InvalidMint
+                );
+                validate!(
+                    accounts.token_b_account.mint == accounts.token_b_mint.key(),
+                    DripError::InvalidMint
+                );
+                validate!(
+                    accounts.treasury_token_b_account.mint == accounts.token_b_mint.key(),
+                    DripError::InvalidMint
+                );
+
                 // Business Checks
-                if accounts.treasury_token_b_account.state != AccountState::Initialized {
-                    return Err(UninitializedAccount.into());
-                }
-                if params.whitelisted_swaps.len() > 5 {
-                    return Err(ErrorCode::InvalidNumSwaps.into());
-                }
-                if params.max_slippage_bps == 0 || params.max_slippage_bps >= 10_000 {
-                    return Err(ErrorCode::InvalidVaultMaxSlippage.into());
-                }
+                // TODO: @Mocha, do we need this check? I think its fine to not do this check since you can initialize a treasury token account later anyways
+                validate!(
+                    accounts.treasury_token_b_account.state == AccountState::Initialized,
+                    UninitializedAccount
+                );
+                validate!(
+                    params.whitelisted_swaps.len() <= VAULT_SWAP_WHITELIST_SIZE,
+                    DripError::InvalidNumSwaps
+                );
+                validate!(
+                    params.max_slippage_bps > 0 && params.max_slippage_bps < 10_000,
+                    DripError::InvalidVaultMaxSlippage
+                );
+
                 Ok(())
             }
             Admin::UpdateVaultWhitelistedSwaps {
                 accounts, params, ..
             } => {
                 // Relation Checks
-                if accounts.admin.key() != accounts.vault_proto_config.admin {
-                    return Err(ErrorCode::SignerIsNotAdmin.into());
-                }
-                if accounts.vault_proto_config.key() != accounts.vault.proto_config {
-                    return Err(ErrorCode::InvalidVaultProtoConfigReference.into());
-                }
+                validate!(
+                    accounts.admin.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
+                validate!(
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
+                    DripError::InvalidVaultProtoConfigReference
+                );
+
                 // Business Checks
-                if params.whitelisted_swaps.len() > 5 {
-                    return Err(ErrorCode::InvalidNumSwaps.into());
-                }
+                validate!(
+                    params.whitelisted_swaps.len() <= VAULT_SWAP_WHITELIST_SIZE,
+                    DripError::InvalidNumSwaps
+                );
+
                 Ok(())
             }
         }

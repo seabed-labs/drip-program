@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use whirlpool::state::Whirlpool;
 
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
 #[derive(Clone)]
@@ -34,7 +34,7 @@ pub struct DripSPLTokenSwapAccounts<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
+        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -45,8 +45,8 @@ pub struct DripSPLTokenSwapAccounts<'info> {
             last_vault_period.period_id.to_string().as_bytes()
         ],
         bump = last_vault_period.bump,
-        constraint = last_vault_period.period_id == vault.last_drip_period @ErrorCode::InvalidVaultPeriod,
-        constraint = last_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
+        constraint = last_vault_period.period_id == vault.last_drip_period @DripError::InvalidVaultPeriod,
+        constraint = last_vault_period.vault == vault.key() @DripError::InvalidVaultPeriod
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -59,8 +59,8 @@ pub struct DripSPLTokenSwapAccounts<'info> {
             current_vault_period.period_id.to_string().as_bytes()
         ],
         bump = current_vault_period.bump,
-        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap() @ErrorCode::InvalidVaultPeriod,
-        constraint = current_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
+        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap() @DripError::InvalidVaultPeriod,
+        constraint = current_vault_period.vault == vault.key() @DripError::InvalidVaultPeriod
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -75,7 +75,7 @@ pub struct DripSPLTokenSwapAccounts<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_token_b_account.mint == vault.token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.mint == vault.token_b_mint.key() @DripError::InvalidMint,
         constraint = vault_token_b_account.owner == vault.key(),
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -97,7 +97,7 @@ pub struct DripSPLTokenSwapAccounts<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = drip_fee_token_a_account.mint == vault.token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = drip_fee_token_a_account.mint == vault.token_a_mint.key() @DripError::InvalidMint,
     )]
     pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -159,7 +159,7 @@ pub struct DripOrcaWhirlpoolAccounts<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
+        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -192,7 +192,7 @@ pub struct DripOrcaWhirlpoolAccounts<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint,
+        constraint = vault_token_a_account.mint == vault.token_a_mint @DripError::InvalidMint,
         constraint = vault_token_a_account.owner == vault.key(),
         constraint = vault_token_a_account.amount >= vault.drip_amount
     )]
@@ -201,7 +201,7 @@ pub struct DripOrcaWhirlpoolAccounts<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_token_b_account.mint == vault.token_b_mint @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.mint == vault.token_b_mint @DripError::InvalidMint,
         constraint = vault_token_b_account.owner == vault.key(),
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -223,7 +223,7 @@ pub struct DripOrcaWhirlpoolAccounts<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = drip_fee_token_a_account.mint == vault.token_a_mint @ErrorCode::InvalidMint
+        constraint = drip_fee_token_a_account.mint == vault.token_a_mint @DripError::InvalidMint
     )]
     pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 

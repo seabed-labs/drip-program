@@ -1,4 +1,4 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::{
     instruction_accounts::{
         InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
@@ -26,12 +26,12 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
         match self {
             Init::VaultProtoConfig { params, .. } => {
                 if params.granularity == 0 {
-                    return Err(ErrorCode::InvalidGranularity.into());
+                    return Err(DripError::InvalidGranularity.into());
                 }
                 if params.token_a_drip_trigger_spread >= 5000
                     || params.token_b_withdrawal_spread >= 5000
                 {
-                    return Err(ErrorCode::InvalidSpread.into());
+                    return Err(DripError::InvalidSpread.into());
                 }
                 Ok(())
             }
@@ -40,7 +40,7 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
             } => {
                 // Relation Checks
                 if accounts.vault_proto_config.key() != accounts.vault.proto_config {
-                    return Err(ErrorCode::InvalidVaultProtoConfigReference.into());
+                    return Err(DripError::InvalidVaultProtoConfigReference.into());
                 }
                 // Business Checks
                 // TODO(Mocha): do we even need this for init_vault_period?
@@ -48,7 +48,7 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                     || (params.period_id == 0 && accounts.vault.last_drip_period == 0))
                 {
                     return Err(
-                        ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod.into(),
+                        DripError::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod.into(),
                     );
                 }
                 Ok(())
@@ -166,6 +166,6 @@ mod tests {
             params: initialize_vault_proto_config_params,
         };
         let res = vault_proto_config_action.validate();
-        assert_eq!(res, Err(ErrorCode::InvalidGranularity.into()));
+        assert_eq!(res, Err(DripError::InvalidGranularity.into()));
     }
 }

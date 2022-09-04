@@ -1,4 +1,4 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
@@ -46,7 +46,7 @@ pub struct InitializeVaultPeriodAccounts<'info> {
         ],
         bump,
         payer = creator,
-        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
+        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @DripError::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
     )]
     pub vault_period: Account<'info, VaultPeriod>,
 
@@ -62,12 +62,12 @@ pub struct InitializeVaultPeriodAccounts<'info> {
     pub vault: Account<'info, Vault>,
 
     #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @ErrorCode::InvalidMint
+        constraint = token_a_mint.key() == vault.token_a_mint @DripError::InvalidMint
     )]
     pub token_a_mint: Account<'info, Mint>,
 
     #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @ErrorCode::InvalidMint
+        constraint = token_b_mint.key() == vault.token_b_mint @DripError::InvalidMint
     )]
     pub token_b_mint: Account<'info, Mint>,
 

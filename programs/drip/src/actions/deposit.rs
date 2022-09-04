@@ -1,4 +1,4 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::interactions::mint_token::MintToken;
 use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
@@ -35,17 +35,17 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
             } => {
                 // Relation Checks
                 if accounts.vault_period_end.vault != accounts.vault.key() {
-                    return Err(ErrorCode::InvalidVaultReference.into());
+                    return Err(DripError::InvalidVaultReference.into());
                 }
                 if accounts.vault_token_a_account.mint != accounts.vault.token_a_mint {
-                    return Err(ErrorCode::InvalidMint.into());
+                    return Err(DripError::InvalidMint.into());
                 }
                 if accounts.vault_token_a_account.owner != accounts.vault.key() {
                     return Err(IllegalOwner.into());
                 }
                 // TODO(Mocha): we likely don't need all these user account checks
                 if accounts.user_token_a_account.mint != accounts.vault.token_a_mint {
-                    return Err(ErrorCode::InvalidMint.into());
+                    return Err(DripError::InvalidMint.into());
                 }
                 if accounts.user_token_a_account.owner != accounts.depositor.key() {
                     return Err(IllegalOwner.into());
@@ -59,10 +59,10 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
                 }
                 // Business Checks
                 if params.number_of_swaps == 0 {
-                    return Err(ErrorCode::NumSwapsIsZero.into());
+                    return Err(DripError::NumSwapsIsZero.into());
                 }
                 if accounts.vault_period_end.period_id == 0 {
-                    return Err(ErrorCode::InvalidVaultPeriod.into());
+                    return Err(DripError::InvalidVaultPeriod.into());
                 }
                 if accounts.vault_period_end.period_id
                     != accounts
@@ -71,7 +71,7 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
                         .checked_add(params.number_of_swaps)
                         .unwrap()
                 {
-                    return Err(ErrorCode::InvalidVaultPeriod.into());
+                    return Err(DripError::InvalidVaultPeriod.into());
                 }
                 if params.token_a_deposit_amount == 0 {
                     return Err(InvalidArgument.into());
@@ -85,7 +85,7 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
                     params.number_of_swaps,
                 ) == 0
                 {
-                    return Err(ErrorCode::PeriodicDripAmountIsZero.into());
+                    return Err(DripError::PeriodicDripAmountIsZero.into());
                 }
                 Ok(())
             }

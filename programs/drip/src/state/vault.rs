@@ -1,9 +1,11 @@
-use crate::errors::ErrorCode::CannotGetVaultBump;
+use crate::errors::DripError::CannotGetVaultBump;
 use crate::math::calculate_drip_activation_timestamp;
 use crate::state::traits::PDA;
 use crate::state::VaultPeriod;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
+
+pub const VAULT_SWAP_WHITELIST_SIZE: usize = 5;
 
 #[account]
 #[derive(Default)]
@@ -12,13 +14,13 @@ pub struct Vault {
     // allocation needed: ceil( (378+8)/8 )*8 -> 392
 
     // Account relations
-    pub proto_config: Pubkey,             // 32
-    pub token_a_mint: Pubkey,             // 32
-    pub token_b_mint: Pubkey,             // 32
-    pub token_a_account: Pubkey,          // 32
-    pub token_b_account: Pubkey,          // 32
-    pub treasury_token_b_account: Pubkey, // 32
-    pub whitelisted_swaps: [Pubkey; 5],   // 32*5
+    pub proto_config: Pubkey,                                   // 32
+    pub token_a_mint: Pubkey,                                   // 32
+    pub token_b_mint: Pubkey,                                   // 32
+    pub token_a_account: Pubkey,                                // 32
+    pub token_b_account: Pubkey,                                // 32
+    pub treasury_token_b_account: Pubkey,                       // 32
+    pub whitelisted_swaps: [Pubkey; VAULT_SWAP_WHITELIST_SIZE], // 32*5
 
     // Data
     // 1 to N

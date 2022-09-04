@@ -1,4 +1,4 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -14,7 +14,7 @@ pub struct InitializeVaultParams {
 #[derive(Accounts)]
 pub struct InitializeVaultAccounts<'info> {
     // mut needed because we are initializing the account
-    #[account(mut, address = vault_proto_config.admin @ErrorCode::OnlyAdminCanInitVault)]
+    #[account(mut, address = vault_proto_config.admin @DripError::OnlyAdminCanInitVault)]
     pub creator: Signer<'info>,
 
     /* DRIP ACCOUNTS */
@@ -52,7 +52,7 @@ pub struct InitializeVaultAccounts<'info> {
     pub token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        constraint = treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = treasury_token_b_account.mint == token_b_mint.key() @DripError::InvalidMint,
         constraint = treasury_token_b_account.state == AccountState::Initialized
     )]
     pub treasury_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -80,7 +80,7 @@ pub struct UpdateVaultWhitelistedSwapsParams {
 // TODO(Mocha): this naming is awkward
 #[derive(Accounts)]
 pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
-    #[account(mut, address = vault_proto_config.admin @ErrorCode::SignerIsNotAdmin)]
+    #[account(mut, address = vault_proto_config.admin @DripError::SignerIsNotAdmin)]
     pub admin: Signer<'info>,
 
     #[account(
@@ -97,7 +97,7 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     pub vault: Account<'info, Vault>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
+        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
