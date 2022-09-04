@@ -12,6 +12,7 @@ use crate::{
     CPI,
 };
 
+use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use anchor_lang::prelude::*;
 use std::collections::BTreeMap;
 
@@ -71,6 +72,11 @@ fn validate_deposit_variants(accounts: &DepositAccounts, params: &DepositParams)
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps) > 0,
         DripError::PeriodicDripAmountIsZero
     );
+
+    validate!(
+        accounts.user_token_a_account.delegated_amount >= params.token_a_deposit_amount,
+        InvalidArgument
+    );
     Ok(())
 }
 
@@ -83,8 +89,10 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 bumps,
             } => deposit_without_metadata(accounts, params, bumps),
             Deposit::WithMetadata {
-                accounts, params, ..
-            } => deposit_with_metadata(accounts, params),
+                accounts,
+                params,
+                bumps,
+            } => deposit_with_metadata(accounts, params, bumps),
         }
     }
 }
@@ -121,6 +129,74 @@ fn deposit_without_metadata(
     );
 
     /* STATE UPDATES (EFFECTS) */
+    update_state(accounts, params, bumps)?;
+
+    /* MANUAL CPI (INTERACTIONS) */
+    let signer: &Vault = accounts.vault.as_ref();
+    token_transfer.execute(signer)?;
+    mint_position_nft.execute(signer)?;
+    revoke_position_nft_auth.execute(signer)?;
+
+    Ok(())
+}
+
+fn deposit_with_metadata(
+    accounts: &mut DepositWithMetadataAccounts,
+    params: DepositParams,
+    bumps: BTreeMap<String, u8>,
+) -> Result<()> {
+    let token_transfer = TransferToken::new(
+        &accounts.deposit_accounts.token_program,
+        &accounts.deposit_accounts.user_token_a_account,
+        &accounts.deposit_accounts.vault_token_a_account,
+        &accounts.deposit_accounts.vault.to_account_info(),
+        params.token_a_deposit_amount,
+    );
+
+    let mint_position_nft = MintToken::new(
+        &accounts.deposit_accounts.token_program,
+        &accounts.deposit_accounts.user_position_nft_mint,
+        &accounts.deposit_accounts.user_position_nft_account,
+        &accounts.deposit_accounts.vault.to_account_info(),
+        1,
+    );
+
+    let create_token_metadata = CreateTokenMetadata::new(
+        &accounts.metadata_program,
+        &accounts.deposit_accounts.system_program,
+        &accounts.position_metadata_account,
+        &accounts.deposit_accounts.user_position_nft_mint,
+        &accounts.deposit_accounts.vault.to_account_info(),
+        &accounts.deposit_accounts.depositor.to_account_info(),
+        &accounts.deposit_accounts.rent,
+        get_metadata_url(&accounts.deposit_accounts.user_position_nft_mint.key()),
+    );
+
+    let revoke_position_nft_auth = SetMintAuthority::new(
+        &accounts.deposit_accounts.token_program,
+        &accounts.deposit_accounts.user_position_nft_mint,
+        &accounts.deposit_accounts.vault.to_account_info(),
+        None,
+    );
+
+    /* STATE UPDATES (EFFECTS) */
+    update_state(&mut accounts.deposit_accounts, params, bumps)?;
+
+    /* MANUAL CPI (INTERACTIONS) */
+    let signer: &Vault = accounts.deposit_accounts.vault.as_ref();
+    token_transfer.execute(signer)?;
+    mint_position_nft.execute(signer)?;
+    create_token_metadata.execute(signer)?;
+    revoke_position_nft_auth.execute(signer)?;
+
+    Ok(())
+}
+
+fn update_state(
+    accounts: &mut DepositAccounts,
+    params: DepositParams,
+    bumps: BTreeMap<String, u8>,
+) -> Result<()> {
     let periodic_drip_amount =
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps);
 
@@ -136,20 +212,5 @@ fn deposit_without_metadata(
         params.number_of_swaps,
         periodic_drip_amount,
         bumps.get("user_position"),
-    )?;
-
-    /* MANUAL CPI (INTERACTIONS) */
-    let signer: &Vault = accounts.vault.as_ref();
-    token_transfer.execute(signer)?;
-    mint_position_nft.execute(signer)?;
-    revoke_position_nft_auth.execute(signer)?;
-
-    Ok(())
-}
-
-fn deposit_with_metadata(
-    _accounts: &mut DepositWithMetadataAccounts,
-    _params: DepositParams,
-) -> Result<()> {
-    todo!()
+    )
 }

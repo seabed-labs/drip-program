@@ -19,13 +19,13 @@ impl<'info> SetMintAuthority<'info> {
         token_program: &Program<'info, Token>,
         mint: &Account<'info, Mint>,
         current_authority: &AccountInfo<'info>,
-        new_authority: Option<AccountInfo<'info>>,
+        new_authority: Option<&AccountInfo<'info>>,
     ) -> Self {
         SetMintAuthority {
             token_program: token_program.clone(),
             mint: mint.clone(),
             current_authority: current_authority.clone(),
-            new_authority: new_authority.as_ref().cloned(),
+            new_authority: new_authority.cloned(),
         }
     }
 }

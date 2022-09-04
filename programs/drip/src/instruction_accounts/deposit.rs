@@ -13,7 +13,6 @@ pub struct DepositParams {
 }
 
 #[derive(Accounts)]
-#[instruction(params: DepositParams)]
 pub struct DepositAccounts<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
@@ -41,9 +40,7 @@ pub struct DepositAccounts<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = params.number_of_swaps > 0 @DripError::NumSwapsIsZero,
         constraint = vault_period_end.period_id > 0 @DripError::InvalidVaultPeriod,
-        constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @DripError::InvalidVaultPeriod
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
@@ -62,8 +59,6 @@ pub struct DepositAccounts<'info> {
         constraint = user_token_a_account.mint == vault.token_a_mint,
         constraint = user_token_a_account.owner == depositor.key(),
         constraint = user_token_a_account.delegate.contains(&vault.key()),
-        constraint = params.token_a_deposit_amount > 0,
-        constraint = user_token_a_account.delegated_amount >= params.token_a_deposit_amount
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -104,7 +99,6 @@ pub struct DepositAccounts<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(params: DepositParams)]
 pub struct DepositWithMetadataAccounts<'info> {
     pub deposit_accounts: DepositAccounts<'info>,
 
