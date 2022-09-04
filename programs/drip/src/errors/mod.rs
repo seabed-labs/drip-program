@@ -20,7 +20,7 @@ pub enum DripError {
     InvalidSpread,
     #[msg("Token Swap is Not Whitelisted")]
     InvalidSwapAccount,
-    #[msg("A Vault May Limit to a Maximum of 5 Token Swaps")]
+    #[msg("A Vault May Whitelist a Maximum of 5 Swap Accounts")]
     InvalidNumSwaps,
     #[msg("Provided account references the wrong vault-proto-config")]
     InvalidVaultProtoConfigReference,

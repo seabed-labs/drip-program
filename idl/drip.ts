@@ -875,7 +875,7 @@ export type Drip = {
     {
       code: 6009;
       name: "InvalidNumSwaps";
-      msg: "A Vault May Limit to a Maximum of 5 Token Swaps";
+      msg: "A Vault May Whitelist a Maximum of 5 Swap Accounts";
     },
     {
       code: 6010;
@@ -1822,7 +1822,7 @@ export const IDL: Drip = {
     {
       code: 6009,
       name: "InvalidNumSwaps",
-      msg: "A Vault May Limit to a Maximum of 5 Token Swaps",
+      msg: "A Vault May Whitelist a Maximum of 5 Swap Accounts",
     },
     {
       code: 6010,
