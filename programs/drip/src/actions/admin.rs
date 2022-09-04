@@ -61,8 +61,6 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     params.max_slippage_bps > 0 && params.max_slippage_bps < 10_000,
                     DripError::InvalidVaultMaxSlippage
                 );
-
-                Ok(())
             }
             Admin::SetVaultSwapWhitelist {
                 accounts, params, ..
@@ -82,10 +80,10 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     params.whitelisted_swaps.len() <= VAULT_SWAP_WHITELIST_SIZE,
                     DripError::InvalidNumSwaps
                 );
-
-                Ok(())
             }
         }
+
+        Ok(())
     }
 }
 

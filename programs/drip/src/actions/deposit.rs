@@ -4,7 +4,8 @@ use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::Vault;
-use crate::ProgramError::{IllegalOwner, InvalidArgument};
+use crate::validate;
+use crate::ProgramError::InvalidArgument;
 use crate::{
     instruction_accounts::deposit::{DepositAccounts, DepositParams, DepositWithMetadataAccounts},
     state::traits::{Executable, Validatable},
@@ -34,63 +35,41 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
                 accounts, params, ..
             } => {
                 // Relation Checks
-                if accounts.vault_period_end.vault != accounts.vault.key() {
-                    return Err(DripError::InvalidVaultReference.into());
-                }
-                if accounts.vault_token_a_account.mint != accounts.vault.token_a_mint {
-                    return Err(DripError::InvalidMint.into());
-                }
-                if accounts.vault_token_a_account.owner != accounts.vault.key() {
-                    return Err(IllegalOwner.into());
-                }
-                // TODO(Mocha): we likely don't need all these user account checks
-                if accounts.user_token_a_account.mint != accounts.vault.token_a_mint {
-                    return Err(DripError::InvalidMint.into());
-                }
-                if accounts.user_token_a_account.owner != accounts.depositor.key() {
-                    return Err(IllegalOwner.into());
-                }
-                if !accounts
-                    .user_token_a_account
-                    .delegate
-                    .contains(&accounts.vault.key())
-                {
-                    return Err(IllegalOwner.into());
-                }
+                validate!(
+                    accounts.vault_period_end.vault == accounts.vault.key(),
+                    DripError::InvalidVaultReference
+                );
+                validate!(
+                    accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
+                    DripError::IncorrectVaultTokenAccount
+                );
+
                 // Business Checks
-                if params.number_of_swaps == 0 {
-                    return Err(DripError::NumSwapsIsZero.into());
-                }
-                if accounts.vault_period_end.period_id == 0 {
-                    return Err(DripError::InvalidVaultPeriod.into());
-                }
-                if accounts.vault_period_end.period_id
-                    != accounts
-                        .vault
-                        .last_drip_period
-                        .checked_add(params.number_of_swaps)
-                        .unwrap()
-                {
-                    return Err(DripError::InvalidVaultPeriod.into());
-                }
-                if params.token_a_deposit_amount == 0 {
-                    return Err(InvalidArgument.into());
-                }
-                // TODO(Mocha): we probably shouldn't throw an error here
-                if accounts.user_token_a_account.delegated_amount < params.token_a_deposit_amount {
-                    return Err(InvalidArgument.into());
-                }
-                if calculate_periodic_drip_amount(
-                    params.token_a_deposit_amount,
-                    params.number_of_swaps,
-                ) == 0
-                {
-                    return Err(DripError::PeriodicDripAmountIsZero.into());
-                }
-                Ok(())
+                validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
+                // TODO(Matcha): @Mocha, what's this for again?
+                validate!(
+                    accounts.vault_period_end.period_id
+                        == accounts
+                            .vault
+                            .last_drip_period
+                            .checked_add(params.number_of_swaps)
+                            .unwrap(),
+                    DripError::InvalidVaultPeriod
+                );
+                validate!(params.token_a_deposit_amount > 0, InvalidArgument);
+
+                validate!(
+                    calculate_periodic_drip_amount(
+                        params.token_a_deposit_amount,
+                        params.number_of_swaps
+                    ) > 0,
+                    DripError::PeriodicDripAmountIsZero
+                );
             }
             Deposit::WithMetadata { .. } => todo!(),
         }
+
+        Ok(())
     }
 }
 
@@ -159,11 +138,11 @@ fn deposit_without_metadata(
     )?;
 
     /* MANUAL CPI (INTERACTIONS) */
-    // TODO(Mocha): should the signer just be part of the ::new fn?
     let signer: &Vault = accounts.vault.as_ref();
     token_transfer.execute(signer)?;
     mint_position_nft.execute(signer)?;
     revoke_position_nft_auth.execute(signer)?;
+
     Ok(())
 }
 

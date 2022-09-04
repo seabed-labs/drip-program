@@ -46,4 +46,6 @@ pub enum DripError {
     NumSwapsIsZero,
     #[msg("Signer is not admin")]
     SignerIsNotAdmin,
+    #[msg("Incorrect vault token account passed in")]
+    IncorrectVaultTokenAccount,
 }
