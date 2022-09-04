@@ -111,7 +111,7 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                 )?;
 
                 Ok(())
-            },
+            }
             Admin::UpdateVaultWhitelistedSwaps { accounts, params } => {
                 accounts
                     .vault
