@@ -109,16 +109,14 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     accounts.vault_proto_config.granularity,
                     bumps.get("vault"),
                 )?;
-
-                Ok(())
             }
             Admin::UpdateVaultWhitelistedSwaps { accounts, params } => {
                 accounts
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
-
-                Ok(())
             }
         }
+
+        Ok(())
     }
 }
