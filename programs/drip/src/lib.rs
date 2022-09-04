@@ -43,6 +43,7 @@ pub mod drip {
         handle_action(Deposit::WithoutMetadata {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 
@@ -53,6 +54,7 @@ pub mod drip {
         handle_action(Deposit::WithMetadata {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 

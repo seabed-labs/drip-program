@@ -18,7 +18,7 @@ impl<'info> SetMintAuthority<'info> {
     pub fn new(
         token_program: &Program<'info, Token>,
         mint: &Account<'info, Mint>,
-        current_authority: AccountInfo<'info>,
+        current_authority: &AccountInfo<'info>,
         new_authority: Option<AccountInfo<'info>>,
     ) -> Self {
         SetMintAuthority {
