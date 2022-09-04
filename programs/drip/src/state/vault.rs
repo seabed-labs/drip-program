@@ -6,6 +6,8 @@ use crate::test_account_size;
 use anchor_lang::prelude::*;
 
 pub const VAULT_SWAP_WHITELIST_SIZE: usize = 5;
+pub const MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE: u16 = 0;
+pub const MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE: u16 = 10_000;
 
 #[account]
 #[derive(Default)]

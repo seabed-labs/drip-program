@@ -1,7 +1,10 @@
 use crate::errors::DripError;
-use crate::state::VAULT_SWAP_WHITELIST_SIZE;
-use crate::validate;
+use crate::state::{
+    MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE, MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
+    VAULT_SWAP_WHITELIST_SIZE,
+};
 use crate::ProgramError::UninitializedAccount;
+use crate::{accounts, validate};
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
     state::traits::{Executable, Validatable},
@@ -58,7 +61,8 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::InvalidNumSwaps
                 );
                 validate!(
-                    params.max_slippage_bps > 0 && params.max_slippage_bps < 10_000,
+                    params.max_slippage_bps > MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE
+                        && params.max_slippage_bps < MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
                     DripError::InvalidVaultMaxSlippage
                 );
             }
