@@ -100,7 +100,7 @@ fn deposit_without_metadata(
         &accounts.token_program,
         &accounts.user_token_a_account,
         &accounts.vault_token_a_account,
-        accounts.vault.as_ref().as_ref(),
+        &accounts.vault.to_account_info(),
         params.token_a_deposit_amount,
     );
 
