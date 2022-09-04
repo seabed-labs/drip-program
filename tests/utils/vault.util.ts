@@ -173,7 +173,7 @@ export class VaultUtil extends TestUtil {
     }
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
-      .updateVaultWhitelistedSwaps({
+      .setVaultSwapWhitelist({
         whitelistedSwaps: params.whitelistedSwaps ?? [],
       })
       .accounts({
