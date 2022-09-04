@@ -1103,6 +1103,11 @@ export type Drip = {
       code: 6022;
       name: "IncorrectVaultTokenAccount";
       msg: "Incorrect vault token account passed in";
+    },
+    {
+      code: 6023;
+      name: "InvalidOwner";
+      msg: "Account is owned by the wrong account";
     }
   ];
 };
@@ -2212,6 +2217,11 @@ export const IDL: Drip = {
       code: 6022,
       name: "IncorrectVaultTokenAccount",
       msg: "Incorrect vault token account passed in",
+    },
+    {
+      code: 6023,
+      name: "InvalidOwner",
+      msg: "Account is owned by the wrong account",
     },
   ],
 };
