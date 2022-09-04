@@ -17,7 +17,7 @@ pub enum Admin<'a, 'info> {
         params: InitializeVaultParams,
         bumps: BTreeMap<String, u8>,
     },
-    UpdateVaultWhitelistedSwaps {
+    SetVaultSwapWhitelist {
         accounts: &'a mut UpdateVaultWhitelistedSwapsAccounts<'info>,
         params: UpdateVaultWhitelistedSwapsParams,
     },
@@ -64,7 +64,7 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
 
                 Ok(())
             }
-            Admin::UpdateVaultWhitelistedSwaps {
+            Admin::SetVaultSwapWhitelist {
                 accounts, params, ..
             } => {
                 // Relation Checks
@@ -110,7 +110,7 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     bumps.get("vault"),
                 )?;
             }
-            Admin::UpdateVaultWhitelistedSwaps { accounts, params } => {
+            Admin::SetVaultSwapWhitelist { accounts, params } => {
                 accounts
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
