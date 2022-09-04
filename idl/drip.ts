@@ -520,7 +520,7 @@ export type Drip = {
       ];
     },
     {
-      name: "updateVaultWhitelistedSwaps";
+      name: "setVaultSwapWhitelist";
       accounts: [
         {
           name: "admin";
@@ -936,6 +936,11 @@ export type Drip = {
       code: 6021;
       name: "SignerIsNotAdmin";
       msg: "Signer is not admin";
+    },
+    {
+      code: 6022;
+      name: "IncorrectVaultTokenAccount";
+      msg: "Incorrect vault token account passed in";
     }
   ];
 };
@@ -1462,7 +1467,7 @@ export const IDL: Drip = {
       ],
     },
     {
-      name: "updateVaultWhitelistedSwaps",
+      name: "setVaultSwapWhitelist",
       accounts: [
         {
           name: "admin",
@@ -1878,6 +1883,11 @@ export const IDL: Drip = {
       code: 6021,
       name: "SignerIsNotAdmin",
       msg: "Signer is not admin",
+    },
+    {
+      code: 6022,
+      name: "IncorrectVaultTokenAccount",
+      msg: "Incorrect vault token account passed in",
     },
   ],
 };

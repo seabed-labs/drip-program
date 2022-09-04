@@ -33,44 +33,45 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
         match self {
             Deposit::WithoutMetadata {
                 accounts, params, ..
-            } => {
-                // Relation Checks
-                validate!(
-                    accounts.vault_period_end.vault == accounts.vault.key(),
-                    DripError::InvalidVaultReference
-                );
-                validate!(
-                    accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
-                    DripError::IncorrectVaultTokenAccount
-                );
+            } => validate_deposit_variants(accounts, params),
 
-                // Business Checks
-                validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
-                // TODO(Matcha): @Mocha, what's this for again?
-                validate!(
-                    accounts.vault_period_end.period_id
-                        == accounts
-                            .vault
-                            .last_drip_period
-                            .checked_add(params.number_of_swaps)
-                            .unwrap(),
-                    DripError::InvalidVaultPeriod
-                );
-                validate!(params.token_a_deposit_amount > 0, InvalidArgument);
-
-                validate!(
-                    calculate_periodic_drip_amount(
-                        params.token_a_deposit_amount,
-                        params.number_of_swaps
-                    ) > 0,
-                    DripError::PeriodicDripAmountIsZero
-                );
-            }
-            Deposit::WithMetadata { .. } => todo!(),
+            Deposit::WithMetadata {
+                accounts, params, ..
+            } => validate_deposit_variants(&accounts.deposit_accounts, params),
         }
-
-        Ok(())
     }
+}
+
+fn validate_deposit_variants(accounts: &DepositAccounts, params: &DepositParams) -> Result<()> {
+    // Relation Checks
+    validate!(
+        accounts.vault_period_end.vault == accounts.vault.key(),
+        DripError::InvalidVaultReference
+    );
+    validate!(
+        accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
+        DripError::IncorrectVaultTokenAccount
+    );
+
+    // Business Checks
+    validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
+    // TODO(Matcha): @Mocha, what's this for again?
+    validate!(
+        accounts.vault_period_end.period_id
+            == accounts
+                .vault
+                .last_drip_period
+                .checked_add(params.number_of_swaps)
+                .unwrap(),
+        DripError::InvalidVaultPeriod
+    );
+    validate!(params.token_a_deposit_amount > 0, InvalidArgument);
+
+    validate!(
+        calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps) > 0,
+        DripError::PeriodicDripAmountIsZero
+    );
+    Ok(())
 }
 
 impl<'a, 'info> Executable for Deposit<'a, 'info> {

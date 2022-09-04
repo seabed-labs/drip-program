@@ -3,8 +3,8 @@ use crate::state::{
     MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE, MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
     VAULT_SWAP_WHITELIST_SIZE,
 };
+use crate::validate;
 use crate::ProgramError::UninitializedAccount;
-use crate::{accounts, validate};
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
     state::traits::{Executable, Validatable},

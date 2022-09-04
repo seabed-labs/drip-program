@@ -520,7 +520,7 @@
       ]
     },
     {
-      "name": "updateVaultWhitelistedSwaps",
+      "name": "setVaultSwapWhitelist",
       "accounts": [
         {
           "name": "admin",
@@ -936,6 +936,11 @@
       "code": 6021,
       "name": "SignerIsNotAdmin",
       "msg": "Signer is not admin"
+    },
+    {
+      "code": 6022,
+      "name": "IncorrectVaultTokenAccount",
+      "msg": "Incorrect vault token account passed in"
     }
   ]
 }

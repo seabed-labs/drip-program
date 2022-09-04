@@ -101,7 +101,7 @@ impl Vault {
     }
 
     pub fn set_whitelisted_swaps(&mut self, whitelisted_swaps: Vec<Pubkey>) {
-        self.limit_swaps = whitelisted_swaps.len() > 0;
+        self.limit_swaps = !whitelisted_swaps.is_empty();
         self.whitelisted_swaps = Default::default();
         for (i, &swap) in whitelisted_swaps.iter().enumerate() {
             self.whitelisted_swaps[i] = swap;
