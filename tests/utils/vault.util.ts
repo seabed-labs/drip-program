@@ -315,26 +315,28 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripSplTokenSwap()
       .accounts({
-        dripTriggerSource: user.publicKey.toBase58(),
-        dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
-        vault: vault.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        lastVaultPeriod: lastVaultPeriod.toBase58(),
-        currentVaultPeriod: currentVaultPeriod.toBase58(),
-        swapTokenMint: swapTokenMint.toBase58(),
-        vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-        vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        swapTokenAAccount: swapTokenAAccount.toBase58(),
-        swapTokenBAccount: swapTokenBAccount.toBase58(),
+        common: {
+          dripTriggerSource: user.publicKey.toBase58(),
+          dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
+          vault: vault.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          lastVaultPeriod: lastVaultPeriod.toBase58(),
+          currentVaultPeriod: currentVaultPeriod.toBase58(),
+          swapTokenMint: swapTokenMint.toBase58(),
+          vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+          vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+          swapTokenAAccount: swapTokenAAccount.toBase58(),
+          swapTokenBAccount: swapTokenBAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+        },
         swapFeeAccount: swapFeeAccount.toBase58(),
         swap: swap.toBase58(),
         swapAuthority: swapAuthority.toBase58(),
         tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [user]);
@@ -360,21 +362,23 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripOrcaWhirlpool()
       .accounts({
-        dripTriggerSource: params.botKeypair.publicKey.toBase58(),
-        vault: params.vault.toBase58(),
-        vaultProtoConfig: params.vaultProtoConfig.toBase58(),
-        lastVaultPeriod: params.lastVaultPeriod.toBase58(),
-        currentVaultPeriod: params.currentVaultPeriod.toBase58(),
-        vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
-        vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
-        swapTokenAAccount: params.swapTokenAAccount.toBase58(),
-        swapTokenBAccount: params.swapTokenBAccount.toBase58(),
-        dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
+        common: {
+          dripTriggerSource: params.botKeypair.publicKey.toBase58(),
+          vault: params.vault.toBase58(),
+          vaultProtoConfig: params.vaultProtoConfig.toBase58(),
+          lastVaultPeriod: params.lastVaultPeriod.toBase58(),
+          currentVaultPeriod: params.currentVaultPeriod.toBase58(),
+          vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
+          vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
+          swapTokenAAccount: params.swapTokenAAccount.toBase58(),
+          swapTokenBAccount: params.swapTokenBAccount.toBase58(),
+          dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+        },
         whirlpool: params.whirlpool.toBase58(),
         tickArray0: params.tickArray0.toBase58(),
         tickArray1: params.tickArray1.toBase58(),

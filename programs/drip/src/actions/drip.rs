@@ -1,8 +1,13 @@
 use anchor_lang::prelude::*;
 
+use crate::errors::DripError::{
+    DuplicateDripError, InvalidOwner, InvalidSwapAccount, PeriodicDripAmountIsZero,
+};
+
 use crate::{
     instruction_accounts::{DripOrcaWhirlpoolAccounts, DripSPLTokenSwapAccounts},
     state::traits::{Executable, Validatable},
+    validate, DripCommonAccounts,
 };
 
 pub enum Drip<'a, 'info> {
@@ -17,10 +22,46 @@ pub enum Drip<'a, 'info> {
 impl<'a, 'info> Validatable for Drip<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
-            Drip::SPLTokenSwap { .. } => todo!(),
-            Drip::OrcaWhirlpool { .. } => todo!(),
+            Drip::SPLTokenSwap { accounts, .. } => {
+                validate_common(&accounts.common, &accounts.swap.key())?;
+                validate!(
+                    accounts.common.swap_token_a_account.owner == accounts.swap.key(),
+                    InvalidOwner
+                );
+                validate!(
+                    accounts.common.swap_token_b_account.owner == accounts.swap.key(),
+                    InvalidOwner
+                );
+                Ok(())
+            }
+            Drip::OrcaWhirlpool { accounts, .. } => {
+                validate_common(&accounts.common, &accounts.whirlpool.key())?;
+                // TODO: should we rename whirlpool to swap so we can normalize this more?
+                validate!(
+                    accounts.common.swap_token_a_account.owner == accounts.whirlpool.key(),
+                    InvalidOwner
+                );
+                validate!(
+                    accounts.common.swap_token_b_account.owner == accounts.whirlpool.key(),
+                    InvalidOwner
+                );
+                Ok(())
+            }
         }
     }
+}
+
+fn validate_common(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
+    validate!(
+        accounts.vault_token_a_account.amount > 0 && accounts.vault.drip_amount > 0,
+        PeriodicDripAmountIsZero
+    );
+    validate!(accounts.vault.is_drip_activated(), DuplicateDripError);
+    validate!(
+        !accounts.vault.limit_swaps || accounts.vault.whitelisted_swaps.contains(swap),
+        InvalidSwapAccount
+    );
+    Ok(())
 }
 
 impl<'a, 'info> Executable for Drip<'a, 'info> {

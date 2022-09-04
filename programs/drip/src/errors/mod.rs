@@ -48,4 +48,6 @@ pub enum DripError {
     SignerIsNotAdmin,
     #[msg("Incorrect vault token account passed in")]
     IncorrectVaultTokenAccount,
+    #[msg("Account is owned by the wrong account")]
+    InvalidOwner,
 }

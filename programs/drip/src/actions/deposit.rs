@@ -34,16 +34,16 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
         match self {
             Deposit::WithoutMetadata {
                 accounts, params, ..
-            } => validate_deposit_variants(accounts, params),
+            } => validate_common(accounts, params),
 
             Deposit::WithMetadata {
                 accounts, params, ..
-            } => validate_deposit_variants(&accounts.deposit_accounts, params),
+            } => validate_common(&accounts.deposit_accounts, params),
         }
     }
 }
 
-fn validate_deposit_variants(accounts: &DepositAccounts, params: &DepositParams) -> Result<()> {
+fn validate_common(accounts: &DepositAccounts, params: &DepositParams) -> Result<()> {
     // Relation Checks
     validate!(
         accounts.vault_period_end.vault == accounts.vault.key(),
