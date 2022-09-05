@@ -50,4 +50,6 @@ pub enum DripError {
     IncorrectVaultTokenAccount,
     #[msg("Account is owned by the wrong account")]
     InvalidOwner,
+    #[msg("Position token account balance is empty")]
+    PositionBalanceIsZero,
 }
