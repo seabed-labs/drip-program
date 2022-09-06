@@ -165,7 +165,7 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
     }
 }
 
-fn execute_withdraw_b<'info>(accounts: &mut WithdrawCommonAccounts<'info>) -> Result<()> {
+fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
     /* COMPUTE (CHECKS) */
     let WithdrawalAmountB {
         withdrawable_amount_b_before_fees,
