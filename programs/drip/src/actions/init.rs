@@ -107,48 +107,52 @@ mod tests {
     use super::*;
     use crate::state;
     use crate::Init::VaultProtoConfig;
-    use std::cell::RefCell;
-    use std::rc::Rc;
 
     //  TODO: clean this up
     #[test]
     fn test_init_vault_proto_config() {
-        let key: Pubkey = Default::default();
-        let mut lamports: u64 = 1;
-        let owner: Pubkey = Default::default();
-        let default_account_info = &AccountInfo {
-            key: &key,
-            is_signer: false,
-            is_writable: false,
-            lamports: Rc::new(RefCell::new(&mut lamports)),
-            data: Rc::new(RefCell::new(&mut [])),
-            owner: &owner,
-            executable: false,
-            rent_epoch: 0,
+        let signer = Pubkey::new_unique();
+        let system_program: Pubkey = System::id();
+        let vault_proto_config = Pubkey::new_unique();
+        let l1 = &mut 1;
+        let l2 = &mut 1;
+        let l3 = &mut 1;
+        let d1 = &mut [0u8];
+        let d2 = &mut [0u8];
+        let mut buf = {
+            let vault_proto_config_data: state::VaultProtoConfig = state::VaultProtoConfig {
+                granularity: 0,
+                token_a_drip_trigger_spread: 0,
+                token_b_withdrawal_spread: 0,
+                admin: Default::default(),
+            };
+            let mut buf: Vec<u8> = Vec::new();
+            vault_proto_config_data.try_serialize(&mut buf).unwrap();
+            buf
         };
-
-        let mut signer_account = default_account_info.clone();
-        signer_account.is_signer = true;
-
-        let mut system_program_account = default_account_info.clone();
-        system_program_account.executable = true;
-
-        let mut vault_proto_config_account = default_account_info.clone();
-
-        let vault_proto_config_key: Pubkey = Pubkey::new_unique();
-        vault_proto_config_account.key = &vault_proto_config_key;
-
-        let vault_proto_config_data: state::VaultProtoConfig = state::VaultProtoConfig {
-            granularity: 0,
-            token_a_drip_trigger_spread: 0,
-            token_b_withdrawal_spread: 0,
-            admin: Default::default(),
-        };
-        let mut buf = Vec::new();
-        vault_proto_config_data.try_serialize(&mut buf).unwrap();
-        vault_proto_config_account.data = Rc::new(RefCell::new(&mut buf));
-
-        vault_proto_config_account.owner = &crate::ID;
+        let d3 = buf.as_mut_slice();
+        let signer_account =
+            AccountInfo::new(&signer, true, false, l1, d1, &system_program, false, 0);
+        let system_program_account = AccountInfo::new(
+            &system_program,
+            false,
+            false,
+            l2,
+            d2,
+            &system_program,
+            true,
+            0,
+        );
+        let vault_proto_config_account = AccountInfo::new(
+            &vault_proto_config,
+            false,
+            false,
+            l3,
+            d3,
+            &crate::ID,
+            false,
+            0,
+        );
 
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
             creator: Signer::try_from(&signer_account).unwrap(),
