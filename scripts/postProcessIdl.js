@@ -25,7 +25,7 @@ async function main() {
 
   const modifiedAccounts = inputIdlJson.accounts.map((account) => ({
     ...account,
-    name: account.name.toLowerCase(),
+    name: account.name[0].toLowerCase() + account.name.substring(1),
   }));
 
   const outputIdlTsJson = {

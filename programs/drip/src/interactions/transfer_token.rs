@@ -15,8 +15,8 @@ pub struct TransferToken<'info> {
 impl<'info> TransferToken<'info> {
     pub fn new(
         token_program: &Program<'info, Token>,
-        from: &Account<'info, anchor_spl::token::TokenAccount>,
-        to: &Account<'info, anchor_spl::token::TokenAccount>,
+        from: &Account<'info, TokenAccount>,
+        to: &Account<'info, TokenAccount>,
         authority: &AccountInfo<'info>,
         amount: u64,
     ) -> Self {

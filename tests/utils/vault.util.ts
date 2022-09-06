@@ -4,7 +4,6 @@ import {
   Keypair,
   PublicKey,
   Signer,
-  Transaction,
   TransactionSignature,
 } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
@@ -173,7 +172,7 @@ export class VaultUtil extends TestUtil {
     }
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
-      .updateVaultWhitelistedSwaps({
+      .setVaultSwapWhitelist({
         whitelistedSwaps: params.whitelistedSwaps ?? [],
       })
       .accounts({
@@ -269,23 +268,25 @@ export class VaultUtil extends TestUtil {
         numberOfSwaps: input.params.numberOfSwaps,
       })
       .accounts({
-        vault: input.accounts.vault.toBase58(),
-        vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
-        userPosition: input.accounts.userPosition.toBase58(),
-        userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
-        vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
-        userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
-        userPositionNftAccount:
-          input.accounts.userPositionNftAccount.toBase58(),
+        common: {
+          vault: input.accounts.vault.toBase58(),
+          vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
+          userPosition: input.accounts.userPosition.toBase58(),
+          userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
+          vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
+          userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
+          userPositionNftAccount:
+            input.accounts.userPositionNftAccount.toBase58(),
+          depositor: input.accounts.depositor.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+        },
         positionMetadataAccount:
           input.accounts.positionMetadataAccount.toBase58(),
-        depositor: input.accounts.depositor.toBase58(),
         metadataProgram: ProgramUtil.metadataProgram.programId.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [
@@ -313,26 +314,28 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripSplTokenSwap()
       .accounts({
-        dripTriggerSource: user.publicKey.toBase58(),
-        dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
-        vault: vault.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        lastVaultPeriod: lastVaultPeriod.toBase58(),
-        currentVaultPeriod: currentVaultPeriod.toBase58(),
+        common: {
+          dripTriggerSource: user.publicKey.toBase58(),
+          dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
+          vault: vault.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          lastVaultPeriod: lastVaultPeriod.toBase58(),
+          currentVaultPeriod: currentVaultPeriod.toBase58(),
+          vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+          vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+          swapTokenAAccount: swapTokenAAccount.toBase58(),
+          swapTokenBAccount: swapTokenBAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+        },
         swapTokenMint: swapTokenMint.toBase58(),
-        vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-        vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        swapTokenAAccount: swapTokenAAccount.toBase58(),
-        swapTokenBAccount: swapTokenBAccount.toBase58(),
         swapFeeAccount: swapFeeAccount.toBase58(),
         swap: swap.toBase58(),
         swapAuthority: swapAuthority.toBase58(),
         tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [user]);
@@ -358,21 +361,23 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .dripOrcaWhirlpool()
       .accounts({
-        dripTriggerSource: params.botKeypair.publicKey.toBase58(),
-        vault: params.vault.toBase58(),
-        vaultProtoConfig: params.vaultProtoConfig.toBase58(),
-        lastVaultPeriod: params.lastVaultPeriod.toBase58(),
-        currentVaultPeriod: params.currentVaultPeriod.toBase58(),
-        vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
-        vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
-        swapTokenAAccount: params.swapTokenAAccount.toBase58(),
-        swapTokenBAccount: params.swapTokenBAccount.toBase58(),
-        dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
+        common: {
+          dripTriggerSource: params.botKeypair.publicKey.toBase58(),
+          vault: params.vault.toBase58(),
+          vaultProtoConfig: params.vaultProtoConfig.toBase58(),
+          lastVaultPeriod: params.lastVaultPeriod.toBase58(),
+          currentVaultPeriod: params.currentVaultPeriod.toBase58(),
+          vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
+          vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
+          swapTokenAAccount: params.swapTokenAAccount.toBase58(),
+          swapTokenBAccount: params.swapTokenBAccount.toBase58(),
+          dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+        },
         whirlpool: params.whirlpool.toBase58(),
         tickArray0: params.tickArray0.toBase58(),
         tickArray1: params.tickArray1.toBase58(),
@@ -399,19 +404,21 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawB()
       .accounts({
-        withdrawer: withdrawer.publicKey.toBase58(),
-        vault: vault.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        vaultPeriodI: vaultPeriodI.toBase58(),
-        vaultPeriodJ: vaultPeriodJ.toBase58(),
-        userPosition: userPosition.toBase58(),
-        userPositionNftAccount: userPositionNftAccount.toBase58(),
-        vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
-        userTokenBAccount: userTokenBAccount.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        common: {
+          withdrawer: withdrawer.publicKey.toBase58(),
+          vault: vault.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          vaultPeriodI: vaultPeriodI.toBase58(),
+          vaultPeriodJ: vaultPeriodJ.toBase58(),
+          userPosition: userPosition.toBase58(),
+          userPositionNftAccount: userPositionNftAccount.toBase58(),
+          vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+          vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
+          userTokenBAccount: userTokenBAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        },
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);
@@ -436,22 +443,26 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .closePosition()
       .accounts({
-        vault: vault.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        vaultPeriodI: vaultPeriodI.toBase58(),
-        vaultPeriodJ: vaultPeriodJ.toBase58(),
+        common: {
+          vault: vault.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          vaultPeriodI: vaultPeriodI.toBase58(),
+          vaultPeriodJ: vaultPeriodJ.toBase58(),
+          userPosition: userPosition.toBase58(),
+          userPositionNftAccount: userPositionNftAccount.toBase58(),
+          vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+          vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
+          userTokenBAccount: userTokenBAccount.toBase58(),
+          withdrawer: withdrawer.publicKey.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        },
         vaultPeriodUserExpiry: vaultPeriodUserExpiry.toBase58(),
-        userPosition: userPosition.toBase58(),
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-        vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
         userTokenAAccount: userTokenAAccount.toBase58(),
-        userTokenBAccount: userTokenBAccount.toBase58(),
-        userPositionNftAccount: userPositionNftAccount.toBase58(),
         userPositionNftMint: userPositionNftMint.toBase58(),
-        withdrawer: withdrawer.publicKey.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);

@@ -28,16 +28,6 @@ pub mod drip {
         })
     }
 
-    pub fn init_vault(
-        ctx: Context<InitializeVaultAccounts>,
-        params: InitializeVaultParams,
-    ) -> Result<()> {
-        handle_action(Init::Vault {
-            accounts: ctx.accounts,
-            params,
-        })
-    }
-
     pub fn init_vault_period(
         ctx: Context<InitializeVaultPeriodAccounts>,
         params: InitializeVaultPeriodParams,
@@ -45,6 +35,7 @@ pub mod drip {
         handle_action(Init::VaultPeriod {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 
@@ -52,6 +43,19 @@ pub mod drip {
         handle_action(Deposit::WithoutMetadata {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
+        })
+    }
+
+    pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
+        handle_action(Withdraw::WithoutClosePosition {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn close_position(ctx: Context<ClosePositionAccounts>) -> Result<()> {
+        handle_action(Withdraw::WithClosePosition {
+            accounts: ctx.accounts,
         })
     }
 
@@ -62,6 +66,7 @@ pub mod drip {
         handle_action(Deposit::WithMetadata {
             accounts: ctx.accounts,
             params,
+            bumps: ctx.bumps,
         })
     }
 
@@ -79,16 +84,26 @@ pub mod drip {
 
     // Admin Ix's
 
-    // pub fn init_vault(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
-    //     init_vault::handler(ctx, params)
-    // }
+    pub fn init_vault(
+        ctx: Context<InitializeVaultAccounts>,
+        params: InitializeVaultParams,
+    ) -> Result<()> {
+        handle_action(Admin::InitVault {
+            accounts: ctx.accounts,
+            params,
+            bumps: ctx.bumps,
+        })
+    }
 
-    // pub fn update_vault_whitelisted_swaps(
-    //     ctx: Context<UpdateVaultWhitelistedSwaps>,
-    //     params: UpdateVaultWhitelistedSwapsParams,
-    // ) -> Result<()> {
-    //     update_vault_swap_whitelist::handler(ctx, params)
-    // }
+    pub fn set_vault_swap_whitelist(
+        ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
+        params: UpdateVaultWhitelistedSwapsParams,
+    ) -> Result<()> {
+        handle_action(Admin::SetVaultSwapWhitelist {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {

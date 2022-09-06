@@ -1,9 +1,13 @@
-use crate::errors::ErrorCode::CannotGetVaultBump;
+use crate::errors::DripError::CannotGetVaultBump;
 use crate::math::calculate_drip_activation_timestamp;
 use crate::state::traits::PDA;
 use crate::state::VaultPeriod;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
+
+pub const VAULT_SWAP_WHITELIST_SIZE: usize = 5;
+pub const MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE: u16 = 0;
+pub const MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE: u16 = 10_000;
 
 #[account]
 #[derive(Default)]
@@ -12,13 +16,13 @@ pub struct Vault {
     // allocation needed: ceil( (378+8)/8 )*8 -> 392
 
     // Account relations
-    pub proto_config: Pubkey,             // 32
-    pub token_a_mint: Pubkey,             // 32
-    pub token_b_mint: Pubkey,             // 32
-    pub token_a_account: Pubkey,          // 32
-    pub token_b_account: Pubkey,          // 32
-    pub treasury_token_b_account: Pubkey, // 32
-    pub whitelisted_swaps: [Pubkey; 5],   // 32*5
+    pub proto_config: Pubkey,                                   // 32
+    pub token_a_mint: Pubkey,                                   // 32
+    pub token_b_mint: Pubkey,                                   // 32
+    pub token_a_account: Pubkey,                                // 32
+    pub token_b_account: Pubkey,                                // 32
+    pub treasury_token_b_account: Pubkey,                       // 32
+    pub whitelisted_swaps: [Pubkey; VAULT_SWAP_WHITELIST_SIZE], // 32*5
 
     // Data
     // 1 to N
@@ -43,8 +47,7 @@ impl Vault {
         token_a_account: Pubkey,
         token_b_account: Pubkey,
         treasury_token_b_account: Pubkey,
-        whitelisted_swaps: [Pubkey; 5],
-        limit_swaps: bool,
+        whitelisted_swaps: Vec<Pubkey>,
         max_slippage_bps: u16,
         granularity: u64,
         bump: Option<&u8>,
@@ -55,8 +58,6 @@ impl Vault {
         self.token_a_account = token_a_account;
         self.token_b_account = token_b_account;
         self.treasury_token_b_account = treasury_token_b_account;
-        self.whitelisted_swaps = whitelisted_swaps;
-        self.limit_swaps = limit_swaps;
         self.max_slippage_bps = max_slippage_bps;
 
         self.last_drip_period = 0;
@@ -66,6 +67,8 @@ impl Vault {
         let now = Clock::get().unwrap().unix_timestamp;
         self.drip_activation_timestamp =
             calculate_drip_activation_timestamp(now, granularity, false);
+
+        self.set_whitelisted_swaps(whitelisted_swaps);
 
         match bump {
             Some(val) => {
@@ -97,9 +100,12 @@ impl Vault {
             calculate_drip_activation_timestamp(now, granularity, true);
     }
 
-    pub fn update_whitelisted_swaps(&mut self, whitelisted_swaps: [Pubkey; 5], limit_swaps: bool) {
-        self.limit_swaps = limit_swaps;
-        self.whitelisted_swaps = whitelisted_swaps;
+    pub fn set_whitelisted_swaps(&mut self, whitelisted_swaps: Vec<Pubkey>) {
+        self.limit_swaps = !whitelisted_swaps.is_empty();
+        self.whitelisted_swaps = Default::default();
+        for (i, &swap) in whitelisted_swaps.iter().enumerate() {
+            self.whitelisted_swaps[i] = swap;
+        }
     }
 
     pub fn is_drip_activated(&self) -> bool {
