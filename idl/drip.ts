@@ -317,7 +317,7 @@ export type Drip = {
       name: "depositWithMetadata";
       accounts: [
         {
-          name: "depositAccounts";
+          name: "common";
           accounts: [
             {
               name: "depositor";
@@ -1446,7 +1446,7 @@ export const IDL: Drip = {
       name: "depositWithMetadata",
       accounts: [
         {
-          name: "depositAccounts",
+          name: "common",
           accounts: [
             {
               name: "depositor",

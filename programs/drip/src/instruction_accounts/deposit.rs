@@ -100,7 +100,7 @@ pub struct DepositAccounts<'info> {
 
 #[derive(Accounts)]
 pub struct DepositWithMetadataAccounts<'info> {
-    pub deposit_accounts: DepositAccounts<'info>,
+    pub common: DepositAccounts<'info>,
 
     /// CHECK: Checked by metaplex's program
     #[account(mut)]

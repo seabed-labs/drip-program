@@ -38,7 +38,7 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
 
             Deposit::WithMetadata {
                 accounts, params, ..
-            } => validate_common(&accounts.deposit_accounts, params),
+            } => validate_common(&accounts.common, params),
         }
     }
 }
@@ -147,44 +147,44 @@ fn deposit_with_metadata(
     bumps: BTreeMap<String, u8>,
 ) -> Result<()> {
     let token_transfer = TransferToken::new(
-        &accounts.deposit_accounts.token_program,
-        &accounts.deposit_accounts.user_token_a_account,
-        &accounts.deposit_accounts.vault_token_a_account,
-        &accounts.deposit_accounts.vault.to_account_info(),
+        &accounts.common.token_program,
+        &accounts.common.user_token_a_account,
+        &accounts.common.vault_token_a_account,
+        &accounts.common.vault.to_account_info(),
         params.token_a_deposit_amount,
     );
 
     let mint_position_nft = MintToken::new(
-        &accounts.deposit_accounts.token_program,
-        &accounts.deposit_accounts.user_position_nft_mint,
-        &accounts.deposit_accounts.user_position_nft_account,
-        &accounts.deposit_accounts.vault.to_account_info(),
+        &accounts.common.token_program,
+        &accounts.common.user_position_nft_mint,
+        &accounts.common.user_position_nft_account,
+        &accounts.common.vault.to_account_info(),
         1,
     );
 
     let create_token_metadata = CreateTokenMetadata::new(
         &accounts.metadata_program,
-        &accounts.deposit_accounts.system_program,
+        &accounts.common.system_program,
         &accounts.position_metadata_account,
-        &accounts.deposit_accounts.user_position_nft_mint,
-        &accounts.deposit_accounts.vault.to_account_info(),
-        &accounts.deposit_accounts.depositor.to_account_info(),
-        &accounts.deposit_accounts.rent,
-        get_metadata_url(&accounts.deposit_accounts.user_position_nft_mint.key()),
+        &accounts.common.user_position_nft_mint,
+        &accounts.common.vault.to_account_info(),
+        &accounts.common.depositor.to_account_info(),
+        &accounts.common.rent,
+        get_metadata_url(&accounts.common.user_position_nft_mint.key()),
     );
 
     let revoke_position_nft_auth = SetMintAuthority::new(
-        &accounts.deposit_accounts.token_program,
-        &accounts.deposit_accounts.user_position_nft_mint,
-        &accounts.deposit_accounts.vault.to_account_info(),
+        &accounts.common.token_program,
+        &accounts.common.user_position_nft_mint,
+        &accounts.common.vault.to_account_info(),
         None,
     );
 
     /* STATE UPDATES (EFFECTS) */
-    update_state(&mut accounts.deposit_accounts, params, bumps)?;
+    update_state(&mut accounts.common, params, bumps)?;
 
     /* MANUAL CPI (INTERACTIONS) */
-    let signer: &Vault = accounts.deposit_accounts.vault.as_ref();
+    let signer: &Vault = accounts.common.vault.as_ref();
     token_transfer.execute(signer)?;
     mint_position_nft.execute(signer)?;
     create_token_metadata.execute(signer)?;

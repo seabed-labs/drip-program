@@ -268,7 +268,7 @@ export class VaultUtil extends TestUtil {
         numberOfSwaps: input.params.numberOfSwaps,
       })
       .accounts({
-        depositAccounts: {
+        common: {
           vault: input.accounts.vault.toBase58(),
           vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
           userPosition: input.accounts.userPosition.toBase58(),
