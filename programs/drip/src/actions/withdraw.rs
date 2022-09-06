@@ -26,8 +26,8 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
             Withdraw::WithoutClosePosition { accounts } => {
                 validate_common(&accounts.common)?;
                 let WithdrawalAmountB {
-                    withdrawable_amount_b_before_fees: _withdrawable_amount_b_before_fees,
-                    withdrawal_spread_amount_b: _withdrawal_spread_amount_b,
+                    withdrawable_amount_b_before_fees: _,
+                    withdrawal_spread_amount_b: _,
                     withdrawable_amount_b,
                 } = get_withdrawal_amount_b(&accounts.common);
                 if withdrawable_amount_b == 0 {
@@ -135,7 +135,6 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                 );
 
                 /* STATE UPDATES (EFFECTS) */
-
                 // Update the user's position state to reflect the newly withdrawn amount
                 accounts.common.user_position.close();
                 // Only reduce drip amount and dar if we haven't done so already
@@ -153,6 +152,7 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                         );
                 }
 
+                /* MANUAL CPI (INTERACTIONS) */
                 let signer: &Vault = &accounts.common.vault;
                 if let Some(transfer) = transfer_a_to_user {
                     transfer.execute(signer)?;
@@ -202,6 +202,7 @@ fn execute_withdraw_b<'info>(accounts: &mut WithdrawCommonAccounts<'info>) -> Re
         .user_position
         .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
 
+    /* MANUAL CPI (INTERACTIONS) */
     let signer: &Vault = &accounts.vault;
     if let Some(transfer) = transfer_b_to_treasury {
         transfer.execute(signer)?;
