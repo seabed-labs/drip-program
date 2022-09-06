@@ -1,4 +1,5 @@
 use crate::errors::DripError;
+use crate::state::MAX_TOKEN_SPREAD_INCLUSIVE;
 use crate::{
     instruction_accounts::{
         InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
@@ -28,8 +29,8 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 if params.granularity == 0 {
                     return Err(DripError::InvalidGranularity.into());
                 }
-                if params.token_a_drip_trigger_spread >= 5000
-                    || params.token_b_withdrawal_spread >= 5000
+                if params.token_a_drip_trigger_spread >= MAX_TOKEN_SPREAD_INCLUSIVE
+                    || params.token_b_withdrawal_spread >= MAX_TOKEN_SPREAD_INCLUSIVE
                 {
                     return Err(DripError::InvalidSpread.into());
                 }
