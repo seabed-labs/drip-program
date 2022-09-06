@@ -1,10 +1,13 @@
 use crate::state::traits::{Executable, Validatable};
-use crate::{validate, ClosePositionAccounts, WithdrawBAccounts, CPI};
+use crate::{validate, ClosePositionAccounts, WithdrawBAccounts, WithdrawCommonAccounts, CPI};
 use std::cmp::min;
 
 use crate::errors::DripError;
+use crate::interactions::burn_token::BurnToken;
 use crate::interactions::transfer_token::TransferToken;
-use crate::math::{calculate_spread_amount, calculate_withdraw_token_b_amount};
+use crate::math::{
+    calculate_spread_amount, calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount,
+};
 use crate::state::Vault;
 use anchor_lang::prelude::*;
 
@@ -21,12 +24,12 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Withdraw::WithoutClosePosition { accounts } => {
-                validate_common(accounts)?;
+                validate_common(&accounts.common)?;
                 let WithdrawalAmountB {
                     withdrawable_amount_b_before_fees: _withdrawable_amount_b_before_fees,
                     withdrawal_spread_amount_b: _withdrawal_spread_amount_b,
                     withdrawable_amount_b,
-                } = get_withdrawal_amount_b(accounts);
+                } = get_withdrawal_amount_b(&accounts.common);
                 if withdrawable_amount_b == 0 {
                     return Err(DripError::WithdrawableAmountIsZero.into());
                 }
@@ -37,7 +40,7 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
     }
 }
 
-fn validate_common(accounts: &WithdrawBAccounts) -> Result<()> {
+fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
     validate!(
         accounts.vault_proto_config.key() == accounts.vault.proto_config,
         DripError::InvalidVaultProtoConfigReference
@@ -103,50 +106,110 @@ fn validate_common(accounts: &WithdrawBAccounts) -> Result<()> {
 impl<'a, 'info> Executable for Withdraw<'a, 'info> {
     fn execute(self) -> Result<()> {
         match self {
-            Withdraw::WithoutClosePosition { accounts } => {
+            Withdraw::WithoutClosePosition { accounts } => execute_withdraw_b(&mut accounts.common),
+            Withdraw::WithClosePosition { accounts } => {
+                // withdrawB's execute is a subset of close position (they have slightly different validation)
+                execute_withdraw_b(&mut accounts.common)?;
+
                 /* COMPUTE (CHECKS) */
-                let WithdrawalAmountB {
-                    withdrawable_amount_b_before_fees,
-                    withdrawal_spread_amount_b,
-                    withdrawable_amount_b,
-                } = get_withdrawal_amount_b(accounts);
-                // If for some rounding reason we have 0 zero spread, don't error out
-                let transfer_b_to_treasury = if withdrawal_spread_amount_b != 0 {
+                let withdrawable_amount_a = get_withdrawal_amount_a(&accounts.common);
+
+                let transfer_a_to_user = if withdrawable_amount_a != 0 {
                     Some(TransferToken::new(
-                        &accounts.token_program,
-                        &accounts.vault_token_b_account,
-                        &accounts.vault_treasury_token_b_account,
-                        &accounts.vault.to_account_info(),
-                        withdrawal_spread_amount_b,
+                        &accounts.common.token_program,
+                        &accounts.vault_token_a_account,
+                        &accounts.user_token_a_account,
+                        &accounts.common.vault.to_account_info(),
+                        withdrawable_amount_a,
                     ))
                 } else {
                     None
                 };
-                let transfer_b_to_user = TransferToken::new(
-                    &accounts.token_program,
-                    &accounts.vault_token_b_account,
-                    &accounts.user_token_b_account,
-                    &accounts.vault.to_account_info(),
-                    withdrawable_amount_b,
+
+                let burn_position = BurnToken::new(
+                    &accounts.common.token_program,
+                    &accounts.user_position_nft_mint,
+                    &accounts.common.user_position_nft_account,
+                    &accounts.common.vault.to_account_info(),
+                    1,
                 );
 
                 /* STATE UPDATES (EFFECTS) */
 
                 // Update the user's position state to reflect the newly withdrawn amount
-                accounts
-                    .user_position
-                    .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
+                accounts.common.user_position.close();
+                // Only reduce drip amount and dar if we haven't done so already
+                if accounts.common.vault_period_j.period_id
+                    < accounts.vault_period_user_expiry.period_id
+                {
+                    accounts
+                        .common
+                        .vault
+                        .decrease_drip_amount(accounts.common.user_position.periodic_drip_amount);
+                    accounts
+                        .vault_period_user_expiry
+                        .decrease_drip_amount_to_reduce(
+                            accounts.common.user_position.periodic_drip_amount,
+                        );
+                }
 
-                let signer: &Vault = &accounts.vault;
-                if let Some(transfer) = transfer_b_to_treasury {
+                let signer: &Vault = &accounts.common.vault;
+                if let Some(transfer) = transfer_a_to_user {
                     transfer.execute(signer)?;
                 }
-                transfer_b_to_user.execute(signer)?;
+                burn_position.execute(signer)?;
+
                 Ok(())
             }
-            Withdraw::WithClosePosition { .. } => todo!(),
         }
     }
+}
+
+fn execute_withdraw_b<'info>(accounts: &mut WithdrawCommonAccounts<'info>) -> Result<()> {
+    /* COMPUTE (CHECKS) */
+    let WithdrawalAmountB {
+        withdrawable_amount_b_before_fees,
+        withdrawal_spread_amount_b,
+        withdrawable_amount_b,
+    } = get_withdrawal_amount_b(accounts);
+    // If for some rounding reason we have 0 zero spread, don't error out
+    let transfer_b_to_treasury = if withdrawal_spread_amount_b != 0 {
+        Some(TransferToken::new(
+            &accounts.token_program,
+            &accounts.vault_token_b_account,
+            &accounts.vault_treasury_token_b_account,
+            &accounts.vault.to_account_info(),
+            withdrawal_spread_amount_b,
+        ))
+    } else {
+        None
+    };
+    let transfer_b_to_user = if withdrawable_amount_b != 0 {
+        Some(TransferToken::new(
+            &accounts.token_program,
+            &accounts.vault_token_b_account,
+            &accounts.user_token_b_account,
+            &accounts.vault.to_account_info(),
+            withdrawable_amount_b,
+        ))
+    } else {
+        None
+    };
+
+    /* STATE UPDATES (EFFECTS) */
+    // Update the user's position state to reflect the newly withdrawn amount
+    accounts
+        .user_position
+        .increase_withdrawn_amount(withdrawable_amount_b_before_fees);
+
+    let signer: &Vault = &accounts.vault;
+    if let Some(transfer) = transfer_b_to_treasury {
+        transfer.execute(signer)?;
+    }
+    if let Some(transfer) = transfer_b_to_user {
+        transfer.execute(signer)?;
+    }
+    Ok(())
 }
 
 struct WithdrawalAmountB {
@@ -154,7 +217,8 @@ struct WithdrawalAmountB {
     pub withdrawal_spread_amount_b: u64,
     pub withdrawable_amount_b: u64,
 }
-fn get_withdrawal_amount_b(accounts: &WithdrawBAccounts) -> WithdrawalAmountB {
+
+fn get_withdrawal_amount_b(accounts: &WithdrawCommonAccounts) -> WithdrawalAmountB {
     let i = accounts.vault_period_i.period_id;
     let j = accounts.vault_period_j.period_id;
     let max_withdrawable_amount_b = calculate_withdraw_token_b_amount(
@@ -182,4 +246,17 @@ fn get_withdrawal_amount_b(accounts: &WithdrawBAccounts) -> WithdrawalAmountB {
         withdrawal_spread_amount_b,
         withdrawable_amount_b,
     }
+}
+
+fn get_withdrawal_amount_a(accounts: &WithdrawCommonAccounts) -> u64 {
+    let i = accounts.vault_period_i.period_id;
+    let j = accounts.vault_period_j.period_id;
+
+    // Token A is only transferred with close_position ix
+    calculate_withdraw_token_a_amount(
+        i,
+        j,
+        accounts.user_position.number_of_swaps,
+        accounts.user_position.periodic_drip_amount,
+    )
 }

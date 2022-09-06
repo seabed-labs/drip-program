@@ -6,11 +6,13 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
-pub struct WithdrawBAccounts<'info> {
+pub struct WithdrawCommonAccounts<'info> {
     pub withdrawer: Signer<'info>,
 
     /* DRIP ACCOUNTS */
     #[account(
+        // mut needed for close_position
+        mut,
         seeds = [
             b"drip-v1".as_ref(),
             vault.token_a_mint.as_ref(),
@@ -68,6 +70,8 @@ pub struct WithdrawBAccounts<'info> {
 
     /* TOKEN ACCOUNTS */
     #[account(
+        // mut needed for close_position 
+        mut,
         constraint = user_position_nft_account.mint == user_position.position_authority @DripError::InvalidMint,
         constraint = user_position_nft_account.owner == withdrawer.key(),
         constraint = user_position_nft_account.amount == 1,
@@ -102,11 +106,15 @@ pub struct WithdrawBAccounts<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-//  TODO: Dedupe with above
+#[derive(Accounts)]
+pub struct WithdrawBAccounts<'info> {
+    pub common: WithdrawCommonAccounts<'info>,
+}
+
 #[derive(Accounts)]
 pub struct ClosePositionAccounts<'info> {
-    pub common: WithdrawBAccounts<'info>,
-    /* CLOSE POSITION SPECIFIC ACCOUNTS */
+    pub common: WithdrawCommonAccounts<'info>,
+
     #[account(
         // mut needed because we are changing state
         mut,

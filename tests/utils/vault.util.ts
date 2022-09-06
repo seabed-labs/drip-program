@@ -405,19 +405,21 @@ export class VaultUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawB()
       .accounts({
-        withdrawer: withdrawer.publicKey.toBase58(),
-        vault: vault.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        vaultPeriodI: vaultPeriodI.toBase58(),
-        vaultPeriodJ: vaultPeriodJ.toBase58(),
-        userPosition: userPosition.toBase58(),
-        userPositionNftAccount: userPositionNftAccount.toBase58(),
-        vaultTokenBAccount: vaultTokenBAccount.toBase58(),
-        vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
-        userTokenBAccount: userTokenBAccount.toBase58(),
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        common: {
+          withdrawer: withdrawer.publicKey.toBase58(),
+          vault: vault.toBase58(),
+          vaultProtoConfig: vaultProtoConfig.toBase58(),
+          vaultPeriodI: vaultPeriodI.toBase58(),
+          vaultPeriodJ: vaultPeriodJ.toBase58(),
+          userPosition: userPosition.toBase58(),
+          userPositionNftAccount: userPositionNftAccount.toBase58(),
+          vaultTokenBAccount: vaultTokenBAccount.toBase58(),
+          vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
+          userTokenBAccount: userTokenBAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+        },
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);
@@ -448,10 +450,10 @@ export class VaultUtil extends TestUtil {
           vaultPeriodI: vaultPeriodI.toBase58(),
           vaultPeriodJ: vaultPeriodJ.toBase58(),
           userPosition: userPosition.toBase58(),
+          userPositionNftAccount: userPositionNftAccount.toBase58(),
           vaultTokenBAccount: vaultTokenBAccount.toBase58(),
           vaultTreasuryTokenBAccount: vaultTreasuryTokenBAccount.toBase58(),
           userTokenBAccount: userTokenBAccount.toBase58(),
-          userPositionNftAccount: userPositionNftAccount.toBase58(),
           withdrawer: withdrawer.publicKey.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
