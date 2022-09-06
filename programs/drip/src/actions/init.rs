@@ -1,5 +1,7 @@
-use crate::errors::DripError;
-use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
+use crate::errors::DripError::{
+    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod, InvalidGranularity, InvalidSpread,
+    InvalidVaultProtoConfigReference,
+};
 use crate::state::MAX_TOKEN_SPREAD_INCLUSIVE;
 use crate::{
     instruction_accounts::{
@@ -40,18 +42,17 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 accounts, params, ..
             } => {
                 // Relation Checks
-                if accounts.vault_proto_config.key() != accounts.vault.proto_config {
-                    return Err(DripError::InvalidVaultProtoConfigReference.into());
-                }
+                validate!(
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
+                    InvalidVaultProtoConfigReference
+                );
                 // Business Checks
                 // TODO(Mocha): do we even need this for init_vault_period?
-                if !(params.period_id > accounts.vault.last_drip_period
-                    || (params.period_id == 0 && accounts.vault.last_drip_period == 0))
-                {
-                    return Err(
-                        DripError::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod.into(),
-                    );
-                }
+                validate!(
+                    params.period_id > accounts.vault.last_drip_period
+                        || (params.period_id == 0 && accounts.vault.last_drip_period == 0),
+                    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
+                );
                 Ok(())
             }
         }
@@ -167,6 +168,6 @@ mod tests {
             params: initialize_vault_proto_config_params,
         };
         let res = vault_proto_config_action.validate();
-        assert_eq!(res, Err(DripError::InvalidGranularity.into()));
+        assert_eq!(res, Err(InvalidGranularity.into()));
     }
 }
