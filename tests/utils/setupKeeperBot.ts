@@ -76,6 +76,7 @@ export function setupKeeperBot() {
         granularity,
         5,
         5,
+        10,
         tokenOwnerKeypair.publicKey
       );
     }

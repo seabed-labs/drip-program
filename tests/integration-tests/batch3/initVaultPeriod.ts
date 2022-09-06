@@ -36,6 +36,7 @@ export function testInitVaultPeriod() {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
+        tokenBReferralSpread: 10,
         admin: TestUtil.provider.wallet.publicKey,
       }),
     ]);
@@ -86,8 +87,6 @@ export function testInitVaultPeriod() {
       vaultPubkey,
       vaultPeriodPubkey,
       vaultProtoConfigPubkey,
-      tokenAMint,
-      tokenBMint,
       69
     );
     const vaultPeriodAccount = await AccountUtil.fetchVaultPeriodAccount(

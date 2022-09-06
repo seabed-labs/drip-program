@@ -44,16 +44,6 @@ export type Drip = {
           isSigner: false;
         },
         {
-          name: "tokenAMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenBMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "vaultProtoConfig";
           isMut: false;
           isSigner: false;
@@ -824,6 +814,10 @@ export type Drip = {
             type: "u16";
           },
           {
+            name: "tokenBReferralSpread";
+            type: "u16";
+          },
+          {
             name: "admin";
             type: "publicKey";
           }
@@ -957,6 +951,10 @@ export type Drip = {
           },
           {
             name: "tokenBWithdrawalSpread";
+            type: "u16";
+          },
+          {
+            name: "tokenBReferralSpread";
             type: "u16";
           },
           {
@@ -1169,16 +1167,6 @@ export const IDL: Drip = {
         },
         {
           name: "vault",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenAMint",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenBMint",
           isMut: false,
           isSigner: false,
         },
@@ -1953,6 +1941,10 @@ export const IDL: Drip = {
             type: "u16",
           },
           {
+            name: "tokenBReferralSpread",
+            type: "u16",
+          },
+          {
             name: "admin",
             type: "publicKey",
           },
@@ -2086,6 +2078,10 @@ export const IDL: Drip = {
           },
           {
             name: "tokenBWithdrawalSpread",
+            type: "u16",
+          },
+          {
+            name: "tokenBReferralSpread",
             type: "u16",
           },
           {

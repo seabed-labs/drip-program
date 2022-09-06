@@ -26,6 +26,7 @@ export class AccountUtil extends TestUtil {
       | "granularity"
       | "tokenADripTriggerSpread"
       | "tokenBWithdrawalSpread"
+      | "tokenBReferralSpread"
       | "admin"
     >
   > {

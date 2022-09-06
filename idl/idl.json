@@ -44,16 +44,6 @@
           "isSigner": false
         },
         {
-          "name": "tokenAMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenBMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "vaultProtoConfig",
           "isMut": false,
           "isSigner": false
@@ -824,6 +814,10 @@
             "type": "u16"
           },
           {
+            "name": "tokenBReferralSpread",
+            "type": "u16"
+          },
+          {
             "name": "admin",
             "type": "publicKey"
           }
@@ -957,6 +951,10 @@
           },
           {
             "name": "tokenBWithdrawalSpread",
+            "type": "u16"
+          },
+          {
+            "name": "tokenBReferralSpread",
             "type": "u16"
           },
           {

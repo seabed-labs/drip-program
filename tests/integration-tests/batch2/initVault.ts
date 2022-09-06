@@ -13,7 +13,6 @@ import {
   PDA,
 } from "../../utils/common.util";
 import { SolUtil } from "../../utils/sol.util";
-import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 import { ProgramUtil } from "../../utils/program.util";
@@ -38,6 +37,7 @@ export function testInitVault() {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
+        tokenBReferralSpread: 10,
         admin: TestUtil.provider.wallet.publicKey,
       }),
     ]);
@@ -364,6 +364,7 @@ export function testInitVault() {
             granularity: new BN(Granularity.DAILY),
             tokenADripTriggerSpread: 100,
             tokenBWithdrawalSpread: 100,
+            tokenBReferralSpread: 25,
             admin: adminPubkey,
           })
           .accounts({

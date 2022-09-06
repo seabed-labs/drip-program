@@ -25,6 +25,7 @@ export type VaultProtoConfigParams = {
   granularity: Granularity;
   tokenADripTriggerSpread: number;
   tokenBWithdrawalSpread: number;
+  tokenBReferralSpread: number;
   admin: PublicKey;
 };
 
@@ -94,6 +95,7 @@ export class VaultUtil extends TestUtil {
         granularity: new BN(vaultProtoConfig.granularity.toString()),
         tokenADripTriggerSpread: vaultProtoConfig.tokenADripTriggerSpread,
         tokenBWithdrawalSpread: vaultProtoConfig.tokenBWithdrawalSpread,
+        tokenBReferralSpread: vaultProtoConfig.tokenBReferralSpread,
         admin: vaultProtoConfig.admin,
       })
       .accounts({
@@ -209,8 +211,6 @@ export class VaultUtil extends TestUtil {
     vault: PublicKey,
     vaultPeriod: PublicKey,
     vaultProtoConfig: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey,
     periodId: number
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
@@ -221,8 +221,6 @@ export class VaultUtil extends TestUtil {
         vault: vault.toBase58(),
         vaultPeriod: vaultPeriod.toBase58(),
         vaultProtoConfig: vaultProtoConfig.toBase58(),
-        tokenAMint: tokenAMint.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
         creator: this.provider.wallet.publicKey.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
@@ -531,6 +529,7 @@ export class VaultUtil extends TestUtil {
         granularity: 1,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
+        tokenBReferralSpread: 10,
         admin: TestUtil.provider.wallet.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;

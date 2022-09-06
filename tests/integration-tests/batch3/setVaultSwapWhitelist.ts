@@ -44,6 +44,7 @@ export function testSetVaultSwapWhitelist() {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
+        tokenBReferralSpread: 10,
         admin: adminKeypair.publicKey,
       }),
     ]);

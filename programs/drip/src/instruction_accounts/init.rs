@@ -2,13 +2,12 @@ use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
-use anchor_spl::token::Mint;
-
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultProtoConfigParams {
     pub granularity: u64,
     pub token_a_drip_trigger_spread: u16,
     pub token_b_withdrawal_spread: u16,
+    pub token_b_referral_spread: u16,
     pub admin: Pubkey,
 }
 
@@ -53,23 +52,13 @@ pub struct InitializeVaultPeriodAccounts<'info> {
     #[account(
         seeds = [
             b"drip-v1".as_ref(),
-            token_a_mint.key().as_ref(),
-            token_b_mint.key().as_ref(),
+            vault.token_a_mint.as_ref(),
+            vault.token_b_mint.as_ref(),
             vault_proto_config.key().as_ref(),
         ],
         bump = vault.bump
     )]
     pub vault: Account<'info, Vault>,
-
-    #[account(
-        constraint = token_a_mint.key() == vault.token_a_mint @DripError::InvalidMint
-    )]
-    pub token_a_mint: Account<'info, Mint>,
-
-    #[account(
-        constraint = token_b_mint.key() == vault.token_b_mint @DripError::InvalidMint
-    )]
-    pub token_b_mint: Account<'info, Mint>,
 
     #[account(
         constraint = vault_proto_config.key() == vault.proto_config

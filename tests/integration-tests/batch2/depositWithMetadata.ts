@@ -69,6 +69,7 @@ export function testDepositWithMetadata() {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
+      tokenBReferralSpread: 10,
       admin: TestUtil.provider.wallet.publicKey,
     });
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
@@ -104,8 +105,6 @@ export function testDepositWithMetadata() {
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
       69
     );
 

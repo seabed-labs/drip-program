@@ -33,7 +33,8 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 validate!(params.granularity > 0, InvalidGranularity);
                 validate!(
                     params.token_a_drip_trigger_spread < MAX_TOKEN_SPREAD_INCLUSIVE
-                        && params.token_b_withdrawal_spread < MAX_TOKEN_SPREAD_INCLUSIVE,
+                        && params.token_b_withdrawal_spread < MAX_TOKEN_SPREAD_INCLUSIVE
+                        && params.token_b_referral_spread < MAX_TOKEN_SPREAD_INCLUSIVE,
                     InvalidSpread
                 );
                 Ok(())
@@ -82,6 +83,7 @@ fn init_vault_proto_config(
         params.granularity,
         params.token_a_drip_trigger_spread,
         params.token_b_withdrawal_spread,
+        params.token_b_referral_spread,
         params.admin,
     );
     Ok(())
@@ -110,14 +112,16 @@ mod tests {
     use test_case::test_case;
 
     //  TODO: clean this up
-    #[test_case(0, 0, 0, Pubkey::new_unique(), Err(InvalidGranularity.into()); "Returns error for invalid granularity")]
-    #[test_case(1, 5001, 0, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_a_drip_trigger_spread")]
-    #[test_case(1, 10, 5001, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_withdrawal_spread")]
-    #[test_case(1, 10, 10, Pubkey::new_unique(), Ok(()) ; "Returns ok for valid params")]
+    #[test_case(0, 0, 0, 0, Pubkey::new_unique(), Err(InvalidGranularity.into()); "Returns error for invalid granularity")]
+    #[test_case(1, 5001, 0, 0, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_a_drip_trigger_spread")]
+    #[test_case(1, 10, 5001, 0, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_withdrawal_spread")]
+    #[test_case(1, 10, 10, 5001, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_referral_spread")]
+    #[test_case(1, 10, 10, 10, Pubkey::new_unique(), Ok(()) ; "Returns ok for valid params")]
     fn vault_proto_config_validate(
         granularity: u64,
         token_a_drip_trigger_spread: u16,
         token_b_withdrawal_spread: u16,
+        token_b_referral_spread: u16,
         admin: Pubkey,
         expected_res: Result<()>,
     ) {
@@ -134,6 +138,7 @@ mod tests {
                 granularity: 0,
                 token_a_drip_trigger_spread: 0,
                 token_b_withdrawal_spread: 0,
+                token_b_referral_spread: 0,
                 admin: Default::default(),
             };
             let mut buf: Vec<u8> = Vec::new();
@@ -174,6 +179,7 @@ mod tests {
             granularity,
             token_a_drip_trigger_spread,
             token_b_withdrawal_spread,
+            token_b_referral_spread,
             admin,
         };
 
