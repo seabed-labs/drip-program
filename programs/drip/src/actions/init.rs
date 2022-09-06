@@ -1,4 +1,5 @@
 use crate::errors::DripError;
+use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
 use crate::state::MAX_TOKEN_SPREAD_INCLUSIVE;
 use crate::{
     instruction_accounts::{
@@ -6,6 +7,7 @@ use crate::{
         InitializeVaultProtoConfigAccounts, InitializeVaultProtoConfigParams,
     },
     state::traits::{Executable, Validatable},
+    validate,
 };
 use anchor_lang::prelude::*;
 use std::collections::BTreeMap;
@@ -26,14 +28,12 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Init::VaultProtoConfig { params, .. } => {
-                if params.granularity == 0 {
-                    return Err(DripError::InvalidGranularity.into());
-                }
-                if params.token_a_drip_trigger_spread >= MAX_TOKEN_SPREAD_INCLUSIVE
-                    || params.token_b_withdrawal_spread >= MAX_TOKEN_SPREAD_INCLUSIVE
-                {
-                    return Err(DripError::InvalidSpread.into());
-                }
+                validate!(params.granularity > 0, InvalidGranularity);
+                validate!(
+                    params.token_a_drip_trigger_spread < MAX_TOKEN_SPREAD_INCLUSIVE
+                        && params.token_b_withdrawal_spread < MAX_TOKEN_SPREAD_INCLUSIVE,
+                    InvalidSpread
+                );
                 Ok(())
             }
             Init::VaultPeriod {
