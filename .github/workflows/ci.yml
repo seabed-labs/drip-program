@@ -79,7 +79,7 @@ jobs:
         run: anchor build
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings --A clippy::too_many_arguments
+        run: cargo clippy -- -D warnings --A clippy::too_many_arguments --A clippy::borrowed-box
 
   lint:
     runs-on: ubuntu-latest
