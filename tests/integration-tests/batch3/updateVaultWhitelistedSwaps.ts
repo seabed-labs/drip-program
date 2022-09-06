@@ -14,9 +14,9 @@ import { AccountUtil } from "../../utils/account.util";
 import { ProgramUtil } from "../../utils/program.util";
 import { TestUtil } from "../../utils/config.util";
 
-describe("#setVaultSwapWhitelist", testSetVaultSwapWhitelist);
+describe("#updateVaultWhitelistedSwaps", testUpdateVaultWhitelistedSwaps);
 
-export function testSetVaultSwapWhitelist() {
+export function testUpdateVaultWhitelistedSwaps() {
   let treasuryTokenBAccount: PublicKey;
   let adminKeypair: Keypair;
 

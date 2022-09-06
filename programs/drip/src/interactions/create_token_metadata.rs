@@ -8,12 +8,12 @@ use mpl_token_metadata::instruction::create_metadata_accounts_v3;
 const DRIP_METADATA_NAME: &str = "Drip Position";
 const DRIP_METADATA_SYMBOL: &str = "DP";
 
-pub fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
-    format!(
-        "https://api.drip.dcaf.so/v1/drip/position/{}/metadata",
-        position_nft_mint_pubkey
-    )
-}
+// fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
+//     format!(
+//         "https://api.drip.dcaf.so/v1/drip/position/{}/metadata",
+//         position_nft_mint_pubkey
+//     )
+// }
 
 // TODO: Maybe move this to another location
 #[derive(Clone)]
@@ -41,23 +41,23 @@ pub struct CreateTokenMetadata<'info> {
 
 impl<'info> CreateTokenMetadata<'info> {
     pub fn new(
-        metadata_program: &Program<'info, MetaplexTokenMetadata>,
-        system_program: &Program<'info, System>,
-        position_metadata_account: &AccountInfo<'info>,
-        mint: &Account<'info, Mint>,
-        authority: &AccountInfo<'info>,
-        payer: &AccountInfo<'info>,
-        rent: &Sysvar<'info, Rent>,
+        metadata_program: Program<'info, MetaplexTokenMetadata>,
+        system_program: Program<'info, System>,
+        position_metadata_account: AccountInfo<'info>,
+        mint: Account<'info, Mint>,
+        authority: AccountInfo<'info>,
+        payer: AccountInfo<'info>,
+        rent: Sysvar<'info, Rent>,
         metadata_uri: String,
     ) -> Self {
         CreateTokenMetadata {
-            metadata_program: metadata_program.clone(),
-            system_program: system_program.clone(),
-            position_metadata_account: position_metadata_account.clone(),
-            mint: mint.clone(),
-            authority: authority.clone(),
-            payer: payer.clone(),
-            rent: rent.clone(),
+            metadata_program,
+            system_program,
+            position_metadata_account,
+            mint,
+            authority,
+            payer,
+            rent,
             metadata_uri,
         }
     }

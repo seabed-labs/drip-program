@@ -1,4 +1,4 @@
-use crate::errors::DripError;
+use crate::errors::ErrorCode;
 use crate::math::{calculate_new_twap_amount, compute_price};
 use crate::test_account_size;
 use anchor_lang::prelude::*;
@@ -39,7 +39,7 @@ impl VaultPeriod {
                 self.bump = *val;
                 Ok(())
             }
-            None => Err(DripError::CannotGetVaultPeriodBump.into()),
+            None => Err(ErrorCode::CannotGetVaultPeriodBump.into()),
         }
     }
 

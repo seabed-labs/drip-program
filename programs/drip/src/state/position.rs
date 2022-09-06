@@ -1,4 +1,4 @@
-use crate::{errors::DripError::CannotGetPositionBump, test_account_size};
+use crate::{errors::ErrorCode::CannotGetPositionBump, test_account_size};
 use anchor_lang::prelude::*;
 
 #[account]

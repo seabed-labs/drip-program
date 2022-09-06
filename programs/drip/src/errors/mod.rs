@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[error_code]
-pub enum DripError {
+pub enum ErrorCode {
     #[msg("Cannot get position bump")]
     CannotGetPositionBump,
     #[msg("Cannot get vault bump")]
@@ -20,7 +20,7 @@ pub enum DripError {
     InvalidSpread,
     #[msg("Token Swap is Not Whitelisted")]
     InvalidSwapAccount,
-    #[msg("A Vault May Whitelist a Maximum of 5 Swap Accounts")]
+    #[msg("A Vault May Limit to a Maximum of 5 Token Swaps")]
     InvalidNumSwaps,
     #[msg("Provided account references the wrong vault-proto-config")]
     InvalidVaultProtoConfigReference,
@@ -46,10 +46,4 @@ pub enum DripError {
     NumSwapsIsZero,
     #[msg("Signer is not admin")]
     SignerIsNotAdmin,
-    #[msg("Incorrect vault token account passed in")]
-    IncorrectVaultTokenAccount,
-    #[msg("Account is owned by the wrong account")]
-    InvalidOwner,
-    #[msg("Position token account balance is empty")]
-    PositionBalanceIsZero,
 }

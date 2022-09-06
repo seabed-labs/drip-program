@@ -26,12 +26,3 @@ macro_rules! test_account_size {
         }
     };
 }
-
-#[macro_export]
-macro_rules! validate {
-    ( $condition:expr, $err:expr ) => {
-        if !($condition) {
-            return Err($err.into());
-        }
-    };
-}

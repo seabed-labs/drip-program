@@ -1,4 +1,4 @@
-use crate::errors::DripError;
+use crate::errors::ErrorCode;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::{
     calculate_spread_amount, calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount,
@@ -71,7 +71,7 @@ pub fn handle_withdraw<'info, 'withdraw>(
         .unwrap();
     // If we are not closing the position and the withdraw-able amount is 0, there is no point continuing
     if with_close_position.is_none() && withdrawable_amount_b == 0 {
-        return Err(DripError::WithdrawableAmountIsZero.into());
+        return Err(ErrorCode::WithdrawableAmountIsZero.into());
     }
 
     let transfer_a_to_user = match with_close_position.as_ref().zip(withdrawable_amount_a) {

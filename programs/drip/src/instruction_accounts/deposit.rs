@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::errors::DripError;
+use crate::errors::ErrorCode;
 use crate::interactions::create_token_metadata::MetaplexTokenMetadata;
 use crate::state::{Position, Vault, VaultPeriod};
 
@@ -13,6 +13,7 @@ pub struct DepositParams {
 }
 
 #[derive(Accounts)]
+#[instruction(params: DepositParams)]
 pub struct DepositAccounts<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
@@ -40,7 +41,9 @@ pub struct DepositAccounts<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = vault_period_end.period_id > 0 @DripError::InvalidVaultPeriod,
+        constraint = params.number_of_swaps > 0 @ErrorCode::NumSwapsIsZero,
+        constraint = vault_period_end.period_id > 0 @ErrorCode::InvalidVaultPeriod,
+        constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @ErrorCode::InvalidVaultPeriod
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
@@ -59,6 +62,8 @@ pub struct DepositAccounts<'info> {
         constraint = user_token_a_account.mint == vault.token_a_mint,
         constraint = user_token_a_account.owner == depositor.key(),
         constraint = user_token_a_account.delegate.contains(&vault.key()),
+        constraint = params.token_a_deposit_amount > 0,
+        constraint = user_token_a_account.delegated_amount >= params.token_a_deposit_amount
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -99,8 +104,9 @@ pub struct DepositAccounts<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(params: DepositParams)]
 pub struct DepositWithMetadataAccounts<'info> {
-    pub common: DepositAccounts<'info>,
+    pub deposit_accounts: DepositAccounts<'info>,
 
     /// CHECK: Checked by metaplex's program
     #[account(mut)]
