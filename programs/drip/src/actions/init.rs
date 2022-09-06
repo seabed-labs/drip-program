@@ -107,10 +107,20 @@ mod tests {
     use super::*;
     use crate::state;
     use crate::Init::VaultProtoConfig;
+    use test_case::test_case;
 
     //  TODO: clean this up
-    #[test]
-    fn test_init_vault_proto_config() {
+    #[test_case(0, 0, 0, Pubkey::new_unique(), Err(InvalidGranularity.into()); "Returns error for invalid granularity")]
+    #[test_case(1, 5001, 0, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_a_drip_trigger_spread")]
+    #[test_case(1, 10, 5001, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_withdrawal_spread")]
+    #[test_case(1, 10, 10, Pubkey::new_unique(), Ok(()) ; "Returns ok for valid params")]
+    fn vault_proto_config_validate(
+        granularity: u64,
+        token_a_drip_trigger_spread: u16,
+        token_b_withdrawal_spread: u16,
+        admin: Pubkey,
+        expected_res: Result<()>,
+    ) {
         let signer = Pubkey::new_unique();
         let system_program: Pubkey = System::id();
         let vault_proto_config = Pubkey::new_unique();
@@ -161,10 +171,10 @@ mod tests {
         };
 
         let initialize_vault_proto_config_params = InitializeVaultProtoConfigParams {
-            granularity: 0,
-            token_a_drip_trigger_spread: 0,
-            token_b_withdrawal_spread: 0,
-            admin: Default::default(),
+            granularity,
+            token_a_drip_trigger_spread,
+            token_b_withdrawal_spread,
+            admin,
         };
 
         let vault_proto_config_action = VaultProtoConfig {
@@ -172,6 +182,6 @@ mod tests {
             params: initialize_vault_proto_config_params,
         };
         let res = vault_proto_config_action.validate();
-        assert_eq!(res, Err(InvalidGranularity.into()));
+        assert_eq!(res, expected_res);
     }
 }
