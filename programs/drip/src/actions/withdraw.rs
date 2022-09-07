@@ -35,7 +35,53 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
                 }
                 Ok(())
             }
-            Withdraw::WithClosePosition { accounts } => validate_common(&accounts.common),
+            Withdraw::WithClosePosition { accounts } => {
+                validate_common(&accounts.common)?;
+                // Relation Checks
+                validate!(
+                    accounts.vault_period_user_expiry.vault == accounts.common.vault.key(),
+                    DripError::InvalidVaultReference
+                );
+                validate!(
+                    accounts.vault_token_a_account.key() == accounts.common.vault.token_a_account,
+                    DripError::IncorrectVaultTokenAccount
+                );
+                validate!(
+                    accounts.user_position_nft_mint.key()
+                        == accounts.common.user_position.position_authority,
+                    DripError::InvalidMint
+                );
+                // Intentionally not added these checks, we don't need them
+                // validate!(
+                //     accounts.user_token_a_account.owner == accounts.common.withdrawer.key(),
+                //     DripError::InvalidOwner
+                // );
+                // validate!(
+                //     accounts.user_token_a_account.mint == accounts.common.vault.token_a_mint,
+                //     DripError::InvalidMint
+                // );
+
+                // Business Checks
+                validate!(
+                    accounts.user_position_nft_mint.supply == 1
+                        && accounts.user_position_nft_mint.decimals == 0
+                        && accounts.user_position_nft_mint.is_initialized
+                        && accounts.user_position_nft_mint.mint_authority.is_none()
+                        && accounts.user_position_nft_mint.freeze_authority.is_none(),
+                    DripError::InvalidMint
+                );
+                validate!(
+                    accounts.vault_period_user_expiry.period_id
+                        == accounts
+                            .common
+                            .user_position
+                            .drip_period_id_before_deposit
+                            .checked_add(accounts.common.user_position.number_of_swaps)
+                            .unwrap(),
+                    DripError::InvalidVaultPeriod
+                );
+                Ok(())
+            }
         }
     }
 }
@@ -82,6 +128,7 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
         DripError::InvalidOwner
     );
+
     // Business Checks
     validate!(
         accounts.vault_period_i.period_id == accounts.user_position.drip_period_id_before_deposit,
@@ -100,14 +147,13 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         DripError::InvalidVaultPeriod
     );
     validate!(
-        accounts.user_position_nft_account.amount == 1,
-        DripError::PositionBalanceIsZero
-    );
-    validate!(
         !accounts.user_position.is_closed,
         DripError::PositionAlreadyClosed
     );
-
+    validate!(
+        accounts.user_position_nft_account.amount == 1,
+        DripError::PositionBalanceIsZero
+    );
     Ok(())
 }
 
