@@ -172,7 +172,7 @@ fn get_token_a_swap_amount(accounts: &DripCommonAccounts) -> u64 {
 }
 
 #[inline(never)]
-fn execute_drip<'a, 'info>(accounts: &mut DripCommonAccounts, swap: impl CPI) -> Result<()> {
+fn execute_drip(accounts: &mut DripCommonAccounts, swap: impl CPI) -> Result<()> {
     let current_drip_amount = accounts.vault.drip_amount;
     msg!("drip_amount {:?}", current_drip_amount);
 
