@@ -6,3 +6,5 @@ target
 node_modules
 .idea
 devnet-keypair.json
+.temp
+scratchpad.md

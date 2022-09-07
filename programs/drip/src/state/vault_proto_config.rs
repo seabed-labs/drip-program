@@ -1,6 +1,7 @@
+use crate::test_account_size;
 use anchor_lang::prelude::*;
 
-use crate::test_account_size;
+pub const MAX_TOKEN_SPREAD_EXCLUSIVE: u16 = 5_000;
 
 #[account]
 #[derive(Default)]

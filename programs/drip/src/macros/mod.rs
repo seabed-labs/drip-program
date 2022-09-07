@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! sign {
     ( $x:ident ) => {
-        &[&$x.seeds()[..], &[[$x.bump].as_ref()][..]].concat()
+        &[&$x.seeds()[..], &[[$x.bump()].as_ref()][..]].concat()
     };
 }
 
@@ -23,6 +23,15 @@ macro_rules! test_account_size {
                     $x::ACCOUNT_SPACE
                 );
             }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! validate {
+    ( $condition:expr, $err:expr ) => {
+        if !($condition) {
+            return Err($err.into());
         }
     };
 }

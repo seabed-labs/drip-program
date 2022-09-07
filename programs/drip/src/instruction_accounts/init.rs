@@ -1,15 +1,40 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct InitializeVaultProtoConfigParams {
+    pub granularity: u64,
+    pub token_a_drip_trigger_spread: u16,
+    pub token_b_withdrawal_spread: u16,
+    pub token_b_referral_spread: u16,
+    pub admin: Pubkey,
+}
+
+#[derive(Accounts)]
+pub struct InitializeVaultProtoConfigAccounts<'info> {
+    // mut needed because we are initializing the account
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
+    #[account(
+        init,
+        space = VaultProtoConfig::ACCOUNT_SPACE,
+        payer = creator
+    )]
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultPeriodParams {
-    period_id: u64,
+    pub period_id: u64,
 }
 
 #[derive(Accounts)]
 #[instruction(params: InitializeVaultPeriodParams)]
-pub struct InitializeVaultPeriod<'info> {
+pub struct InitializeVaultPeriodAccounts<'info> {
     #[account(
         init,
         space = VaultPeriod::ACCOUNT_SPACE,
@@ -20,9 +45,9 @@ pub struct InitializeVaultPeriod<'info> {
         ],
         bump,
         payer = creator,
-        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @ErrorCode::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
+        constraint = (params.period_id > vault.last_drip_period || (params.period_id == 0 && vault.last_drip_period == 0)) @DripError::CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
     )]
-    vault_period: Account<'info, VaultPeriod>,
+    pub vault_period: Account<'info, VaultPeriod>,
 
     #[account(
         seeds = [
@@ -33,7 +58,7 @@ pub struct InitializeVaultPeriod<'info> {
         ],
         bump = vault.bump
     )]
-    vault: Account<'info, Vault>,
+    pub vault: Account<'info, Vault>,
 
     #[account(
         constraint = vault_proto_config.key() == vault.proto_config
@@ -44,20 +69,4 @@ pub struct InitializeVaultPeriod<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
     pub system_program: Program<'info, System>,
-}
-
-pub fn handler(
-    ctx: Context<InitializeVaultPeriod>,
-    params: InitializeVaultPeriodParams,
-) -> Result<()> {
-    let vault_period = &mut ctx.accounts.vault_period;
-
-    vault_period.init(
-        ctx.accounts.vault.key(),
-        params.period_id,
-        ctx.bumps.get("vault_period"),
-    )?;
-
-    msg!("Initialized VaultPeriod");
-    Ok(())
 }

@@ -1,10 +1,9 @@
-use crate::errors::ErrorCode;
-use crate::interactions::drip_utils::{handle_drip, SPLTokenSwapAccounts};
+use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::Mint;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
+use whirlpool::state::Whirlpool;
 
 #[derive(Clone)]
 pub struct TokenSwap;
@@ -15,8 +14,17 @@ impl Id for TokenSwap {
     }
 }
 
+#[derive(Clone)]
+pub struct WhirlpoolProgram;
+
+impl Id for WhirlpoolProgram {
+    fn id() -> Pubkey {
+        whirlpool::ID
+    }
+}
+
 #[derive(Accounts)]
-pub struct DripSPLTokenSwap<'info> {
+pub struct DripCommonAccounts<'info> {
     // User that triggers the Drip
     pub drip_trigger_source: Signer<'info>,
 
@@ -34,7 +42,7 @@ pub struct DripSPLTokenSwap<'info> {
     pub vault: Box<Account<'info, Vault>>,
 
     #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @ErrorCode::InvalidVaultProtoConfigReference
+        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
@@ -45,8 +53,8 @@ pub struct DripSPLTokenSwap<'info> {
             last_vault_period.period_id.to_string().as_bytes()
         ],
         bump = last_vault_period.bump,
-        constraint = last_vault_period.period_id == vault.last_drip_period @ErrorCode::InvalidVaultPeriod,
-        constraint = last_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
+        constraint = last_vault_period.period_id == vault.last_drip_period @DripError::InvalidVaultPeriod,
+        constraint = last_vault_period.vault == vault.key() @DripError::InvalidVaultPeriod
     )]
     pub last_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -59,8 +67,8 @@ pub struct DripSPLTokenSwap<'info> {
             current_vault_period.period_id.to_string().as_bytes()
         ],
         bump = current_vault_period.bump,
-        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap() @ErrorCode::InvalidVaultPeriod,
-        constraint = current_vault_period.vault == vault.key() @ErrorCode::InvalidVaultPeriod
+        constraint = current_vault_period.period_id == vault.last_drip_period.checked_add(1).unwrap() @DripError::InvalidVaultPeriod,
+        constraint = current_vault_period.vault == vault.key() @DripError::InvalidVaultPeriod
     )]
     pub current_vault_period: Box<Account<'info, VaultPeriod>>,
 
@@ -75,7 +83,7 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = vault_token_b_account.mint == vault.token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = vault_token_b_account.mint == vault.token_b_mint.key() @DripError::InvalidMint,
         constraint = vault_token_b_account.owner == vault.key(),
     )]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -83,21 +91,19 @@ pub struct DripSPLTokenSwap<'info> {
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = swap_token_a_account.owner == swap_authority.key()
     )]
     pub swap_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = swap_token_b_account.owner == swap_authority.key()
     )]
     pub swap_token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         // mut needed because we are changing balance
         mut,
-        constraint = drip_fee_token_a_account.mint == vault.token_a_mint.key() @ErrorCode::InvalidMint,
+        constraint = drip_fee_token_a_account.mint == vault.token_a_mint.key() @DripError::InvalidMint,
     )]
     pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -108,8 +114,12 @@ pub struct DripSPLTokenSwap<'info> {
     pub system_program: Program<'info, System>,
 
     pub rent: Sysvar<'info, Rent>,
+}
 
-    // SPL Token Swap Specific Accounts
+#[derive(Accounts)]
+pub struct DripSPLTokenSwapAccounts<'info> {
+    pub common: DripCommonAccounts<'info>,
+
     /// CHECK: Checked by token-swap program
     pub swap: UncheckedAccount<'info>,
 
@@ -131,25 +141,27 @@ pub struct DripSPLTokenSwap<'info> {
     pub token_swap_program: Program<'info, TokenSwap>,
 }
 
-pub fn handler(ctx: Context<DripSPLTokenSwap>) -> Result<()> {
-    handle_drip(
-        &mut ctx.accounts.vault,
-        &ctx.accounts.vault_proto_config,
-        &mut ctx.accounts.vault_token_a_account,
-        &mut ctx.accounts.vault_token_b_account,
-        &mut ctx.accounts.drip_fee_token_a_account,
-        &ctx.accounts.last_vault_period,
-        &mut ctx.accounts.current_vault_period,
-        &mut ctx.accounts.swap_token_a_account,
-        &mut ctx.accounts.swap_token_b_account,
-        &ctx.accounts.token_program,
-        Some(SPLTokenSwapAccounts {
-            swap: &ctx.accounts.swap,
-            swap_token_mint: &ctx.accounts.swap_token_mint,
-            swap_fee_account: &ctx.accounts.swap_fee_account,
-            swap_authority: &ctx.accounts.swap_authority,
-            token_swap_program: &ctx.accounts.token_swap_program,
-        }),
-        None,
-    )
+#[derive(Accounts)]
+pub struct DripOrcaWhirlpoolAccounts<'info> {
+    pub common: DripCommonAccounts<'info>,
+
+    #[account(mut)]
+    pub whirlpool: Box<Account<'info, Whirlpool>>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_0: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_1: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_2: UncheckedAccount<'info>,
+
+    /// CHECK: Checked by Whirlpool
+    pub oracle: UncheckedAccount<'info>,
+
+    pub whirlpool_program: Program<'info, WhirlpoolProgram>,
 }

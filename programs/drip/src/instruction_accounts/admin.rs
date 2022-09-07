@@ -1,4 +1,4 @@
-use crate::errors::ErrorCode;
+use crate::errors::DripError;
 use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
@@ -7,14 +7,14 @@ use spl_token::state::AccountState;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
-    max_slippage_bps: u16,
-    whitelisted_swaps: Vec<Pubkey>,
+    pub max_slippage_bps: u16,
+    pub whitelisted_swaps: Vec<Pubkey>,
 }
 
 #[derive(Accounts)]
-pub struct InitializeVault<'info> {
+pub struct InitializeVaultAccounts<'info> {
     // mut needed because we are initializing the account
-    #[account(mut, address = vault_proto_config.admin @ErrorCode::OnlyAdminCanInitVault)]
+    #[account(mut, address = vault_proto_config.admin @DripError::OnlyAdminCanInitVault)]
     pub creator: Signer<'info>,
 
     /* DRIP ACCOUNTS */
@@ -52,7 +52,7 @@ pub struct InitializeVault<'info> {
     pub token_b_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
-        constraint = treasury_token_b_account.mint == token_b_mint.key() @ErrorCode::InvalidMint,
+        constraint = treasury_token_b_account.mint == token_b_mint.key() @DripError::InvalidMint,
         constraint = treasury_token_b_account.state == AccountState::Initialized
     )]
     pub treasury_token_b_account: Box<Account<'info, TokenAccount>>,
@@ -72,37 +72,34 @@ pub struct InitializeVault<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<InitializeVault>, params: InitializeVaultParams) -> Result<()> {
-    if params.whitelisted_swaps.len() > 5 {
-        return Err(ErrorCode::InvalidNumSwaps.into());
-    }
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct UpdateVaultWhitelistedSwapsParams {
+    pub whitelisted_swaps: Vec<Pubkey>,
+}
 
-    if params.max_slippage_bps == 0 || params.max_slippage_bps >= 10_000 {
-        return Err(ErrorCode::InvalidVaultMaxSlippage.into());
-    }
+// TODO(Mocha): this naming is awkward
+#[derive(Accounts)]
+pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
+    #[account(mut, address = vault_proto_config.admin @DripError::SignerIsNotAdmin)]
+    pub admin: Signer<'info>,
 
-    let mut whitelisted_swaps: [Pubkey; 5] = Default::default();
-    for (i, s) in params.whitelisted_swaps.iter().enumerate() {
-        whitelisted_swaps[i] = *s;
-    }
-    /* MANUAL CHECKS + COMPUTE (CHECKS) */
-    /* STATE UPDATES (EFFECTS) */
-    ctx.accounts.vault.init(
-        ctx.accounts.vault_proto_config.key(),
-        ctx.accounts.token_a_mint.key(),
-        ctx.accounts.token_b_mint.key(),
-        ctx.accounts.token_a_account.key(),
-        ctx.accounts.token_b_account.key(),
-        ctx.accounts.treasury_token_b_account.key(),
-        whitelisted_swaps,
-        !params.whitelisted_swaps.is_empty(),
-        params.max_slippage_bps,
-        ctx.accounts.vault_proto_config.granularity,
-        ctx.bumps.get("vault"),
-    )?;
+    #[account(
+        // mut needed because we are changing state
+        mut,
+        seeds = [
+            b"drip-v1".as_ref(),
+            vault.token_a_mint.key().as_ref(),
+            vault.token_b_mint.key().as_ref(),
+            vault_proto_config.key().as_ref(),
+        ],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, Vault>,
 
-    msg!("Initialized Vault");
+    #[account(
+        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
+    )]
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
-    /* MANUAL CPI (INTERACTIONS) */
-    Ok(())
+    pub system_program: Program<'info, System>,
 }

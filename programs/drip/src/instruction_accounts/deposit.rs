@@ -1,16 +1,19 @@
-use crate::errors::ErrorCode;
-use crate::interactions::deposit_utils::handle_deposit;
-use crate::interactions::deposit_utils::DepositParams;
-use crate::state::Position;
-use crate::state::{Vault, VaultPeriod};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::Mint;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
+
+use crate::errors::DripError;
+use crate::interactions::create_token_metadata::MetaplexTokenMetadata;
+use crate::state::{Position, Vault, VaultPeriod};
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct DepositParams {
+    pub token_a_deposit_amount: u64,
+    pub number_of_swaps: u64,
+}
 
 #[derive(Accounts)]
-#[instruction(params: DepositParams)]
-pub struct Deposit<'info> {
+pub struct DepositAccounts<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
 
@@ -37,9 +40,7 @@ pub struct Deposit<'info> {
             vault_period_end.period_id.to_string().as_bytes()
         ],
         bump = vault_period_end.bump,
-        constraint = params.number_of_swaps > 0 @ErrorCode::NumSwapsIsZero,
-        constraint = vault_period_end.period_id > 0 @ErrorCode::InvalidVaultPeriod,
-        constraint = vault_period_end.period_id == vault.last_drip_period.checked_add(params.number_of_swaps).unwrap() @ErrorCode::InvalidVaultPeriod
+        constraint = vault_period_end.period_id > 0 @DripError::InvalidVaultPeriod,
     )]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
@@ -58,8 +59,6 @@ pub struct Deposit<'info> {
         constraint = user_token_a_account.mint == vault.token_a_mint,
         constraint = user_token_a_account.owner == depositor.key(),
         constraint = user_token_a_account.delegate.contains(&vault.key()),
-        constraint = params.token_a_deposit_amount > 0,
-        constraint = user_token_a_account.delegated_amount >= params.token_a_deposit_amount
     )]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
@@ -99,21 +98,12 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Deposit>, params: DepositParams) -> Result<()> {
-    handle_deposit(
-        &ctx.accounts.depositor,
-        &ctx.accounts.rent,
-        &ctx.accounts.token_program,
-        &ctx.accounts.system_program,
-        &ctx.accounts.vault_token_a_account,
-        &ctx.accounts.user_token_a_account,
-        &ctx.accounts.user_position_nft_mint,
-        &ctx.accounts.user_position_nft_account,
-        &mut ctx.accounts.vault,
-        &mut ctx.accounts.vault_period_end,
-        &mut ctx.accounts.user_position,
-        ctx.bumps.get("user_position"),
-        params,
-        None,
-    )
+#[derive(Accounts)]
+pub struct DepositWithMetadataAccounts<'info> {
+    pub common: DepositAccounts<'info>,
+
+    /// CHECK: Checked by metaplex's program
+    #[account(mut)]
+    pub position_metadata_account: UncheckedAccount<'info>,
+    pub metadata_program: Program<'info, MetaplexTokenMetadata>,
 }
