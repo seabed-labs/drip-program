@@ -2,7 +2,7 @@ use crate::errors::DripError::{
     CannotInitializeVaultPeriodLessThanVaultCurrentPeriod, InvalidGranularity, InvalidSpread,
     InvalidVaultProtoConfigReference,
 };
-use crate::state::MAX_TOKEN_SPREAD_INCLUSIVE;
+use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
 use crate::{
     instruction_accounts::{
         InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
@@ -32,9 +32,9 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
             Init::VaultProtoConfig { params, .. } => {
                 validate!(params.granularity > 0, InvalidGranularity);
                 validate!(
-                    params.token_a_drip_trigger_spread < MAX_TOKEN_SPREAD_INCLUSIVE
-                        && params.token_b_withdrawal_spread < MAX_TOKEN_SPREAD_INCLUSIVE
-                        && params.token_b_referral_spread < MAX_TOKEN_SPREAD_INCLUSIVE,
+                    params.token_a_drip_trigger_spread < MAX_TOKEN_SPREAD_EXCLUSIVE
+                        && params.token_b_withdrawal_spread < MAX_TOKEN_SPREAD_EXCLUSIVE
+                        && params.token_b_referral_spread < MAX_TOKEN_SPREAD_EXCLUSIVE,
                     InvalidSpread
                 );
                 Ok(())
@@ -98,10 +98,7 @@ fn init_vault_period(
         accounts.vault.key(),
         params.period_id,
         bumps.get("vault_period"),
-    )?;
-
-    msg!("Initialized VaultPeriod");
-    Ok(())
+    )
 }
 
 #[cfg(test)]

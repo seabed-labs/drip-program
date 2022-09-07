@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::DripError::{
-    DuplicateDripError, InvalidOwner, InvalidSwapAccount, PeriodicDripAmountIsZero,
+    DuplicateDripError, InvalidOwner, InvalidSwapAccount, InvalidVaultPeriod,
+    InvalidVaultProtoConfigReference, InvalidVaultReference, PeriodicDripAmountIsZero,
 };
 
 use crate::errors::DripError;
@@ -60,7 +61,41 @@ impl<'a, 'info> Validatable for Drip<'a, 'info> {
 
 fn validate_common(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
     validate!(
+        accounts.vault_proto_config.key() == accounts.vault.proto_config,
+        InvalidVaultProtoConfigReference
+    );
+    validate!(
+        accounts.last_vault_period.vault == accounts.vault.key(),
+        InvalidVaultReference
+    );
+    validate!(
+        accounts.current_vault_period.vault == accounts.vault.key(),
+        InvalidVaultReference
+    );
+    validate!(
+        accounts.vault_token_a_account.owner == accounts.vault.key(),
+        InvalidOwner
+    );
+    validate!(
+        accounts.vault_token_b_account.owner == accounts.vault.key(),
+        InvalidOwner
+    );
+
+    validate!(
+        accounts.last_vault_period.period_id == accounts.vault.last_drip_period,
+        InvalidVaultPeriod
+    );
+    validate!(
+        accounts.current_vault_period.period_id
+            == accounts.vault.last_drip_period.checked_add(1).unwrap(),
+        InvalidVaultPeriod
+    );
+    validate!(
         accounts.vault_token_a_account.amount > 0 && accounts.vault.drip_amount > 0,
+        PeriodicDripAmountIsZero
+    );
+    validate!(
+        accounts.vault_token_a_account.amount >= accounts.vault.drip_amount,
         PeriodicDripAmountIsZero
     );
     validate!(accounts.vault.is_drip_activated(), DuplicateDripError);

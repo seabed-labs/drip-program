@@ -41,6 +41,7 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
 }
 
 fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
+    // Relation Checks
     validate!(
         accounts.vault_proto_config.key() == accounts.vault.proto_config,
         DripError::InvalidVaultProtoConfigReference
@@ -52,14 +53,6 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
     validate!(
         accounts.vault_period_j.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
-    );
-    validate!(
-        accounts.user_position_nft_account.mint == accounts.user_position.position_authority,
-        DripError::InvalidMint
-    );
-    validate!(
-        accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
-        DripError::InvalidOwner
     );
     validate!(
         accounts.vault_token_b_account.key() == accounts.vault.token_b_account,
@@ -77,7 +70,19 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         accounts.user_token_b_account.mint == accounts.vault_token_b_account.mint,
         DripError::InvalidMint
     );
-
+    validate!(
+        accounts.user_position.vault == accounts.vault.key(),
+        DripError::InvalidVaultReference
+    );
+    validate!(
+        accounts.user_position_nft_account.mint == accounts.user_position.position_authority,
+        DripError::InvalidMint
+    );
+    validate!(
+        accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
+        DripError::InvalidOwner
+    );
+    // Business Checks
     validate!(
         accounts.vault_period_i.period_id == accounts.user_position.drip_period_id_before_deposit,
         DripError::InvalidVaultPeriod
@@ -94,10 +99,13 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
             ),
         DripError::InvalidVaultPeriod
     );
-
     validate!(
         accounts.user_position_nft_account.amount == 1,
         DripError::PositionBalanceIsZero
+    );
+    validate!(
+        !accounts.user_position.is_closed,
+        DripError::PositionAlreadyClosed
     );
 
     Ok(())
