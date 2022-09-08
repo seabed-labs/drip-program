@@ -100,6 +100,9 @@ pub struct WithdrawCommonAccounts<'info> {
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
+    /// CHECK: if empty or == system program, ignore, if present this should match position.referrer
+    pub referrer: UncheckedAccount<'info>,
+
     /* MISC */
     pub token_program: Program<'info, Token>,
 

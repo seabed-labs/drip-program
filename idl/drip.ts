@@ -203,6 +203,11 @@ export type Drip = {
               isSigner: false;
             },
             {
+              name: "referrer";
+              isMut: false;
+              isSigner: false;
+            },
+            {
               name: "tokenProgram";
               isMut: false;
               isSigner: false;
@@ -271,6 +276,11 @@ export type Drip = {
             {
               name: "userTokenBAccount";
               isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "referrer";
+              isMut: false;
               isSigner: false;
             },
             {
@@ -1348,6 +1358,11 @@ export const IDL: Drip = {
               isSigner: false,
             },
             {
+              name: "referrer",
+              isMut: false,
+              isSigner: false,
+            },
+            {
               name: "tokenProgram",
               isMut: false,
               isSigner: false,
@@ -1416,6 +1431,11 @@ export const IDL: Drip = {
             {
               name: "userTokenBAccount",
               isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "referrer",
+              isMut: false,
               isSigner: false,
             },
             {
