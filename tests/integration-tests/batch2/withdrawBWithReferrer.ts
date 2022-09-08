@@ -28,7 +28,7 @@ import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 
-describe("#withdrawB", testWithdrawB);
+describe("#withdrawBWithReferrer", testWithdrawB);
 
 export function testWithdrawB() {
   initLog();
@@ -66,6 +66,8 @@ export function testWithdrawB() {
   let dripTrigger;
   let withdrawB;
   let depositWithNewUser;
+
+  let referrer: PublicKey;
 
   beforeEach(async () => {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
@@ -118,7 +120,7 @@ export function testWithdrawB() {
       1,
       5,
       5,
-      0,
+      5,
       TestUtil.provider.wallet.publicKey
     );
 
@@ -151,6 +153,8 @@ export function testWithdrawB() {
       )
     );
 
+    const referrerWallet = generatePair().publicKey;
+    referrer = await tokenB.createAssociatedTokenAccount(referrerWallet);
     userTokenAAccount = await tokenA.createAssociatedTokenAccount(
       user.publicKey
     );
@@ -179,7 +183,7 @@ export function testWithdrawB() {
         vaultPDA.publicKey,
         vaultPeriods[4].publicKey,
         userTokenAAccount,
-        vaultTreasuryTokenBAccount
+        referrer
       );
 
     dripTrigger = dripSPLTokenSwapWrapper(
@@ -205,14 +209,15 @@ export function testWithdrawB() {
       userPostionNFTAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      userTokenBAccount
+      userTokenBAccount,
+      referrer
     );
 
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
       tokenA,
-      vaultTreasuryTokenBAccount
+      referrer
     );
   });
 
@@ -236,14 +241,17 @@ export function testWithdrawB() {
       userTokenBAccountAfter,
       vaultTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
+      referrerTokenBAccountAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(referrer),
     ]);
 
-    userTokenBAccountAfter.balance.toString().should.equal("497753433");
+    userTokenBAccountAfter.balance.toString().should.equal("497504432");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
+    referrerTokenBAccountAfter.balance.toString().should.equal("249001");
     // The vault token b balance is 1 here, likely due to rounding issues
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
   });
@@ -268,103 +276,18 @@ export function testWithdrawB() {
       userTokenBAccountAfter,
       vaultTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
+      referrerTokenBAccountAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(referrer),
     ]);
 
-    userTokenBAccountAfter.balance.toString().should.equal("995010603");
+    userTokenBAccountAfter.balance.toString().should.equal("994512849");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
+    referrerTokenBAccountAfter.balance.toString().should.equal("497754");
     // The vault token b balance is 1 here, likely due to rounding issues
     vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
-  });
-
-  it("should be able to withdraw in the middle of the drip and at the end", async () => {
-    for (let i = 0; i < 2; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[2].publicKey);
-    let [userTokenBAccountAfter, vaultTreasuryTokenBAccountAfter] =
-      await Promise.all([
-        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      ]);
-    userTokenBAccountAfter.balance.toString().should.equal("497753433");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
-    for (let i = 2; i < 4; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    await withdrawB(vaultPeriods[0].publicKey, vaultPeriods[4].publicKey);
-    [userTokenBAccountAfter, vaultTreasuryTokenBAccountAfter] =
-      await Promise.all([
-        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      ]);
-    // Diff of 1 from previous test due to rounding issues since we always round down
-    userTokenBAccountAfter.balance.toString().should.equal("995010604");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497753");
-  });
-
-  it("should not be able to withdraw twice in the same period", async () => {
-    await depositWithNewUser({
-      mintAmount: 3,
-      numberOfCycles: 2,
-      newUserEndVaultPeriod: vaultPeriods[2].publicKey,
-    });
-    for (let i = 0; i < 2; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    let [i, j] = [0, 2];
-    const [userTokenBAccountBefore, userPositionAccountBefore] =
-      await Promise.all([
-        TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-        AccountUtil.fetchPositionAccount(userPositionAccount),
-      ]);
-    userTokenBAccountBefore.balance.toString().should.equal("0");
-    userPositionAccountBefore.withdrawnTokenBAmount
-      .toString()
-      .should.equal("0");
-    await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    let [userTokenBAccountAfter, userPositionAccountAfter] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-    ]);
-    userTokenBAccountAfter.balance.toString().should.equal("496269459");
-    userPositionAccountAfter.withdrawnTokenBAmount
-      .toString()
-      .should.equal("496517717");
-    try {
-      await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    } catch (e) {
-      findError(
-        e,
-        new RegExp("Withdrawable amount is zero")
-      ).should.not.be.undefined();
-    }
-  });
-
-  it("should not be able to withdraw when withdrawable amount is 0", async () => {
-    let [i, j] = [0, 0];
-    try {
-      await withdrawB(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Withdrawable amount is zero")
-      ).should.not.be.undefined();
-    }
   });
 }

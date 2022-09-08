@@ -161,6 +161,7 @@ export function testDepositWithMetadata() {
         positionMetadataAccount: PDAUtil.getPositionMetadata(
           positionNftMintKeypair.publicKey
         ).publicKey,
+        referrer: vaultTreasuryTokenBAccount,
       },
       signers: {
         depositor: user,

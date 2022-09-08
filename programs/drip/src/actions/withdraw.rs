@@ -27,7 +27,8 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
                 validate_common(&accounts.common)?;
                 let WithdrawalAmountB {
                     withdrawable_amount_b_before_fees: _,
-                    withdrawal_spread_amount_b: _,
+                    treasury_spread_amount_b: _,
+                    referrer_spread_amount_b: _,
                     withdrawable_amount_b,
                 } = get_withdrawal_amount_b(&accounts.common);
                 if withdrawable_amount_b == 0 {
@@ -92,47 +93,19 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         accounts.vault_proto_config.key() == accounts.vault.proto_config,
         DripError::InvalidVaultProtoConfigReference
     );
+
     validate!(
         accounts.vault_period_i.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
     validate!(
-        accounts.vault_period_j.vault == accounts.vault.key(),
-        DripError::InvalidVaultReference
-    );
-    validate!(
-        accounts.vault_token_b_account.key() == accounts.vault.token_b_account,
-        DripError::IncorrectVaultTokenAccount
-    );
-    validate!(
-        accounts.vault_treasury_token_b_account.key() == accounts.vault.treasury_token_b_account,
-        DripError::IncorrectVaultTokenAccount
-    );
-    validate!(
-        accounts.user_token_b_account.owner == accounts.withdrawer.key(),
-        DripError::InvalidOwner
-    );
-    validate!(
-        accounts.user_token_b_account.mint == accounts.vault_token_b_account.mint,
-        DripError::InvalidMint
-    );
-    validate!(
-        accounts.user_position.vault == accounts.vault.key(),
-        DripError::InvalidVaultReference
-    );
-    validate!(
-        accounts.user_position_nft_account.mint == accounts.user_position.position_authority,
-        DripError::InvalidMint
-    );
-    validate!(
-        accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
-        DripError::InvalidOwner
-    );
-
-    // Business Checks
-    validate!(
         accounts.vault_period_i.period_id == accounts.user_position.drip_period_id_before_deposit,
         DripError::InvalidVaultPeriod
+    );
+
+    validate!(
+        accounts.vault_period_j.vault == accounts.vault.key(),
+        DripError::InvalidVaultReference
     );
     validate!(
         accounts.vault_period_j.period_id
@@ -146,9 +119,46 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
             ),
         DripError::InvalidVaultPeriod
     );
+
+    validate!(
+        accounts.vault_token_b_account.key() == accounts.vault.token_b_account,
+        DripError::IncorrectVaultTokenAccount
+    );
+
+    validate!(
+        accounts.vault_treasury_token_b_account.key() == accounts.vault.treasury_token_b_account,
+        DripError::IncorrectVaultTokenAccount
+    );
+
+    validate!(
+        accounts.user_token_b_account.owner == accounts.withdrawer.key(),
+        DripError::InvalidOwner
+    );
+    validate!(
+        accounts.user_token_b_account.mint == accounts.vault_token_b_account.mint,
+        DripError::InvalidMint
+    );
+
+    validate!(
+        accounts.user_position.vault == accounts.vault.key(),
+        DripError::InvalidVaultReference
+    );
     validate!(
         !accounts.user_position.is_closed,
         DripError::PositionAlreadyClosed
+    );
+    validate!(
+        accounts.user_position.referrer == accounts.referrer.key(),
+        DripError::InvalidMint
+    );
+
+    validate!(
+        accounts.user_position_nft_account.mint == accounts.user_position.position_authority,
+        DripError::InvalidMint
+    );
+    validate!(
+        accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
+        DripError::InvalidOwner
     );
     validate!(
         accounts.user_position_nft_account.amount == 1,
@@ -223,17 +233,29 @@ fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
     /* COMPUTE (CHECKS) */
     let WithdrawalAmountB {
         withdrawable_amount_b_before_fees,
-        withdrawal_spread_amount_b,
+        treasury_spread_amount_b,
+        referrer_spread_amount_b,
         withdrawable_amount_b,
     } = get_withdrawal_amount_b(accounts);
     // If for some rounding reason we have 0 zero spread, don't error out
-    let transfer_b_to_treasury = if withdrawal_spread_amount_b != 0 {
+    let transfer_b_to_treasury = if treasury_spread_amount_b != 0 {
         Some(TransferToken::new(
             &accounts.token_program,
             &accounts.vault_token_b_account,
             &accounts.vault_treasury_token_b_account,
             &accounts.vault.to_account_info(),
-            withdrawal_spread_amount_b,
+            treasury_spread_amount_b,
+        ))
+    } else {
+        None
+    };
+    let transfer_b_to_referrer = if referrer_spread_amount_b != 0 {
+        Some(TransferToken::new(
+            &accounts.token_program,
+            &accounts.vault_token_b_account,
+            &accounts.referrer,
+            &accounts.vault.to_account_info(),
+            referrer_spread_amount_b,
         ))
     } else {
         None
@@ -264,12 +286,16 @@ fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
     if let Some(transfer) = transfer_b_to_user {
         transfer.execute(signer)?;
     }
+    if let Some(transfer) = transfer_b_to_referrer {
+        transfer.execute(signer)?;
+    }
     Ok(())
 }
 
 struct WithdrawalAmountB {
     pub withdrawable_amount_b_before_fees: u64,
-    pub withdrawal_spread_amount_b: u64,
+    pub treasury_spread_amount_b: u64,
+    pub referrer_spread_amount_b: u64,
     pub withdrawable_amount_b: u64,
 }
 
@@ -289,16 +315,25 @@ fn get_withdrawal_amount_b(accounts: &WithdrawCommonAccounts) -> WithdrawalAmoun
         .get_withdrawable_amount_with_max(max_withdrawable_amount_b);
 
     // Account for Withdrawal Spread on Token B
-    let withdrawal_spread_amount_b = calculate_spread_amount(
+    let treasury_spread_amount_b = calculate_spread_amount(
         withdrawable_amount_b_before_fees,
         accounts.vault_proto_config.token_b_withdrawal_spread,
     );
+    let referrer_spread_amount_b = calculate_spread_amount(
+        withdrawable_amount_b_before_fees,
+        accounts.vault_proto_config.token_b_referral_spread,
+    );
+
     let withdrawable_amount_b = withdrawable_amount_b_before_fees
-        .checked_sub(withdrawal_spread_amount_b)
+        .checked_sub(treasury_spread_amount_b)
+        .unwrap()
+        .checked_sub(referrer_spread_amount_b)
         .unwrap();
+
     WithdrawalAmountB {
         withdrawable_amount_b_before_fees,
-        withdrawal_spread_amount_b,
+        treasury_spread_amount_b,
+        referrer_spread_amount_b,
         withdrawable_amount_b,
     }
 }
@@ -307,7 +342,6 @@ fn get_withdrawal_amount_a(accounts: &WithdrawCommonAccounts) -> u64 {
     let i = accounts.vault_period_i.period_id;
     let j = accounts.vault_period_j.period_id;
 
-    // Token A is only transferred with close_position ix
     calculate_withdraw_token_a_amount(
         i,
         j,

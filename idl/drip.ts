@@ -203,6 +203,11 @@ export type Drip = {
               isSigner: false;
             },
             {
+              name: "referrer";
+              isMut: true;
+              isSigner: false;
+            },
+            {
               name: "tokenProgram";
               isMut: false;
               isSigner: false;
@@ -270,6 +275,11 @@ export type Drip = {
             },
             {
               name: "userTokenBAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "referrer";
               isMut: true;
               isSigner: false;
             },
@@ -744,10 +754,6 @@ export type Drip = {
             type: "publicKey";
           },
           {
-            name: "isReferred";
-            type: "bool";
-          },
-          {
             name: "depositedTokenAAmount";
             type: "u64";
           },
@@ -1139,6 +1145,11 @@ export type Drip = {
       code: 6024;
       name: "PositionBalanceIsZero";
       msg: "Position token account balance is empty";
+    },
+    {
+      code: 6025;
+      name: "InvalidReferrer";
+      msg: "Referrer does not match position referrer";
     }
   ];
 };
@@ -1348,6 +1359,11 @@ export const IDL: Drip = {
               isSigner: false,
             },
             {
+              name: "referrer",
+              isMut: true,
+              isSigner: false,
+            },
+            {
               name: "tokenProgram",
               isMut: false,
               isSigner: false,
@@ -1415,6 +1431,11 @@ export const IDL: Drip = {
             },
             {
               name: "userTokenBAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "referrer",
               isMut: true,
               isSigner: false,
             },
@@ -1889,10 +1910,6 @@ export const IDL: Drip = {
             type: "publicKey",
           },
           {
-            name: "isReferred",
-            type: "bool",
-          },
-          {
             name: "depositedTokenAAmount",
             type: "u64",
           },
@@ -2284,6 +2301,11 @@ export const IDL: Drip = {
       code: 6024,
       name: "PositionBalanceIsZero",
       msg: "Position token account balance is empty",
+    },
+    {
+      code: 6025,
+      name: "InvalidReferrer",
+      msg: "Referrer does not match position referrer",
     },
   ],
 };

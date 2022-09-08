@@ -207,7 +207,8 @@ export function testDripSPLTokenSwap() {
       new u64(4),
       vaultPDA.publicKey,
       vaultPeriods[4].publicKey,
-      userTokenAAccount
+      userTokenAAccount,
+      vaultTreasuryTokenBAccount
     );
 
     dripTrigger = dripSPLTokenSwapWrapper(

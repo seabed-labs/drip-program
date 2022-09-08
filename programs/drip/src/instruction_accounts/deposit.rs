@@ -90,8 +90,10 @@ pub struct DepositAccounts<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: Arbitrary token account, if empty or == system program, ignore referral fees
-    pub referrer: UncheckedAccount<'info>,
+    #[account(
+        constraint = referrer.mint == vault.token_b_mint @DripError::InvalidMint,
+    )]
+    pub referrer: Box<Account<'info, TokenAccount>>,
 
     // Other
     // mut needed because we are initing accounts

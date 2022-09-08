@@ -14,7 +14,7 @@ use crate::{
 
 use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use anchor_lang::prelude::*;
-use anchor_spl::token::TokenAccount;
+
 use std::collections::BTreeMap;
 
 pub enum Deposit<'a, 'info> {
@@ -65,13 +65,10 @@ fn validate_common(accounts: &DepositAccounts, params: &DepositParams) -> Result
         DripError::IncorrectVaultTokenAccount
     );
 
-    if accounts.referrer.key() != Pubkey::default() {
-        let token_account = Account::<'_, TokenAccount>::try_from(&accounts.referrer)?;
-        validate!(
-            token_account.mint == accounts.vault.token_b_mint,
-            DripError::InvalidMint
-        )
-    }
+    validate!(
+        accounts.referrer.mint == accounts.vault.token_b_mint,
+        DripError::InvalidMint
+    );
     // Business Checks
 
     validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);

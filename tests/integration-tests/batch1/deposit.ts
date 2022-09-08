@@ -16,7 +16,6 @@ import {
   getVaultPeriodPDA,
   Granularity,
 } from "../../utils/common.util";
-import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
@@ -155,6 +154,7 @@ export function testDeposit() {
         userTokenAAccount: userTokenAAccount,
         userPositionNftAccount: userPositionNft_ATA,
         depositor: user.publicKey,
+        referrer: vaultTreasuryTokenBAccount,
       },
       signers: {
         depositor: user,
@@ -193,8 +193,7 @@ export function testDeposit() {
     positionAccount.withdrawnTokenBAmount.toString().should.equal("0");
     positionAccount.referrer
       .toString()
-      .should.equal(PublicKey.default.toString());
-    positionAccount.isReferred.should.equal(false);
+      .should.equal(vaultTreasuryTokenBAccount.toString());
     const vaultTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
       vaultTokenAAccount
     );
@@ -295,7 +294,6 @@ export function testDeposit() {
     positionAccount.referrer
       .toString()
       .should.equal(referrerTokenBAccount.toString());
-    positionAccount.isReferred.should.equal(true);
   });
 
   it("should fail if the wrong mint is used for the referrer token account", async () => {
