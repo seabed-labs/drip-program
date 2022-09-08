@@ -112,6 +112,11 @@
           "isSigner": false
         },
         {
+          "name": "referrer",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -347,6 +352,11 @@
             {
               "name": "userPositionNftAccount",
               "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "referrer",
+              "isMut": false,
               "isSigner": false
             },
             {
@@ -728,6 +738,14 @@
           {
             "name": "positionAuthority",
             "type": "publicKey"
+          },
+          {
+            "name": "referrer",
+            "type": "publicKey"
+          },
+          {
+            "name": "isReferred",
+            "type": "bool"
           },
           {
             "name": "depositedTokenAAmount",

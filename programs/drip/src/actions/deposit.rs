@@ -14,6 +14,7 @@ use crate::{
 
 use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use anchor_lang::prelude::*;
+use anchor_spl::token::TokenAccount;
 use std::collections::BTreeMap;
 
 pub enum Deposit<'a, 'info> {
@@ -49,13 +50,6 @@ fn validate_common(accounts: &DepositAccounts, params: &DepositParams) -> Result
         accounts.vault_period_end.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
-    validate!(
-        accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
-        DripError::IncorrectVaultTokenAccount
-    );
-
-    // Business Checks
-    validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
     // TODO(Matcha): @Mocha, what's this for again?
     validate!(
         accounts.vault_period_end.period_id
@@ -66,6 +60,22 @@ fn validate_common(accounts: &DepositAccounts, params: &DepositParams) -> Result
                 .unwrap(),
         DripError::InvalidVaultPeriod
     );
+    validate!(
+        accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
+        DripError::IncorrectVaultTokenAccount
+    );
+
+    if accounts.referrer.key() != Pubkey::default() {
+        let token_account = Account::<'_, TokenAccount>::try_from(&accounts.referrer)?;
+        validate!(
+            token_account.mint == accounts.vault.token_b_mint,
+            DripError::InvalidMint
+        )
+    }
+    // Business Checks
+
+    validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
+
     validate!(params.token_a_deposit_amount > 0, InvalidArgument);
 
     validate!(
@@ -208,6 +218,7 @@ fn update_state(
     accounts.user_position.init(
         accounts.vault.key(),
         accounts.user_position_nft_mint.key(),
+        accounts.referrer.key(),
         params.token_a_deposit_amount,
         accounts.vault.last_drip_period,
         params.number_of_swaps,

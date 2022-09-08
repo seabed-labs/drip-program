@@ -23,8 +23,6 @@ import { TestUtil } from "../../utils/config.util";
 describe("#deposit", testDeposit);
 
 export function testDeposit() {
-  initLog();
-
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let vaultPeriodPubkey: PublicKey;
@@ -193,7 +191,10 @@ export function testDeposit() {
       .toString()
       .should.equal("10000000000");
     positionAccount.withdrawnTokenBAmount.toString().should.equal("0");
-
+    positionAccount.referrer
+      .toString()
+      .should.equal(PublicKey.default.toString());
+    positionAccount.isReferred.should.equal(false);
     const vaultTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
       vaultTokenAAccount
     );
@@ -235,5 +236,116 @@ export function testDeposit() {
     // TODO(matcha): We should probably assign close authority to user WHEN THEY WITHDRAW so that they can close the account
     (userPositionNftTokenAccount.closeAuthority == null).should.be.true();
     // TODO(matcha): Should we just check every single property in the account? First need to understand what they are
+  });
+
+  it("should create a position with the referrer set", async () => {
+    const positionNftMintKeypair = generatePair();
+    const positionPDA = await getPositionPDA(positionNftMintKeypair.publicKey);
+
+    const [userPositionNft_ATA] = await Promise.all([
+      findAssociatedTokenAddress(
+        user.publicKey,
+        positionNftMintKeypair.publicKey
+      ),
+    ]);
+
+    const depositAmount = await TokenUtil.scaleAmount(
+      amount(10, Denom.Thousand),
+      tokenA
+    );
+
+    await tokenA.approve(
+      userTokenAAccount,
+      vaultPubkey,
+      user.publicKey,
+      [user],
+      depositAmount
+    );
+
+    const referrer = generatePair().publicKey;
+    const referrerTokenBAccount =
+      await TokenUtil.getOrCreateAssociatedTokenAccount(tokenB, referrer);
+
+    await VaultUtil.deposit({
+      params: {
+        tokenADepositAmount: depositAmount,
+        numberOfSwaps: new u64(69),
+      },
+      accounts: {
+        vault: vaultPubkey,
+        vaultPeriodEnd: vaultPeriodPubkey,
+        userPosition: positionPDA.publicKey,
+        userPositionNftMint: positionNftMintKeypair.publicKey,
+        vaultTokenAAccount: vaultTokenAAccount,
+        userTokenAAccount: userTokenAAccount,
+        userPositionNftAccount: userPositionNft_ATA,
+        depositor: user.publicKey,
+        referrer: referrerTokenBAccount,
+      },
+      signers: {
+        depositor: user,
+        userPositionNftMint: positionNftMintKeypair,
+      },
+    });
+
+    const positionAccount = await AccountUtil.fetchPositionAccount(
+      positionPDA.publicKey
+    );
+
+    positionAccount.referrer
+      .toString()
+      .should.equal(referrerTokenBAccount.toString());
+    positionAccount.isReferred.should.equal(true);
+  });
+
+  it("should fail if the wrong mint is used for the referrer token account", async () => {
+    const positionNftMintKeypair = generatePair();
+    const positionPDA = await getPositionPDA(positionNftMintKeypair.publicKey);
+
+    const [userPositionNft_ATA] = await Promise.all([
+      findAssociatedTokenAddress(
+        user.publicKey,
+        positionNftMintKeypair.publicKey
+      ),
+    ]);
+
+    const depositAmount = await TokenUtil.scaleAmount(
+      amount(10, Denom.Thousand),
+      tokenA
+    );
+
+    await tokenA.approve(
+      userTokenAAccount,
+      vaultPubkey,
+      user.publicKey,
+      [user],
+      depositAmount
+    );
+
+    const referrer = generatePair().publicKey;
+    const referrerTokenBAccount =
+      await TokenUtil.getOrCreateAssociatedTokenAccount(tokenA, referrer);
+
+    await VaultUtil.deposit({
+      params: {
+        tokenADepositAmount: depositAmount,
+        numberOfSwaps: new u64(69),
+      },
+      accounts: {
+        vault: vaultPubkey,
+        vaultPeriodEnd: vaultPeriodPubkey,
+        userPosition: positionPDA.publicKey,
+        userPositionNftMint: positionNftMintKeypair.publicKey,
+        vaultTokenAAccount: vaultTokenAAccount,
+        userTokenAAccount: userTokenAAccount,
+        userPositionNftAccount: userPositionNft_ATA,
+        depositor: user.publicKey,
+        referrer: referrerTokenBAccount,
+      },
+      signers: {
+        depositor: user,
+        userPositionNftMint: positionNftMintKeypair,
+      },
+    }).should.rejectedWith(/0x1776/);
   });
 }

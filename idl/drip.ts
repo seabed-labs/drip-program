@@ -112,6 +112,11 @@ export type Drip = {
           isSigner: false;
         },
         {
+          name: "referrer";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "tokenProgram";
           isMut: false;
           isSigner: false;
@@ -347,6 +352,11 @@ export type Drip = {
             {
               name: "userPositionNftAccount";
               isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "referrer";
+              isMut: false;
               isSigner: false;
             },
             {
@@ -728,6 +738,14 @@ export type Drip = {
           {
             name: "positionAuthority";
             type: "publicKey";
+          },
+          {
+            name: "referrer";
+            type: "publicKey";
+          },
+          {
+            name: "isReferred";
+            type: "bool";
           },
           {
             name: "depositedTokenAAmount";
@@ -1239,6 +1257,11 @@ export const IDL: Drip = {
           isSigner: false,
         },
         {
+          name: "referrer",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "tokenProgram",
           isMut: false,
           isSigner: false,
@@ -1474,6 +1497,11 @@ export const IDL: Drip = {
             {
               name: "userPositionNftAccount",
               isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "referrer",
+              isMut: false,
               isSigner: false,
             },
             {
@@ -1855,6 +1883,14 @@ export const IDL: Drip = {
           {
             name: "positionAuthority",
             type: "publicKey",
+          },
+          {
+            name: "referrer",
+            type: "publicKey",
+          },
+          {
+            name: "isReferred",
+            type: "bool",
           },
           {
             name: "depositedTokenAAmount",

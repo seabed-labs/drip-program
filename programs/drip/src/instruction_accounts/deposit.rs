@@ -90,6 +90,9 @@ pub struct DepositAccounts<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
+    /// CHECK: Arbitrary token account, if empty or == system program, ignore referral fees
+    pub referrer: UncheckedAccount<'info>,
+
     // Other
     // mut needed because we are initing accounts
     pub token_program: Program<'info, Token>,

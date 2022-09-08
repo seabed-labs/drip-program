@@ -82,6 +82,8 @@ export class AccountUtil extends TestUtil {
       | "periodicDripAmount"
       | "isClosed"
       | "bump"
+      | "referrer"
+      | "isReferred"
     >
   > {
     return await ProgramUtil.dripProgram.account.position.fetch(pubkey);
