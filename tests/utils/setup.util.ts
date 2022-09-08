@@ -97,7 +97,8 @@ export const deployVaultPeriod = async (
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
-  tokenA: Token
+  tokenA: Token,
+  referrer: PublicKey
 ) => {
   return async ({
     numberOfCycles,
@@ -130,7 +131,8 @@ export const depositWithNewUserWrapper = (
       new u64(numberOfCycles),
       vault,
       newUserEndVaultPeriod,
-      user2TokenAAccount
+      user2TokenAAccount,
+      referrer
     );
   };
 };
@@ -142,7 +144,8 @@ export const depositToVault = async (
   numberOfSwaps: u64,
   vault: PublicKey,
   vaultPeriodEnd: PublicKey,
-  userTokenAAccount: PublicKey
+  userTokenAAccount: PublicKey,
+  referrer: PublicKey
 ): Promise<PublicKey[]> => {
   await tokenA.approve(
     userTokenAAccount,
@@ -171,6 +174,7 @@ export const depositToVault = async (
       userTokenAAccount,
       userPositionNftAccount,
       depositor: user.publicKey,
+      referrer,
     },
     signers: {
       depositor: user,
@@ -347,7 +351,8 @@ export const withdrawBWrapper = (
   userPostionNFTAccount: PublicKey,
   vaultTokenB: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
-  userTokenBAccount: PublicKey
+  userTokenBAccount: PublicKey,
+  referrer?: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
     const txHash = await VaultUtil.withdrawB(
@@ -360,7 +365,8 @@ export const withdrawBWrapper = (
       vaultTreasuryTokenBAccount,
       vaultPeriodI,
       vaultPeriodJ,
-      userTokenBAccount
+      userTokenBAccount,
+      referrer
     );
   };
 };

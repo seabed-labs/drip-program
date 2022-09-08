@@ -10,9 +10,6 @@ pub struct Position {
     pub position_authority: Pubkey, // 32
     // The address to send referral fees too
     pub referrer: Pubkey, // 32
-    //  flag to indicate whether we should send referral fees to `referrer`
-    // `referrer` and `is_referred` can be thought of as Option<Pubkey>
-    pub is_referred: bool, // 1
     // Total deposited
     pub deposited_token_a_amount: u64, // 8
     // Total withdrawn B (amount sent to the user + amount sent to the treasury)
@@ -29,8 +26,8 @@ pub struct Position {
 }
 
 impl Position {
-    // total space -> 147
-    // allocation needed: ceil( (147+8)/8 )*8 -> 160
+    // total space -> 146
+    // allocation needed: ceil( (146+8)/8 )*8 -> 160
     pub const ACCOUNT_SPACE: usize = 160;
 
     pub fn init(
@@ -54,7 +51,6 @@ impl Position {
         self.periodic_drip_amount = periodic_drip_amount;
         self.is_closed = false;
         self.referrer = referrer;
-        self.is_referred = referrer != Pubkey::default();
         match bump {
             Some(val) => {
                 self.bump = *val;

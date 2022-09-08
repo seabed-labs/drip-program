@@ -83,7 +83,6 @@ export class AccountUtil extends TestUtil {
       | "isClosed"
       | "bump"
       | "referrer"
-      | "isReferred"
     >
   > {
     return await ProgramUtil.dripProgram.account.position.fetch(pubkey);

@@ -52,4 +52,6 @@ pub enum DripError {
     InvalidOwner,
     #[msg("Position token account balance is empty")]
     PositionBalanceIsZero,
+    #[msg("Referrer does not match position referrer")]
+    InvalidReferrer,
 }

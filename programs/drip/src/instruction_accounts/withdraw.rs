@@ -100,8 +100,13 @@ pub struct WithdrawCommonAccounts<'info> {
     )]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    /// CHECK: if empty or == system program, ignore, if present this should match position.referrer
-    pub referrer: UncheckedAccount<'info>,
+    // mut needed because we are changing the balance
+    #[account(
+        mut,
+        constraint = referrer.mint == vault_token_b_account.mint @DripError::InvalidMint,
+        constraint = referrer.key() == user_position.referrer @DripError::InvalidReferrer,
+    )]
+    pub referrer: Box<Account<'info, TokenAccount>>,
 
     /* MISC */
     pub token_program: Program<'info, Token>,

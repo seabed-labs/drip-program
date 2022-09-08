@@ -10,7 +10,6 @@ use crate::math::{
 };
 use crate::state::Vault;
 use anchor_lang::prelude::*;
-use anchor_spl::token::TokenAccount;
 
 pub enum Withdraw<'a, 'info> {
     WithoutClosePosition {
@@ -250,19 +249,17 @@ fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
     } else {
         None
     };
-    let transfer_b_to_referrer =
-        if accounts.user_position.is_referred && referrer_spread_amount_b != 0 {
-            let referrer = Account::<'_, TokenAccount>::try_from(&accounts.referrer)?;
-            Some(TransferToken::new(
-                &accounts.token_program,
-                &accounts.vault_token_b_account,
-                &referrer,
-                &accounts.vault.to_account_info(),
-                referrer_spread_amount_b,
-            ))
-        } else {
-            None
-        };
+    let transfer_b_to_referrer = if referrer_spread_amount_b != 0 {
+        Some(TransferToken::new(
+            &accounts.token_program,
+            &accounts.vault_token_b_account,
+            &accounts.referrer,
+            &accounts.vault.to_account_info(),
+            referrer_spread_amount_b,
+        ))
+    } else {
+        None
+    };
     let transfer_b_to_user = if withdrawable_amount_b != 0 {
         Some(TransferToken::new(
             &accounts.token_program,
@@ -322,14 +319,10 @@ fn get_withdrawal_amount_b(accounts: &WithdrawCommonAccounts) -> WithdrawalAmoun
         withdrawable_amount_b_before_fees,
         accounts.vault_proto_config.token_b_withdrawal_spread,
     );
-    let referrer_spread_amount_b = if accounts.user_position.is_referred {
-        calculate_spread_amount(
-            withdrawable_amount_b_before_fees,
-            accounts.vault_proto_config.token_b_referral_spread,
-        )
-    } else {
-        0
-    };
+    let referrer_spread_amount_b = calculate_spread_amount(
+        withdrawable_amount_b_before_fees,
+        accounts.vault_proto_config.token_b_referral_spread,
+    );
 
     let withdrawable_amount_b = withdrawable_amount_b_before_fees
         .checked_sub(treasury_spread_amount_b)

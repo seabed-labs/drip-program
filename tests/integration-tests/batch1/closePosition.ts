@@ -115,7 +115,7 @@ export function testClosePosition() {
       1,
       5,
       5,
-      10,
+      0,
       TestUtil.provider.wallet.publicKey
     );
 
@@ -175,7 +175,8 @@ export function testClosePosition() {
         new u64(4),
         vaultPDA.publicKey,
         vaultPeriods[4].publicKey,
-        userTokenAAccount
+        userTokenAAccount,
+        vaultTreasuryTokenBAccount
       );
 
     userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
@@ -212,7 +213,8 @@ export function testClosePosition() {
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
-      tokenA
+      tokenA,
+      vaultTreasuryTokenBAccount
     );
   });
 
