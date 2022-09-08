@@ -39,6 +39,7 @@ export interface DepositTxParams {
     userTokenAAccount: PublicKey;
     userPositionNftAccount: PublicKey;
     depositor: PublicKey;
+    referrer?: PublicKey;
   };
   signers: {
     depositor: Signer;
@@ -61,6 +62,7 @@ export interface DepositWithMetadataTxParams {
     userPositionNftAccount: PublicKey;
     positionMetadataAccount: PublicKey;
     depositor: PublicKey;
+    referrer?: PublicKey;
   };
   signers: {
     depositor: Signer;
@@ -244,6 +246,9 @@ export class VaultUtil extends TestUtil {
         userPositionNftAccount:
           input.accounts.userPositionNftAccount.toBase58(),
         depositor: input.accounts.depositor.toBase58(),
+        referrer: input.accounts.referrer
+          ? input.accounts.referrer
+          : PublicKey.default,
         tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
         associatedTokenProgram:
           ProgramUtil.associatedTokenProgram.programId.toBase58(),
@@ -276,6 +281,9 @@ export class VaultUtil extends TestUtil {
           userPositionNftAccount:
             input.accounts.userPositionNftAccount.toBase58(),
           depositor: input.accounts.depositor.toBase58(),
+          referrer: input.accounts.referrer
+            ? input.accounts.referrer
+            : PublicKey.default,
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),

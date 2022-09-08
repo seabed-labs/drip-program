@@ -8,6 +8,11 @@ pub struct Position {
     pub vault: Pubkey, // 32
     // The position authority NFT mint
     pub position_authority: Pubkey, // 32
+    // The address to send referral fees too
+    pub referrer: Pubkey, // 32
+    //  flag to indicate whether we should send referral fees to `referrer`
+    // `referrer` and `is_referred` can be thought of as Option<Pubkey>
+    pub is_referred: bool, // 1
     // Total deposited
     pub deposited_token_a_amount: u64, // 8
     // Total withdrawn B (amount sent to the user + amount sent to the treasury)
@@ -24,14 +29,15 @@ pub struct Position {
 }
 
 impl Position {
-    // total space -> 114
-    // allocation needed: ceil( (114+8)/8 )*8 -> 128
-    pub const ACCOUNT_SPACE: usize = 128;
+    // total space -> 147
+    // allocation needed: ceil( (147+8)/8 )*8 -> 160
+    pub const ACCOUNT_SPACE: usize = 160;
 
     pub fn init(
         &mut self,
         vault: Pubkey,
         position_nft: Pubkey,
+        referrer: Pubkey,
         deposited_amount: u64,
         last_drip_period: u64,
         number_of_swaps: u64,
@@ -47,6 +53,8 @@ impl Position {
         self.number_of_swaps = number_of_swaps;
         self.periodic_drip_amount = periodic_drip_amount;
         self.is_closed = false;
+        self.referrer = referrer;
+        self.is_referred = referrer != Pubkey::default();
         match bump {
             Some(val) => {
                 self.bump = *val;
