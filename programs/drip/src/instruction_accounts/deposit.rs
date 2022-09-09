@@ -13,7 +13,7 @@ pub struct DepositParams {
 }
 
 #[derive(Accounts)]
-pub struct DepositAccounts<'info> {
+pub struct DepositCommonAccounts<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
 
@@ -104,8 +104,13 @@ pub struct DepositAccounts<'info> {
 }
 
 #[derive(Accounts)]
+pub struct DepositAccounts<'info> {
+    pub common: DepositCommonAccounts<'info>,
+}
+
+#[derive(Accounts)]
 pub struct DepositWithMetadataAccounts<'info> {
-    pub common: DepositAccounts<'info>,
+    pub common: DepositCommonAccounts<'info>,
 
     /// CHECK: Checked by metaplex's program
     #[account(mut)]

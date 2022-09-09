@@ -4,17 +4,18 @@ use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
 use crate::state::Vault;
-use crate::validate;
 use crate::ProgramError::InvalidArgument;
 use crate::{
     instruction_accounts::deposit::{DepositAccounts, DepositParams, DepositWithMetadataAccounts},
     state::traits::{Executable, Validatable},
     CPI,
 };
+use crate::{validate, DepositCommonAccounts};
 
 use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use anchor_lang::prelude::*;
 
+use crate::interactions::empty::Empty;
 use std::collections::BTreeMap;
 
 pub enum Deposit<'a, 'info> {
@@ -35,7 +36,7 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
         match self {
             Deposit::WithoutMetadata {
                 accounts, params, ..
-            } => validate_common(accounts, params),
+            } => validate_common(&accounts.common, params),
 
             Deposit::WithMetadata {
                 accounts, params, ..
@@ -44,7 +45,7 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
     }
 }
 
-fn validate_common(accounts: &DepositAccounts, params: &DepositParams) -> Result<()> {
+fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> Result<()> {
     // Relation Checks
     validate!(
         accounts.vault_period_end.vault == accounts.vault.key(),
@@ -94,7 +95,7 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 accounts,
                 params,
                 bumps,
-            } => deposit_without_metadata(accounts, params, bumps),
+            } => execute_deposit(&mut accounts.common, params, bumps, Empty::new()),
             Deposit::WithMetadata {
                 accounts,
                 params,
@@ -107,10 +108,11 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
 // At this point, we can have them take whatever code path needed and can arbitrarily share code paths between multiple flows of the same action
 // Think of an action as a higher level construct that encompasses all instruction variants
 
-fn deposit_without_metadata(
-    accounts: &mut DepositAccounts,
+fn execute_deposit(
+    accounts: &mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
+    create_token_metadata: impl CPI,
 ) -> Result<()> {
     //  TODO: figure out how to dedupe this cpi call creation
     let token_transfer = TransferToken::new(
@@ -143,6 +145,7 @@ fn deposit_without_metadata(
     let signer: &Vault = accounts.vault.as_ref();
     token_transfer.execute(signer)?;
     mint_position_nft.execute(signer)?;
+    create_token_metadata.execute(signer)?;
     revoke_position_nft_auth.execute(signer)?;
 
     Ok(())
@@ -201,7 +204,7 @@ fn deposit_with_metadata(
 }
 
 fn update_state(
-    accounts: &mut DepositAccounts,
+    accounts: &mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
 ) -> Result<()> {
