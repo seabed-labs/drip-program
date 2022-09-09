@@ -79,7 +79,7 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
     );
 
     validate!(
-        accounts.user_token_a_account.delegated_amount >= params.token_a_deposit_amount,
+        params.token_a_deposit_amount <= accounts.user_token_a_account.delegated_amount,
         InvalidArgument
     );
     Ok(())
