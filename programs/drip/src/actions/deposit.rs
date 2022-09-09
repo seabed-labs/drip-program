@@ -1,4 +1,5 @@
 use crate::errors::DripError;
+use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use crate::interactions::mint_token::MintToken;
 use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
@@ -11,11 +12,7 @@ use crate::{
     CPI,
 };
 use crate::{validate, DepositCommonAccounts};
-
-use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
 use anchor_lang::prelude::*;
-
-use crate::interactions::empty::Empty;
 use std::collections::BTreeMap;
 
 pub enum Deposit<'a, 'info> {
@@ -95,12 +92,32 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 accounts,
                 params,
                 bumps,
-            } => execute_deposit(&mut accounts.common, params, bumps, Empty::new()),
+            } => {
+                let create_token_metadata = None::<Box<CreateTokenMetadata>>;
+                execute_deposit(&mut accounts.common, params, bumps, create_token_metadata)
+            }
             Deposit::WithMetadata {
                 accounts,
                 params,
                 bumps,
-            } => deposit_with_metadata(accounts, params, bumps),
+            } => {
+                let create_token_metadata = CreateTokenMetadata::new(
+                    &accounts.metadata_program,
+                    &accounts.common.system_program,
+                    &accounts.position_metadata_account,
+                    &accounts.common.user_position_nft_mint,
+                    &accounts.common.vault.to_account_info(),
+                    &accounts.common.depositor.to_account_info(),
+                    &accounts.common.rent,
+                    get_metadata_url(&accounts.common.user_position_nft_mint.key()),
+                );
+                execute_deposit(
+                    &mut accounts.common,
+                    params,
+                    bumps,
+                    Some(Box::new(create_token_metadata)),
+                )
+            }
         }
     }
 }
@@ -112,9 +129,8 @@ fn execute_deposit(
     accounts: &mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
-    create_token_metadata: impl CPI,
+    create_token_metadata: Option<Box<impl CPI>>,
 ) -> Result<()> {
-    //  TODO: figure out how to dedupe this cpi call creation
     let token_transfer = TransferToken::new(
         &accounts.token_program,
         &accounts.user_token_a_account,
@@ -145,63 +161,65 @@ fn execute_deposit(
     let signer: &Vault = accounts.vault.as_ref();
     token_transfer.execute(signer)?;
     mint_position_nft.execute(signer)?;
-    create_token_metadata.execute(signer)?;
+    if let Some(create_token_metadata) = create_token_metadata {
+        create_token_metadata.execute(signer)?;
+    }
     revoke_position_nft_auth.execute(signer)?;
 
     Ok(())
 }
 
-fn deposit_with_metadata(
-    accounts: &mut DepositWithMetadataAccounts,
-    params: DepositParams,
-    bumps: BTreeMap<String, u8>,
-) -> Result<()> {
-    let token_transfer = TransferToken::new(
-        &accounts.common.token_program,
-        &accounts.common.user_token_a_account,
-        &accounts.common.vault_token_a_account,
-        &accounts.common.vault.to_account_info(),
-        params.token_a_deposit_amount,
-    );
-
-    let mint_position_nft = MintToken::new(
-        &accounts.common.token_program,
-        &accounts.common.user_position_nft_mint,
-        &accounts.common.user_position_nft_account,
-        &accounts.common.vault.to_account_info(),
-        1,
-    );
-
-    let create_token_metadata = CreateTokenMetadata::new(
-        &accounts.metadata_program,
-        &accounts.common.system_program,
-        &accounts.position_metadata_account,
-        &accounts.common.user_position_nft_mint,
-        &accounts.common.vault.to_account_info(),
-        &accounts.common.depositor.to_account_info(),
-        &accounts.common.rent,
-        get_metadata_url(&accounts.common.user_position_nft_mint.key()),
-    );
-
-    let revoke_position_nft_auth = SetMintAuthority::new(
-        &accounts.common.token_program,
-        &accounts.common.user_position_nft_mint,
-        &accounts.common.vault.to_account_info(),
-        None,
-    );
-
-    /* STATE UPDATES (EFFECTS) */
-    update_state(&mut accounts.common, params, bumps)?;
-
-    /* MANUAL CPI (INTERACTIONS) */
-    let signer: &Vault = accounts.common.vault.as_ref();
-    token_transfer.execute(signer)?;
-    mint_position_nft.execute(signer)?;
-    create_token_metadata.execute(signer)?;
-    revoke_position_nft_auth.execute(signer)?;
-
-    Ok(())
-}
+// fn deposit_with_metadata(
+//     accounts: &mut DepositWithMetadataAccounts,
+//     params: DepositParams,
+//     bumps: BTreeMap<String, u8>,
+// ) -> Result<()> {
+//     let token_transfer = TransferToken::new(
+//         &accounts.common.token_program,
+//         &accounts.common.user_token_a_account,
+//         &accounts.common.vault_token_a_account,
+//         &accounts.common.vault.to_account_info(),
+//         params.token_a_deposit_amount,
+//     );
+//
+//     let mint_position_nft = MintToken::new(
+//         &accounts.common.token_program,
+//         &accounts.common.user_position_nft_mint,
+//         &accounts.common.user_position_nft_account,
+//         &accounts.common.vault.to_account_info(),
+//         1,
+//     );
+//
+//     let create_token_metadata = CreateTokenMetadata::new(
+//         &accounts.metadata_program,
+//         &accounts.common.system_program,
+//         &accounts.position_metadata_account,
+//         &accounts.common.user_position_nft_mint,
+//         &accounts.common.vault.to_account_info(),
+//         &accounts.common.depositor.to_account_info(),
+//         &accounts.common.rent,
+//         get_metadata_url(&accounts.common.user_position_nft_mint.key()),
+//     );
+//
+//     let revoke_position_nft_auth = SetMintAuthority::new(
+//         &accounts.common.token_program,
+//         &accounts.common.user_position_nft_mint,
+//         &accounts.common.vault.to_account_info(),
+//         None,
+//     );
+//
+//     /* STATE UPDATES (EFFECTS) */
+//     update_state(&mut accounts.common, params, bumps)?;
+//
+//     /* MANUAL CPI (INTERACTIONS) */
+//     let signer: &Vault = accounts.common.vault.as_ref();
+//     token_transfer.execute(signer)?;
+//     mint_position_nft.execute(signer)?;
+//     create_token_metadata.execute(signer)?;
+//     revoke_position_nft_auth.execute(signer)?;
+//
+//     Ok(())
+// }
 
 fn update_state(
     accounts: &mut DepositCommonAccounts,

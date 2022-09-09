@@ -1,6 +1,5 @@
 pub mod burn_token;
 pub mod create_token_metadata;
-pub mod empty;
 pub mod mint_token;
 pub mod set_mint_authority;
 pub mod swap_orca_whirlpool;
