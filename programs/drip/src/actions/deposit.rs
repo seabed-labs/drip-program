@@ -43,7 +43,6 @@ impl<'a, 'info> Validatable for Deposit<'a, 'info> {
 }
 
 fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> Result<()> {
-    // Relation Checks
     validate!(
         accounts.vault_period_end.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
@@ -67,7 +66,6 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
         accounts.referrer.mint == accounts.vault.token_b_mint,
         DripError::InvalidMint
     );
-    // Business Checks
 
     validate!(params.number_of_swaps > 0, DripError::NumSwapsIsZero);
 
