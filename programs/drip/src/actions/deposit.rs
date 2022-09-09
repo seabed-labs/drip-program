@@ -122,9 +122,6 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
     }
 }
 
-// At this point, we can have them take whatever code path needed and can arbitrarily share code paths between multiple flows of the same action
-// Think of an action as a higher level construct that encompasses all instruction variants
-
 fn execute_deposit(
     accounts: &mut DepositCommonAccounts,
     params: DepositParams,
@@ -168,58 +165,6 @@ fn execute_deposit(
 
     Ok(())
 }
-
-// fn deposit_with_metadata(
-//     accounts: &mut DepositWithMetadataAccounts,
-//     params: DepositParams,
-//     bumps: BTreeMap<String, u8>,
-// ) -> Result<()> {
-//     let token_transfer = TransferToken::new(
-//         &accounts.common.token_program,
-//         &accounts.common.user_token_a_account,
-//         &accounts.common.vault_token_a_account,
-//         &accounts.common.vault.to_account_info(),
-//         params.token_a_deposit_amount,
-//     );
-//
-//     let mint_position_nft = MintToken::new(
-//         &accounts.common.token_program,
-//         &accounts.common.user_position_nft_mint,
-//         &accounts.common.user_position_nft_account,
-//         &accounts.common.vault.to_account_info(),
-//         1,
-//     );
-//
-//     let create_token_metadata = CreateTokenMetadata::new(
-//         &accounts.metadata_program,
-//         &accounts.common.system_program,
-//         &accounts.position_metadata_account,
-//         &accounts.common.user_position_nft_mint,
-//         &accounts.common.vault.to_account_info(),
-//         &accounts.common.depositor.to_account_info(),
-//         &accounts.common.rent,
-//         get_metadata_url(&accounts.common.user_position_nft_mint.key()),
-//     );
-//
-//     let revoke_position_nft_auth = SetMintAuthority::new(
-//         &accounts.common.token_program,
-//         &accounts.common.user_position_nft_mint,
-//         &accounts.common.vault.to_account_info(),
-//         None,
-//     );
-//
-//     /* STATE UPDATES (EFFECTS) */
-//     update_state(&mut accounts.common, params, bumps)?;
-//
-//     /* MANUAL CPI (INTERACTIONS) */
-//     let signer: &Vault = accounts.common.vault.as_ref();
-//     token_transfer.execute(signer)?;
-//     mint_position_nft.execute(signer)?;
-//     create_token_metadata.execute(signer)?;
-//     revoke_position_nft_auth.execute(signer)?;
-//
-//     Ok(())
-// }
 
 fn update_state(
     accounts: &mut DepositCommonAccounts,
