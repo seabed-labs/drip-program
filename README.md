@@ -5,7 +5,9 @@
 ## Deploys
 
 [devnet - dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk](https://explorer.solana.com/address/dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk?cluster=devnet)
+
 [mainnet - dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk](https://explorer.solana.com/address/dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk?cluster=devnet)
+
 [devnet staging - F1NyoZsUhJzcpGyoEqpDNbUMKVvCnSXcCki1nN3ycAeo](https://explorer.solana.com/address/F1NyoZsUhJzcpGyoEqpDNbUMKVvCnSXcCki1nN3ycAeo?cluster=devnet)
 
 ## Setup Instructions
