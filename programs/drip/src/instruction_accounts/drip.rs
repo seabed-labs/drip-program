@@ -1,7 +1,7 @@
 use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
+
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use whirlpool::state::Whirlpool;
 
