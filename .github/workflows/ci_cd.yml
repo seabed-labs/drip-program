@@ -291,7 +291,7 @@ jobs:
           program-path: "programs/drip"
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     needs: [test-integration-batch-1, test-integration-batch-2, test-integration-batch-3, test-integration-batch-4]
     runs-on: ubuntu-latest
     steps:
@@ -317,6 +317,9 @@ jobs:
             /opt/hostedtoolcache/node
             target
             node_modules
+      
+      - name: Add Solana Tools to Path 
+        run: echo "PATH=$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH" >> $GITHUB_ENV
 
       - name: Deploy Devnet Staging Program
         run: ./scripts/deploy-devnet-staging.sh
