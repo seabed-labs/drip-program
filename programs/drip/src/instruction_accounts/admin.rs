@@ -100,6 +100,4 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
         constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
-
-    pub system_program: Program<'info, System>,
 }

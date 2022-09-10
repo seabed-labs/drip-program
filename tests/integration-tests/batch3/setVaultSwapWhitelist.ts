@@ -129,8 +129,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      },
-      {}
+      }
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -213,8 +212,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      },
-      {}
+      }
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -296,8 +294,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: undefined,
-      },
-      {}
+      }
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -367,8 +364,7 @@ export function testSetVaultSwapWhitelist() {
       undefined,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      },
-      {}
+      }
     ).should.be.rejectedWith(/0x1785/);
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);

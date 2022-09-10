@@ -170,9 +170,6 @@ export class VaultUtil extends TestUtil {
       whitelistedSwaps: PublicKey[] | null | undefined;
     } = {
       whitelistedSwaps: undefined,
-    },
-    programs?: {
-      systemProgram?: PublicKey;
     }
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
@@ -185,9 +182,6 @@ export class VaultUtil extends TestUtil {
         admin:
           admin?.publicKey.toBase58() ??
           this.provider.wallet.publicKey.toBase58(),
-        systemProgram:
-          programs?.systemProgram?.toBase58() ??
-          ProgramUtil.systemProgram.programId.toBase58(),
       })
       .transaction();
     if (admin) {
@@ -203,7 +197,6 @@ export class VaultUtil extends TestUtil {
         "confirmed"
       );
       return txId;
-      // return TestUtil.provider.connection.sendTransaction(tx, [admin]);
     } else {
       return await this.provider.sendAndConfirm(tx, undefined);
     }
@@ -332,7 +325,6 @@ export class VaultUtil extends TestUtil {
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         swapTokenMint: swapTokenMint.toBase58(),
@@ -379,7 +371,6 @@ export class VaultUtil extends TestUtil {
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         whirlpool: params.whirlpool.toBase58(),
@@ -467,7 +458,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },

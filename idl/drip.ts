@@ -483,11 +483,6 @@ export type Drip = {
               isSigner: false;
             },
             {
-              name: "systemProgram";
-              isMut: false;
-              isSigner: false;
-            },
-            {
               name: "rent";
               isMut: false;
               isSigner: false;
@@ -585,11 +580,6 @@ export type Drip = {
             },
             {
               name: "associatedTokenProgram";
-              isMut: false;
-              isSigner: false;
-            },
-            {
-              name: "systemProgram";
               isMut: false;
               isSigner: false;
             },
@@ -721,11 +711,6 @@ export type Drip = {
         },
         {
           name: "vaultProtoConfig";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "systemProgram";
           isMut: false;
           isSigner: false;
         }
@@ -1644,11 +1629,6 @@ export const IDL: Drip = {
               isSigner: false,
             },
             {
-              name: "systemProgram",
-              isMut: false,
-              isSigner: false,
-            },
-            {
               name: "rent",
               isMut: false,
               isSigner: false,
@@ -1746,11 +1726,6 @@ export const IDL: Drip = {
             },
             {
               name: "associatedTokenProgram",
-              isMut: false,
-              isSigner: false,
-            },
-            {
-              name: "systemProgram",
               isMut: false,
               isSigner: false,
             },
@@ -1882,11 +1857,6 @@ export const IDL: Drip = {
         },
         {
           name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
           isMut: false,
           isSigner: false,
         },
