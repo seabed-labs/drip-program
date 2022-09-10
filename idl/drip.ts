@@ -713,11 +713,6 @@ export type Drip = {
           name: "vaultProtoConfig";
           isMut: false;
           isSigner: false;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
         }
       ];
       args: [
@@ -1862,11 +1857,6 @@ export const IDL: Drip = {
         },
         {
           name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
           isMut: false,
           isSigner: false,
         },

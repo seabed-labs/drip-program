@@ -170,9 +170,6 @@ export class VaultUtil extends TestUtil {
       whitelistedSwaps: PublicKey[] | null | undefined;
     } = {
       whitelistedSwaps: undefined,
-    },
-    programs?: {
-      systemProgram?: PublicKey;
     }
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
@@ -185,9 +182,6 @@ export class VaultUtil extends TestUtil {
         admin:
           admin?.publicKey.toBase58() ??
           this.provider.wallet.publicKey.toBase58(),
-        systemProgram:
-          programs?.systemProgram?.toBase58() ??
-          ProgramUtil.systemProgram.programId.toBase58(),
       })
       .transaction();
     if (admin) {
