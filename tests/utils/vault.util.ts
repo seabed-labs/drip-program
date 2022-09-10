@@ -323,9 +323,6 @@ export class VaultUtil extends TestUtil {
           swapTokenAAccount: swapTokenAAccount.toBase58(),
           swapTokenBAccount: swapTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         swapTokenMint: swapTokenMint.toBase58(),
         swapFeeAccount: swapFeeAccount.toBase58(),
@@ -369,9 +366,6 @@ export class VaultUtil extends TestUtil {
           swapTokenBAccount: params.swapTokenBAccount.toBase58(),
           dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         whirlpool: params.whirlpool.toBase58(),
         tickArray0: params.tickArray0.toBase58(),
@@ -415,8 +409,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },
       })
       .transaction();
@@ -458,8 +450,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },
         vaultPeriodUserExpiry: vaultPeriodUserExpiry.toBase58(),
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),

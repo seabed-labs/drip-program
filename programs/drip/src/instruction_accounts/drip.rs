@@ -1,7 +1,7 @@
 use crate::errors::DripError;
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
+
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use whirlpool::state::Whirlpool;
 
@@ -108,10 +108,6 @@ pub struct DripCommonAccounts<'info> {
     pub drip_fee_token_a_account: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-
-    pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]

@@ -1,7 +1,7 @@
 use crate::errors::DripError;
 use crate::state::{Position, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
+
 use anchor_spl::token::Mint;
 use anchor_spl::token::{Token, TokenAccount};
 
@@ -110,8 +110,6 @@ pub struct WithdrawCommonAccounts<'info> {
 
     /* MISC */
     pub token_program: Program<'info, Token>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 #[derive(Accounts)]
