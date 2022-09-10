@@ -72,69 +72,74 @@ export type Drip = {
       name: "deposit";
       accounts: [
         {
-          name: "depositor";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "vault";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultPeriodEnd";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultTokenAAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "userTokenAAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "userPosition";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "userPositionNftMint";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "userPositionNftAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "referrer";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "associatedTokenProgram";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "rent";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
+          name: "common";
+          accounts: [
+            {
+              name: "depositor";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultPeriodEnd";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "userTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "userPosition";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "userPositionNftMint";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "userPositionNftAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "referrer";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "tokenProgram";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "associatedTokenProgram";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "rent";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "systemProgram";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         }
       ];
       args: [
@@ -1228,69 +1233,74 @@ export const IDL: Drip = {
       name: "deposit",
       accounts: [
         {
-          name: "depositor",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "vault",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultPeriodEnd",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultTokenAAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "userTokenAAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "userPosition",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "userPositionNftMint",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "userPositionNftAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "referrer",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "associatedTokenProgram",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "rent",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
+          name: "common",
+          accounts: [
+            {
+              name: "depositor",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultPeriodEnd",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "userTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "userPosition",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "userPositionNftMint",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "userPositionNftAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "referrer",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "tokenProgram",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "associatedTokenProgram",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "rent",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "systemProgram",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
       ],
       args: [

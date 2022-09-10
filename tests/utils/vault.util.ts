@@ -237,21 +237,23 @@ export class VaultUtil extends TestUtil {
         numberOfSwaps: input.params.numberOfSwaps,
       })
       .accounts({
-        vault: input.accounts.vault.toBase58(),
-        vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
-        userPosition: input.accounts.userPosition.toBase58(),
-        userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
-        vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
-        userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
-        userPositionNftAccount:
-          input.accounts.userPositionNftAccount.toBase58(),
-        depositor: input.accounts.depositor.toBase58(),
-        referrer: input.accounts.referrer,
-        tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-        associatedTokenProgram:
-          ProgramUtil.associatedTokenProgram.programId.toBase58(),
-        rent: ProgramUtil.rentProgram.programId.toBase58(),
-        systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+        common: {
+          vault: input.accounts.vault.toBase58(),
+          vaultPeriodEnd: input.accounts.vaultPeriodEnd.toBase58(),
+          userPosition: input.accounts.userPosition.toBase58(),
+          userPositionNftMint: input.accounts.userPositionNftMint.toBase58(),
+          vaultTokenAAccount: input.accounts.vaultTokenAAccount.toBase58(),
+          userTokenAAccount: input.accounts.userTokenAAccount.toBase58(),
+          userPositionNftAccount:
+            input.accounts.userPositionNftAccount.toBase58(),
+          depositor: input.accounts.depositor.toBase58(),
+          referrer: input.accounts.referrer,
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+          associatedTokenProgram:
+            ProgramUtil.associatedTokenProgram.programId.toBase58(),
+          rent: ProgramUtil.rentProgram.programId.toBase58(),
+          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
+        },
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [

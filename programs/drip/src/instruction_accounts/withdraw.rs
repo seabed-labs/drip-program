@@ -116,7 +116,6 @@ pub struct WithdrawCommonAccounts<'info> {
 
 #[derive(Accounts)]
 pub struct WithdrawBAccounts<'info> {
-    // TODO: Do we want to nest like this even if there are no new fields?
     pub common: WithdrawCommonAccounts<'info>,
 }
 
