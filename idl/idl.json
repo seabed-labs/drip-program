@@ -466,11 +466,6 @@
               "name": "tokenProgram",
               "isMut": false,
               "isSigner": false
-            },
-            {
-              "name": "rent",
-              "isMut": false,
-              "isSigner": false
             }
           ]
         },
@@ -560,11 +555,6 @@
             },
             {
               "name": "tokenProgram",
-              "isMut": false,
-              "isSigner": false
-            },
-            {
-              "name": "rent",
               "isMut": false,
               "isSigner": false
             }
