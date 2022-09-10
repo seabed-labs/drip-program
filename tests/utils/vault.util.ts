@@ -331,7 +331,6 @@ export class VaultUtil extends TestUtil {
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         swapTokenMint: swapTokenMint.toBase58(),
@@ -378,7 +377,6 @@ export class VaultUtil extends TestUtil {
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           rent: ProgramUtil.rentProgram.programId.toBase58(),
         },
         whirlpool: params.whirlpool.toBase58(),
