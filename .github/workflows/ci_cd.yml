@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 env:
   cli-id: anchor-v0.25.0.solana-1.10.32.v1
   SWAP_PROGRAM_OWNER_FEE_ADDRESS: HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN
@@ -288,4 +288,39 @@ jobs:
           solana-version: "1.10.32"        
           run-mode: "-analyzeAll"         
           cargo-com: "."                  
-          program-path: "programs/drip" 
+          program-path: "programs/drip"
+
+  deploy:
+    # if: github.ref == 'refs/heads/main'
+    # if: github.event.pull_request.merged == 'true'
+    needs: [build, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.13.0'
+
+      - name: ⚡️ Cache
+        id: cache-deps
+        uses: actions/cache@v2
+        with:
+          key: $${{ env.cli-id }}
+          path: |
+            ~/.local/share/solana
+            ~/.cargo
+            ~/.rustup
+            /opt/hostedtoolcache/node
+            target
+            node_modules
+
+      - name: Deploy Devnet Staging Program
+        run: ./scripts/deploy-devnet-staging.sh
+        env:
+          UPGRADE_AUTHORITY: ${{ secrets.UPGRADE_AUTHORITY }}
+          DRIP_KEYPAIR: ${{ secrets.DRIP_KEYPAIR }}
