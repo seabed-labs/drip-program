@@ -293,7 +293,7 @@ jobs:
   deploy:
     # if: github.ref == 'refs/heads/main'
     # if: github.event.pull_request.merged == 'true'
-    needs: [build, lint]
+    needs: [build, lint, audit, test-unit, test-integration-batch-1, test-integration-batch-2, test-integration-batch-3, test-integration-batch-4]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
