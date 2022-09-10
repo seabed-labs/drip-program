@@ -1,6 +1,6 @@
 # solana-programs
 
-[![CI](https://github.com/dcaf-labs/drip-program/actions/workflows/ci.yml/badge.svg)](https://github.com/dcaf-labs/drip-program/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/dcaf-labs/drip-program/actions/workflows/ci_cd.yml/badge.svg)](https://github.com/dcaf-labs/drip-program/actions/workflows/ci_cd.yml)
 
 ## Deploys
 
