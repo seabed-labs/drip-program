@@ -203,7 +203,6 @@ export class VaultUtil extends TestUtil {
         "confirmed"
       );
       return txId;
-      // return TestUtil.provider.connection.sendTransaction(tx, [admin]);
     } else {
       return await this.provider.sendAndConfirm(tx, undefined);
     }
@@ -467,7 +466,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
           associatedTokenProgram:
             ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },
