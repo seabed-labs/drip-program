@@ -415,8 +415,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },
       })
       .transaction();
@@ -458,8 +456,6 @@ export class VaultUtil extends TestUtil {
             ? referrer.toBase58()
             : vaultTreasuryTokenBAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
-          associatedTokenProgram:
-            ProgramUtil.associatedTokenProgram.programId.toBase58(),
         },
         vaultPeriodUserExpiry: vaultPeriodUserExpiry.toBase58(),
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),

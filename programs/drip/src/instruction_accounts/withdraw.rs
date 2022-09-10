@@ -110,8 +110,6 @@ pub struct WithdrawCommonAccounts<'info> {
 
     /* MISC */
     pub token_program: Program<'info, Token>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 #[derive(Accounts)]
