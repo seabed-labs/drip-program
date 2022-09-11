@@ -7,6 +7,8 @@ use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct WithdrawCommonAccounts<'info> {
+    // mut needed for close_position since we refund lamports
+    #[account(mut)]
     pub withdrawer: Signer<'info>,
 
     /* DRIP ACCOUNTS */

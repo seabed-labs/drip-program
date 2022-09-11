@@ -4,6 +4,7 @@ use std::cmp::min;
 
 use crate::errors::DripError;
 use crate::interactions::burn_token::BurnToken;
+use crate::interactions::close_account::CloseAccount;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::{
     calculate_spread_amount, calculate_withdraw_token_a_amount, calculate_withdraw_token_b_amount,
@@ -198,6 +199,13 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     1,
                 );
 
+                let close_account = CloseAccount::new(
+                    &accounts.common.token_program,
+                    &accounts.common.user_position_nft_account,
+                    &accounts.common.withdrawer,
+                    &accounts.common.withdrawer,
+                );
+
                 /* STATE UPDATES (EFFECTS) */
                 // Update the user's position state to reflect the newly withdrawn amount
                 accounts.common.user_position.close();
@@ -222,7 +230,7 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     transfer.execute(signer)?;
                 }
                 burn_position.execute(signer)?;
-
+                close_account.execute(signer)?;
                 Ok(())
             }
         }
