@@ -20,12 +20,13 @@ import {
   sleep,
   dripSPLTokenSwapWrapper,
 } from "../../utils/setup.util";
-import { Token, u64 } from "@solana/spl-token";
+import { MintLayout, Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
+import should from "should";
 
 describe("#closePosition", testClosePosition);
 
@@ -245,7 +246,7 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
@@ -254,7 +255,7 @@ export function testClosePosition() {
     userTokenAAccountAfter.balance.toString().should.equal("2000000000");
     userTokenBAccountAfter.balance.toString().should.equal("0");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
-    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    should(userPositionNFTAccountAfter).be.null();
     userPositionAccountAfter.isClosed.should.be.true();
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
@@ -295,7 +296,7 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
@@ -304,7 +305,7 @@ export function testClosePosition() {
     userTokenAAccountAfter.balance.toString().should.equal("1500000000");
     userTokenBAccountAfter.balance.toString().should.equal("497753433");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
-    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    should(userPositionNFTAccountAfter).be.null();
     userPositionAccountAfter.isClosed.should.be.true();
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
@@ -345,7 +346,7 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
@@ -354,7 +355,7 @@ export function testClosePosition() {
     userTokenAAccountAfter.balance.toString().should.equal("1000000000");
     userTokenBAccountAfter.balance.toString().should.equal("995010603");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
-    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    should(userPositionNFTAccountAfter).be.null();
     userPositionAccountAfter.isClosed.should.be.true();
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
     vault_After.dripAmount.toString().should.equal("0");
@@ -398,14 +399,14 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(userPositionNFTAccount),
+      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
       AccountUtil.fetchPositionAccount(userPositionAccount),
     ]);
 
     userTokenAAccountAfter.balance.toString().should.equal("1000000000");
     userTokenBAccountAfter.balance.toString().should.equal("992636304");
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("496566");
-    userPositionNFTAccountAfter.balance.toString().should.equal("0");
+    should(userPositionNFTAccountAfter).be.null();
     userPositionAccountAfter.isClosed.should.be.true();
   });
 
@@ -470,24 +471,25 @@ export function testClosePosition() {
       vaultPeriods[j].publicKey,
       vaultPeriods[k].publicKey
     );
+    const mint = TokenUtil.fetchMint(userPositionNFTMint, user);
+    const newUserPositionNFTAccount = await mint.createAssociatedTokenAccount(
+      user.publicKey
+    );
+    newUserPositionNFTAccount
+      .toString()
+      .should.equal(userPositionNFTAccount.toString());
+
     await userPosition.approve(
-      userPositionNFTAccount,
+      newUserPositionNFTAccount,
       vaultPDA.publicKey,
       user.publicKey,
       [user],
       1
     );
-    try {
-      await closePosition(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[j].publicKey,
-        vaultPeriods[k].publicKey
-      );
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Position is already closed")
-      ).should.not.be.undefined();
-    }
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    ).should.be.rejectedWith(/0x177f/);
   });
 }
