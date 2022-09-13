@@ -64,7 +64,8 @@ pub struct DepositCommonAccounts<'info> {
 
     #[account(
         init,
-        space = Position::ACCOUNT_SPACE,
+        // Allocate an extra 64 bytes to future proof this
+        space = Position::ACCOUNT_SPACE + 64,
         seeds = [
             b"user_position".as_ref(),
             user_position_nft_mint.key().as_ref()

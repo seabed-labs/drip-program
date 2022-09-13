@@ -19,7 +19,8 @@ pub struct InitializeVaultProtoConfigAccounts<'info> {
 
     #[account(
         init,
-        space = VaultProtoConfig::ACCOUNT_SPACE,
+        // Allocate an extra 128 bytes to future proof this
+        space = VaultProtoConfig::ACCOUNT_SPACE + 128,
         payer = creator
     )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
