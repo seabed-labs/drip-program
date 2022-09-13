@@ -20,7 +20,8 @@ pub struct InitializeVaultAccounts<'info> {
     /* DRIP ACCOUNTS */
     #[account(
         init,
-        space = Vault::ACCOUNT_SPACE,
+        // Allocate an extra 128 bytes to future proof this
+        space = Vault::ACCOUNT_SPACE + 128,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
