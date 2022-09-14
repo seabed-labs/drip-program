@@ -13,7 +13,7 @@ pub struct InitializeVaultProtoConfigParams {
 
 #[derive(Accounts)]
 pub struct InitializeVaultProtoConfigAccounts<'info> {
-    // mut needed because we are initializing the account
+    // mut needed because we are debiting SOL from the signer to create the vault_proto_config account
     #[account(mut)]
     pub creator: Signer<'info>,
 
