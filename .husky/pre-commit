@@ -9,6 +9,9 @@ cargo fmt -- --check
 echo "Checking typescript formatting... Run 'prettier --w ./' if this check fails"
 yarn run prettier --c ./
 
+echo "Running clippy"
+yarn clippy
+
 echo "Running cargo tests"
 cargo test
 
