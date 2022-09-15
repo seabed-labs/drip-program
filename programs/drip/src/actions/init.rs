@@ -104,7 +104,8 @@ fn init_vault_period(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state;
+    use crate::state::VaultProtoConfig;
+    use crate::test::fixtures::AccountFixture;
     use crate::Init;
     use test_case::test_case;
 
@@ -121,54 +122,30 @@ mod tests {
         admin: Pubkey,
         expected_res: Result<()>,
     ) {
-        let signer = Pubkey::new_unique();
-        let system_program: Pubkey = System::id();
-        let vault_proto_config = Pubkey::new_unique();
-        let l1 = &mut 1;
-        let l2 = &mut 1;
-        let l3 = &mut 1;
-        let d1 = &mut [0u8];
-        let d2 = &mut [0u8];
-        let mut buf = {
-            let vault_proto_config_data: state::VaultProtoConfig = state::VaultProtoConfig {
+        let mut signer = AccountFixture::new_signer();
+        let mut system_program = AccountFixture::new_program();
+        let mut vault_proto_config_data = {
+            let data = VaultProtoConfig {
                 granularity: 0,
                 token_a_drip_trigger_spread: 0,
                 token_b_withdrawal_spread: 0,
                 token_b_referral_spread: 0,
                 admin: Default::default(),
             };
-            let mut buf: Vec<u8> = Vec::new();
-            vault_proto_config_data.try_serialize(&mut buf).unwrap();
+
+            let mut buf = Vec::new();
+            data.try_serialize(&mut buf).unwrap();
+
             buf
         };
-        let d3 = buf.as_mut_slice();
-        let signer_account =
-            AccountInfo::new(&signer, true, false, l1, d1, &system_program, false, 0);
-        let system_program_account = AccountInfo::new(
-            &system_program,
-            false,
-            false,
-            l2,
-            d2,
-            &system_program,
-            true,
-            0,
-        );
-        let vault_proto_config_account = AccountInfo::new(
-            &vault_proto_config,
-            false,
-            false,
-            l3,
-            d3,
-            &crate::ID,
-            false,
-            0,
-        );
+
+        let mut vault_proto_config =
+            AccountFixture::new_drip_account(vault_proto_config_data.as_mut_slice(), false);
 
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
-            creator: Signer::try_from(&signer_account).unwrap(),
-            vault_proto_config: Account::try_from(&vault_proto_config_account).unwrap(),
-            system_program: Program::try_from(&system_program_account).unwrap(),
+            creator: signer.to_signer(),
+            vault_proto_config: vault_proto_config.to_account(),
+            system_program: system_program.to_program(),
         };
 
         let initialize_vault_proto_config_params = InitializeVaultProtoConfigParams {
@@ -189,54 +166,30 @@ mod tests {
 
     #[test]
     fn vault_proto_config_happy_path() {
-        let signer = Pubkey::new_unique();
-        let system_program: Pubkey = System::id();
-        let vault_proto_config = Pubkey::new_unique();
-        let l1 = &mut 1;
-        let l2 = &mut 1;
-        let l3 = &mut 1;
-        let d1 = &mut [0u8];
-        let d2 = &mut [0u8];
-        let mut buf = {
-            let vault_proto_config_data: state::VaultProtoConfig = state::VaultProtoConfig {
+        let mut signer = AccountFixture::new_signer();
+        let mut system_program = AccountFixture::new_program();
+        let mut vault_proto_config_data = {
+            let data = VaultProtoConfig {
                 granularity: 0,
                 token_a_drip_trigger_spread: 0,
                 token_b_withdrawal_spread: 0,
                 token_b_referral_spread: 0,
                 admin: Default::default(),
             };
-            let mut buf: Vec<u8> = Vec::new();
-            vault_proto_config_data.try_serialize(&mut buf).unwrap();
+
+            let mut buf = Vec::new();
+            data.try_serialize(&mut buf).unwrap();
+
             buf
         };
-        let d3 = buf.as_mut_slice();
-        let signer_account =
-            AccountInfo::new(&signer, true, false, l1, d1, &system_program, false, 0);
-        let system_program_account = AccountInfo::new(
-            &system_program,
-            false,
-            false,
-            l2,
-            d2,
-            &system_program,
-            true,
-            0,
-        );
-        let vault_proto_config_account = AccountInfo::new(
-            &vault_proto_config,
-            false,
-            false,
-            l3,
-            d3,
-            &crate::ID,
-            false,
-            0,
-        );
+
+        let mut vault_proto_config =
+            AccountFixture::new_drip_account(vault_proto_config_data.as_mut_slice(), false);
 
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
-            creator: Signer::try_from(&signer_account).unwrap(),
-            vault_proto_config: Account::try_from(&vault_proto_config_account).unwrap(),
-            system_program: Program::try_from(&system_program_account).unwrap(),
+            creator: signer.to_signer(),
+            vault_proto_config: vault_proto_config.to_account(),
+            system_program: system_program.to_program(),
         };
 
         let admin = Pubkey::new_unique();
@@ -263,6 +216,7 @@ mod tests {
         let vault_proto_config = initialize_vault_proto_config_accounts
             .vault_proto_config
             .clone();
+
         assert_eq!(vault_proto_config.granularity, 1);
         assert_eq!(vault_proto_config.token_a_drip_trigger_spread, 2);
         assert_eq!(vault_proto_config.token_b_withdrawal_spread, 3);
