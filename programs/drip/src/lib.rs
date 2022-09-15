@@ -49,6 +49,17 @@ pub mod drip {
         })
     }
 
+    pub fn deposit_with_metadata(
+        ctx: Context<DepositWithMetadataAccounts>,
+        params: DepositParams,
+    ) -> Result<()> {
+        handle_action(Deposit::WithMetadata {
+            accounts: ctx.accounts,
+            params,
+            bumps: ctx.bumps,
+        })
+    }
+
     pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
         handle_action(Withdraw::WithoutClosePosition {
             accounts: ctx.accounts,
@@ -58,17 +69,6 @@ pub mod drip {
     pub fn close_position(ctx: Context<ClosePositionAccounts>) -> Result<()> {
         handle_action(Withdraw::WithClosePosition {
             accounts: ctx.accounts,
-        })
-    }
-
-    pub fn deposit_with_metadata(
-        ctx: Context<DepositWithMetadataAccounts>,
-        params: DepositParams,
-    ) -> Result<()> {
-        handle_action(Deposit::WithMetadata {
-            accounts: ctx.accounts,
-            params,
-            bumps: ctx.bumps,
         })
     }
 
