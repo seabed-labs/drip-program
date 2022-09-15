@@ -219,6 +219,10 @@ mod tests {
         assert_eq!(res, Ok(()));
 
         let vault_period_after = &initialize_vault_period_accounts.vault_period;
+        assert_ne!(
+            initialize_vault_period_accounts.vault.key(),
+            Default::default()
+        );
         assert_eq!(
             vault_period_after.vault,
             initialize_vault_period_accounts.vault.key()
