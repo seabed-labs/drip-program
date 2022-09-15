@@ -1,7 +1,4 @@
-use crate::errors::DripError::{
-    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod, InvalidGranularity, InvalidSpread,
-    InvalidVaultProtoConfigReference,
-};
+use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
 use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
 use crate::{
     instruction_accounts::{
@@ -39,23 +36,7 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 );
                 Ok(())
             }
-            Init::VaultPeriod {
-                accounts, params, ..
-            } => {
-                // Relation Checks
-                validate!(
-                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
-                    InvalidVaultProtoConfigReference
-                );
-                // Business Checks
-                // TODO(Mocha): do we even need this for init_vault_period?
-                validate!(
-                    params.period_id > accounts.vault.last_drip_period
-                        || (params.period_id == 0 && accounts.vault.last_drip_period == 0),
-                    CannotInitializeVaultPeriodLessThanVaultCurrentPeriod
-                );
-                Ok(())
-            }
+            Init::VaultPeriod { .. } => Ok(()),
         }
     }
 }
@@ -103,9 +84,11 @@ fn init_vault_period(
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
-    use crate::state;
-    use crate::Init::VaultProtoConfig;
+    use crate::test::fixtures::AccountFixture;
+    use crate::Init;
     use test_case::test_case;
 
     #[test_case(0, 0, 0, 0, Pubkey::new_unique(), Err(InvalidGranularity.into()); "Returns error for invalid granularity")]
@@ -121,54 +104,14 @@ mod tests {
         admin: Pubkey,
         expected_res: Result<()>,
     ) {
-        let signer = Pubkey::new_unique();
-        let system_program: Pubkey = System::id();
-        let vault_proto_config = Pubkey::new_unique();
-        let l1 = &mut 1;
-        let l2 = &mut 1;
-        let l3 = &mut 1;
-        let d1 = &mut [0u8];
-        let d2 = &mut [0u8];
-        let mut buf = {
-            let vault_proto_config_data: state::VaultProtoConfig = state::VaultProtoConfig {
-                granularity: 0,
-                token_a_drip_trigger_spread: 0,
-                token_b_withdrawal_spread: 0,
-                token_b_referral_spread: 0,
-                admin: Default::default(),
-            };
-            let mut buf: Vec<u8> = Vec::new();
-            vault_proto_config_data.try_serialize(&mut buf).unwrap();
-            buf
-        };
-        let d3 = buf.as_mut_slice();
-        let signer_account =
-            AccountInfo::new(&signer, true, false, l1, d1, &system_program, false, 0);
-        let system_program_account = AccountInfo::new(
-            &system_program,
-            false,
-            false,
-            l2,
-            d2,
-            &system_program,
-            true,
-            0,
-        );
-        let vault_proto_config_account = AccountInfo::new(
-            &vault_proto_config,
-            false,
-            false,
-            l3,
-            d3,
-            &crate::ID,
-            false,
-            0,
-        );
+        let mut signer = AccountFixture::new_signer();
+        let mut system_program = AccountFixture::new_program();
+        let mut vault_proto_config = AccountFixture::new_vault_proto_config(true, true);
 
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
-            creator: Signer::try_from(&signer_account).unwrap(),
-            vault_proto_config: Account::try_from(&vault_proto_config_account).unwrap(),
-            system_program: Program::try_from(&system_program_account).unwrap(),
+            creator: signer.to_signer(),
+            vault_proto_config: vault_proto_config.to_account(),
+            system_program: system_program.to_program(),
         };
 
         let initialize_vault_proto_config_params = InitializeVaultProtoConfigParams {
@@ -179,11 +122,115 @@ mod tests {
             admin,
         };
 
-        let vault_proto_config_action = VaultProtoConfig {
+        let vault_proto_config_action = Init::VaultProtoConfig {
             accounts: initialize_vault_proto_config_accounts,
             params: initialize_vault_proto_config_params,
         };
         let res = vault_proto_config_action.validate();
         assert_eq!(res, expected_res);
+    }
+
+    #[test]
+    fn vault_proto_config_happy_path() {
+        let mut signer = AccountFixture::new_signer();
+        let mut system_program = AccountFixture::new_program();
+        let mut vault_proto_config = AccountFixture::new_vault_proto_config(true, true);
+
+        let mut initialize_vault_proto_config_accounts = InitializeVaultProtoConfigAccounts {
+            creator: signer.to_signer(),
+            vault_proto_config: vault_proto_config.to_account(),
+            system_program: system_program.to_program(),
+        };
+
+        let vault_proto_config_before = &initialize_vault_proto_config_accounts.vault_proto_config;
+
+        assert_eq!(vault_proto_config_before.granularity, 0);
+        assert_eq!(vault_proto_config_before.token_a_drip_trigger_spread, 0);
+        assert_eq!(vault_proto_config_before.token_b_withdrawal_spread, 0);
+        assert_eq!(vault_proto_config_before.token_b_referral_spread, 0);
+        assert_eq!(vault_proto_config_before.admin, Default::default());
+
+        let admin = Pubkey::new_unique();
+
+        let initialize_vault_proto_config_params = InitializeVaultProtoConfigParams {
+            granularity: 1,
+            token_a_drip_trigger_spread: 2,
+            token_b_withdrawal_spread: 3,
+            token_b_referral_spread: 4,
+            admin,
+        };
+
+        let vault_proto_config_action = Init::VaultProtoConfig {
+            accounts: &mut initialize_vault_proto_config_accounts,
+            params: initialize_vault_proto_config_params,
+        };
+
+        let res = vault_proto_config_action.validate();
+        assert_eq!(res, Ok(()));
+
+        let res = vault_proto_config_action.execute();
+        assert_eq!(res, Ok(()));
+
+        let vault_proto_config_after = &initialize_vault_proto_config_accounts.vault_proto_config;
+
+        assert_eq!(vault_proto_config_after.granularity, 1);
+        assert_eq!(vault_proto_config_after.token_a_drip_trigger_spread, 2);
+        assert_eq!(vault_proto_config_after.token_b_withdrawal_spread, 3);
+        assert_eq!(vault_proto_config_after.token_b_referral_spread, 4);
+        assert_eq!(vault_proto_config_after.admin, admin);
+    }
+
+    #[test]
+    fn init_vault_period_happy_path() {
+        let mut signer = AccountFixture::new_signer();
+        let mut system_program = AccountFixture::new_program();
+        let mut vault = AccountFixture::new_vault(false, false);
+        let mut vault_period = AccountFixture::new_vault_period(true, true);
+        let mut initialize_vault_period_accounts = InitializeVaultPeriodAccounts {
+            vault_period: vault_period.to_account(),
+            vault: vault.to_account(),
+            creator: signer.to_signer(),
+            system_program: system_program.to_program(),
+        };
+
+        let vault_period_before = &initialize_vault_period_accounts.vault_period;
+        assert_eq!(vault_period_before.vault, Default::default());
+        assert_eq!(vault_period_before.period_id, 0);
+        assert_eq!(vault_period_before.drip_timestamp, 0);
+        assert_eq!(vault_period_before.dar, 0);
+        assert_eq!(vault_period_before.twap, 0);
+        assert_eq!(vault_period_before.bump, 0);
+
+        let initialize_vault_period_params = InitializeVaultPeriodParams { period_id: 1 };
+
+        let mut bumps = BTreeMap::new();
+        bumps.insert(String::from_str("vault_period").unwrap(), 5);
+
+        let vault_proto_config_action = Init::VaultPeriod {
+            accounts: &mut initialize_vault_period_accounts,
+            params: initialize_vault_period_params,
+            bumps,
+        };
+
+        let res = vault_proto_config_action.validate();
+        assert_eq!(res, Ok(()));
+
+        let res = vault_proto_config_action.execute();
+        assert_eq!(res, Ok(()));
+
+        let vault_period_after = &initialize_vault_period_accounts.vault_period;
+        assert_ne!(
+            initialize_vault_period_accounts.vault.key(),
+            Default::default()
+        );
+        assert_eq!(
+            vault_period_after.vault,
+            initialize_vault_period_accounts.vault.key()
+        );
+        assert_eq!(vault_period_after.period_id, 1);
+        assert_eq!(vault_period_after.drip_timestamp, 0);
+        assert_eq!(vault_period_after.dar, 0);
+        assert_eq!(vault_period_after.twap, 0);
+        assert_eq!(vault_period_after.bump, 5);
     }
 }

@@ -11,6 +11,8 @@ pub mod interactions;
 pub mod macros;
 pub mod math;
 pub mod state;
+#[cfg(test)]
+pub mod test;
 
 declare_id!("dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk");
 

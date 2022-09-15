@@ -42,6 +42,7 @@
     "test:setupWhirlpool": "ENV=DEVNET anchor test tests/utils/setupWhirlpool.ts",
     "test:setupMPLTokenMetadata": "ENV=DEVNET anchor test tests/utils/setupMPLTokenMetadata.ts",
     "build:anchor": "SWAP_PROGRAM_OWNER_FEE_ADDRESS=HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN anchor build",
+    "clippy": "cargo clippy -- -D warnings --A clippy::too_many_arguments --A clippy::borrowed_box",
     "build": "sh scripts/build.sh"
   }
 }
