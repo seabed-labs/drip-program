@@ -6,6 +6,8 @@ use anchor_lang::{
     AccountDeserialize, AccountSerialize, Id, Owner,
 };
 
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
+
 pub struct AccountFixture<T> {
     key: Pubkey,
     is_signer: bool,
@@ -68,24 +70,105 @@ impl AccountFixture<[u8; 1]> {
     }
 }
 
-impl<'data> AccountFixture<&'data mut [u8]> {
-    pub fn new(data: &'data mut [u8]) -> Self {
+impl AccountFixture<Vec<u8>> {
+    pub fn new() -> Self {
         AccountFixture {
             key: Pubkey::new_unique(),
             is_signer: false,
             is_writable: false,
             lamports: 1,
-            data,
+            data: vec![],
             owner: System::id(),
             executable: false,
             rent_epoch: 0,
         }
     }
 
-    pub fn new_drip_account(data: &'data mut [u8], is_writable: bool) -> Self {
-        let mut account = Self::new(data);
+    pub fn new_drip_account(is_writable: bool) -> Self {
+        let mut account = Self::new();
         account.owner = crate::ID;
         account.is_writable = is_writable;
+
+        account
+    }
+
+    pub fn new_vault_proto_config(is_writable: bool, is_empty: bool) -> Self {
+        let data = if is_empty {
+            VaultProtoConfig::default()
+        } else {
+            VaultProtoConfig {
+                granularity: 1,
+                token_a_drip_trigger_spread: 2,
+                token_b_withdrawal_spread: 3,
+                token_b_referral_spread: 4,
+                admin: Pubkey::new_unique(),
+            }
+        };
+
+        let mut buf = Vec::new();
+        data.try_serialize(&mut buf).unwrap();
+
+        let mut account = Self::new_drip_account(is_writable);
+        account.data = buf;
+
+        account
+    }
+
+    pub fn new_vault_period(is_writable: bool, is_empty: bool) -> Self {
+        let data = if is_empty {
+            VaultPeriod::default()
+        } else {
+            VaultPeriod {
+                vault: Pubkey::new_unique(),
+                period_id: 0,
+                dar: 0,
+                twap: 0,
+                drip_timestamp: 0,
+                bump: 0,
+            }
+        };
+
+        let mut buf = Vec::new();
+        data.try_serialize(&mut buf).unwrap();
+
+        let mut account = Self::new_drip_account(is_writable);
+        account.data = buf;
+
+        account
+    }
+
+    pub fn new_vault(is_writable: bool, is_empty: bool) -> Self {
+        let data = if is_empty {
+            Vault::default()
+        } else {
+            Vault {
+                proto_config: Pubkey::new_unique(),
+                token_a_mint: Pubkey::new_unique(),
+                token_b_mint: Pubkey::new_unique(),
+                token_a_account: Pubkey::new_unique(),
+                token_b_account: Pubkey::new_unique(),
+                treasury_token_b_account: Pubkey::new_unique(),
+                whitelisted_swaps: [
+                    Pubkey::new_unique(),
+                    Pubkey::new_unique(),
+                    Pubkey::new_unique(),
+                    Pubkey::new_unique(),
+                    Pubkey::new_unique(),
+                ],
+                last_drip_period: 0,
+                drip_amount: 0,
+                drip_activation_timestamp: 0,
+                bump: 0,
+                limit_swaps: true,
+                max_slippage_bps: 100,
+            }
+        };
+
+        let mut buf = Vec::new();
+        data.try_serialize(&mut buf).unwrap();
+
+        let mut account = Self::new_drip_account(is_writable);
+        account.data = buf;
 
         account
     }
@@ -96,16 +179,16 @@ impl<'data> AccountFixture<&'data mut [u8]> {
             self.is_signer,
             self.is_writable,
             &mut self.lamports,
-            self.data,
+            self.data.as_mut_slice(),
             &self.owner,
             self.executable,
             self.rent_epoch,
         )
     }
 
-    pub fn to_account<T: AccountSerialize + AccountDeserialize + Owner + Clone>(
-        &'data mut self,
-    ) -> Account<'data, T> {
+    pub fn to_account<'info, T: AccountSerialize + AccountDeserialize + Owner + Clone>(
+        &'info mut self,
+    ) -> Account<'info, T> {
         Account::try_from(&self.to_account_info()).unwrap()
     }
 }
