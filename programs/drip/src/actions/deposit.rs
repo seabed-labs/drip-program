@@ -47,7 +47,7 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
         accounts.vault_period_end.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
-    // TODO(Matcha): @Mocha, what's this for again?
+
     validate!(
         accounts.vault_period_end.period_id
             == accounts
@@ -57,6 +57,7 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
                 .unwrap(),
         DripError::InvalidVaultPeriod
     );
+
     validate!(
         accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
         DripError::IncorrectVaultTokenAccount
@@ -76,10 +77,6 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
         DripError::PeriodicDripAmountIsZero
     );
 
-    validate!(
-        params.token_a_deposit_amount <= accounts.user_token_a_account.delegated_amount,
-        InvalidArgument
-    );
     Ok(())
 }
 

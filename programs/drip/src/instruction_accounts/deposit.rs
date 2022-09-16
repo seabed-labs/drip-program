@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::errors::DripError;
 use crate::interactions::create_token_metadata::MetaplexTokenMetadata;
 use crate::state::{Position, Vault, VaultPeriod};
 
@@ -14,52 +13,24 @@ pub struct DepositParams {
 
 #[derive(Accounts)]
 pub struct DepositCommonAccounts<'info> {
+    // mut reason: creating account
     #[account(mut)]
     pub depositor: Signer<'info>,
 
-    #[account(
-        // mut needed
-        mut,
-        seeds = [
-            b"drip-v1".as_ref(),
-            vault_token_a_account.mint.as_ref(),
-            vault.token_b_mint.key().as_ref(),
-            vault.proto_config.as_ref()
-        ],
-        bump = vault.bump
-    )]
+    // mut reason: modifying state
+    #[account(mut)]
     pub vault: Box<Account<'info, Vault>>,
 
-    #[account(
-        // mut needed because we are changing state
-        mut,
-        has_one = vault,
-        seeds = [
-            b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            vault_period_end.period_id.to_string().as_bytes()
-        ],
-        bump = vault_period_end.bump,
-        constraint = vault_period_end.period_id > 0 @DripError::InvalidVaultPeriod,
-    )]
+    // mut reason: modifying state
+    #[account(mut)]
     pub vault_period_end: Box<Account<'info, VaultPeriod>>,
 
-    // Token accounts
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = vault_token_a_account.mint == vault.token_a_mint,
-        constraint = vault_token_a_account.owner == vault.key()
-    )]
+    // mut reason: changing balance
+    #[account(mut)]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = user_token_a_account.mint == vault.token_a_mint,
-        constraint = user_token_a_account.owner == depositor.key(),
-        constraint = user_token_a_account.delegate.contains(&vault.key()),
-    )]
+    // mut reason: changing balance
+    #[account(mut)]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
@@ -91,13 +62,8 @@ pub struct DepositCommonAccounts<'info> {
     )]
     pub user_position_nft_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        constraint = referrer.mint == vault.token_b_mint @DripError::InvalidMint,
-    )]
     pub referrer: Box<Account<'info, TokenAccount>>,
 
-    // Other
-    // mut needed because we are initing accounts
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
