@@ -38,7 +38,7 @@ impl<'info> CPI for TransferToken<'info> {
                 anchor_spl::token::Transfer {
                     from: self.from.to_account_info(),
                     to: self.to.to_account_info(),
-                    authority: self.authority.to_account_info().clone(),
+                    authority: self.authority,
                 },
                 &[sign!(signer)],
             ),
