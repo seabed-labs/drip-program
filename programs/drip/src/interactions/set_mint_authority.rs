@@ -41,11 +41,7 @@ impl<'info> CPI for SetMintAuthority<'info> {
                 self.current_authority.key,
                 &[self.current_authority.key],
             )?,
-            &[
-                self.mint.to_account_info(),
-                self.current_authority,
-                self.token_program.to_account_info(),
-            ],
+            &[self.mint.to_account_info(), self.current_authority],
             &[sign!(signer)],
         )?;
 
