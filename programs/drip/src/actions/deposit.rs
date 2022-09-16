@@ -1,5 +1,5 @@
 use crate::errors::DripError;
-use crate::interactions::create_token_metadata::{get_metadata_url, CreateTokenMetadata};
+use crate::interactions::create_token_metadata::CreateTokenMetadata;
 use crate::interactions::mint_token::MintToken;
 use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
@@ -14,6 +14,9 @@ use crate::{
 use crate::{validate, DepositCommonAccounts};
 use anchor_lang::prelude::*;
 use std::collections::BTreeMap;
+
+const DRIP_METADATA_NAME: &str = "Drip Position";
+const DRIP_METADATA_SYMBOL: &str = "DP";
 
 pub enum Deposit<'a, 'info> {
     WithoutMetadata {
@@ -87,10 +90,7 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 accounts,
                 params,
                 bumps,
-            } => {
-                let create_token_metadata = None::<Box<CreateTokenMetadata>>;
-                execute_deposit(&mut accounts.common, params, bumps, create_token_metadata)
-            }
+            } => execute_deposit(&mut accounts.common, params, bumps, None),
             Deposit::WithMetadata {
                 accounts,
                 params,
@@ -105,12 +105,15 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                     &accounts.common.depositor.to_account_info(),
                     &accounts.common.rent,
                     get_metadata_url(&accounts.common.user_position_nft_mint.key()),
+                    DRIP_METADATA_NAME.to_string(),
+                    DRIP_METADATA_SYMBOL.to_string(),
                 );
+
                 execute_deposit(
                     &mut accounts.common,
                     params,
                     bumps,
-                    Some(Box::new(create_token_metadata)),
+                    Some(create_token_metadata),
                 )
             }
         }
@@ -121,7 +124,7 @@ fn execute_deposit(
     accounts: &mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
-    create_token_metadata: Option<Box<impl CPI>>,
+    create_token_metadata: Option<CreateTokenMetadata>,
 ) -> Result<()> {
     let token_transfer = TransferToken::new(
         &accounts.token_program,
@@ -150,7 +153,7 @@ fn execute_deposit(
     update_state(accounts, params, bumps)?;
 
     /* MANUAL CPI (INTERACTIONS) */
-    let signer: &Vault = accounts.vault.as_ref();
+    let signer: &Vault = &accounts.vault;
     token_transfer.execute(signer)?;
     mint_position_nft.execute(signer)?;
     if let Some(create_token_metadata) = create_token_metadata {
@@ -170,9 +173,11 @@ fn update_state(
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps);
 
     accounts.vault.increase_drip_amount(periodic_drip_amount);
+
     accounts
         .vault_period_end
         .increase_drip_amount_to_reduce(periodic_drip_amount);
+
     accounts.user_position.init(
         accounts.vault.key(),
         accounts.user_position_nft_mint.key(),
@@ -182,5 +187,12 @@ fn update_state(
         params.number_of_swaps,
         periodic_drip_amount,
         bumps.get("user_position"),
+    )
+}
+
+fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {
+    format!(
+        "https://api.drip.dcaf.so/v1/drip/position/{}/metadata",
+        position_nft_mint_pubkey
     )
 }

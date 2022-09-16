@@ -33,7 +33,7 @@ impl Position {
     pub fn init(
         &mut self,
         vault: Pubkey,
-        position_nft: Pubkey,
+        position_authority: Pubkey,
         referrer: Pubkey,
         deposited_amount: u64,
         last_drip_period: u64,
@@ -42,7 +42,7 @@ impl Position {
         bump: Option<&u8>,
     ) -> Result<()> {
         self.vault = vault;
-        self.position_authority = position_nft;
+        self.position_authority = position_authority;
         self.deposited_token_a_amount = deposited_amount;
         self.withdrawn_token_b_amount = 0;
         self.deposit_timestamp = Clock::get().unwrap().unix_timestamp;
