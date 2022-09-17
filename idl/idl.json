@@ -309,7 +309,7 @@
         },
         {
           "name": "swapTokenMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -395,7 +395,7 @@
         },
         {
           "name": "whirlpool",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1073,8 +1073,8 @@
     },
     {
       "code": 6019,
-      "name": "SwappedMoreThanVaultDripAmount",
-      "msg": "Swapped more than vault's drip amount"
+      "name": "IncorrectSwapAmount",
+      "msg": "Swapped the wrong amount during drip"
     },
     {
       "code": 6020,

@@ -309,7 +309,7 @@ export type Drip = {
         },
         {
           name: "swapTokenMint";
-          isMut: false;
+          isMut: true;
           isSigner: false;
         },
         {
@@ -395,7 +395,7 @@ export type Drip = {
         },
         {
           name: "whirlpool";
-          isMut: false;
+          isMut: true;
           isSigner: false;
         },
         {
@@ -1073,8 +1073,8 @@ export type Drip = {
     },
     {
       code: 6019;
-      name: "SwappedMoreThanVaultDripAmount";
-      msg: "Swapped more than vault's drip amount";
+      name: "IncorrectSwapAmount";
+      msg: "Swapped the wrong amount during drip";
     },
     {
       code: 6020;
@@ -1420,7 +1420,7 @@ export const IDL: Drip = {
         },
         {
           name: "swapTokenMint",
-          isMut: false,
+          isMut: true,
           isSigner: false,
         },
         {
@@ -1506,7 +1506,7 @@ export const IDL: Drip = {
         },
         {
           name: "whirlpool",
-          isMut: false,
+          isMut: true,
           isSigner: false,
         },
         {
@@ -2184,8 +2184,8 @@ export const IDL: Drip = {
     },
     {
       code: 6019,
-      name: "SwappedMoreThanVaultDripAmount",
-      msg: "Swapped more than vault's drip amount",
+      name: "IncorrectSwapAmount",
+      msg: "Swapped the wrong amount during drip",
     },
     {
       code: 6020,
