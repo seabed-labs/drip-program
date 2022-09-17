@@ -240,6 +240,193 @@ export type Drip = {
       ];
     },
     {
+      name: "dripSplTokenSwap";
+      accounts: [
+        {
+          name: "common";
+          accounts: [
+            {
+              name: "dripTriggerSource";
+              isMut: false;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "lastVaultPeriod";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "currentVaultPeriod";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultTokenBAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "swapTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "swapTokenBAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "dripFeeTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tokenProgram";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
+        },
+        {
+          name: "swap";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "swapTokenMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "swapFeeAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "swapAuthority";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenSwapProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [];
+    },
+    {
+      name: "dripOrcaWhirlpool";
+      accounts: [
+        {
+          name: "common";
+          accounts: [
+            {
+              name: "dripTriggerSource";
+              isMut: false;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "lastVaultPeriod";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "currentVaultPeriod";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultTokenBAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "swapTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "swapTokenBAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "dripFeeTokenAAccount";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tokenProgram";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
+        },
+        {
+          name: "whirlpool";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tickArray0";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tickArray1";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "tickArray2";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "oracle";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "whirlpoolProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [];
+    },
+    {
       name: "withdrawB";
       accounts: [
         {
@@ -396,193 +583,6 @@ export type Drip = {
         {
           name: "userPositionNftMint";
           isMut: true;
-          isSigner: false;
-        }
-      ];
-      args: [];
-    },
-    {
-      name: "dripSplTokenSwap";
-      accounts: [
-        {
-          name: "common";
-          accounts: [
-            {
-              name: "dripTriggerSource";
-              isMut: false;
-              isSigner: true;
-            },
-            {
-              name: "vault";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultProtoConfig";
-              isMut: false;
-              isSigner: false;
-            },
-            {
-              name: "lastVaultPeriod";
-              isMut: false;
-              isSigner: false;
-            },
-            {
-              name: "currentVaultPeriod";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultTokenBAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "swapTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "swapTokenBAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "dripFeeTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "tokenProgram";
-              isMut: false;
-              isSigner: false;
-            }
-          ];
-        },
-        {
-          name: "swap";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "swapTokenMint";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "swapFeeAccount";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "swapAuthority";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenSwapProgram";
-          isMut: false;
-          isSigner: false;
-        }
-      ];
-      args: [];
-    },
-    {
-      name: "dripOrcaWhirlpool";
-      accounts: [
-        {
-          name: "common";
-          accounts: [
-            {
-              name: "dripTriggerSource";
-              isMut: false;
-              isSigner: true;
-            },
-            {
-              name: "vault";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultProtoConfig";
-              isMut: false;
-              isSigner: false;
-            },
-            {
-              name: "lastVaultPeriod";
-              isMut: false;
-              isSigner: false;
-            },
-            {
-              name: "currentVaultPeriod";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "vaultTokenBAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "swapTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "swapTokenBAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "dripFeeTokenAAccount";
-              isMut: true;
-              isSigner: false;
-            },
-            {
-              name: "tokenProgram";
-              isMut: false;
-              isSigner: false;
-            }
-          ];
-        },
-        {
-          name: "whirlpool";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray0";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray1";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray2";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "oracle";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "whirlpoolProgram";
-          isMut: false;
           isSigner: false;
         }
       ];
@@ -1351,6 +1351,193 @@ export const IDL: Drip = {
       ],
     },
     {
+      name: "dripSplTokenSwap",
+      accounts: [
+        {
+          name: "common",
+          accounts: [
+            {
+              name: "dripTriggerSource",
+              isMut: false,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "lastVaultPeriod",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "currentVaultPeriod",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultTokenBAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "swapTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "swapTokenBAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "dripFeeTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tokenProgram",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
+        },
+        {
+          name: "swap",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "swapTokenMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "swapFeeAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "swapAuthority",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenSwapProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: "dripOrcaWhirlpool",
+      accounts: [
+        {
+          name: "common",
+          accounts: [
+            {
+              name: "dripTriggerSource",
+              isMut: false,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "lastVaultPeriod",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "currentVaultPeriod",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultTokenBAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "swapTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "swapTokenBAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "dripFeeTokenAAccount",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tokenProgram",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
+        },
+        {
+          name: "whirlpool",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tickArray0",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tickArray1",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "tickArray2",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "oracle",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "whirlpoolProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
       name: "withdrawB",
       accounts: [
         {
@@ -1507,193 +1694,6 @@ export const IDL: Drip = {
         {
           name: "userPositionNftMint",
           isMut: true,
-          isSigner: false,
-        },
-      ],
-      args: [],
-    },
-    {
-      name: "dripSplTokenSwap",
-      accounts: [
-        {
-          name: "common",
-          accounts: [
-            {
-              name: "dripTriggerSource",
-              isMut: false,
-              isSigner: true,
-            },
-            {
-              name: "vault",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultProtoConfig",
-              isMut: false,
-              isSigner: false,
-            },
-            {
-              name: "lastVaultPeriod",
-              isMut: false,
-              isSigner: false,
-            },
-            {
-              name: "currentVaultPeriod",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultTokenBAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "swapTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "swapTokenBAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "dripFeeTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "tokenProgram",
-              isMut: false,
-              isSigner: false,
-            },
-          ],
-        },
-        {
-          name: "swap",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "swapTokenMint",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "swapFeeAccount",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "swapAuthority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenSwapProgram",
-          isMut: false,
-          isSigner: false,
-        },
-      ],
-      args: [],
-    },
-    {
-      name: "dripOrcaWhirlpool",
-      accounts: [
-        {
-          name: "common",
-          accounts: [
-            {
-              name: "dripTriggerSource",
-              isMut: false,
-              isSigner: true,
-            },
-            {
-              name: "vault",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultProtoConfig",
-              isMut: false,
-              isSigner: false,
-            },
-            {
-              name: "lastVaultPeriod",
-              isMut: false,
-              isSigner: false,
-            },
-            {
-              name: "currentVaultPeriod",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "vaultTokenBAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "swapTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "swapTokenBAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "dripFeeTokenAAccount",
-              isMut: true,
-              isSigner: false,
-            },
-            {
-              name: "tokenProgram",
-              isMut: false,
-              isSigner: false,
-            },
-          ],
-        },
-        {
-          name: "whirlpool",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray0",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray1",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray2",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "oracle",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "whirlpoolProgram",
-          isMut: false,
           isSigner: false,
         },
       ],
