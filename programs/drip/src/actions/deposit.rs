@@ -122,8 +122,8 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
     }
 }
 
-fn execute_deposit<'a>(
-    accounts: &'a mut DepositCommonAccounts,
+fn execute_deposit(
+    accounts: &mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
     create_token_metadata: Option<&dyn CPI>,
