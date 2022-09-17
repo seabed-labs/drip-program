@@ -224,3 +224,78 @@ fn execute_drip(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use anchor_lang::solana_program::program_pack::Pack;
+    use anchor_spl::token::{Token, TokenAccount};
+
+    use super::*;
+    use crate::{
+        interactions::executor::CpiExecutor,
+        state::traits::{CPI, PDA},
+    };
+
+    pub struct TestDripCpiExecutor<'info> {
+        pub cpi_executions: Vec<(String, String)>,
+        pub drip_common_accounts: DripCommonAccounts<'info>,
+        pub sent_token_a: u64,
+        pub received_token_b: u64,
+    }
+
+    impl<'info> TestDripCpiExecutor<'info> {
+        pub fn set_token_account_balance(
+            account: &mut Account<'info, TokenAccount>,
+            amount: u64,
+        ) -> Result<()> {
+            let token_account = spl_token::state::Account {
+                mint: account.mint,
+                owner: account.owner,
+                amount,
+                delegate: account.delegate,
+                state: account.state,
+                is_native: account.is_native,
+                delegated_amount: account.delegated_amount,
+                close_authority: account.close_authority,
+            };
+
+            let mut buff: Vec<u8> = vec![];
+            spl_token::state::Account::pack(token_account, &mut buff)?;
+
+            let token_account = TokenAccount::try_deserialize(&mut buff.as_slice())?;
+
+            account.set_inner(token_account);
+
+            account.exit(&Token::id())
+        }
+    }
+
+    impl<'info> CpiExecutor for TestDripCpiExecutor<'info> {
+        fn execute_all(
+            &mut self,
+            mut cpis: Vec<&Option<&dyn CPI>>,
+            signer: &dyn PDA,
+        ) -> Result<()> {
+            cpis.drain(..).for_each(|cpi| {
+                if let Some(cpi) = cpi {
+                    self.cpi_executions.push((cpi.id(), signer.id()));
+                }
+            });
+
+            let vault_token_a_balance = self.drip_common_accounts.vault_token_a_account.amount;
+            let vault_token_b_balance = self.drip_common_accounts.vault_token_a_account.amount;
+
+            Self::set_token_account_balance(
+                &mut self.drip_common_accounts.vault_token_a_account,
+                vault_token_a_balance - self.sent_token_a,
+            )?;
+
+            Self::set_token_account_balance(
+                &mut self.drip_common_accounts.vault_token_b_account,
+                vault_token_b_balance + self.received_token_b,
+            )?;
+
+            Ok(())
+        }
+    }
+}

@@ -9,14 +9,14 @@ use anchor_lang::{
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
 pub struct AccountFixture<T> {
-    key: Pubkey,
-    is_signer: bool,
-    is_writable: bool,
-    lamports: u64,
-    data: T,
-    owner: Pubkey,
-    executable: bool,
-    rent_epoch: Epoch,
+    pub key: Pubkey,
+    pub is_signer: bool,
+    pub is_writable: bool,
+    pub lamports: u64,
+    pub data: T,
+    pub owner: Pubkey,
+    pub executable: bool,
+    pub rent_epoch: Epoch,
 }
 
 impl AccountFixture<[u8; 1]> {
