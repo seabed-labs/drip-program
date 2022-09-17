@@ -12,6 +12,10 @@ yarn run prettier --c ./
 echo "Running clippy"
 yarn clippy
 
+echo "Building IDL"
+yarn build
+git add idl
+
 echo "Running cargo tests"
 cargo test
 
