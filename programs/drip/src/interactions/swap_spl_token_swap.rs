@@ -80,7 +80,7 @@ impl<'info> fmt::Debug for SwapSPLTokenSwap<'info> {
 }
 
 impl<'info> CPI for SwapSPLTokenSwap<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         let ix = spl_token_swap::instruction::swap(
             &self.token_swap_program.key(),
             &self.token_program.key(),

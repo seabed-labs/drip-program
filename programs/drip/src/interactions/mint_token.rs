@@ -46,14 +46,14 @@ impl<'info> fmt::Debug for MintToken<'info> {
 }
 
 impl<'info> CPI for MintToken<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         token::mint_to(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 token::MintTo {
                     mint: self.mint.to_account_info(),
                     to: self.to.to_account_info(),
-                    authority: self.authority,
+                    authority: self.authority.clone(),
                 },
                 &[sign!(signer)],
             ),

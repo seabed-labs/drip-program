@@ -44,17 +44,17 @@ impl<'info> fmt::Debug for SetMintAuthority<'info> {
 }
 
 impl<'info> CPI for SetMintAuthority<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         invoke_signed(
             &spl_token::instruction::set_authority(
                 self.token_program.key,
                 &self.mint.key(),
-                self.new_authority.map(|acc| acc.key),
+                self.new_authority.clone().map(|acc| acc.key),
                 AuthorityType::MintTokens,
                 self.current_authority.key,
                 &[self.current_authority.key],
             )?,
-            &[self.mint.to_account_info(), self.current_authority],
+            &[self.mint.to_account_info(), self.current_authority.clone()],
             &[sign!(signer)],
         )?;
 

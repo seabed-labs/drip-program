@@ -108,7 +108,7 @@ struct WhirlpoolSwapParams {
 }
 
 impl<'info> CPI for SwapOrcaWhirlpool<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         let params = WhirlpoolSwapParams {
             amount: self.amount_in,
             other_amount_threshold: 1,

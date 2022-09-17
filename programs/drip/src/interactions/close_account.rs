@@ -43,7 +43,7 @@ impl<'info> fmt::Debug for CloseAccount<'info> {
 }
 
 impl<'info> CPI for CloseAccount<'info> {
-    fn execute(self, _: &impl PDA) -> Result<()> {
+    fn execute(&self, _: &dyn PDA) -> Result<()> {
         invoke_signed(
             &close_account(
                 self.token_program.key,

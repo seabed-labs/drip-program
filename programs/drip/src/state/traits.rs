@@ -18,7 +18,7 @@ pub trait PDA {
 }
 
 pub trait CPI {
-    fn execute(self, signer: &impl PDA) -> Result<()>;
+    fn execute(&self, signer: &dyn PDA) -> Result<()>;
     fn id(&self) -> String;
 }
 

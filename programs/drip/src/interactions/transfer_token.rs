@@ -45,14 +45,14 @@ impl<'info> fmt::Debug for TransferToken<'info> {
 }
 
 impl<'info> CPI for TransferToken<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         anchor_spl::token::transfer(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 anchor_spl::token::Transfer {
                     from: self.from.to_account_info(),
                     to: self.to.to_account_info(),
-                    authority: self.authority,
+                    authority: self.authority.clone(),
                 },
                 &[sign!(signer)],
             ),

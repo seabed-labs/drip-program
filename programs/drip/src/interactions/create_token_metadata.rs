@@ -79,7 +79,7 @@ impl<'info> fmt::Debug for CreateTokenMetadata<'info> {
 }
 
 impl<'info> CPI for CreateTokenMetadata<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         invoke_signed(
             &create_metadata_accounts_v3(
                 self.metadata_program.key(),
@@ -88,9 +88,9 @@ impl<'info> CPI for CreateTokenMetadata<'info> {
                 self.authority.key(),
                 self.payer.key(),
                 self.authority.key(),
-                self.name,
-                self.symbol,
-                self.metadata_uri,
+                self.name.clone(),
+                self.symbol.clone(),
+                self.metadata_uri.clone(),
                 None,
                 0,
                 true,

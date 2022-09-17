@@ -5,6 +5,7 @@ use crate::interactions::mint_token::MintToken;
 use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::calculate_periodic_drip_amount;
+use crate::state::traits::CPI;
 use crate::state::Vault;
 use crate::ProgramError::InvalidArgument;
 use crate::{
@@ -113,7 +114,7 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                     &mut accounts.common,
                     params,
                     bumps,
-                    Some(create_token_metadata),
+                    Some(&create_token_metadata),
                     cpi_executor,
                 )
             }
@@ -121,11 +122,11 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
     }
 }
 
-fn execute_deposit(
-    accounts: &mut DepositCommonAccounts,
+fn execute_deposit<'a>(
+    accounts: &'a mut DepositCommonAccounts,
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
-    create_token_metadata: Option<CreateTokenMetadata>,
+    create_token_metadata: Option<&dyn CPI>,
     cpi_executor: &mut impl CpiExecutor,
 ) -> Result<()> {
     let token_transfer = TransferToken::new(
@@ -157,12 +158,16 @@ fn execute_deposit(
     /* MANUAL CPI (INTERACTIONS) */
 
     let signer: &Vault = &accounts.vault;
-    cpi_executor.execute(token_transfer, signer)?;
-    cpi_executor.execute(mint_position_nft, signer)?;
-    if let Some(create_token_metadata) = create_token_metadata {
-        cpi_executor.execute(create_token_metadata, signer)?;
-    }
-    cpi_executor.execute(revoke_position_nft_auth, signer)?;
+
+    cpi_executor.execute_all(
+        vec![
+            &Some(&token_transfer),
+            &Some(&mint_position_nft),
+            &create_token_metadata,
+            &Some(&revoke_position_nft_auth),
+        ],
+        signer,
+    )?;
 
     Ok(())
 }
