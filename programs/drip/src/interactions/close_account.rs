@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
@@ -29,6 +31,17 @@ impl<'info> CloseAccount<'info> {
     }
 }
 
+impl<'info> fmt::Debug for CloseAccount<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CloseAccount")
+            .field("token_program", &self.token_program.key)
+            .field("token_account", &self.token_account)
+            .field("destination", &self.destination)
+            .field("authority", &self.authority)
+            .finish()
+    }
+}
+
 impl<'info> CPI for CloseAccount<'info> {
     fn execute(self, _: &impl PDA) -> Result<()> {
         invoke_signed(
@@ -48,5 +61,9 @@ impl<'info> CPI for CloseAccount<'info> {
             &[],
         )?;
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }

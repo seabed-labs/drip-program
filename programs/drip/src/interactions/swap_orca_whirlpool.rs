@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::state::traits::{CPI, PDA};
 use crate::{sign, WhirlpoolProgram};
 use anchor_lang::prelude::*;
@@ -74,6 +76,28 @@ impl<'info> SwapOrcaWhirlpool<'info> {
     }
 }
 
+impl<'info> fmt::Debug for SwapOrcaWhirlpool<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SwapOrcaWhirlpool")
+            .field("whirlpool_program", &self.whirlpool_program.key)
+            .field("token_program", &self.token_program.key)
+            .field("token_authority", &self.token_authority)
+            .field("whirlpool", &self.whirlpool)
+            .field("token_owner_account_a", &self.token_owner_account_a)
+            .field("whirlpool_token_vault_a", &self.whirlpool_token_vault_a)
+            .field("token_owner_account_b", &self.token_owner_account_b)
+            .field("whirlpool_token_vault_b", &self.whirlpool_token_vault_b)
+            .field("tick_array_0", &self.tick_array_0)
+            .field("tick_array_1", &self.tick_array_1)
+            .field("tick_array_2", &self.tick_array_2)
+            .field("oracle", &self.oracle)
+            .field("amount_in", &self.amount_in)
+            .field("sqrt_price_limit", &self.sqrt_price_limit)
+            .field("a_to_b", &self.a_to_b)
+            .finish()
+    }
+}
+
 #[derive(BorshSerialize)]
 struct WhirlpoolSwapParams {
     amount: u64,
@@ -132,5 +156,9 @@ impl<'info> CPI for SwapOrcaWhirlpool<'info> {
         )?;
 
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }

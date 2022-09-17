@@ -1,5 +1,6 @@
 use crate::errors::DripError;
 use crate::interactions::create_token_metadata::CreateTokenMetadata;
+use crate::interactions::executor::CpiExecutor;
 use crate::interactions::mint_token::MintToken;
 use crate::interactions::set_mint_authority::SetMintAuthority;
 use crate::interactions::transfer_token::TransferToken;
@@ -9,7 +10,6 @@ use crate::ProgramError::InvalidArgument;
 use crate::{
     instruction_accounts::deposit::{DepositAccounts, DepositParams, DepositWithMetadataAccounts},
     state::traits::{Executable, Validatable},
-    CPI,
 };
 use crate::{validate, DepositCommonAccounts};
 use anchor_lang::prelude::*;
@@ -84,13 +84,13 @@ fn validate_common(accounts: &DepositCommonAccounts, params: &DepositParams) -> 
 }
 
 impl<'a, 'info> Executable for Deposit<'a, 'info> {
-    fn execute(self) -> Result<()> {
+    fn execute(self, cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Deposit::WithoutMetadata {
                 accounts,
                 params,
                 bumps,
-            } => execute_deposit(&mut accounts.common, params, bumps, None),
+            } => execute_deposit(&mut accounts.common, params, bumps, None, cpi_executor),
             Deposit::WithMetadata {
                 accounts,
                 params,
@@ -114,6 +114,7 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                     params,
                     bumps,
                     Some(create_token_metadata),
+                    cpi_executor,
                 )
             }
         }
@@ -125,6 +126,7 @@ fn execute_deposit(
     params: DepositParams,
     bumps: BTreeMap<String, u8>,
     create_token_metadata: Option<CreateTokenMetadata>,
+    cpi_executor: &mut impl CpiExecutor,
 ) -> Result<()> {
     let token_transfer = TransferToken::new(
         &accounts.token_program,
@@ -153,13 +155,14 @@ fn execute_deposit(
     update_state(accounts, params, bumps)?;
 
     /* MANUAL CPI (INTERACTIONS) */
+
     let signer: &Vault = &accounts.vault;
-    token_transfer.execute(signer)?;
-    mint_position_nft.execute(signer)?;
+    cpi_executor.execute(token_transfer, signer)?;
+    cpi_executor.execute(mint_position_nft, signer)?;
     if let Some(create_token_metadata) = create_token_metadata {
-        create_token_metadata.execute(signer)?;
+        cpi_executor.execute(create_token_metadata, signer)?;
     }
-    revoke_position_nft_auth.execute(signer)?;
+    cpi_executor.execute(revoke_position_nft_auth, signer)?;
 
     Ok(())
 }

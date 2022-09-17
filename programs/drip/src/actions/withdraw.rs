@@ -1,3 +1,4 @@
+use crate::interactions::executor::CpiExecutor;
 use crate::state::traits::{Executable, Validatable};
 use crate::{validate, ClosePositionAccounts, WithdrawBAccounts, WithdrawCommonAccounts, CPI};
 use std::cmp::min;
@@ -169,7 +170,7 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
 }
 
 impl<'a, 'info> Executable for Withdraw<'a, 'info> {
-    fn execute(self) -> Result<()> {
+    fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Withdraw::WithoutClosePosition { accounts } => execute_withdraw_b(&mut accounts.common),
             Withdraw::WithClosePosition { accounts } => {

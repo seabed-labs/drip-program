@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::sign;
 use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
@@ -30,6 +32,17 @@ impl<'info> SetMintAuthority<'info> {
     }
 }
 
+impl<'info> fmt::Debug for SetMintAuthority<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SetMintAuthority")
+            .field("token_program", &self.token_program.key)
+            .field("mint", &self.mint)
+            .field("current_authority", &self.current_authority)
+            .field("new_authority", &self.new_authority)
+            .finish()
+    }
+}
+
 impl<'info> CPI for SetMintAuthority<'info> {
     fn execute(self, signer: &impl PDA) -> Result<()> {
         invoke_signed(
@@ -46,5 +59,9 @@ impl<'info> CPI for SetMintAuthority<'info> {
         )?;
 
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }

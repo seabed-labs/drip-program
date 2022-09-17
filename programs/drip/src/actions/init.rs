@@ -1,4 +1,5 @@
 use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
+use crate::interactions::executor::CpiExecutor;
 use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
 use crate::{
     instruction_accounts::{
@@ -42,7 +43,7 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
 }
 
 impl<'a, 'info> Executable for Init<'a, 'info> {
-    fn execute(self) -> Result<()> {
+    fn execute(self, _cpi_executer: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Init::VaultProtoConfig { accounts, params } => {
                 init_vault_proto_config(accounts, params)
@@ -87,6 +88,7 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
+    use crate::interactions::executor::test::TestCpiExecutor;
     use crate::test::fixtures::AccountFixture;
     use crate::Init;
     use test_case::test_case;
@@ -168,8 +170,14 @@ mod tests {
         let res = vault_proto_config_action.validate();
         assert_eq!(res, Ok(()));
 
-        let res = vault_proto_config_action.execute();
+        let mut cpi_executor = TestCpiExecutor {
+            cpi_executions: vec![],
+        };
+
+        let res = vault_proto_config_action.execute(&mut cpi_executor);
         assert_eq!(res, Ok(()));
+
+        assert_eq!(cpi_executor.cpi_executions, vec![]);
 
         let vault_proto_config_after = &initialize_vault_proto_config_accounts.vault_proto_config;
 
@@ -215,8 +223,14 @@ mod tests {
         let res = vault_proto_config_action.validate();
         assert_eq!(res, Ok(()));
 
-        let res = vault_proto_config_action.execute();
+        let mut cpi_executor = TestCpiExecutor {
+            cpi_executions: vec![],
+        };
+
+        let res = vault_proto_config_action.execute(&mut cpi_executor);
         assert_eq!(res, Ok(()));
+
+        assert_eq!(cpi_executor.cpi_executions, vec![]);
 
         let vault_period_after = &initialize_vault_period_accounts.vault_period;
         assert_ne!(

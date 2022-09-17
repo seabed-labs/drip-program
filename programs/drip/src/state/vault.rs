@@ -10,7 +10,7 @@ pub const MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE: u16 = 0;
 pub const MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE: u16 = 10_000;
 
 #[account]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Vault {
     // total space -> 378
     // allocation needed: ceil( (378+8)/8 )*8 -> 392
@@ -126,6 +126,10 @@ impl PDA for Vault {
 
     fn bump(&self) -> u8 {
         self.bump
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }
 

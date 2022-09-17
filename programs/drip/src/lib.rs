@@ -1,6 +1,7 @@
 use actions::*;
 use anchor_lang::prelude::*;
 use instruction_accounts::*;
+use interactions::executor::RealCpiExecutor;
 use state::traits::*;
 pub mod actions;
 pub mod constants;
@@ -109,6 +110,8 @@ pub mod drip {
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {
+    let mut cpi_executor = RealCpiExecutor;
+
     action.validate()?;
-    action.execute()
+    action.execute(&mut cpi_executor)
 }

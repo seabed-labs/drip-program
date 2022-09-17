@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::sign;
 use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
@@ -59,6 +61,23 @@ impl<'info> CreateTokenMetadata<'info> {
     }
 }
 
+impl<'info> fmt::Debug for CreateTokenMetadata<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CreateTokenMetadata")
+            .field("metadata_program", &self.metadata_program.key)
+            .field("system_program", &self.system_program)
+            .field("metadata_account", &self.metadata_account)
+            .field("mint", &self.mint)
+            .field("authority", &self.authority)
+            .field("payer", &self.payer)
+            .field("rent", &self.rent)
+            .field("metadata_uri", &self.metadata_uri)
+            .field("name", &self.name)
+            .field("symbol", &self.symbol)
+            .finish()
+    }
+}
+
 impl<'info> CPI for CreateTokenMetadata<'info> {
     fn execute(self, signer: &impl PDA) -> Result<()> {
         invoke_signed(
@@ -93,5 +112,9 @@ impl<'info> CPI for CreateTokenMetadata<'info> {
         )?;
 
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }

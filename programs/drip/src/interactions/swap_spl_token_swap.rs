@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::state::traits::{CPI, PDA};
 use crate::{sign, TokenSwap};
 use anchor_lang::prelude::*;
@@ -57,6 +59,26 @@ impl<'info> SwapSPLTokenSwap<'info> {
     }
 }
 
+impl<'info> fmt::Debug for SwapSPLTokenSwap<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SwapSPLTokenSwap")
+            .field("token_swap_program", &self.token_swap_program.key)
+            .field("token_program", &self.token_program.key)
+            .field("token_swap", &self.token_swap)
+            .field("swap_authority", &self.swap_authority)
+            .field("user_transfer_authority", &self.user_transfer_authority)
+            .field("user_token_a_account", &self.user_token_a_account)
+            .field("swap_token_a_account", &self.swap_token_a_account)
+            .field("swap_token_b_account", &self.swap_token_b_account)
+            .field("user_token_b_account", &self.user_token_b_account)
+            .field("swap_mint", &self.swap_mint)
+            .field("swap_fee_account", &self.swap_fee_account)
+            .field("amount_in", &self.amount_in)
+            .field("minimum_out", &self.minimum_out)
+            .finish()
+    }
+}
+
 impl<'info> CPI for SwapSPLTokenSwap<'info> {
     fn execute(self, signer: &impl PDA) -> Result<()> {
         let ix = spl_token_swap::instruction::swap(
@@ -110,5 +132,9 @@ impl<'info> CPI for SwapSPLTokenSwap<'info> {
         )?;
 
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }
