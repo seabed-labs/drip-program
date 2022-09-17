@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::DripError::{
-    DuplicateDripError, InvalidOwner, InvalidSwapAccount, InvalidVaultPeriod,
+    DuplicateDripError, IncorrectVaultTokenAccount, InvalidSwapAccount, InvalidVaultPeriod,
     InvalidVaultProtoConfigReference, InvalidVaultReference, PeriodicDripAmountIsZero,
 };
 
@@ -33,28 +33,10 @@ impl<'a, 'info> Validatable for Drip<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Drip::SPLTokenSwap { accounts, .. } => {
-                validate_common(&accounts.common, &accounts.swap.key())?;
-                validate!(
-                    accounts.common.swap_token_a_account.owner == accounts.swap_authority.key(),
-                    InvalidOwner
-                );
-                validate!(
-                    accounts.common.swap_token_b_account.owner == accounts.swap_authority.key(),
-                    InvalidOwner
-                );
-                Ok(())
+                validate_common(&accounts.common, &accounts.swap.key())
             }
             Drip::OrcaWhirlpool { accounts, .. } => {
-                validate_common(&accounts.common, &accounts.whirlpool.key())?;
-                validate!(
-                    accounts.common.swap_token_a_account.owner == accounts.whirlpool.key(),
-                    InvalidOwner
-                );
-                validate!(
-                    accounts.common.swap_token_b_account.owner == accounts.whirlpool.key(),
-                    InvalidOwner
-                );
-                Ok(())
+                validate_common(&accounts.common, &accounts.whirlpool.key())
             }
         }
     }
@@ -65,45 +47,45 @@ fn validate_common(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
         accounts.vault_proto_config.key() == accounts.vault.proto_config,
         InvalidVaultProtoConfigReference
     );
+
     validate!(
         accounts.last_vault_period.vault == accounts.vault.key(),
         InvalidVaultReference
     );
+
     validate!(
         accounts.current_vault_period.vault == accounts.vault.key(),
         InvalidVaultReference
     );
+
     validate!(
-        accounts.vault_token_a_account.owner == accounts.vault.key(),
-        InvalidOwner
+        accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
+        IncorrectVaultTokenAccount
     );
+
     validate!(
-        accounts.vault_token_b_account.owner == accounts.vault.key(),
-        InvalidOwner
+        accounts.vault_token_b_account.key() == accounts.vault.token_b_account,
+        IncorrectVaultTokenAccount
     );
 
     validate!(
         accounts.last_vault_period.period_id == accounts.vault.last_drip_period,
         InvalidVaultPeriod
     );
+
     validate!(
         accounts.current_vault_period.period_id
             == accounts.vault.last_drip_period.checked_add(1).unwrap(),
         InvalidVaultPeriod
     );
-    validate!(
-        accounts.vault_token_a_account.amount > 0 && accounts.vault.drip_amount > 0,
-        PeriodicDripAmountIsZero
-    );
-    validate!(
-        accounts.vault_token_a_account.amount >= accounts.vault.drip_amount,
-        PeriodicDripAmountIsZero
-    );
+
+    validate!(accounts.vault.drip_amount > 0, PeriodicDripAmountIsZero);
     validate!(accounts.vault.is_drip_activated(), DuplicateDripError);
     validate!(
         !accounts.vault.limit_swaps || accounts.vault.whitelisted_swaps.contains(swap),
         InvalidSwapAccount
     );
+
     Ok(())
 }
 
@@ -139,18 +121,18 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
                 );
 
                 let swap = SwapOrcaWhirlpool::new(
-                    &accounts.whirlpool_program.clone(),
-                    &accounts.common.token_program.clone(),
-                    &accounts.common.vault.to_account_info().clone(),
-                    &accounts.whirlpool.to_account_info().clone(),
-                    &accounts.common.vault_token_a_account.clone(),
-                    &accounts.common.swap_token_a_account.clone(),
-                    &accounts.common.vault_token_b_account.clone(),
-                    &accounts.common.swap_token_b_account.clone(),
-                    &accounts.tick_array_0.clone(),
-                    &accounts.tick_array_1.clone(),
-                    &accounts.tick_array_2.clone(),
-                    &accounts.oracle.clone(),
+                    &accounts.whirlpool_program,
+                    &accounts.common.token_program,
+                    &accounts.common.vault.to_account_info(),
+                    &accounts.whirlpool.to_account_info(),
+                    &accounts.common.vault_token_a_account,
+                    &accounts.common.swap_token_a_account,
+                    &accounts.common.vault_token_b_account,
+                    &accounts.common.swap_token_b_account,
+                    &accounts.tick_array_0,
+                    &accounts.tick_array_1,
+                    &accounts.tick_array_2,
+                    &accounts.oracle,
                     swap_amount,
                     sqrt_price_limit,
                 );
