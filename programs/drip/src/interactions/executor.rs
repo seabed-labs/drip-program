@@ -2,13 +2,13 @@ use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
 
 pub trait CpiExecutor {
-    fn execute_all(&mut self, cpis: Vec<&Option<&dyn CPI>>, signer: &impl PDA) -> Result<()>;
+    fn execute_all(&mut self, cpis: Vec<&Option<&dyn CPI>>, signer: &dyn PDA) -> Result<()>;
 }
 
 pub struct RealCpiExecutor;
 
 impl CpiExecutor for RealCpiExecutor {
-    fn execute_all(&mut self, mut cpis: Vec<&Option<&dyn CPI>>, signer: &impl PDA) -> Result<()> {
+    fn execute_all(&mut self, mut cpis: Vec<&Option<&dyn CPI>>, signer: &dyn PDA) -> Result<()> {
         cpis.drain(..).try_for_each(|cpi| {
             if let Some(cpi) = cpi {
                 cpi.execute(signer)
@@ -31,7 +31,7 @@ pub mod test {
         fn execute_all(
             &mut self,
             mut cpis: Vec<&Option<&dyn CPI>>,
-            signer: &impl PDA,
+            signer: &dyn PDA,
         ) -> Result<()> {
             cpis.drain(..).for_each(|cpi| {
                 if let Some(cpi) = cpi {
