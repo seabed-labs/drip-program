@@ -90,7 +90,7 @@ mod tests {
     use super::*;
     use crate::interactions::executor::test::TestCpiExecutor;
     use crate::test::fixtures::{
-        ADMIN, DEFAULT_VAULT, EMPTY_VAULT_PERIOD, EMPTY_VAULT_PROTO_CONFIG, SYSTEM_PROGRAM,
+        ADMIN, EMPTY_VAULT_PERIOD, EMPTY_VAULT_PROTO_CONFIG, SYSTEM_PROGRAM, VAULT,
     };
     use crate::Init;
     use test_case::test_case;
@@ -194,7 +194,7 @@ mod tests {
     fn init_vault_period_happy_path() {
         let mut signer = ADMIN.clone();
         let mut system_program = SYSTEM_PROGRAM.clone();
-        let mut vault = DEFAULT_VAULT.clone();
+        let mut vault = VAULT.clone();
         let mut vault_period = EMPTY_VAULT_PERIOD.clone();
         let mut initialize_vault_period_accounts = InitializeVaultPeriodAccounts {
             vault_period: vault_period.to_account(),

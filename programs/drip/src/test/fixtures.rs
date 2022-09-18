@@ -7,6 +7,7 @@ use anchor_lang::{
     AccountDeserialize, AccountSerialize, Id, Owner,
 };
 use anchor_spl::token::Token;
+use lazy_static::lazy_static;
 
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
@@ -108,8 +109,6 @@ where
     }
 }
 
-use lazy_static::lazy_static;
-
 lazy_static! {
     pub static ref ADMIN: AccountFixture<NoData> = AccountFixture::new_signer();
     pub static ref SYSTEM_PROGRAM: AccountFixture<NoData> =
@@ -118,7 +117,7 @@ lazy_static! {
         AccountFixture::new_drip_account(VaultProtoConfig::default());
     pub static ref EMPTY_VAULT_PERIOD: AccountFixture<VaultPeriod> =
         AccountFixture::new_drip_account(VaultPeriod::default());
-    pub static ref DEFAULT_VAULT_PROTO_CONFIG: AccountFixture<VaultProtoConfig> =
+    pub static ref VAULT_PROTO_CONFIG: AccountFixture<VaultProtoConfig> =
         AccountFixture::new_drip_account(VaultProtoConfig {
             granularity: 60,
             token_a_drip_trigger_spread: 50,
@@ -127,8 +126,8 @@ lazy_static! {
             admin: ADMIN.key,
         });
     // TODO: Use actual mint and token accountn fixtures here
-    pub static ref DEFAULT_VAULT: AccountFixture<Vault> = AccountFixture::new_drip_account(Vault {
-        proto_config: DEFAULT_VAULT_PROTO_CONFIG.key,
+    pub static ref VAULT: AccountFixture<Vault> = AccountFixture::new_drip_account(Vault {
+        proto_config: VAULT_PROTO_CONFIG.key,
         token_a_mint: Pubkey::new_unique(),
         token_b_mint: Pubkey::new_unique(),
         token_a_account: Pubkey::new_unique(),
