@@ -234,13 +234,14 @@ mod tests {
     use crate::{
         interactions::executor::CpiExecutor,
         state::traits::{CPI, PDA},
+        test::fixtures::AccountFixture,
     };
 
     pub struct TestDripCpiExecutor<'info> {
         pub cpi_executions: Vec<(String, String)>,
         pub drip_common_accounts: DripCommonAccounts<'info>,
-        pub sent_token_a: u64,
-        pub received_token_b: u64,
+        pub token_a_to_send: u64,
+        pub token_b_to_receive: u64,
     }
 
     impl<'info> TestDripCpiExecutor<'info> {
@@ -287,15 +288,25 @@ mod tests {
 
             Self::set_token_account_balance(
                 &mut self.drip_common_accounts.vault_token_a_account,
-                vault_token_a_balance - self.sent_token_a,
+                vault_token_a_balance - self.token_a_to_send,
             )?;
 
             Self::set_token_account_balance(
                 &mut self.drip_common_accounts.vault_token_b_account,
-                vault_token_b_balance + self.received_token_b,
+                vault_token_b_balance + self.token_b_to_receive,
             )?;
 
             Ok(())
         }
+    }
+
+    #[test]
+    fn drip_orca_whirlpool_happy_path() {
+        let _drip_trigger_source = AccountFixture::new_signer();
+        let _token_program = AccountFixture::new_program();
+        let _vault = AccountFixture::new_vault(true, false);
+        let _vault_proto_config = AccountFixture::new_vault_proto_config(false, false);
+        let _last_vault_period = AccountFixture::new_vault_period(false, false);
+        let _current_vault_period = AccountFixture::new_vault_period(true, false);
     }
 }
