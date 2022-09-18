@@ -1,4 +1,5 @@
 use crate::errors::DripError;
+use crate::interactions::executor::CpiExecutor;
 use crate::state::{
     MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE, MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
     VAULT_SWAP_WHITELIST_SIZE,
@@ -92,7 +93,7 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
 }
 
 impl<'a, 'info> Executable for Admin<'a, 'info> {
-    fn execute(self) -> Result<()> {
+    fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Admin::InitVault {
                 accounts,

@@ -6,6 +6,7 @@ use crate::errors::DripError::{
 };
 
 use crate::errors::DripError;
+use crate::interactions::executor::CpiExecutor;
 use crate::interactions::swap_spl_token_swap::SwapSPLTokenSwap;
 use crate::interactions::transfer_token::TransferToken;
 use crate::math::{calculate_spread_amount, calculate_sqrt_price_limit};
@@ -107,7 +108,7 @@ fn validate_common(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
 }
 
 impl<'a, 'info> Executable for Drip<'a, 'info> {
-    fn execute(self) -> Result<()> {
+    fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Drip::SPLTokenSwap { accounts } => {
                 let swap = SwapSPLTokenSwap::new(

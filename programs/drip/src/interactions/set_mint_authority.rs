@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::sign;
 use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
@@ -30,25 +32,36 @@ impl<'info> SetMintAuthority<'info> {
     }
 }
 
+impl<'info> fmt::Debug for SetMintAuthority<'info> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SetMintAuthority")
+            .field("token_program", &self.token_program.key)
+            .field("mint", &self.mint)
+            .field("current_authority", &self.current_authority)
+            .field("new_authority", &self.new_authority)
+            .finish()
+    }
+}
+
 impl<'info> CPI for SetMintAuthority<'info> {
-    fn execute(self, signer: &impl PDA) -> Result<()> {
+    fn execute(&self, signer: &dyn PDA) -> Result<()> {
         invoke_signed(
             &spl_token::instruction::set_authority(
                 self.token_program.key,
                 &self.mint.key(),
-                self.new_authority.map(|acc| acc.key),
+                self.new_authority.clone().map(|acc| acc.key),
                 AuthorityType::MintTokens,
                 self.current_authority.key,
                 &[self.current_authority.key],
             )?,
-            &[
-                self.mint.to_account_info(),
-                self.current_authority,
-                self.token_program.to_account_info(),
-            ],
+            &[self.mint.to_account_info(), self.current_authority.clone()],
             &[sign!(signer)],
         )?;
 
         Ok(())
+    }
+
+    fn id(&self) -> String {
+        format!("{:?}", self)
     }
 }
