@@ -25,3 +25,4 @@ whirlpool = { path = "../whirlpool", features = ["no-entrypoint"] }
 
 [dev-dependencies]
 test-case = "2.0.0"
+lazy_static = "1.4.0"

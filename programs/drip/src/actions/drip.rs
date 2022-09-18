@@ -234,7 +234,6 @@ mod tests {
     use crate::{
         interactions::executor::CpiExecutor,
         state::traits::{CPI, PDA},
-        test::fixtures::AccountFixture,
     };
 
     pub struct TestDripCpiExecutor<'info> {
@@ -298,15 +297,5 @@ mod tests {
 
             Ok(())
         }
-    }
-
-    #[test]
-    fn drip_orca_whirlpool_happy_path() {
-        let _drip_trigger_source = AccountFixture::new_signer();
-        let _token_program = AccountFixture::new_program();
-        let _vault = AccountFixture::new_vault(true, false);
-        let _vault_proto_config = AccountFixture::new_vault_proto_config(false, false);
-        let _last_vault_period = AccountFixture::new_vault_period(false, false);
-        let _current_vault_period = AccountFixture::new_vault_period(true, false);
     }
 }

@@ -89,7 +89,9 @@ mod tests {
 
     use super::*;
     use crate::interactions::executor::test::TestCpiExecutor;
-    use crate::test::fixtures::AccountFixture;
+    use crate::test::fixtures::{
+        ADMIN, DEFAULT_VAULT, EMPTY_VAULT_PERIOD, EMPTY_VAULT_PROTO_CONFIG, SYSTEM_PROGRAM,
+    };
     use crate::Init;
     use test_case::test_case;
 
@@ -98,7 +100,7 @@ mod tests {
     #[test_case(1, 10, 5001, 0, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_withdrawal_spread")]
     #[test_case(1, 10, 10, 5001, Pubkey::new_unique(), Err(InvalidSpread.into()); "Returns error for invalid token_b_referral_spread")]
     #[test_case(1, 10, 10, 10, Pubkey::new_unique(), Ok(()) ; "Returns ok for valid params")]
-    fn vault_proto_config_validate(
+    fn init_vault_proto_config_validate(
         granularity: u64,
         token_a_drip_trigger_spread: u16,
         token_b_withdrawal_spread: u16,
@@ -106,9 +108,9 @@ mod tests {
         admin: Pubkey,
         expected_res: Result<()>,
     ) {
-        let mut signer = AccountFixture::new_signer();
-        let mut system_program = AccountFixture::new_program();
-        let mut vault_proto_config = AccountFixture::new_vault_proto_config(true, true);
+        let mut signer = ADMIN.clone();
+        let mut system_program = SYSTEM_PROGRAM.clone();
+        let mut vault_proto_config = EMPTY_VAULT_PROTO_CONFIG.clone();
 
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
             creator: signer.to_signer(),
@@ -133,10 +135,10 @@ mod tests {
     }
 
     #[test]
-    fn vault_proto_config_happy_path() {
-        let mut signer = AccountFixture::new_signer();
-        let mut system_program = AccountFixture::new_program();
-        let mut vault_proto_config = AccountFixture::new_vault_proto_config(true, true);
+    fn init_vault_proto_config_happy_path() {
+        let mut signer = ADMIN.clone();
+        let mut system_program = SYSTEM_PROGRAM.clone();
+        let mut vault_proto_config = EMPTY_VAULT_PROTO_CONFIG.clone();
 
         let mut initialize_vault_proto_config_accounts = InitializeVaultProtoConfigAccounts {
             creator: signer.to_signer(),
@@ -190,10 +192,10 @@ mod tests {
 
     #[test]
     fn init_vault_period_happy_path() {
-        let mut signer = AccountFixture::new_signer();
-        let mut system_program = AccountFixture::new_program();
-        let mut vault = AccountFixture::new_vault(false, false);
-        let mut vault_period = AccountFixture::new_vault_period(true, true);
+        let mut signer = ADMIN.clone();
+        let mut system_program = SYSTEM_PROGRAM.clone();
+        let mut vault = DEFAULT_VAULT.clone();
+        let mut vault_period = EMPTY_VAULT_PERIOD.clone();
         let mut initialize_vault_period_accounts = InitializeVaultPeriodAccounts {
             vault_period: vault_period.to_account(),
             vault: vault.to_account(),
