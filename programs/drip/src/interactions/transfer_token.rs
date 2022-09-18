@@ -5,6 +5,8 @@ use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
+use super::executor::CpiIdentifier;
+
 pub struct TransferToken<'info> {
     token_program: Program<'info, Token>,
     from: Account<'info, TokenAccount>,
@@ -60,7 +62,13 @@ impl<'info> CPI for TransferToken<'info> {
         )
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::TransferToken {
+            token_program: self.token_program.key(),
+            from: self.from.key(),
+            to: self.to.key(),
+            authority: self.authority.key(),
+            amount: self.amount,
+        }
     }
 }

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::interactions::executor::CpiExecutor;
+use crate::interactions::executor::{CpiExecutor, CpiIdentifier};
 
 pub trait ByteSized
 where
@@ -14,12 +14,11 @@ where
 pub trait PDA {
     fn seeds(&self) -> Vec<&[u8]>;
     fn bump(&self) -> u8;
-    fn id(&self) -> String;
 }
 
 pub trait CPI {
     fn execute(&self, signer: &dyn PDA) -> Result<()>;
-    fn id(&self) -> String;
+    fn id(&self) -> CpiIdentifier;
 }
 
 pub trait Validatable {

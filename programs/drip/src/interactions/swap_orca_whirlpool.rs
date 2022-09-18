@@ -9,6 +9,8 @@ use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{Token, TokenAccount};
 use borsh::BorshSerialize;
 
+use super::executor::CpiIdentifier;
+
 pub struct SwapOrcaWhirlpool<'info> {
     whirlpool_program: Program<'info, WhirlpoolProgram>,
     token_program: Program<'info, Token>,
@@ -158,7 +160,23 @@ impl<'info> CPI for SwapOrcaWhirlpool<'info> {
         Ok(())
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::SwapOrcaWhirlpool {
+            whirlpool_program: self.whirlpool_program.key(),
+            token_program: self.token_program.key(),
+            token_authority: self.token_authority.key(),
+            whirlpool: self.whirlpool.key(),
+            token_owner_account_a: self.token_owner_account_a.key(),
+            whirlpool_token_vault_a: self.whirlpool_token_vault_a.key(),
+            token_owner_account_b: self.token_owner_account_b.key(),
+            whirlpool_token_vault_b: self.whirlpool_token_vault_b.key(),
+            tick_array_0: self.tick_array_0.key(),
+            tick_array_1: self.tick_array_1.key(),
+            tick_array_2: self.tick_array_2.key(),
+            oracle: self.oracle.key(),
+            amount_in: self.amount_in,
+            sqrt_price_limit: self.sqrt_price_limit,
+            a_to_b: self.a_to_b,
+        }
     }
 }

@@ -6,6 +6,8 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
+use super::executor::CpiIdentifier;
+
 pub struct SwapSPLTokenSwap<'info> {
     token_swap_program: Program<'info, TokenSwap>,
     token_program: Program<'info, Token>,
@@ -134,7 +136,21 @@ impl<'info> CPI for SwapSPLTokenSwap<'info> {
         Ok(())
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::SwapSPLTokenSwap {
+            token_swap_program: self.token_swap_program.key(),
+            token_program: self.token_program.key(),
+            token_swap: self.token_swap.key(),
+            swap_authority: self.swap_authority.key(),
+            user_transfer_authority: self.user_transfer_authority.key(),
+            user_token_a_account: self.user_token_a_account.key(),
+            swap_token_a_account: self.swap_token_a_account.key(),
+            swap_token_b_account: self.swap_token_b_account.key(),
+            user_token_b_account: self.user_token_b_account.key(),
+            swap_mint: self.swap_mint.key(),
+            swap_fee_account: self.swap_fee_account.key(),
+            amount_in: self.amount_in,
+            minimum_out: self.minimum_out,
+        }
     }
 }

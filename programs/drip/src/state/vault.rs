@@ -127,10 +127,6 @@ impl PDA for Vault {
     fn bump(&self) -> u8 {
         self.bump
     }
-
-    fn id(&self) -> String {
-        format!("{:?}", self)
-    }
 }
 
 test_account_size!(Vault);

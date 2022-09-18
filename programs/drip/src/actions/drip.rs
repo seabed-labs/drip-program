@@ -232,12 +232,12 @@ mod tests {
 
     use super::*;
     use crate::{
-        interactions::executor::CpiExecutor,
+        interactions::executor::{test::TestCpiExecutor, CpiExecutor},
         state::traits::{CPI, PDA},
     };
 
     pub struct TestDripCpiExecutor<'info> {
-        pub cpi_executions: Vec<(String, String)>,
+        pub base_cpi_executor: TestCpiExecutor,
         pub drip_common_accounts: DripCommonAccounts<'info>,
         pub token_a_to_send: u64,
         pub token_b_to_receive: u64,
@@ -271,16 +271,8 @@ mod tests {
     }
 
     impl<'info> CpiExecutor for TestDripCpiExecutor<'info> {
-        fn execute_all(
-            &mut self,
-            mut cpis: Vec<&Option<&dyn CPI>>,
-            signer: &dyn PDA,
-        ) -> Result<()> {
-            cpis.drain(..).for_each(|cpi| {
-                if let Some(cpi) = cpi {
-                    self.cpi_executions.push((cpi.id(), signer.id()));
-                }
-            });
+        fn execute_all(&mut self, cpis: Vec<&Option<&dyn CPI>>, signer: &dyn PDA) -> Result<()> {
+            self.base_cpi_executor.execute_all(cpis, signer)?;
 
             let vault_token_a_balance = self.drip_common_accounts.vault_token_a_account.amount;
             let vault_token_b_balance = self.drip_common_accounts.vault_token_a_account.amount;

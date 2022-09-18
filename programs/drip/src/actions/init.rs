@@ -173,13 +173,14 @@ mod tests {
         assert_eq!(res, Ok(()));
 
         let mut cpi_executor = TestCpiExecutor {
-            cpi_executions: vec![],
+            cpi_calls: vec![],
+            signer: None,
         };
 
         let res = vault_proto_config_action.execute(&mut cpi_executor);
         assert_eq!(res, Ok(()));
 
-        assert_eq!(cpi_executor.cpi_executions, vec![]);
+        assert_eq!(cpi_executor.cpi_calls, vec![]);
 
         let vault_proto_config_after = &initialize_vault_proto_config_accounts.vault_proto_config;
 
@@ -226,13 +227,14 @@ mod tests {
         assert_eq!(res, Ok(()));
 
         let mut cpi_executor = TestCpiExecutor {
-            cpi_executions: vec![],
+            cpi_calls: vec![],
+            signer: None,
         };
 
         let res = vault_proto_config_action.execute(&mut cpi_executor);
         assert_eq!(res, Ok(()));
 
-        assert_eq!(cpi_executor.cpi_executions, vec![]);
+        assert_eq!(cpi_executor.cpi_calls, vec![]);
 
         let vault_period_after = &initialize_vault_period_accounts.vault_period;
         assert_ne!(
