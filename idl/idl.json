@@ -864,6 +864,20 @@
           }
         ]
       }
+    },
+    {
+      "name": "NoData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "data",
+            "type": {
+              "defined": "PhantomData<u8>"
+            }
+          }
+        ]
+      }
     }
   ],
   "types": [

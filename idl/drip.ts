@@ -864,6 +864,20 @@ export type Drip = {
           }
         ];
       };
+    },
+    {
+      name: "noData";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "data";
+            type: {
+              defined: "PhantomData<u8>";
+            };
+          }
+        ];
+      };
     }
   ];
   types: [
@@ -1972,6 +1986,20 @@ export const IDL: Drip = {
           {
             name: "maxSlippageBps",
             type: "u16",
+          },
+        ],
+      },
+    },
+    {
+      name: "noData",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "data",
+            type: {
+              defined: "PhantomData<u8>",
+            },
           },
         ],
       },
