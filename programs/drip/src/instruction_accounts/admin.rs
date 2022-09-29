@@ -1,9 +1,7 @@
-use crate::errors::DripError;
 use crate::state::{Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use spl_token::state::AccountState;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitializeVaultParams {
@@ -14,7 +12,7 @@ pub struct InitializeVaultParams {
 #[derive(Accounts)]
 pub struct InitializeVaultAccounts<'info> {
     // mut needed because we are initializing the account
-    #[account(mut, address = vault_proto_config.admin @DripError::OnlyAdminCanInitVault)]
+    #[account(mut)]
     pub creator: Signer<'info>,
 
     /* DRIP ACCOUNTS */
@@ -52,10 +50,6 @@ pub struct InitializeVaultAccounts<'info> {
     )]
     pub token_b_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        constraint = treasury_token_b_account.mint == token_b_mint.key() @DripError::InvalidMint,
-        constraint = treasury_token_b_account.state == AccountState::Initialized
-    )]
     pub treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
     /* MINTS */
@@ -81,24 +75,12 @@ pub struct UpdateVaultWhitelistedSwapsParams {
 // TODO(Mocha): this naming is awkward
 #[derive(Accounts)]
 pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
-    #[account(mut, address = vault_proto_config.admin @DripError::SignerIsNotAdmin)]
+    #[account(mut)]
     pub admin: Signer<'info>,
 
-    #[account(
-        // mut needed because we are changing state
-        mut,
-        seeds = [
-            b"drip-v1".as_ref(),
-            vault.token_a_mint.key().as_ref(),
-            vault.token_b_mint.key().as_ref(),
-            vault_proto_config.key().as_ref(),
-        ],
-        bump = vault.bump,
-    )]
+    // mut needed because we are changing state
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
 
-    #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
-    )]
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }

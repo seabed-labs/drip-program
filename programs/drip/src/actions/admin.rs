@@ -33,34 +33,36 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
             Admin::InitVault {
                 accounts, params, ..
             } => {
-                // Relation Checks
                 validate!(
                     accounts.creator.key() == accounts.vault_proto_config.admin,
                     DripError::SignerIsNotAdmin
                 );
+
                 validate!(
                     accounts.token_a_account.mint == accounts.token_a_mint.key(),
                     DripError::InvalidMint
                 );
+
                 validate!(
                     accounts.token_b_account.mint == accounts.token_b_mint.key(),
                     DripError::InvalidMint
                 );
+
                 validate!(
                     accounts.treasury_token_b_account.mint == accounts.token_b_mint.key(),
                     DripError::InvalidMint
                 );
 
-                // Business Checks
-                // TODO: @Mocha, do we need this check? I think its fine to not do this check since you can initialize a treasury token account later anyways
                 validate!(
                     accounts.treasury_token_b_account.state == AccountState::Initialized,
                     UninitializedAccount
                 );
+
                 validate!(
                     params.whitelisted_swaps.len() <= VAULT_SWAP_WHITELIST_SIZE,
                     DripError::InvalidNumSwaps
                 );
+
                 validate!(
                     params.max_slippage_bps > MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE
                         && params.max_slippage_bps < MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
@@ -70,17 +72,16 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
             Admin::SetVaultSwapWhitelist {
                 accounts, params, ..
             } => {
-                // Relation Checks
                 validate!(
                     accounts.admin.key() == accounts.vault_proto_config.admin,
                     DripError::SignerIsNotAdmin
                 );
+
                 validate!(
                     accounts.vault_proto_config.key() == accounts.vault.proto_config,
                     DripError::InvalidVaultProtoConfigReference
                 );
 
-                // Business Checks
                 validate!(
                     params.whitelisted_swaps.len() <= VAULT_SWAP_WHITELIST_SIZE,
                     DripError::InvalidNumSwaps
