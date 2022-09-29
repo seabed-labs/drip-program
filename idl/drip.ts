@@ -872,9 +872,7 @@ export type Drip = {
         fields: [
           {
             name: "data";
-            type: {
-              defined: "PhantomData<u8>";
-            };
+            type: "u8";
           }
         ];
       };
@@ -1997,9 +1995,7 @@ export const IDL: Drip = {
         fields: [
           {
             name: "data",
-            type: {
-              defined: "PhantomData<u8>",
-            },
+            type: "u8",
           },
         ],
       },

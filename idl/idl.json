@@ -872,9 +872,7 @@
         "fields": [
           {
             "name": "data",
-            "type": {
-              "defined": "PhantomData<u8>"
-            }
+            "type": "u8"
           }
         ]
       }

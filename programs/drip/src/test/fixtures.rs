@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program_option::COption;
 use anchor_lang::{
@@ -19,7 +17,7 @@ use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 #[account]
 #[derive(Default)]
 pub struct NoData {
-    data: PhantomData<u8>,
+    data: u8,
 }
 
 #[derive(Clone)]
