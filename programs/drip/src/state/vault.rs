@@ -90,7 +90,7 @@ impl Vault {
         self.drip_amount = self.drip_amount.checked_sub(position_drip).unwrap();
     }
 
-    pub fn process_drip(&mut self, current_period: &Account<VaultPeriod>, granularity: u64) {
+    pub fn process_drip(&mut self, current_period: &VaultPeriod, granularity: u64) {
         self.drip_amount = self.drip_amount.checked_sub(current_period.dar).unwrap();
         self.last_drip_period = current_period.period_id;
 
@@ -126,10 +126,6 @@ impl PDA for Vault {
 
     fn bump(&self) -> u8 {
         self.bump
-    }
-
-    fn id(&self) -> String {
-        format!("{:?}", self)
     }
 }
 

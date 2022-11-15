@@ -40,8 +40,8 @@ pub enum DripError {
     CannotInitializeVaultPeriodLessThanVaultCurrentPeriod,
     #[msg("Invalid value for vault.max_slippage_bps")]
     InvalidVaultMaxSlippage,
-    #[msg("Swapped more than vault's drip amount")]
-    SwappedMoreThanVaultDripAmount,
+    #[msg("Swapped the wrong amount during drip")]
+    IncorrectSwapAmount,
     #[msg("Number of swaps is zero")]
     NumSwapsIsZero,
     #[msg("Signer is not admin")]

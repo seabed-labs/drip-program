@@ -6,6 +6,8 @@ use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::{Token, TokenAccount};
 use spl_token::instruction::close_account;
 
+use super::executor::CpiIdentifier;
+
 pub struct CloseAccount<'info> {
     token_program: Program<'info, Token>,
     token_account: Account<'info, TokenAccount>,
@@ -63,7 +65,12 @@ impl<'info> CPI for CloseAccount<'info> {
         Ok(())
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::CloseAccount {
+            token_program: self.token_program.key(),
+            token_account: self.token_account.key(),
+            destination: self.destination.key(),
+            authority: self.authority.key(),
+        }
     }
 }

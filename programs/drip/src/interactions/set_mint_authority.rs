@@ -8,6 +8,8 @@ use anchor_spl::token::Mint;
 use anchor_spl::token::Token;
 use spl_token::instruction::AuthorityType;
 
+use super::executor::CpiIdentifier;
+
 pub struct SetMintAuthority<'info> {
     token_program: Program<'info, Token>,
     mint: Account<'info, Mint>,
@@ -61,7 +63,12 @@ impl<'info> CPI for SetMintAuthority<'info> {
         Ok(())
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::SetMintAuthority {
+            token_program: self.token_program.key(),
+            mint: self.mint.key(),
+            current_authority: self.current_authority.key(),
+            new_authority: self.new_authority.clone().map(|info| info.key()),
+        }
     }
 }

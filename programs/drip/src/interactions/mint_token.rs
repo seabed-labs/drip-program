@@ -6,6 +6,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint};
 use anchor_spl::token::{Token, TokenAccount};
 
+use super::executor::CpiIdentifier;
+
 pub struct MintToken<'info> {
     token_program: Program<'info, Token>,
     mint: Account<'info, Mint>,
@@ -61,7 +63,13 @@ impl<'info> CPI for MintToken<'info> {
         )
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::MintToken {
+            token_program: self.token_program.key(),
+            mint: self.mint.key(),
+            to: self.to.key(),
+            authority: self.authority.key(),
+            amount: self.amount,
+        }
     }
 }
