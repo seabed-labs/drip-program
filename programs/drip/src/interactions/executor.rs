@@ -19,7 +19,7 @@ impl CpiExecutor for RealCpiExecutor {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CpiIdentifier {
     MintToken {
         token_program: Pubkey,
