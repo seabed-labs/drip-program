@@ -7,6 +7,8 @@ use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::Mint;
 use mpl_token_metadata::instruction::create_metadata_accounts_v3;
 
+use super::executor::CpiIdentifier;
+
 // TODO: Maybe move this to another location
 #[derive(Clone)]
 pub struct MetaplexTokenMetadata;
@@ -114,7 +116,18 @@ impl<'info> CPI for CreateTokenMetadata<'info> {
         Ok(())
     }
 
-    fn id(&self) -> String {
-        format!("{:?}", self)
+    fn id(&self) -> CpiIdentifier {
+        CpiIdentifier::CreateTokenMetadata {
+            metadata_program: self.metadata_program.key(),
+            system_program: self.system_program.key(),
+            metadata_account: self.metadata_account.key(),
+            mint: self.mint.key(),
+            authority: self.authority.key(),
+            payer: self.payer.key(),
+            rent: self.rent.key(),
+            metadata_uri: self.metadata_uri.clone(),
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+        }
     }
 }

@@ -1,176 +1,94 @@
+use anchor_lang::prelude::*;
+use anchor_lang::solana_program::program_option::COption;
 use anchor_lang::{
     accounts::account::Account,
     prelude::{AccountInfo, Program, Pubkey, Signer},
+    solana_program::program_pack::Pack,
     solana_program::stake_history::Epoch,
     system_program::System,
     AccountDeserialize, AccountSerialize, Id, Owner,
 };
+use anchor_spl::token::{Mint, Token, TokenAccount};
+use lazy_static::lazy_static;
+use spl_token::state::AccountState;
 
 use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
-pub struct AccountFixture<T> {
-    key: Pubkey,
-    is_signer: bool,
-    is_writable: bool,
-    lamports: u64,
-    data: T,
-    owner: Pubkey,
-    executable: bool,
-    rent_epoch: Epoch,
+#[account]
+#[derive(Default)]
+pub struct NoData {
+    data: u8,
 }
 
-impl AccountFixture<[u8; 1]> {
-    pub fn new() -> Self {
+#[derive(Clone)]
+pub struct AccountFixture<AnchorAccount>
+where
+    AnchorAccount: AccountSerialize + AccountDeserialize + Owner + Clone + Default,
+{
+    pub key: Pubkey,
+    pub is_signer: bool,
+    pub is_writable: bool,
+    pub lamports: u64,
+    pub data: Vec<u8>,
+    pub owner: Pubkey,
+    pub executable: bool,
+    pub rent_epoch: Epoch,
+    pub account: AnchorAccount,
+}
+
+impl<AnchorAccount> AccountFixture<AnchorAccount>
+where
+    AnchorAccount: AccountSerialize + AccountDeserialize + Owner + Clone + Default,
+{
+    pub fn new_system_account(key: Option<Pubkey>) -> Self {
         AccountFixture {
-            key: Pubkey::new_unique(),
+            key: key.map_or_else(|| Pubkey::new_unique(), |key| key),
             is_signer: false,
             is_writable: false,
-            lamports: 1,
-            data: [0],
+            lamports: 10,
+            data: vec![0],
             owner: System::id(),
             executable: false,
             rent_epoch: 0,
+            account: AnchorAccount::default(),
         }
     }
 
-    pub fn new_signer() -> Self {
-        let mut account = Self::new();
+    pub fn new_signer(key: Option<Pubkey>) -> Self {
+        let mut account = Self::new_system_account(key);
         account.is_signer = true;
 
         account
     }
 
-    pub fn new_program() -> Self {
-        let mut account = Self::new();
+    pub fn new_program(key: Pubkey) -> Self {
+        let mut account = Self::new_system_account(Some(key));
         account.executable = true;
-        account.key = Default::default();
 
         account
     }
 
-    pub fn to_account_info(&mut self) -> AccountInfo {
-        AccountInfo::new(
-            &self.key,
-            self.is_signer,
-            self.is_writable,
-            &mut self.lamports,
-            &mut self.data,
-            &self.owner,
-            self.executable,
-            self.rent_epoch,
-        )
-    }
-
-    pub fn to_program<'info, T: Id + Clone>(&'info mut self) -> Program<'info, T> {
-        Program::try_from(&self.to_account_info()).unwrap()
-    }
-
-    pub fn to_signer<'info>(&'info mut self) -> Signer<'info> {
-        Signer::try_from(&self.to_account_info()).unwrap()
-    }
-}
-
-impl AccountFixture<Vec<u8>> {
-    pub fn new() -> Self {
-        AccountFixture {
-            key: Pubkey::new_unique(),
-            is_signer: false,
-            is_writable: false,
-            lamports: 1,
-            data: vec![],
-            owner: System::id(),
-            executable: false,
-            rent_epoch: 0,
-        }
-    }
-
-    pub fn new_drip_account(is_writable: bool) -> Self {
-        let mut account = Self::new();
-        account.owner = crate::ID;
-        account.is_writable = is_writable;
-
-        account
-    }
-
-    pub fn new_vault_proto_config(is_writable: bool, is_empty: bool) -> Self {
-        let data = if is_empty {
-            VaultProtoConfig::default()
-        } else {
-            VaultProtoConfig {
-                granularity: 1,
-                token_a_drip_trigger_spread: 2,
-                token_b_withdrawal_spread: 3,
-                token_b_referral_spread: 4,
-                admin: Pubkey::new_unique(),
-            }
-        };
+    pub fn new_program_data_account(
+        program_id: Pubkey,
+        state: AnchorAccount,
+        key: Option<Pubkey>,
+    ) -> Self {
+        let mut account = Self::new_system_account(key);
+        account.owner = program_id;
 
         let mut buf = Vec::new();
-        data.try_serialize(&mut buf).unwrap();
-
-        let mut account = Self::new_drip_account(is_writable);
+        state.try_serialize(&mut buf).unwrap();
         account.data = buf;
 
         account
     }
 
-    pub fn new_vault_period(is_writable: bool, is_empty: bool) -> Self {
-        let data = if is_empty {
-            VaultPeriod::default()
-        } else {
-            VaultPeriod {
-                vault: Pubkey::new_unique(),
-                period_id: 0,
-                dar: 0,
-                twap: 0,
-                drip_timestamp: 0,
-                bump: 0,
-            }
-        };
-
-        let mut buf = Vec::new();
-        data.try_serialize(&mut buf).unwrap();
-
-        let mut account = Self::new_drip_account(is_writable);
-        account.data = buf;
-
-        account
+    pub fn new_drip_account(state: AnchorAccount, key: Option<Pubkey>) -> Self {
+        Self::new_program_data_account(crate::ID, state, key)
     }
 
-    pub fn new_vault(is_writable: bool, is_empty: bool) -> Self {
-        let data = if is_empty {
-            Vault::default()
-        } else {
-            Vault {
-                proto_config: Pubkey::new_unique(),
-                token_a_mint: Pubkey::new_unique(),
-                token_b_mint: Pubkey::new_unique(),
-                token_a_account: Pubkey::new_unique(),
-                token_b_account: Pubkey::new_unique(),
-                treasury_token_b_account: Pubkey::new_unique(),
-                whitelisted_swaps: [
-                    Pubkey::new_unique(),
-                    Pubkey::new_unique(),
-                    Pubkey::new_unique(),
-                    Pubkey::new_unique(),
-                    Pubkey::new_unique(),
-                ],
-                last_drip_period: 0,
-                drip_amount: 0,
-                drip_activation_timestamp: 0,
-                bump: 0,
-                limit_swaps: true,
-                max_slippage_bps: 100,
-            }
-        };
-
-        let mut buf = Vec::new();
-        data.try_serialize(&mut buf).unwrap();
-
-        let mut account = Self::new_drip_account(is_writable);
-        account.data = buf;
-
-        account
+    pub fn new_token_program_account(state: AnchorAccount, key: Option<Pubkey>) -> Self {
+        Self::new_program_data_account(Token::id(), state, key)
     }
 
     pub fn to_account_info(&mut self) -> AccountInfo {
@@ -186,9 +104,152 @@ impl AccountFixture<Vec<u8>> {
         )
     }
 
-    pub fn to_account<'info, T: AccountSerialize + AccountDeserialize + Owner + Clone>(
-        &'info mut self,
-    ) -> Account<'info, T> {
+    pub fn to_account<'info>(&'info mut self) -> Account<'info, AnchorAccount> {
         Account::try_from(&self.to_account_info()).unwrap()
     }
+
+    pub fn to_signer<'info>(&'info mut self) -> Signer<'info> {
+        Signer::try_from(&self.to_account_info()).unwrap()
+    }
+
+    pub fn to_program<'info, T: Id + Clone>(&'info mut self) -> Program<'info, T> {
+        Program::try_from(&self.to_account_info()).unwrap()
+    }
+}
+
+pub fn new_anchor_wrapped_account<
+    AnchorWrapperAccount: AccountDeserialize,
+    InnerSolanaAccount: Pack,
+>(
+    account: InnerSolanaAccount,
+) -> AnchorWrapperAccount {
+    let mut buff: Vec<u8> = vec![0; InnerSolanaAccount::LEN];
+    InnerSolanaAccount::pack(account, &mut buff).unwrap();
+    AnchorWrapperAccount::try_deserialize(&mut buff.as_slice()).unwrap()
+}
+
+lazy_static! {
+    pub static ref ADMIN: AccountFixture<NoData> = AccountFixture::new_signer(None);
+    pub static ref SYSTEM_PROGRAM: AccountFixture<NoData> =
+        AccountFixture::new_program(Pubkey::default());
+    pub static ref EMPTY_VAULT_PROTO_CONFIG: AccountFixture<VaultProtoConfig> =
+        AccountFixture::new_drip_account(VaultProtoConfig::default(), None);
+    pub static ref EMPTY_VAULT_PERIOD: AccountFixture<VaultPeriod> =
+        AccountFixture::new_drip_account(VaultPeriod::default(), None);
+    pub static ref VAULT_PROTO_CONFIG: AccountFixture<VaultProtoConfig> =
+        AccountFixture::new_drip_account(VaultProtoConfig {
+            granularity: 60,
+            token_a_drip_trigger_spread: 50,
+            token_b_withdrawal_spread: 50,
+            token_b_referral_spread: 10,
+            admin: ADMIN.key,
+        }, None);
+
+    pub static ref TOKEN_A_MINT: AccountFixture<Mint> = AccountFixture::new_token_program_account(
+        new_anchor_wrapped_account(spl_token::state::Mint {
+            mint_authority: COption::None,
+            supply: 1_000_000_000_000_000, // 1 billion
+            decimals: 6,
+            is_initialized: true,
+            freeze_authority: COption::None,
+        }),
+        None
+    );
+
+    pub static ref TOKEN_B_MINT: AccountFixture<Mint> = AccountFixture::new_token_program_account(
+        new_anchor_wrapped_account(spl_token::state::Mint {
+            mint_authority: COption::None,
+            supply: 1_000_000_000_000_000, // 1 billion
+            decimals: 6,
+            is_initialized: true,
+            freeze_authority: COption::None,
+        }),
+        None
+    );
+
+    pub static ref VAULT_TOKEN_A_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
+        new_anchor_wrapped_account(spl_token::state::Account {
+            mint: Pubkey::new_unique(),
+            owner: ADMIN.key.clone(),
+            amount: 1_000_000_000_000, // 1 Million
+            delegate: COption::None,
+            state: AccountState::Initialized,
+            is_native: COption::None,
+            delegated_amount: 0,
+            close_authority: COption::None,
+        }),
+        None
+    );
+
+    pub static ref VAULT_TOKEN_B_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
+        new_anchor_wrapped_account(spl_token::state::Account {
+            mint: TOKEN_B_MINT.key.clone(),
+            owner: ADMIN.key.clone(),
+            amount: 1_000_000_000_000, // 1 Million
+            delegate: COption::None,
+            state: AccountState::Initialized,
+            is_native: COption::None,
+            delegated_amount: 0,
+            close_authority: COption::None,
+        }),
+        None
+    );
+
+    pub static ref VAULT_TREASURY_TOKEN_B_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
+        new_anchor_wrapped_account(spl_token::state::Account {
+            mint: TOKEN_B_MINT.key.clone(),
+            owner: ADMIN.key.clone(),
+            amount: 0, // 0
+            delegate: COption::None,
+            state: AccountState::Initialized,
+            is_native: COption::None,
+            delegated_amount: 0,
+            close_authority: COption::None,
+        }),
+        None
+    );
+
+    pub static ref WHITELISTED_SWAP_1: AccountFixture<NoData> = AccountFixture::new_system_account(None);
+    pub static ref WHITELISTED_SWAP_2: AccountFixture<NoData> = AccountFixture::new_system_account(None);
+    pub static ref WHITELISTED_SWAP_3: AccountFixture<NoData> = AccountFixture::new_system_account(None);
+
+    pub static ref VAULT_PERIOD_0: AccountFixture<VaultPeriod> = AccountFixture::new_drip_account(
+        VaultPeriod {
+            vault: VAULT.key,
+            period_id: 0,
+            dar: 10,
+            twap: 0,
+            drip_timestamp: 0,
+            bump: 0,
+        },
+        None
+    );
+
+    pub static ref VAULT_PERIOD_1: AccountFixture<VaultPeriod> = AccountFixture::new_drip_account(
+        VaultPeriod {
+            vault: VAULT.key,
+            period_id: 1,
+            dar: 10,
+            twap: 0,
+            drip_timestamp: 0,
+            bump: 0,
+        },
+        None
+    );
+
+    pub static ref VAULT: AccountFixture<Vault> = AccountFixture::new_drip_account(Vault {
+        proto_config: VAULT_PROTO_CONFIG.key,
+        token_a_mint: TOKEN_A_MINT.key,
+        token_b_mint: TOKEN_B_MINT.key,
+        token_a_account: VAULT_TOKEN_A_ACCOUNT.key,
+        token_b_account: VAULT_TOKEN_B_ACCOUNT.key,
+        treasury_token_b_account: VAULT_TREASURY_TOKEN_B_ACCOUNT.key,
+        whitelisted_swaps: [WHITELISTED_SWAP_1.key, WHITELISTED_SWAP_2.key, WHITELISTED_SWAP_3.key, Pubkey::default(), Pubkey::default()],
+        last_drip_period: 0,
+        drip_amount: 50,
+        drip_activation_timestamp: 0,
+        bump: 0,
+        limit_swaps: true,
+        max_slippage_bps: 1000,
+    }, None);
 }

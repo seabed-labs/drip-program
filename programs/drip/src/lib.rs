@@ -61,18 +61,6 @@ pub mod drip {
         })
     }
 
-    pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
-        handle_action(Withdraw::WithoutClosePosition {
-            accounts: ctx.accounts,
-        })
-    }
-
-    pub fn close_position(ctx: Context<ClosePositionAccounts>) -> Result<()> {
-        handle_action(Withdraw::WithClosePosition {
-            accounts: ctx.accounts,
-        })
-    }
-
     pub fn drip_spl_token_swap(ctx: Context<DripSPLTokenSwapAccounts>) -> Result<()> {
         handle_action(Drip::SPLTokenSwap {
             accounts: ctx.accounts,
@@ -81,6 +69,18 @@ pub mod drip {
 
     pub fn drip_orca_whirlpool(ctx: Context<DripOrcaWhirlpoolAccounts>) -> Result<()> {
         handle_action(Drip::OrcaWhirlpool {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
+        handle_action(Withdraw::WithoutClosePosition {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn close_position(ctx: Context<ClosePositionAccounts>) -> Result<()> {
+        handle_action(Withdraw::WithClosePosition {
             accounts: ctx.accounts,
         })
     }

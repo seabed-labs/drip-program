@@ -39,7 +39,7 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.32.0
+          toolchain: stable
 
       - name: Setup Clippy
         id: install-clippy
@@ -79,7 +79,7 @@ jobs:
         run: anchor build
 
       - name: Run Clippy
-        run: cargo clippy -- -D warnings --A clippy::too_many_arguments --A clippy::borrowed-box
+        run: cargo clippy -- -D warnings --A clippy::too_many_arguments --A clippy::borrowed-box --A clippy::result_large_err
 
   lint:
     runs-on: ubuntu-latest
