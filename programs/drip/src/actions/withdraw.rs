@@ -27,52 +27,27 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
         match self {
             Withdraw::WithoutClosePosition { accounts } => {
                 validate_common(&accounts.common)?;
+
                 let WithdrawalAmountB {
-                    withdrawable_amount_b_before_fees: _,
-                    treasury_spread_amount_b: _,
-                    referrer_spread_amount_b: _,
                     withdrawable_amount_b,
+                    ..
                 } = get_withdrawal_amount_b(&accounts.common);
-                if withdrawable_amount_b == 0 {
-                    return Err(DripError::WithdrawableAmountIsZero.into());
-                }
+
+                validate!(
+                    withdrawable_amount_b > 0,
+                    DripError::WithdrawableAmountIsZero
+                );
+
                 Ok(())
             }
             Withdraw::WithClosePosition { accounts } => {
                 validate_common(&accounts.common)?;
-                // Relation Checks
+
                 validate!(
                     accounts.vault_period_user_expiry.vault == accounts.common.vault.key(),
                     DripError::InvalidVaultReference
                 );
-                validate!(
-                    accounts.vault_token_a_account.key() == accounts.common.vault.token_a_account,
-                    DripError::IncorrectVaultTokenAccount
-                );
-                validate!(
-                    accounts.user_position_nft_mint.key()
-                        == accounts.common.user_position.position_authority,
-                    DripError::InvalidMint
-                );
-                // Intentionally not added these checks, we don't need them
-                // validate!(
-                //     accounts.user_token_a_account.owner == accounts.common.withdrawer.key(),
-                //     DripError::InvalidOwner
-                // );
-                // validate!(
-                //     accounts.user_token_a_account.mint == accounts.common.vault.token_a_mint,
-                //     DripError::InvalidMint
-                // );
 
-                // Business Checks
-                validate!(
-                    accounts.user_position_nft_mint.supply == 1
-                        && accounts.user_position_nft_mint.decimals == 0
-                        && accounts.user_position_nft_mint.is_initialized
-                        && accounts.user_position_nft_mint.mint_authority.is_none()
-                        && accounts.user_position_nft_mint.freeze_authority.is_none(),
-                    DripError::InvalidMint
-                );
                 validate!(
                     accounts.vault_period_user_expiry.period_id
                         == accounts
@@ -83,6 +58,18 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
                             .unwrap(),
                     DripError::InvalidVaultPeriod
                 );
+
+                validate!(
+                    accounts.vault_token_a_account.key() == accounts.common.vault.token_a_account,
+                    DripError::IncorrectVaultTokenAccount
+                );
+
+                validate!(
+                    accounts.user_position_nft_mint.key()
+                        == accounts.common.user_position.position_authority,
+                    DripError::InvalidMint
+                );
+
                 Ok(())
             }
         }
@@ -100,6 +87,7 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         accounts.vault_period_i.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
+
     validate!(
         accounts.vault_period_i.period_id == accounts.user_position.drip_period_id_before_deposit,
         DripError::InvalidVaultPeriod
@@ -109,6 +97,7 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         accounts.vault_period_j.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
+
     validate!(
         accounts.vault_period_j.period_id
             == min(
@@ -133,22 +122,15 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
     );
 
     validate!(
-        accounts.user_token_b_account.owner == accounts.withdrawer.key(),
-        DripError::InvalidOwner
-    );
-    validate!(
-        accounts.user_token_b_account.mint == accounts.vault_token_b_account.mint,
-        DripError::InvalidMint
-    );
-
-    validate!(
         accounts.user_position.vault == accounts.vault.key(),
         DripError::InvalidVaultReference
     );
+
     validate!(
         !accounts.user_position.is_closed,
         DripError::PositionAlreadyClosed
     );
+
     validate!(
         accounts.user_position.referrer == accounts.referrer.key(),
         DripError::InvalidMint
@@ -170,24 +152,28 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
 }
 
 impl<'a, 'info> Executable for Withdraw<'a, 'info> {
-    fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
+    fn execute(self, cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
-            Withdraw::WithoutClosePosition { accounts } => execute_withdraw_b(&mut accounts.common),
+            Withdraw::WithoutClosePosition { accounts } => {
+                execute_withdraw_b(&mut accounts.common, cpi_executor)
+            }
             Withdraw::WithClosePosition { accounts } => {
                 // withdrawB's execute is a subset of close position (they have slightly different validation)
-                execute_withdraw_b(&mut accounts.common)?;
+                execute_withdraw_b(&mut accounts.common, cpi_executor)?;
 
                 /* COMPUTE (CHECKS) */
                 let withdrawable_amount_a = get_withdrawal_amount_a(&accounts.common);
 
-                let transfer_a_to_user = if withdrawable_amount_a != 0 {
-                    Some(TransferToken::new(
-                        &accounts.common.token_program,
-                        &accounts.vault_token_a_account,
-                        &accounts.user_token_a_account,
-                        &accounts.common.vault.to_account_info(),
-                        withdrawable_amount_a,
-                    ))
+                let transfer_a_to_user = TransferToken::new(
+                    &accounts.common.token_program,
+                    &accounts.vault_token_a_account,
+                    &accounts.user_token_a_account,
+                    &accounts.common.vault.to_account_info(),
+                    withdrawable_amount_a,
+                );
+
+                let transfer_a_to_user_if_nonzero: Option<&dyn CPI> = if withdrawable_amount_a > 0 {
+                    Some(&transfer_a_to_user)
                 } else {
                     None
                 };
@@ -227,18 +213,25 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
 
                 /* MANUAL CPI (INTERACTIONS) */
                 let signer: &Vault = &accounts.common.vault;
-                if let Some(transfer) = transfer_a_to_user {
-                    transfer.execute(signer)?;
-                }
-                burn_position.execute(signer)?;
-                close_account.execute(signer)?;
+                cpi_executor.execute_all(
+                    vec![
+                        &transfer_a_to_user_if_nonzero,
+                        &Some(&burn_position),
+                        &Some(&close_account),
+                    ],
+                    signer,
+                )?;
+
                 Ok(())
             }
         }
     }
 }
 
-fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
+fn execute_withdraw_b(
+    accounts: &mut WithdrawCommonAccounts,
+    cpi_executor: &mut impl CpiExecutor,
+) -> Result<()> {
     /* COMPUTE (CHECKS) */
     let WithdrawalAmountB {
         withdrawable_amount_b_before_fees,
@@ -247,39 +240,41 @@ fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
         withdrawable_amount_b,
     } = get_withdrawal_amount_b(accounts);
     // If for some rounding reason we have 0 zero spread, don't error out
-    let transfer_b_to_treasury = if treasury_spread_amount_b != 0 {
-        Some(TransferToken::new(
-            &accounts.token_program,
-            &accounts.vault_token_b_account,
-            &accounts.vault_treasury_token_b_account,
-            &accounts.vault.to_account_info(),
-            treasury_spread_amount_b,
-        ))
+    let transfer_b_to_treasury = TransferToken::new(
+        &accounts.token_program,
+        &accounts.vault_token_b_account,
+        &accounts.vault_treasury_token_b_account,
+        &accounts.vault.to_account_info(),
+        treasury_spread_amount_b,
+    );
+
+    let transfer_b_to_treasury_if_nonzero: Option<&dyn CPI> = if treasury_spread_amount_b > 0 {
+        Some(&transfer_b_to_treasury)
     } else {
         None
     };
-    let transfer_b_to_referrer = if referrer_spread_amount_b != 0 {
-        Some(TransferToken::new(
-            &accounts.token_program,
-            &accounts.vault_token_b_account,
-            &accounts.referrer,
-            &accounts.vault.to_account_info(),
-            referrer_spread_amount_b,
-        ))
+
+    let transfer_b_to_referrer = TransferToken::new(
+        &accounts.token_program,
+        &accounts.vault_token_b_account,
+        &accounts.referrer,
+        &accounts.vault.to_account_info(),
+        referrer_spread_amount_b,
+    );
+
+    let transfer_b_to_referrer_if_nonzero: Option<&dyn CPI> = if referrer_spread_amount_b > 0 {
+        Some(&transfer_b_to_referrer)
     } else {
         None
     };
-    let transfer_b_to_user = if withdrawable_amount_b != 0 {
-        Some(TransferToken::new(
-            &accounts.token_program,
-            &accounts.vault_token_b_account,
-            &accounts.user_token_b_account,
-            &accounts.vault.to_account_info(),
-            withdrawable_amount_b,
-        ))
-    } else {
-        None
-    };
+
+    let transfer_b_to_user = TransferToken::new(
+        &accounts.token_program,
+        &accounts.vault_token_b_account,
+        &accounts.user_token_b_account,
+        &accounts.vault.to_account_info(),
+        withdrawable_amount_b,
+    );
 
     /* STATE UPDATES (EFFECTS) */
     // Update the user's position state to reflect the newly withdrawn amount
@@ -289,15 +284,16 @@ fn execute_withdraw_b(accounts: &mut WithdrawCommonAccounts) -> Result<()> {
 
     /* MANUAL CPI (INTERACTIONS) */
     let signer: &Vault = &accounts.vault;
-    if let Some(transfer) = transfer_b_to_treasury {
-        transfer.execute(signer)?;
-    }
-    if let Some(transfer) = transfer_b_to_user {
-        transfer.execute(signer)?;
-    }
-    if let Some(transfer) = transfer_b_to_referrer {
-        transfer.execute(signer)?;
-    }
+
+    cpi_executor.execute_all(
+        vec![
+            &transfer_b_to_treasury_if_nonzero,
+            &Some(&transfer_b_to_user),
+            &transfer_b_to_referrer_if_nonzero,
+        ],
+        signer,
+    )?;
+
     Ok(())
 }
 

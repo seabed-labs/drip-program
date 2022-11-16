@@ -12,49 +12,14 @@ pub struct WithdrawCommonAccounts<'info> {
     pub withdrawer: Signer<'info>,
 
     /* DRIP ACCOUNTS */
-    #[account(
-        // mut needed for close_position
-        mut,
-        seeds = [
-            b"drip-v1".as_ref(),
-            vault.token_a_mint.as_ref(),
-            vault_token_b_account.mint.as_ref(),
-            vault_proto_config.key().as_ref()
-        ],
-        bump = vault.bump
-    )]
+    // mut needed for close_position
+    #[account(mut)]
     pub vault: Box<Account<'info, Vault>>,
 
-    #[account(
-        constraint = vault_proto_config.key() == vault.proto_config @DripError::InvalidVaultProtoConfigReference
-    )]
     pub vault_proto_config: Box<Account<'info, VaultProtoConfig>>,
 
-    #[account(
-        seeds = [
-            b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            vault_period_i.period_id.to_string().as_bytes(),
-        ],
-        bump = vault_period_i.bump,
-        constraint = vault_period_i.vault == vault.key() @DripError::InvalidVaultReference,
-        constraint = vault_period_i.period_id == user_position.drip_period_id_before_deposit @DripError::InvalidVaultPeriod,
-    )]
     pub vault_period_i: Account<'info, VaultPeriod>,
 
-    #[account(
-        seeds = [
-            b"vault_period".as_ref(),
-            vault.key().as_ref(),
-            vault_period_j.period_id.to_string().as_bytes(),
-        ],
-        bump = vault_period_j.bump,
-        constraint = vault_period_j.vault == vault.key() @DripError::InvalidVaultReference,
-        constraint = vault_period_j.period_id == std::cmp::min(
-            vault.last_drip_period,
-            user_position.drip_period_id_before_deposit.checked_add(user_position.number_of_swaps).unwrap()
-        ) @DripError::InvalidVaultPeriod,
-    )]
     pub vault_period_j: Account<'info, VaultPeriod>,
 
     #[account(
@@ -71,43 +36,24 @@ pub struct WithdrawCommonAccounts<'info> {
     pub user_position: Account<'info, Position>,
 
     /* TOKEN ACCOUNTS */
-    #[account(
-        // mut needed for close_position 
-        mut,
-        constraint = user_position_nft_account.mint == user_position.position_authority @DripError::InvalidMint,
-        constraint = user_position_nft_account.owner == withdrawer.key(),
-        constraint = user_position_nft_account.amount == 1,
-    )]
+    // mut needed for close_position
+    #[account(mut)]
     pub user_position_nft_account: Account<'info, TokenAccount>,
 
-    #[account(
-        // mut needed because we are changing the balance
-        mut,
-        constraint = vault_token_b_account.key() == vault.token_b_account,
-    )]
+    // mut needed because we are changing the balance
+    #[account(mut)]
     pub vault_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = vault_treasury_token_b_account.key() == vault.treasury_token_b_account,
-    )]
+    // mut needed because we are changing balance
+    #[account(mut)]
     pub vault_treasury_token_b_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        // mut needed because we are changing the balance
-        mut,
-        constraint = user_token_b_account.owner == withdrawer.key(),
-        constraint = user_token_b_account.mint == vault_token_b_account.mint @DripError::InvalidMint,
-    )]
+    // mut needed because we are changing the balance
+    #[account(mut)]
     pub user_token_b_account: Box<Account<'info, TokenAccount>>,
 
     // mut needed because we are changing the balance
-    #[account(
-        mut,
-        constraint = referrer.mint == vault_token_b_account.mint @DripError::InvalidMint,
-        constraint = referrer.key() == user_position.referrer @DripError::InvalidReferrer,
-    )]
+    #[account(mut)]
     pub referrer: Box<Account<'info, TokenAccount>>,
 
     /* MISC */
@@ -123,46 +69,19 @@ pub struct WithdrawBAccounts<'info> {
 pub struct ClosePositionAccounts<'info> {
     pub common: WithdrawCommonAccounts<'info>,
 
-    #[account(
-        // mut needed because we are changing state
-        mut,
-        seeds = [
-            b"vault_period".as_ref(),
-            common.vault.key().as_ref(),
-            vault_period_user_expiry.period_id.to_string().as_bytes(),
-        ],
-        bump = vault_period_user_expiry.bump,
-        constraint = vault_period_user_expiry.vault == common.vault.key() @DripError::InvalidVaultReference,
-        constraint = vault_period_user_expiry.period_id == common.user_position.drip_period_id_before_deposit
-                .checked_add(common.user_position.number_of_swaps)
-                .unwrap() @DripError::InvalidVaultPeriod,
-    )]
+    // mut needed because we are changing state
+    #[account(mut)]
     pub vault_period_user_expiry: Box<Account<'info, VaultPeriod>>,
 
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = vault_token_a_account.key() == common.vault.token_a_account,
-    )]
+    // mut needed because we are changing balance
+    #[account(mut)]
     pub vault_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        // mut needed because we are changing balance
-        mut,
-        constraint = user_token_a_account.owner == common.withdrawer.key(),
-        constraint = user_token_a_account.mint == common.vault.token_a_mint @DripError::InvalidMint
-    )]
+    // mut needed because we are changing balance
+    #[account(mut)]
     pub user_token_a_account: Box<Account<'info, TokenAccount>>,
 
-    #[account(
-        // mut needed because we are burning the users NFT
-        mut,
-        constraint = user_position_nft_mint.key() == common.user_position.position_authority @DripError::InvalidMint,
-        constraint = user_position_nft_mint.supply == 1,
-        constraint = user_position_nft_mint.decimals == 0,
-        constraint = user_position_nft_mint.is_initialized,
-        constraint = user_position_nft_mint.mint_authority.is_none(),
-        constraint = user_position_nft_mint.freeze_authority.is_none()
-    )]
+    // mut needed because we are burning the users NFT
+    #[account(mut)]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
 }

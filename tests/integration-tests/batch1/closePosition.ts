@@ -19,6 +19,7 @@ import {
   depositWithNewUserWrapper,
   sleep,
   dripSPLTokenSwapWrapper,
+  withdrawBWrapper,
 } from "../../utils/setup.util";
 import { MintLayout, Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -66,6 +67,7 @@ export function testClosePosition() {
 
   let dripTrigger;
   let closePosition;
+  let withdraw;
   let depositWithNewUser;
 
   beforeEach(async () => {
@@ -211,6 +213,17 @@ export function testClosePosition() {
       userPositionNFTMint
     );
 
+    withdraw = withdrawBWrapper(
+      user,
+      vaultPDA.publicKey,
+      vaultProtoConfig,
+      userPositionAccount,
+      userPositionNFTAccount,
+      vaultTokenBAccount,
+      vaultTreasuryTokenBAccount,
+      userTokenBAccount
+    );
+
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
@@ -328,6 +341,57 @@ export function testClosePosition() {
     );
 
     let [i, j, k] = [0, 4, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey
+    );
+
+    const [
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
+      vaultTreasuryTokenBAccountAfter,
+      userPositionNFTAccountAfter,
+      userPositionAccountAfter,
+      vault_After,
+      vaultPeriodUserExpiryAfter,
+    ] = await Promise.all([
+      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
+      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
+      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
+      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
+      AccountUtil.fetchPositionAccount(userPositionAccount),
+      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
+      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
+    ]);
+
+    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+    userTokenBAccountAfter.balance.toString().should.equal("995010603");
+    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
+    should(userPositionNFTAccountAfter).be.null();
+    userPositionAccountAfter.isClosed.should.be.true();
+    vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
+    vault_After.dripAmount.toString().should.equal("0");
+  });
+
+  it("should be able to close position after withdrawing", async () => {
+    for (let i = 0; i < 4; i++) {
+      await dripTrigger(
+        vaultPeriods[i].publicKey,
+        vaultPeriods[i + 1].publicKey
+      );
+      await sleep(1500);
+    }
+    await userPosition.approve(
+      userPositionNFTAccount,
+      vaultPDA.publicKey,
+      user.publicKey,
+      [user],
+      1
+    );
+
+    let [i, j, k] = [0, 4, 4];
+    await withdraw(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
