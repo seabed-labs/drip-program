@@ -430,7 +430,7 @@ export function testInitVault() {
 
       await TestUtil.provider.connection
         .sendTransaction(initVaultTx, [randoKeypair])
-        .should.be.rejectedWith(/0x177d/);
+        .should.be.rejectedWith(/0x1785/);
     });
   });
 

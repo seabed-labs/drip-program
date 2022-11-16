@@ -1118,8 +1118,5 @@
       "name": "InvalidReferrer",
       "msg": "Referrer does not match position referrer"
     }
-  ],
-  "metadata": {
-    "address": "dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk"
-  }
+  ]
 }
