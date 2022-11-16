@@ -1119,9 +1119,6 @@ export type Drip = {
       msg: "Referrer does not match position referrer";
     }
   ];
-  metadata: {
-    address: "dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk";
-  };
 };
 
 export const IDL: Drip = {
@@ -2245,7 +2242,4 @@ export const IDL: Drip = {
       msg: "Referrer does not match position referrer",
     },
   ],
-  metadata: {
-    address: "dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk",
-  },
 };
