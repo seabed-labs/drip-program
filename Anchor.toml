@@ -29,11 +29,21 @@ program = "./deps/mpl_token_metadata/mpl_token_metadata.so"
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
 
+# Program
 [[test.validator.clone]]
 address = "FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH"
 
-# Devnet Pyth
-#[test.validator]
-#url = "https://api.devnet.solana.com"
-#[[test.validator.clone]]
-#address = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"
+# ETH price account
+[[test.validator.clone]]
+address = "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
+# ETH product account
+[[test.validator.clone]]
+address = "EMkxjGC1CQ7JLiutDbfYb7UKb3zm9SJcUmr1YicBsdpZ"
+
+# USDC price account
+[[test.validator.clone]]
+address = "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
+# USDC product account
+[[test.validator.clone]]
+address = "8GWTTbNiXdmyZREXbjsZBmCRuzdPrW55dnZGDkTRjWvb"
+
