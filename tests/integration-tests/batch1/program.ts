@@ -24,4 +24,11 @@ describe("Test Dependent Programs", () => {
     );
     metadataProgram.should.not.be.undefined();
   });
+
+  it("should have the pyth program", async () => {
+    const pythProgram = await AccountUtil.fetchAccountInfo(
+      new web3.PublicKey(ProgramUtil.pythProgram.programId)
+    );
+    pythProgram.should.not.be.undefined();
+  });
 });
