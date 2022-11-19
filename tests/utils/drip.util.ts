@@ -20,7 +20,6 @@ import { BN } from "@project-serum/anchor";
 import { TokenUtil } from "./token.util";
 import { deployVaultPeriod, depositToVault } from "./setup.util";
 import { SolUtil } from "./sol.util";
-import { Key } from "@metaplex-foundation/mpl-token-metadata";
 
 export type VaultProtoConfigParams = {
   granularity: Granularity;
@@ -534,11 +533,54 @@ export class DripUtil extends TestUtil {
       .accounts({
         ...accounts,
         oracleConfig: accounts.oracleConfig.publicKey.toString(),
-        creator: this.provider.wallet.publicKey,
         systemProgram: ProgramUtil.systemProgram.programId,
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [accounts.oracleConfig]);
+  }
+
+  static async updateOracleConfig(
+    accounts: {
+      oracleConfig: PublicKey;
+      tokenAPrice: PublicKey;
+      tokenBPrice: PublicKey;
+    },
+    params: {
+      enabled: boolean;
+      source: number;
+      tokenAMint: PublicKey;
+      tokenBMint: PublicKey;
+      updateAuthority: PublicKey;
+    },
+    updateAuthority?: Keypair | Signer
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .updateOracleConfig({
+        ...params,
+      })
+      .accounts({
+        ...accounts,
+        oracleConfig: accounts.oracleConfig.toString(),
+        updateAuthority:
+          updateAuthority?.publicKey ?? this.provider.wallet.publicKey,
+      })
+      .transaction();
+    if (updateAuthority) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        updateAuthority,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
   }
 
   /*
