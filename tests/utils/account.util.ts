@@ -51,6 +51,7 @@ export class AccountUtil extends TestUtil {
       | "bump"
       | "limitSwaps"
       | "maxSlippageBps"
+      | "oracleConfig"
     >
   > {
     return await ProgramUtil.dripProgram.account.vault.fetch(pubkey);

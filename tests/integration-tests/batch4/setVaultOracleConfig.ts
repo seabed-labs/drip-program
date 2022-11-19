@@ -1,21 +1,19 @@
 import "should";
 import { AccountUtil } from "../../utils/account.util";
 import { DripUtil } from "../../utils/drip.util";
-import {
-  generatePair,
-} from "../../utils/common.util";
+import { generatePair } from "../../utils/common.util";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 
-describe("#initOracleConfig", testInitOracleConfig);
+describe("#setVaultOracleConfig", setVaultOracleConfig);
 
-export function testInitOracleConfig() {
+function setVaultOracleConfig() {
   let vault: PublicKey;
   let vaultProtoConfig: PublicKey;
   let oracleConfig: PublicKey;
   let admin: Keypair | Signer;
 
-  beforeEach( async () => {
-    const res = await DripUtil.deployVault({})
+  beforeEach(async () => {
+    const res = await DripUtil.deployVault({});
     const oracleConfigKeypair = generatePair();
     const updateAuthority = generatePair();
     const accounts = {
@@ -44,47 +42,97 @@ export function testInitOracleConfig() {
   });
 
   it("should update the oracle account to provided input if admin signs the transaction", async () => {
-    const vaultBefore = await AccountUtil.fetchVaultAccount(
-      vault
+    const vaultBefore = await AccountUtil.fetchVaultAccount(vault);
+    await DripUtil.setVaultOracleConfig(
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      },
+      {
+        oracleConfig,
+      }
     );
-    await DripUtil.setVaultOracleConfig({
-      admin,
-      vault,
-      vaultProtoConfig,
-    }, {
-      oracleConfig,
-    });
-    const vaultAfter = await AccountUtil.fetchVaultAccount(
-     vault
-    );
+    const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
 
-    vaultAfter.protoConfig.toBase58().should.equal(vaultBefore.protoConfig.toBase58());
-    vaultAfter.tokenAMint.toBase58().should.equal(vaultBefore.tokenAMint.toBase58());
-    vaultAfter.tokenBMint.toBase58().should.equal(vaultBefore.tokenBMint.toBase58());
-    vaultAfter.tokenAAccount.toBase58().should.equal(vaultBefore.tokenAAccount.toBase58());
-    vaultAfter.tokenBAccount.toBase58().should.equal(vaultBefore.tokenBAccount.toBase58());
-    vaultAfter.treasuryTokenBAccount.toBase58().should.equal(vaultBefore.treasuryTokenBAccount.toBase58());
-    vaultAfter.whitelistedSwaps.should.containEql(vaultBefore.whitelistedSwaps);
-    vaultAfter.lastDripPeriod.should.equal(vaultBefore.lastDripPeriod);
-    vaultAfter.dripAmount.should.equal(vaultBefore.dripAmount);
-    vaultAfter.dripActivationTimestamp.should.equal(vaultBefore.dripActivationTimestamp);
+    vaultAfter.protoConfig
+      .toBase58()
+      .should.equal(vaultBefore.protoConfig.toBase58());
+    vaultAfter.tokenAMint
+      .toBase58()
+      .should.equal(vaultBefore.tokenAMint.toBase58());
+    vaultAfter.tokenBMint
+      .toBase58()
+      .should.equal(vaultBefore.tokenBMint.toBase58());
+    vaultAfter.tokenAAccount
+      .toBase58()
+      .should.equal(vaultBefore.tokenAAccount.toBase58());
+    vaultAfter.tokenBAccount
+      .toBase58()
+      .should.equal(vaultBefore.tokenBAccount.toBase58());
+    vaultAfter.treasuryTokenBAccount
+      .toBase58()
+      .should.equal(vaultBefore.treasuryTokenBAccount.toBase58());
+    vaultAfter.whitelistedSwaps
+      .map((el) => el.toBase58())
+      .sort()
+      .should.deepEqual(
+        vaultBefore.whitelistedSwaps.map((el) => el.toBase58()).sort()
+      );
+    vaultAfter.lastDripPeriod
+      .toString()
+      .should.equal(vaultBefore.lastDripPeriod.toString());
+    vaultAfter.dripAmount
+      .toString()
+      .should.equal(vaultBefore.dripAmount.toString());
+    vaultAfter.dripActivationTimestamp
+      .toString()
+      .should.equal(vaultBefore.dripActivationTimestamp.toString());
     vaultAfter.bump.should.equal(vaultBefore.bump);
     vaultAfter.limitSwaps.should.equal(vaultBefore.limitSwaps);
     vaultAfter.maxSlippageBps.should.equal(vaultBefore.maxSlippageBps);
 
-    vaultAfter.oracleConfig.toBase58().should.not.equal(vaultBefore.oracleConfig.toBase58());
-    vaultAfter.oracleConfig.toBase58.should.equal(oracleConfig.toBase58());
+    vaultAfter.oracleConfig
+      .toBase58()
+      .should.not.equal(vaultBefore.oracleConfig.toBase58());
+    vaultAfter.oracleConfig.toBase58().should.equal(oracleConfig.toBase58());
   });
 
-  // it("should throw an error when an invalid source is passed in", async () => {
-  //
-  // });
-  //
-  // it("should throw an error when token_a_price cannot be decoded correctly", async () => {
-  //
-  // });
-  //
-  // it("should throw an error when token_b_price cannot be decoded correctly", async () => {
-  //
-  // });
+  it("should be able to set oracle config 2 times", async () => {
+    await DripUtil.setVaultOracleConfig(
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      },
+      {
+        oracleConfig: generatePair().publicKey,
+      }
+    );
+    await DripUtil.setVaultOracleConfig(
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      },
+      {
+        oracleConfig,
+      }
+    );
+    const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
+    vaultAfter.oracleConfig.toBase58().should.equal(oracleConfig.toBase58());
+  });
+
+  it("should throw an error a non-admin tries to update the oracle config", async () => {
+    await DripUtil.setVaultOracleConfig(
+      {
+        admin: undefined,
+        vault,
+        vaultProtoConfig,
+      },
+      {
+        oracleConfig,
+      }
+    ).should.be.rejectedWith(/0x1785/); // SignerIsNotAdmin
+  });
 }
