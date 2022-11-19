@@ -32,12 +32,15 @@ pub struct Vault {
     pub bump: u8,                       // 1
     pub limit_swaps: bool,              // 1
     pub max_slippage_bps: u16,          // 2
+
+    //  new fields added after mainnet release
+    pub oracle_config: Pubkey, // 32
 }
 
 impl Vault {
-    // total space -> 378
-    // allocation needed: ceil( (378+8)/8 )*8 -> 392
-    pub const ACCOUNT_SPACE: usize = 392;
+    // total space -> 410
+    // allocation needed: ceil( (410+8)/8 )*8 -> 424
+    pub const ACCOUNT_SPACE: usize = 424;
 
     pub fn init(
         &mut self,
@@ -106,6 +109,10 @@ impl Vault {
         for (i, &swap) in whitelisted_swaps.iter().enumerate() {
             self.whitelisted_swaps[i] = swap;
         }
+    }
+
+    pub fn set_oracle_config(&mut self, new_oracle_config: Pubkey) {
+        self.oracle_config = new_oracle_config
     }
 
     pub fn is_drip_activated(&self) -> bool {

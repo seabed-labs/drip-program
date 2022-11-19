@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultProtoConfig};
+use crate::state::{OracleConfig, Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -19,7 +19,7 @@ pub struct InitializeVaultAccounts<'info> {
     #[account(
         init,
         // Allocate an extra 128 bytes to future proof this
-        space = Vault::ACCOUNT_SPACE + 128,
+        space = Vault::ACCOUNT_SPACE + 96,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
@@ -72,7 +72,6 @@ pub struct UpdateVaultWhitelistedSwapsParams {
     pub whitelisted_swaps: Vec<Pubkey>,
 }
 
-// TODO(Mocha): this naming is awkward
 #[derive(Accounts)]
 pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     #[account(mut)]
@@ -83,4 +82,78 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     pub vault: Account<'info, Vault>,
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct SetVaultOracleConfigParams {
+    pub oracle_config: Pubkey,
+}
+
+#[derive(Accounts)]
+pub struct SetVaultOracleConfigAccounts<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub vault: Account<'info, Vault>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct InitializeOracleConfigParams {
+    pub enabled: bool,
+    pub source: u8,
+    pub update_authority: Pubkey,
+}
+
+#[derive(Accounts)]
+#[instruction(params: InitializeOracleConfigParams)]
+pub struct InitializeOracleConfigAccounts<'info> {
+    #[account(
+        init,
+        // Allocate an extra 128 bytes to future proof this
+        space = OracleConfig::ACCOUNT_SPACE + 128,
+        payer = creator,
+    )]
+    pub oracle_config: Account<'info, OracleConfig>,
+
+    pub token_a_mint: Account<'info, Mint>,
+    /// CHECK: Need to custom decode based on "source"
+    pub token_a_price: UncheckedAccount<'info>,
+
+    pub token_b_mint: Account<'info, Mint>,
+    /// CHECK: Need to custom decode based on "source"
+    pub token_b_price: UncheckedAccount<'info>,
+
+    // mut needed because we are debiting SOL from the signer to create the oracle_config account
+    #[account(mut)]
+    pub creator: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct UpdateOracleConfigParams {
+    pub enabled: bool,
+    pub source: u8,
+    pub update_authority: Pubkey,
+    pub token_a_mint: Pubkey,
+    pub token_b_mint: Pubkey,
+}
+
+#[derive(Accounts)]
+#[instruction(params: UpdateOracleConfigParams)]
+pub struct UpdateOracleConfigAccounts<'info> {
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub oracle_config: Account<'info, OracleConfig>,
+
+    /// CHECK: Need to custom decode based on "source"
+    pub token_a_price: UncheckedAccount<'info>,
+
+    /// CHECK: Need to custom decode based on "source"
+    pub token_b_price: UncheckedAccount<'info>,
+
+    pub update_authority: Signer<'info>,
 }

@@ -1,3 +1,4 @@
+use crate::state::{OracleConfig, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program_option::COption;
 use anchor_lang::{
@@ -11,8 +12,6 @@ use anchor_lang::{
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use lazy_static::lazy_static;
 use spl_token::state::AccountState;
-
-use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
 #[account]
 #[derive(Default)]
@@ -42,7 +41,7 @@ where
 {
     pub fn new_system_account(key: Option<Pubkey>) -> Self {
         AccountFixture {
-            key: key.map_or_else(|| Pubkey::new_unique(), |key| key),
+            key: key.map_or_else(Pubkey::new_unique, |key| key),
             is_signer: false,
             is_writable: false,
             lamports: 10,
@@ -145,6 +144,7 @@ lazy_static! {
             admin: ADMIN.key,
         }, None);
 
+
     pub static ref TOKEN_A_MINT: AccountFixture<Mint> = AccountFixture::new_token_program_account(
         new_anchor_wrapped_account(spl_token::state::Mint {
             mint_authority: COption::None,
@@ -155,6 +155,23 @@ lazy_static! {
         }),
         None
     );
+
+    pub static ref TOKEN_A_PRICE: AccountFixture<NoData> = AccountFixture::new_system_account(None);
+
+    pub static ref TOKEN_B_PRICE: AccountFixture<NoData> = AccountFixture::new_system_account(None);
+
+    pub static ref ORACLE_CONFIG: AccountFixture<OracleConfig> =
+        AccountFixture::new_drip_account(OracleConfig {
+            enabled: true,
+            source: 1,
+            update_authority: ADMIN.key,
+            token_a_mint: TOKEN_A_MINT.key,
+            token_a_price: TOKEN_A_PRICE.key,
+            token_b_mint: TOKEN_B_MINT.key,
+            token_b_price: TOKEN_B_PRICE.key,
+        }, None
+    );
+
 
     pub static ref TOKEN_B_MINT: AccountFixture<Mint> = AccountFixture::new_token_program_account(
         new_anchor_wrapped_account(spl_token::state::Mint {
@@ -170,7 +187,7 @@ lazy_static! {
     pub static ref VAULT_TOKEN_A_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
         new_anchor_wrapped_account(spl_token::state::Account {
             mint: Pubkey::new_unique(),
-            owner: ADMIN.key.clone(),
+            owner: ADMIN.key,
             amount: 1_000_000_000_000, // 1 Million
             delegate: COption::None,
             state: AccountState::Initialized,
@@ -183,8 +200,8 @@ lazy_static! {
 
     pub static ref VAULT_TOKEN_B_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
         new_anchor_wrapped_account(spl_token::state::Account {
-            mint: TOKEN_B_MINT.key.clone(),
-            owner: ADMIN.key.clone(),
+            mint: TOKEN_B_MINT.key,
+            owner: ADMIN.key,
             amount: 1_000_000_000_000, // 1 Million
             delegate: COption::None,
             state: AccountState::Initialized,
@@ -197,8 +214,8 @@ lazy_static! {
 
     pub static ref VAULT_TREASURY_TOKEN_B_ACCOUNT: AccountFixture<TokenAccount> = AccountFixture::new_token_program_account(
         new_anchor_wrapped_account(spl_token::state::Account {
-            mint: TOKEN_B_MINT.key.clone(),
-            owner: ADMIN.key.clone(),
+            mint: TOKEN_B_MINT.key,
+            owner: ADMIN.key,
             amount: 0, // 0
             delegate: COption::None,
             state: AccountState::Initialized,
@@ -251,5 +268,6 @@ lazy_static! {
         bump: 0,
         limit_swaps: true,
         max_slippage_bps: 1000,
+        oracle_config: ORACLE_CONFIG.key,
     }, None);
 }

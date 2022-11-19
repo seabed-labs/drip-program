@@ -54,4 +54,6 @@ pub enum DripError {
     PositionBalanceIsZero,
     #[msg("Referrer does not match position referrer")]
     InvalidReferrer,
+    #[msg("Supplied oracle Source is not supported")]
+    InvalidOracleSource,
 }
