@@ -6,7 +6,7 @@ import {
   Granularity,
 } from "../../utils/common.util";
 import { SolUtil } from "../../utils/sol.util";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { TokenUtil } from "../../utils/token.util";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
@@ -40,7 +40,7 @@ export function testSetVaultSwapWhitelist() {
 
     await Promise.all([
       SolUtil.fundAccount(adminKeypair.publicKey, SolUtil.solToLamports(0.1)),
-      VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
@@ -123,7 +123,7 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(false);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await VaultUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.updateVaultWhitelistedSwaps(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -206,7 +206,7 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(true);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await VaultUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.updateVaultWhitelistedSwaps(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -288,7 +288,7 @@ export function testSetVaultSwapWhitelist() {
     });
     vaultAccountBefore.limitSwaps.should.equal(true);
 
-    await VaultUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.updateVaultWhitelistedSwaps(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -358,7 +358,7 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(false);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await VaultUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.updateVaultWhitelistedSwaps(
       vault,
       vaultProtoConfig,
       undefined,

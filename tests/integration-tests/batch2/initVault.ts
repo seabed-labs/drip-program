@@ -1,7 +1,7 @@
 import "should";
 import { AccountUtil } from "../../utils/account.util";
 import { TokenUtil } from "../../utils/token.util";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { PublicKey, Keypair, Transaction } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import {
@@ -13,7 +13,6 @@ import {
   PDA,
 } from "../../utils/common.util";
 import { SolUtil } from "../../utils/sol.util";
-import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 import { ProgramUtil } from "../../utils/program.util";
 import { BN } from "@project-serum/anchor";
@@ -21,8 +20,6 @@ import { BN } from "@project-serum/anchor";
 describe("#initVault", testInitVault);
 
 export function testInitVault() {
-  initLog();
-
   let vaultProtoConfigAccount: PublicKey;
   let tokenA: Token;
   let tokenB: Token;
@@ -33,7 +30,7 @@ export function testInitVault() {
     const treasuryOwner = generatePair();
     await Promise.all([
       SolUtil.fundAccount(treasuryOwner.publicKey, SolUtil.solToLamports(0.1)),
-      VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
@@ -66,7 +63,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -137,7 +134,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -175,7 +172,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -213,7 +210,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -240,7 +237,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -262,7 +259,7 @@ export function testInitVault() {
       findAssociatedTokenAddress(vaultPDAPublicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDAPublicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -288,7 +285,7 @@ export function testInitVault() {
       generatePair().publicKey,
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
       tokenA.publicKey,
@@ -452,7 +449,7 @@ export function testInitVault() {
     });
 
     it("should fail to initialize when system program is passed in", async () => {
-      await VaultUtil.initVault(
+      await DripUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
@@ -466,7 +463,7 @@ export function testInitVault() {
     });
 
     it("should fail to initialize when invalid token program is passed in", async () => {
-      await VaultUtil.initVault(
+      await DripUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
@@ -480,7 +477,7 @@ export function testInitVault() {
     });
 
     it("should fail to initialize when invalid associated token program is passed in", async () => {
-      await VaultUtil.initVault(
+      await DripUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,
@@ -494,7 +491,7 @@ export function testInitVault() {
     });
 
     it("should fail to initialize when invalid rent program is passed in", async () => {
-      await VaultUtil.initVault(
+      await DripUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
         tokenA.publicKey,

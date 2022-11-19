@@ -87,7 +87,7 @@ export type DeployVaultRes = {
 };
 
 // TODO(Mocha): Replace the program interaction with the SDK
-export class VaultUtil extends TestUtil {
+export class DripUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfigParams
@@ -213,9 +213,8 @@ export class VaultUtil extends TestUtil {
         periodId: new u64(periodId),
       })
       .accounts({
-        vault: vault.toBase58(),
         vaultPeriod: vaultPeriod.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
+        vault: vault.toBase58(),
         creator: this.provider.wallet.publicKey.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
@@ -460,6 +459,34 @@ export class VaultUtil extends TestUtil {
     return this.provider.sendAndConfirm(tx, [withdrawer]);
   }
 
+  static async initOracleConfig(
+    accounts: {
+      oracleConfig: Keypair | Signer;
+      tokenAMint: PublicKey;
+      tokenAPrice: PublicKey;
+      tokenBMint: PublicKey;
+      tokenBPrice: PublicKey;
+    },
+    params: {
+      enabled: boolean;
+      source: number;
+      updateAuthority: PublicKey;
+    }
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .initOracleConfig({
+        ...params,
+      })
+      .accounts({
+        ...accounts,
+        oracleConfig: accounts.oracleConfig.publicKey.toString(),
+        creator: this.provider.wallet.publicKey,
+        systemProgram: ProgramUtil.systemProgram.programId,
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [accounts.oracleConfig]);
+  }
+
   /*
     Deploy Vault Proto Config if not provided
     Create token accounts
@@ -519,7 +546,7 @@ export class VaultUtil extends TestUtil {
 
     if (!vaultProtoConfig) {
       const vaultProtoConfigKeypair = generatePair();
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: 1,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
@@ -539,7 +566,7 @@ export class VaultUtil extends TestUtil {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
 
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfig,
       tokenA.publicKey,

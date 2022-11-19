@@ -2,7 +2,7 @@ import "should";
 import { DECIMALS, TokenUtil } from "../../utils/token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { SolUtil } from "../../utils/sol.util";
 import { AccountUtil } from "../../utils/account.util";
 import {
@@ -16,7 +16,6 @@ import {
   getVaultPeriodPDA,
   Granularity,
 } from "../../utils/common.util";
-import { initLog } from "../../utils/log.util";
 import { PDAUtil } from "@orca-so/whirlpools-sdk";
 import { TestUtil } from "../../utils/config.util";
 
@@ -24,8 +23,6 @@ import { TestUtil } from "../../utils/config.util";
 describe("#depositWithMetadata", testDepositWithMetadata);
 
 export function testDepositWithMetadata() {
-  initLog();
-
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let vaultPeriodPubkey: PublicKey;
@@ -65,7 +62,7 @@ export function testDepositWithMetadata() {
     ]);
 
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -86,7 +83,7 @@ export function testDepositWithMetadata() {
         findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
         TokenUtil.createTokenAccount(tokenB, treasuryOwner.publicKey),
       ]);
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenA.publicKey,
@@ -101,7 +98,7 @@ export function testDepositWithMetadata() {
 
     const vaultPeriodPDA = await getVaultPeriodPDA(vaultPubkey, 69);
 
-    await VaultUtil.initVaultPeriod(
+    await DripUtil.initVaultPeriod(
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
@@ -144,7 +141,7 @@ export function testDepositWithMetadata() {
       depositAmount
     );
 
-    await VaultUtil.depositWithMetadata({
+    await DripUtil.depositWithMetadata({
       params: {
         tokenADepositAmount: depositAmount,
         numberOfSwaps: new u64(69),

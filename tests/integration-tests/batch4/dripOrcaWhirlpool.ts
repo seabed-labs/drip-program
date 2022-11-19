@@ -2,7 +2,7 @@ import "should";
 import { DeployWhirlpoolRes, WhirlpoolUtil } from "../../utils/whirlpool.util";
 import { TokenUtil } from "../../utils/token.util";
 import { dripOrcaWhirlpoolWrapper } from "../../utils/setup.util";
-import { DeployVaultRes, VaultUtil } from "../../utils/vault.util";
+import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
 import { AccountUtil } from "../../utils/account.util";
 import {
   AccountFetcher,
@@ -26,7 +26,7 @@ export function testDripOrcaWhirlpool() {
   });
 
   beforeEach(async () => {
-    deployVaultRes = await VaultUtil.deployVault({
+    deployVaultRes = await DripUtil.deployVault({
       tokenA: deployWhirlpoolRes.tokenA,
       tokenB: deployWhirlpoolRes.tokenB,
       whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],
@@ -128,7 +128,7 @@ export function testDripOrcaWhirlpool() {
       deployWhirlpoolRes.tokenA,
     ];
 
-    const deployVaultRes = await VaultUtil.deployVault({
+    const deployVaultRes = await DripUtil.deployVault({
       tokenA,
       tokenB,
       whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],

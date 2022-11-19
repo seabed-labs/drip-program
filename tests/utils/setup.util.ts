@@ -10,7 +10,7 @@ import {
   getVaultPeriodPDA,
   PDA,
 } from "./common.util";
-import { VaultUtil } from "./vault.util";
+import { DripUtil } from "./drip.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./token.util";
 import { SolUtil } from "./sol.util";
@@ -31,7 +31,7 @@ export const deployVaultProtoConfig = async (
   admin: PublicKey
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
-  await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+  await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
     granularity,
     tokenADripTriggerSpread,
     tokenBWithdrawalSpread,
@@ -42,7 +42,7 @@ export const deployVaultProtoConfig = async (
 };
 
 /**
- * @deprecated Use VaultUtil.deployVault
+ * @deprecated Use DripUtil.deployVault
  */
 export const deployVault = async (
   tokenAMint: PublicKey,
@@ -60,7 +60,7 @@ export const deployVault = async (
     findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint),
     findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint),
   ]);
-  await VaultUtil.initVault(
+  await DripUtil.initVault(
     vaultPDA.publicKey,
     vaultProtoConfigAccount,
     tokenAMint,
@@ -84,7 +84,7 @@ export const deployVaultPeriod = async (
   period: number
 ): Promise<PDA> => {
   const vaultPeriodPDA = await getVaultPeriodPDA(vault, period);
-  await VaultUtil.initVaultPeriod(
+  await DripUtil.initVaultPeriod(
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
@@ -160,7 +160,7 @@ export const depositToVault = async (
     findAssociatedTokenAddress(vault, tokenA.publicKey),
     findAssociatedTokenAddress(user.publicKey, userPositionNftMint.publicKey),
   ]);
-  await VaultUtil.deposit({
+  await DripUtil.deposit({
     params: {
       tokenADepositAmount,
       numberOfSwaps,
@@ -281,7 +281,7 @@ export const dripSPLTokenSwapWrapper = (
     previousDripPeriod: PublicKey,
     currentDripPeriod: PublicKey
   ) => {
-    await VaultUtil.dripSPLTokenSwap(
+    await DripUtil.dripSPLTokenSwap(
       user,
       dripFeeTokenAAccount,
       vault,
@@ -320,7 +320,7 @@ export const dripOrcaWhirlpoolWrapper = (
     tickArray2: PublicKey
   ) => {
     try {
-      await VaultUtil.dripOrcaWhirlpool({
+      await DripUtil.dripOrcaWhirlpool({
         botKeypair,
         dripFeeTokenAAccount,
         vault,
@@ -355,7 +355,7 @@ export const withdrawBWrapper = (
   referrer?: PublicKey
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    const txHash = await VaultUtil.withdrawB(
+    const txHash = await DripUtil.withdrawB(
       user,
       vault,
       vaultProtoConfig,
@@ -389,7 +389,7 @@ export const closePositionWrapper = (
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
   ) => {
-    const txHash = await VaultUtil.closePosition(
+    const txHash = await DripUtil.closePosition(
       withdrawer,
       vault,
       vaultProtoConfig,

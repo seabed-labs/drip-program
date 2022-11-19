@@ -1,18 +1,15 @@
 import "should";
 import { AccountUtil } from "../../utils/account.util";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { generatePair, Granularity } from "../../utils/common.util";
-import { initLog } from "../../utils/log.util";
 
 describe("#initVaultProtoConfig", testInitVaultProtoConfig);
 
 export function testInitVaultProtoConfig() {
-  initLog();
-
   it("initializes the vault proto config account correctly", async () => {
     const vaultProtoConfigKeypair = generatePair();
     const admin = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 10,
@@ -39,7 +36,7 @@ export function testInitVaultProtoConfig() {
 
   it("uses absolute value when granularity is negative", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: -10,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -56,7 +53,7 @@ export function testInitVaultProtoConfig() {
   it("errors when passed in account is already initialized", async () => {
     const vaultProtoConfigKeypair = generatePair();
     const admin = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 10,
@@ -64,7 +61,7 @@ export function testInitVaultProtoConfig() {
       admin: admin.publicKey,
     });
 
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.HOURLY,
       tokenADripTriggerSpread: 100,
       tokenBWithdrawalSpread: 100,
@@ -75,7 +72,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when granularity is 0", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: 0,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -86,7 +83,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when granularity is not a number", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: "1o" as any,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -97,7 +94,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_a_drip_trigger_spread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 70000,
       tokenBWithdrawalSpread: 5,
@@ -110,7 +107,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_b_withdrawal_spread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 70000,
@@ -123,7 +120,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_b_referral_spread is not within u16 bound", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -136,7 +133,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_a_drip_trigger_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 5000,
       tokenBWithdrawalSpread: 5,
@@ -147,7 +144,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_b_withdrawal_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5000,
@@ -158,7 +155,7 @@ export function testInitVaultProtoConfig() {
 
   it("errors when token_b_referral_spread is ge than 5000", async () => {
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.MONTHLY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,

@@ -1,6 +1,6 @@
 import "should";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { TokenUtil } from "../../utils/token.util";
 import { AccountUtil } from "../../utils/account.util";
 import {
@@ -11,7 +11,6 @@ import {
   Granularity,
 } from "../../utils/common.util";
 import { SolUtil } from "../../utils/sol.util";
-import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 
 // TODO(matcha): More exhaustive tests
@@ -19,8 +18,6 @@ import { TestUtil } from "../../utils/config.util";
 describe("#initVaultPeriod", testInitVaultPeriod);
 
 export function testInitVaultPeriod() {
-  initLog();
-
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let tokenAMint: PublicKey;
@@ -32,7 +29,7 @@ export function testInitVaultPeriod() {
     const treasuryOwner = generatePair();
     await Promise.all([
       SolUtil.fundAccount(treasuryOwner.publicKey, SolUtil.solToLamports(0.1)),
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: Granularity.DAILY,
         tokenADripTriggerSpread: 5,
         tokenBWithdrawalSpread: 5,
@@ -63,7 +60,7 @@ export function testInitVaultPeriod() {
       tokenB,
       treasuryOwner.publicKey
     );
-    await VaultUtil.initVault(
+    await DripUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
       tokenA.publicKey,
@@ -83,7 +80,7 @@ export function testInitVaultPeriod() {
       69
     );
 
-    await VaultUtil.initVaultPeriod(
+    await DripUtil.initVaultPeriod(
       vaultPubkey,
       vaultPeriodPubkey,
       vaultProtoConfigPubkey,
