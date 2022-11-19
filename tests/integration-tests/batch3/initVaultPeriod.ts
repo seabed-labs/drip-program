@@ -60,16 +60,16 @@ export function testInitVaultPeriod() {
       tokenB,
       treasuryOwner.publicKey
     );
-    await DripUtil.initVault(
-      vaultPDA.publicKey,
-      vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
-      treasuryTokenBAccount,
-      undefined
-    );
+    const initVaultAccounts = {
+      vaultPubkey: vaultPDA.publicKey,
+      vaultProtoConfigAccount: vaultProtoConfigPubkey,
+      tokenAMint: tokenA.publicKey,
+      tokenBMint: tokenB.publicKey,
+      tokenAAccount: vaultTokenA_ATA,
+      tokenBAccount: vaultTokenB_ATA,
+      treasuryTokenBAccount: treasuryTokenBAccount,
+    };
+    await DripUtil.initVault(initVaultAccounts);
 
     vaultPubkey = vaultPDA.publicKey;
   });

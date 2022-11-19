@@ -123,7 +123,7 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(false);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await DripUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.setVaultSwapWhitelist(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -206,7 +206,7 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(true);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await DripUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.setVaultSwapWhitelist(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -288,7 +288,7 @@ export function testSetVaultSwapWhitelist() {
     });
     vaultAccountBefore.limitSwaps.should.equal(true);
 
-    await DripUtil.updateVaultWhitelistedSwaps(
+    await DripUtil.setVaultSwapWhitelist(
       vault,
       vaultProtoConfig,
       adminKeypair,
@@ -358,14 +358,9 @@ export function testSetVaultSwapWhitelist() {
     vaultAccountBefore.limitSwaps.should.equal(false);
 
     const newWhitelistedSwaps = [generatePair().publicKey];
-    await DripUtil.updateVaultWhitelistedSwaps(
-      vault,
-      vaultProtoConfig,
-      undefined,
-      {
-        whitelistedSwaps: newWhitelistedSwaps,
-      }
-    ).should.be.rejectedWith(/0x1785/);
+    await DripUtil.setVaultSwapWhitelist(vault, vaultProtoConfig, undefined, {
+      whitelistedSwaps: newWhitelistedSwaps,
+    }).should.be.rejectedWith(/0x1785/);
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
     vaultAccountAfter.should.deepEqual(vaultAccountBefore);

@@ -83,16 +83,16 @@ export function testDepositWithMetadata() {
         findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
         TokenUtil.createTokenAccount(tokenB, treasuryOwner.publicKey),
       ]);
-    await DripUtil.initVault(
-      vaultPDA.publicKey,
-      vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      undefined
-    );
+    const initVaultAccounts = {
+      vaultPubkey: vaultPDA.publicKey,
+      vaultProtoConfigAccount: vaultProtoConfigPubkey,
+      tokenAMint: tokenA.publicKey,
+      tokenBMint: tokenB.publicKey,
+      tokenAAccount: vaultTokenAAccount,
+      tokenBAccount: vaultTokenBAccount,
+      treasuryTokenBAccount: vaultTreasuryTokenBAccount,
+    };
+    await DripUtil.initVault(initVaultAccounts);
 
     vaultPubkey = vaultPDA.publicKey;
 

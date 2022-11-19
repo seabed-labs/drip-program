@@ -60,19 +60,20 @@ export const deployVault = async (
     findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint),
     findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint),
   ]);
-  await DripUtil.initVault(
-    vaultPDA.publicKey,
-    vaultProtoConfigAccount,
-    tokenAMint,
-    tokenBMint,
-    vaultTokenA_ATA,
-    vaultTokenB_ATA,
-    vaultTreasuryTokenBAccount,
-    {
-      whitelistedSwaps,
-      maxSlippageBps: 1000,
-    }
-  );
+  const initVaultAccounts = {
+    vaultPubkey: vaultPDA.publicKey,
+    vaultProtoConfigAccount: vaultProtoConfigAccount,
+    tokenAMint: tokenAMint,
+    tokenBMint: tokenBMint,
+    tokenAAccount: vaultTokenA_ATA,
+    tokenBAccount: vaultTokenB_ATA,
+    treasuryTokenBAccount: vaultTreasuryTokenBAccount,
+  };
+  const initVaultParams = {
+    whitelistedSwaps,
+    maxSlippageBps: 1000,
+  };
+  await DripUtil.initVault(initVaultAccounts, initVaultParams);
   return vaultPDA;
 };
 
