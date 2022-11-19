@@ -103,15 +103,15 @@ where
         )
     }
 
-    pub fn to_account<'info>(&'info mut self) -> Account<'info, AnchorAccount> {
+    pub fn to_account(&mut self) -> Account<AnchorAccount> {
         Account::try_from(&self.to_account_info()).unwrap()
     }
 
-    pub fn to_signer<'info>(&'info mut self) -> Signer<'info> {
+    pub fn to_signer(&mut self) -> Signer {
         Signer::try_from(&self.to_account_info()).unwrap()
     }
 
-    pub fn to_program<'info, T: Id + Clone>(&'info mut self) -> Program<'info, T> {
+    pub fn to_program<T: Id + Clone>(&mut self) -> Program<T> {
         Program::try_from(&self.to_account_info()).unwrap()
     }
 }
