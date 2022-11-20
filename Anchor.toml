@@ -32,6 +32,10 @@ url = "https://api.mainnet-beta.solana.com"
 [[test.validator.clone]]
 address = "FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH"
 
+# TODO: For Better tests, we can clone the ETH/USDC mints and override
+# authority values to a known test pubkey
+# https://github.com/coral-xyz/anchor/blob/master/tests/multiple-suites/tests/Test.root.base.toml#L10
+
 # ETH price account
 [[test.validator.clone]]
 address = "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"

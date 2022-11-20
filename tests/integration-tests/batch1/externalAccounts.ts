@@ -35,7 +35,7 @@ describe("Test External Accounts", () => {
 
   it("should have the pyth ETH price account", async () => {
     let info = await AccountUtil.fetchAccountInfo(
-      new web3.PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB")
+      ProgramUtil.pythETHPriceAccount.address
     );
     const priceData = parsePriceData(info.data as any);
     priceData.productAccountKey
@@ -52,7 +52,7 @@ describe("Test External Accounts", () => {
 
   it("should have the pyth USDC price account", async () => {
     let info = await AccountUtil.fetchAccountInfo(
-      new web3.PublicKey("Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD")
+      ProgramUtil.pythUSDCPriceAccount.address
     );
     const priceData = parsePriceData(info.data as any);
     priceData.productAccountKey

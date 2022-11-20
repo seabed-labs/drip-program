@@ -6,6 +6,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "../../utils/token.util";
 import { SolUtil } from "../../utils/sol.util";
 import { Token } from "@solana/spl-token";
+import { ProgramUtil } from "../../utils/program.util";
 
 describe("#updateOracleConfig", testUpdateOracleConfig);
 
@@ -16,12 +17,6 @@ function testUpdateOracleConfig() {
   let updateAuthority: Keypair;
   let oracleConfig: PublicKey;
 
-  const tokenAPrice = new PublicKey(
-    "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
-  );
-  const tokenBPrice = new PublicKey(
-    "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
-  );
   beforeEach(async () => {
     updateAuthority = generatePair();
     await Promise.all([
@@ -48,9 +43,9 @@ function testUpdateOracleConfig() {
     const accounts = {
       oracleConfig: oracleConfigKeypair,
       tokenAMint: tokenAMint.publicKey,
-      tokenAPrice,
+      tokenAPrice: ProgramUtil.pythETHPriceAccount.address,
       tokenBMint: tokenBMint.publicKey,
-      tokenBPrice,
+      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
       creator: updateAuthority,
     };
     const params = {
@@ -68,8 +63,8 @@ function testUpdateOracleConfig() {
     const updateOracleConfigAccounts = {
       oracleConfig,
       newTokenAMint: tokenBMint.publicKey,
-      newTokenAPrice: tokenBPrice, // swap
-      newTokenBPrice: tokenAPrice, // swap
+      newTokenAPrice: ProgramUtil.pythUSDCPriceAccount.address, // swap
+      newTokenBPrice: ProgramUtil.pythETHPriceAccount.address, // swap
       newTokenBMint: tokenAMint.publicKey,
     };
     const updateOracleConfigParams = {
@@ -137,9 +132,9 @@ function testUpdateOracleConfig() {
     const updateOracleConfigAccounts = {
       oracleConfig: generatePair().publicKey,
       newTokenAMint: tokenBMint.publicKey,
-      newTokenAPrice: tokenBPrice,
+      newTokenAPrice: ProgramUtil.pythUSDCPriceAccount.address,
       newTokenBMint: tokenAMint.publicKey,
-      newTokenBPrice: tokenAPrice,
+      newTokenBPrice: ProgramUtil.pythETHPriceAccount.address,
     };
     const updateOracleConfigParams = {
       enabled: false,
@@ -157,9 +152,9 @@ function testUpdateOracleConfig() {
     const updateOracleConfigAccounts = {
       oracleConfig,
       newTokenAMint: tokenBMint.publicKey,
-      newTokenAPrice: tokenBPrice,
+      newTokenAPrice: ProgramUtil.pythUSDCPriceAccount.address,
       newTokenBMint: tokenAMint.publicKey,
-      newTokenBPrice: tokenAPrice,
+      newTokenBPrice: ProgramUtil.pythETHPriceAccount.address,
     };
     const updateOracleConfigParams = {
       enabled: false,
