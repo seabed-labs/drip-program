@@ -718,17 +718,27 @@
           "isSigner": false
         },
         {
-          "name": "tokenAPrice",
+          "name": "newTokenAMint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "tokenBPrice",
+          "name": "newTokenAPrice",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "updateAuthority",
+          "name": "newTokenBMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newTokenBPrice",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "currentUpdateAuthority",
           "isMut": false,
           "isSigner": true
         }
@@ -784,19 +794,17 @@
           "isSigner": false
         },
         {
+          "name": "newOracleConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "vaultProtoConfig",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "params",
-          "type": {
-            "defined": "SetVaultOracleConfigParams"
-          }
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
@@ -1061,18 +1069,6 @@
       }
     },
     {
-      "name": "SetVaultOracleConfigParams",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "oracleConfig",
-            "type": "publicKey"
-          }
-        ]
-      }
-    },
-    {
       "name": "UpdateOracleConfigParams",
       "type": {
         "kind": "struct",
@@ -1086,15 +1082,7 @@
             "type": "u8"
           },
           {
-            "name": "updateAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "tokenAMint",
-            "type": "publicKey"
-          },
-          {
-            "name": "tokenBMint",
+            "name": "newUpdateAuthority",
             "type": "publicKey"
           }
         ]

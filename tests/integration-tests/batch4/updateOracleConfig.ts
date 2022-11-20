@@ -62,21 +62,20 @@ function testUpdateOracleConfig() {
   });
 
   it("should be able to update an existing oracle config", async () => {
-    console.log(1);
     const oracleConfigAccountBefore =
       await AccountUtil.fetchOracleConfigAccount(oracleConfig);
     // swap tokenA and tokenB, change update_authority and disable the config
     const updateOracleConfigAccounts = {
       oracleConfig,
-      tokenAPrice: tokenBPrice,
-      tokenBPrice: tokenAPrice,
+      newTokenAMint: tokenBMint.publicKey,
+      newTokenAPrice: tokenBPrice, // swap
+      newTokenBPrice: tokenAPrice, // swap
+      newTokenBMint: tokenAMint.publicKey,
     };
     const updateOracleConfigParams = {
       enabled: false,
       source: 0,
-      tokenAMint: tokenBMint.publicKey,
-      tokenBMint: tokenAMint.publicKey,
-      updateAuthority: DripUtil.provider.publicKey,
+      newUpdateAuthority: DripUtil.provider.publicKey,
     };
     await DripUtil.updateOracleConfig(
       updateOracleConfigAccounts,
@@ -103,49 +102,49 @@ function testUpdateOracleConfig() {
       .should.not.equal(oracleConfigAccountBefore.updateAuthority.toString());
     oracleConfigAccountAfter.updateAuthority
       .toString()
-      .should.equal(updateOracleConfigParams.updateAuthority.toString());
+      .should.equal(updateOracleConfigParams.newUpdateAuthority.toString());
 
     oracleConfigAccountAfter.tokenAMint
       .toString()
       .should.not.equal(oracleConfigAccountBefore.tokenAMint.toString());
     oracleConfigAccountAfter.tokenAMint
       .toString()
-      .should.equal(updateOracleConfigParams.tokenAMint.toString());
+      .should.equal(updateOracleConfigAccounts.newTokenAMint.toString());
 
     oracleConfigAccountAfter.tokenAPrice
       .toString()
       .should.not.equal(oracleConfigAccountBefore.tokenAPrice.toString());
     oracleConfigAccountAfter.tokenAPrice
       .toString()
-      .should.equal(updateOracleConfigAccounts.tokenAPrice.toString());
+      .should.equal(updateOracleConfigAccounts.newTokenAPrice.toString());
 
     oracleConfigAccountAfter.tokenBMint
       .toString()
       .should.not.equal(oracleConfigAccountBefore.tokenBMint.toString());
     oracleConfigAccountAfter.tokenBMint
       .toString()
-      .should.equal(updateOracleConfigParams.tokenBMint.toString());
+      .should.equal(updateOracleConfigAccounts.newTokenBMint.toString());
 
     oracleConfigAccountAfter.tokenBPrice
       .toString()
       .should.not.equal(oracleConfigAccountBefore.tokenBPrice.toString());
     oracleConfigAccountAfter.tokenBPrice
       .toString()
-      .should.equal(updateOracleConfigAccounts.tokenBPrice.toString());
+      .should.equal(updateOracleConfigAccounts.newTokenBPrice.toString());
   });
 
   it("should throw an error when updating an oracle config that does not exist", async () => {
     const updateOracleConfigAccounts = {
       oracleConfig: generatePair().publicKey,
-      tokenAPrice: tokenBPrice,
-      tokenBPrice: tokenAPrice,
+      newTokenAMint: tokenBMint.publicKey,
+      newTokenAPrice: tokenBPrice,
+      newTokenBMint: tokenAMint.publicKey,
+      newTokenBPrice: tokenAPrice,
     };
     const updateOracleConfigParams = {
       enabled: false,
       source: 0,
-      tokenAMint: tokenBMint.publicKey,
-      tokenBMint: tokenAMint.publicKey,
-      updateAuthority: DripUtil.provider.publicKey,
+      newUpdateAuthority: DripUtil.provider.publicKey,
     };
     await DripUtil.updateOracleConfig(
       updateOracleConfigAccounts,
@@ -157,15 +156,15 @@ function testUpdateOracleConfig() {
   it("should throw an error when the updateAuthority does not sign the transaction", async () => {
     const updateOracleConfigAccounts = {
       oracleConfig,
-      tokenAPrice: tokenBPrice,
-      tokenBPrice: tokenAPrice,
+      newTokenAMint: tokenBMint.publicKey,
+      newTokenAPrice: tokenBPrice,
+      newTokenBMint: tokenAMint.publicKey,
+      newTokenBPrice: tokenAPrice,
     };
     const updateOracleConfigParams = {
       enabled: false,
       source: 0,
-      tokenAMint: tokenBMint.publicKey,
-      tokenBMint: tokenAMint.publicKey,
-      updateAuthority: DripUtil.provider.publicKey,
+      newUpdateAuthority: DripUtil.provider.publicKey,
     };
     await DripUtil.updateOracleConfig(
       updateOracleConfigAccounts,

@@ -128,13 +128,9 @@ pub mod drip {
         })
     }
 
-    pub fn set_vault_oracle_config(
-        ctx: Context<SetVaultOracleConfigAccounts>,
-        params: SetVaultOracleConfigParams,
-    ) -> Result<()> {
+    pub fn set_vault_oracle_config(ctx: Context<SetVaultOracleConfigAccounts>) -> Result<()> {
         handle_action(Admin::SetVaultOracleConfig {
             accounts: ctx.accounts,
-            params,
         })
     }
 }

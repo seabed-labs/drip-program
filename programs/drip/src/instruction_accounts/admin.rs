@@ -84,11 +84,6 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct SetVaultOracleConfigParams {
-    pub oracle_config: Pubkey,
-}
-
 #[derive(Accounts)]
 pub struct SetVaultOracleConfigAccounts<'info> {
     #[account(mut)]
@@ -98,6 +93,7 @@ pub struct SetVaultOracleConfigAccounts<'info> {
     #[account(mut)]
     pub vault: Account<'info, Vault>,
 
+    pub new_oracle_config: Account<'info, OracleConfig>,
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
 
@@ -105,23 +101,22 @@ pub struct SetVaultOracleConfigAccounts<'info> {
 pub struct UpdateOracleConfigParams {
     pub enabled: bool,
     pub source: u8,
-    pub update_authority: Pubkey,
-    pub token_a_mint: Pubkey,
-    pub token_b_mint: Pubkey,
+    pub new_update_authority: Pubkey,
 }
 
 #[derive(Accounts)]
-#[instruction(params: UpdateOracleConfigParams)]
 pub struct UpdateOracleConfigAccounts<'info> {
     // mut needed because we are changing state
     #[account(mut)]
     pub oracle_config: Account<'info, OracleConfig>,
 
+    pub new_token_a_mint: Account<'info, Mint>,
     /// CHECK: Need to custom decode based on "source"
-    pub token_a_price: UncheckedAccount<'info>,
+    pub new_token_a_price: UncheckedAccount<'info>,
 
+    pub new_token_b_mint: Account<'info, Mint>,
     /// CHECK: Need to custom decode based on "source"
-    pub token_b_price: UncheckedAccount<'info>,
+    pub new_token_b_price: UncheckedAccount<'info>,
 
-    pub update_authority: Signer<'info>,
+    pub current_update_authority: Signer<'info>,
 }

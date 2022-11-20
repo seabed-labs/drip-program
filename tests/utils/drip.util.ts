@@ -220,18 +220,14 @@ export class DripUtil extends TestUtil {
     }
   }
 
-  static async setVaultOracleConfig(
-    accounts: {
-      admin?: Keypair | Signer;
-      vault: PublicKey;
-      vaultProtoConfig: PublicKey;
-    },
-    params: {
-      oracleConfig: PublicKey;
-    }
-  ): Promise<TransactionSignature> {
+  static async setVaultOracleConfig(accounts: {
+    admin?: Keypair | Signer;
+    vault: PublicKey;
+    vaultProtoConfig: PublicKey;
+    newOracleConfig: PublicKey;
+  }): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
-      .setVaultOracleConfig({ ...params })
+      .setVaultOracleConfig()
       .accounts({
         ...accounts,
         admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
@@ -547,15 +543,15 @@ export class DripUtil extends TestUtil {
   static async updateOracleConfig(
     accounts: {
       oracleConfig: PublicKey;
-      tokenAPrice: PublicKey;
-      tokenBPrice: PublicKey;
+      newTokenAMint: PublicKey;
+      newTokenAPrice: PublicKey;
+      newTokenBMint: PublicKey;
+      newTokenBPrice: PublicKey;
     },
     params: {
       enabled: boolean;
       source: number;
-      tokenAMint: PublicKey;
-      tokenBMint: PublicKey;
-      updateAuthority: PublicKey;
+      newUpdateAuthority: PublicKey;
     },
     updateAuthority?: Keypair | Signer
   ): Promise<TransactionSignature> {
@@ -565,8 +561,7 @@ export class DripUtil extends TestUtil {
       })
       .accounts({
         ...accounts,
-        oracleConfig: accounts.oracleConfig.toString(),
-        updateAuthority:
+        currentUpdateAuthority:
           updateAuthority?.publicKey ?? this.provider.wallet.publicKey,
       })
       .transaction();

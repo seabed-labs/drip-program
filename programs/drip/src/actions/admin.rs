@@ -1,8 +1,7 @@
 use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
-    SetVaultOracleConfigAccounts, SetVaultOracleConfigParams, UpdateOracleConfigAccounts,
-    UpdateOracleConfigParams,
+    SetVaultOracleConfigAccounts, UpdateOracleConfigAccounts, UpdateOracleConfigParams,
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{
@@ -33,9 +32,7 @@ pub enum Admin<'a, 'info> {
     },
     SetVaultOracleConfig {
         accounts: &'a mut SetVaultOracleConfigAccounts<'info>,
-        params: SetVaultOracleConfigParams,
     },
-
     UpdateOracleConfig {
         accounts: &'a mut UpdateOracleConfigAccounts<'info>,
         params: UpdateOracleConfigParams,
@@ -106,13 +103,14 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 accounts, params, ..
             } => {
                 validate!(
-                    accounts.update_authority.key() == accounts.oracle_config.update_authority,
+                    accounts.current_update_authority.key()
+                        == accounts.oracle_config.update_authority,
                     DripError::SignerIsNotAdmin
                 );
                 validate_oracle(
                     params.source,
-                    &accounts.token_a_price.to_account_info(),
-                    &accounts.token_b_price.to_account_info(),
+                    &accounts.new_token_a_price.to_account_info(),
+                    &accounts.new_token_b_price.to_account_info(),
                 )?;
             }
         }
@@ -165,18 +163,20 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
             }
-            Admin::SetVaultOracleConfig { accounts, params } => {
-                accounts.vault.set_oracle_config(params.oracle_config);
+            Admin::SetVaultOracleConfig { accounts } => {
+                accounts
+                    .vault
+                    .set_oracle_config(accounts.new_oracle_config.key());
             }
             Admin::UpdateOracleConfig { accounts, params } => {
                 accounts.oracle_config.init(
                     params.enabled,
                     params.source,
-                    params.update_authority,
-                    params.token_a_mint,
-                    accounts.token_a_price.key(),
-                    params.token_b_mint,
-                    accounts.token_b_price.key(),
+                    params.new_update_authority,
+                    accounts.new_token_a_mint.key(),
+                    accounts.new_token_a_price.key(),
+                    accounts.new_token_b_mint.key(),
+                    accounts.new_token_b_price.key(),
                 );
             }
         }

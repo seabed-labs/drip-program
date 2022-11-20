@@ -718,17 +718,27 @@ export type Drip = {
           isSigner: false;
         },
         {
-          name: "tokenAPrice";
+          name: "newTokenAMint";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "tokenBPrice";
+          name: "newTokenAPrice";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "updateAuthority";
+          name: "newTokenBMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "newTokenBPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "currentUpdateAuthority";
           isMut: false;
           isSigner: true;
         }
@@ -784,19 +794,17 @@ export type Drip = {
           isSigner: false;
         },
         {
+          name: "newOracleConfig";
+          isMut: false;
+          isSigner: false;
+        },
+        {
           name: "vaultProtoConfig";
           isMut: false;
           isSigner: false;
         }
       ];
-      args: [
-        {
-          name: "params";
-          type: {
-            defined: "SetVaultOracleConfigParams";
-          };
-        }
-      ];
+      args: [];
     }
   ];
   accounts: [
@@ -1061,18 +1069,6 @@ export type Drip = {
       };
     },
     {
-      name: "SetVaultOracleConfigParams";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "oracleConfig";
-            type: "publicKey";
-          }
-        ];
-      };
-    },
-    {
       name: "UpdateOracleConfigParams";
       type: {
         kind: "struct";
@@ -1086,15 +1082,7 @@ export type Drip = {
             type: "u8";
           },
           {
-            name: "updateAuthority";
-            type: "publicKey";
-          },
-          {
-            name: "tokenAMint";
-            type: "publicKey";
-          },
-          {
-            name: "tokenBMint";
+            name: "newUpdateAuthority";
             type: "publicKey";
           }
         ];
@@ -2055,17 +2043,27 @@ export const IDL: Drip = {
           isSigner: false,
         },
         {
-          name: "tokenAPrice",
+          name: "newTokenAMint",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "tokenBPrice",
+          name: "newTokenAPrice",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "updateAuthority",
+          name: "newTokenBMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "newTokenBPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "currentUpdateAuthority",
           isMut: false,
           isSigner: true,
         },
@@ -2121,19 +2119,17 @@ export const IDL: Drip = {
           isSigner: false,
         },
         {
+          name: "newOracleConfig",
+          isMut: false,
+          isSigner: false,
+        },
+        {
           name: "vaultProtoConfig",
           isMut: false,
           isSigner: false,
         },
       ],
-      args: [
-        {
-          name: "params",
-          type: {
-            defined: "SetVaultOracleConfigParams",
-          },
-        },
-      ],
+      args: [],
     },
   ],
   accounts: [
@@ -2398,18 +2394,6 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "SetVaultOracleConfigParams",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "oracleConfig",
-            type: "publicKey",
-          },
-        ],
-      },
-    },
-    {
       name: "UpdateOracleConfigParams",
       type: {
         kind: "struct",
@@ -2423,15 +2407,7 @@ export const IDL: Drip = {
             type: "u8",
           },
           {
-            name: "updateAuthority",
-            type: "publicKey",
-          },
-          {
-            name: "tokenAMint",
-            type: "publicKey",
-          },
-          {
-            name: "tokenBMint",
+            name: "newUpdateAuthority",
             type: "publicKey",
           },
         ],

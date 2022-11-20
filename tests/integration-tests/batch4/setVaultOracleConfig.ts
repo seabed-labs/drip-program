@@ -48,16 +48,12 @@ function setVaultOracleConfig() {
 
   it("should update the oracle account to provided input if admin signs the transaction", async () => {
     const vaultBefore = await AccountUtil.fetchVaultAccount(vault);
-    await DripUtil.setVaultOracleConfig(
-      {
-        admin,
-        vault,
-        vaultProtoConfig,
-      },
-      {
-        oracleConfig,
-      }
-    );
+    await DripUtil.setVaultOracleConfig({
+      admin,
+      vault,
+      vaultProtoConfig,
+      newOracleConfig: oracleConfig,
+    });
     const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
 
     vaultAfter.protoConfig
@@ -104,40 +100,28 @@ function setVaultOracleConfig() {
   });
 
   it("should be able to set oracle config 2 times", async () => {
-    await DripUtil.setVaultOracleConfig(
-      {
-        admin,
-        vault,
-        vaultProtoConfig,
-      },
-      {
-        oracleConfig: generatePair().publicKey,
-      }
-    );
-    await DripUtil.setVaultOracleConfig(
-      {
-        admin,
-        vault,
-        vaultProtoConfig,
-      },
-      {
-        oracleConfig,
-      }
-    );
+    await DripUtil.setVaultOracleConfig({
+      admin,
+      vault,
+      vaultProtoConfig,
+      newOracleConfig: oracleConfig,
+    });
+    await DripUtil.setVaultOracleConfig({
+      admin,
+      vault,
+      vaultProtoConfig,
+      newOracleConfig: oracleConfig,
+    });
     const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
     vaultAfter.oracleConfig.toBase58().should.equal(oracleConfig.toBase58());
   });
 
   it("should throw an error a non-admin tries to update the oracle config", async () => {
-    await DripUtil.setVaultOracleConfig(
-      {
-        admin: undefined,
-        vault,
-        vaultProtoConfig,
-      },
-      {
-        oracleConfig,
-      }
-    ).should.be.rejectedWith(/0x1785/); // SignerIsNotAdmin
+    await DripUtil.setVaultOracleConfig({
+      admin: undefined,
+      vault,
+      vaultProtoConfig,
+      newOracleConfig: oracleConfig,
+    }).should.be.rejectedWith(/0x1785/); // SignerIsNotAdmin
   });
 }
