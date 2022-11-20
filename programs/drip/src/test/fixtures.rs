@@ -163,7 +163,7 @@ lazy_static! {
     pub static ref ORACLE_CONFIG: AccountFixture<OracleConfig> =
         AccountFixture::new_drip_account(OracleConfig {
             enabled: true,
-            source: 1,
+            source: 0,
             update_authority: ADMIN.key,
             token_a_mint: TOKEN_A_MINT.key,
             token_a_price: TOKEN_A_PRICE.key,
