@@ -62,8 +62,9 @@ pub fn validate_oracle(
 ) -> Result<()> {
     match source {
         0 => {
-            // note: we don't have an owner check here, however its not needed as only using the oracle
-            // config is something an admin does intentionally
+            // note: we don't have an owner check here, however its not needed as
+            // using the oracle config is something an admin does intentionally
+            // they are responsible for supplying the correct account
             let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
             price_feed.get_current_price().unwrap();
             let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
