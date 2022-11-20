@@ -794,12 +794,12 @@ export type Drip = {
           isSigner: false;
         },
         {
-          name: "newOracleConfig";
+          name: "vaultProtoConfig";
           isMut: false;
           isSigner: false;
         },
         {
-          name: "vaultProtoConfig";
+          name: "newOracleConfig";
           isMut: false;
           isSigner: false;
         }
@@ -2119,12 +2119,12 @@ export const IDL: Drip = {
           isSigner: false,
         },
         {
-          name: "newOracleConfig",
+          name: "vaultProtoConfig",
           isMut: false,
           isSigner: false,
         },
         {
-          name: "vaultProtoConfig",
+          name: "newOracleConfig",
           isMut: false,
           isSigner: false,
         },

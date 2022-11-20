@@ -92,9 +92,9 @@ pub struct SetVaultOracleConfigAccounts<'info> {
     // mut needed because we are changing state
     #[account(mut)]
     pub vault: Account<'info, Vault>,
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     pub new_oracle_config: Account<'info, OracleConfig>,
-    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
