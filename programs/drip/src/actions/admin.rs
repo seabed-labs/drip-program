@@ -1,7 +1,8 @@
 use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
-    SetVaultOracleConfigAccounts, UpdateOracleConfigAccounts, UpdateOracleConfigParams,
+    SetVaultFieldCommonAccounts, SetVaultMaxPriceDeviationParams, SetVaultOracleConfigAccounts,
+    UpdateOracleConfigAccounts, UpdateOracleConfigParams,
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{
@@ -13,7 +14,7 @@ use crate::ProgramError::UninitializedAccount;
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
     state::traits::{Executable, Validatable},
-    UpdateVaultWhitelistedSwapsAccounts, UpdateVaultWhitelistedSwapsParams,
+    SetVaultWhitelistedSwapsParams,
 };
 use anchor_lang::prelude::*;
 
@@ -27,11 +28,15 @@ pub enum Admin<'a, 'info> {
         bumps: BTreeMap<String, u8>,
     },
     SetVaultSwapWhitelist {
-        accounts: &'a mut UpdateVaultWhitelistedSwapsAccounts<'info>,
-        params: UpdateVaultWhitelistedSwapsParams,
+        accounts: &'a mut SetVaultFieldCommonAccounts<'info>,
+        params: SetVaultWhitelistedSwapsParams,
     },
     SetVaultOracleConfig {
         accounts: &'a mut SetVaultOracleConfigAccounts<'info>,
+    },
+    SetVaultMaxPriceDeviation {
+        accounts: &'a mut SetVaultFieldCommonAccounts<'info>,
+        params: SetVaultMaxPriceDeviationParams,
     },
     UpdateOracleConfig {
         accounts: &'a mut UpdateOracleConfigAccounts<'info>,
@@ -92,11 +97,18 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::InvalidNumSwaps
                 );
             }
-            Admin::SetVaultOracleConfig { accounts, .. } => {
+            Admin::SetVaultMaxPriceDeviation { accounts, .. } => {
                 validate_vault_admin(
                     accounts.admin.key(),
                     &accounts.vault_proto_config,
                     Some(&accounts.vault),
+                )?;
+            }
+            Admin::SetVaultOracleConfig { accounts, .. } => {
+                validate_vault_admin(
+                    accounts.vault_update_common_accounts.admin.key(),
+                    &accounts.vault_update_common_accounts.vault_proto_config,
+                    Some(&accounts.vault_update_common_accounts.vault),
                 )?;
             }
             Admin::UpdateOracleConfig {
@@ -163,8 +175,14 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
             }
+            Admin::SetVaultMaxPriceDeviation { accounts, params } => {
+                accounts
+                    .vault
+                    .set_max_price_deviation_bps(params.max_price_deviation_bps);
+            }
             Admin::SetVaultOracleConfig { accounts } => {
                 accounts
+                    .vault_update_common_accounts
                     .vault
                     .set_oracle_config(accounts.new_oracle_config.key());
             }

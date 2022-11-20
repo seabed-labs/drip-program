@@ -58,4 +58,6 @@ pub enum DripError {
     InvalidOracleSource,
     #[msg("Oracle enabled vaults must use a drip_XXX_v2 ix")]
     V1DripOracleNotSupported,
+    #[msg("Oracle provided does not match expected value")]
+    InvalidOracleConfig,
 }

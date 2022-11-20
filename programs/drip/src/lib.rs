@@ -6,7 +6,6 @@ use state::traits::*;
 pub mod actions;
 pub mod constants;
 pub mod errors;
-pub mod events;
 pub mod instruction_accounts;
 pub mod interactions;
 pub mod macros;
@@ -119,10 +118,20 @@ pub mod drip {
     }
 
     pub fn set_vault_swap_whitelist(
-        ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
-        params: UpdateVaultWhitelistedSwapsParams,
+        ctx: Context<SetVaultFieldCommonAccounts>,
+        params: SetVaultWhitelistedSwapsParams,
     ) -> Result<()> {
         handle_action(Admin::SetVaultSwapWhitelist {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
+
+    pub fn set_vault_max_price_deviation(
+        ctx: Context<SetVaultFieldCommonAccounts>,
+        params: SetVaultMaxPriceDeviationParams,
+    ) -> Result<()> {
+        handle_action(Admin::SetVaultMaxPriceDeviation {
             accounts: ctx.accounts,
             params,
         })

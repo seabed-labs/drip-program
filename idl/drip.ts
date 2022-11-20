@@ -775,13 +775,13 @@ export type Drip = {
         {
           name: "params";
           type: {
-            defined: "UpdateVaultWhitelistedSwapsParams";
+            defined: "SetVaultWhitelistedSwapsParams";
           };
         }
       ];
     },
     {
-      name: "setVaultOracleConfig";
+      name: "setVaultMaxPriceDeviation";
       accounts: [
         {
           name: "admin";
@@ -797,6 +797,39 @@ export type Drip = {
           name: "vaultProtoConfig";
           isMut: false;
           isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "SetVaultMaxPriceDeviationParams";
+          };
+        }
+      ];
+    },
+    {
+      name: "setVaultOracleConfig";
+      accounts: [
+        {
+          name: "vaultUpdateCommonAccounts";
+          accounts: [
+            {
+              name: "admin";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         },
         {
           name: "newOracleConfig";
@@ -1055,7 +1088,7 @@ export type Drip = {
       };
     },
     {
-      name: "UpdateVaultWhitelistedSwapsParams";
+      name: "SetVaultWhitelistedSwapsParams";
       type: {
         kind: "struct";
         fields: [
@@ -1064,6 +1097,18 @@ export type Drip = {
             type: {
               vec: "publicKey";
             };
+          }
+        ];
+      };
+    },
+    {
+      name: "SetVaultMaxPriceDeviationParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "maxPriceDeviationBps";
+            type: "u16";
           }
         ];
       };
@@ -1163,25 +1208,6 @@ export type Drip = {
           }
         ];
       };
-    }
-  ];
-  events: [
-    {
-      name: "Log";
-      fields: [
-        {
-          name: "data";
-          type: {
-            option: "u64";
-          };
-          index: false;
-        },
-        {
-          name: "message";
-          type: "string";
-          index: true;
-        }
-      ];
     }
   ];
   errors: [
@@ -1324,6 +1350,11 @@ export type Drip = {
       code: 6027;
       name: "V1DripOracleNotSupported";
       msg: "Oracle enabled vaults must use a drip_XXX_v2 ix";
+    },
+    {
+      code: 6028;
+      name: "InvalidOracleConfig";
+      msg: "Oracle provided does not match expected value";
     }
   ];
 };
@@ -2105,13 +2136,13 @@ export const IDL: Drip = {
         {
           name: "params",
           type: {
-            defined: "UpdateVaultWhitelistedSwapsParams",
+            defined: "SetVaultWhitelistedSwapsParams",
           },
         },
       ],
     },
     {
-      name: "setVaultOracleConfig",
+      name: "setVaultMaxPriceDeviation",
       accounts: [
         {
           name: "admin",
@@ -2127,6 +2158,39 @@ export const IDL: Drip = {
           name: "vaultProtoConfig",
           isMut: false,
           isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "SetVaultMaxPriceDeviationParams",
+          },
+        },
+      ],
+    },
+    {
+      name: "setVaultOracleConfig",
+      accounts: [
+        {
+          name: "vaultUpdateCommonAccounts",
+          accounts: [
+            {
+              name: "admin",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
         {
           name: "newOracleConfig",
@@ -2385,7 +2449,7 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "UpdateVaultWhitelistedSwapsParams",
+      name: "SetVaultWhitelistedSwapsParams",
       type: {
         kind: "struct",
         fields: [
@@ -2394,6 +2458,18 @@ export const IDL: Drip = {
             type: {
               vec: "publicKey",
             },
+          },
+        ],
+      },
+    },
+    {
+      name: "SetVaultMaxPriceDeviationParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "maxPriceDeviationBps",
+            type: "u16",
           },
         ],
       },
@@ -2493,25 +2569,6 @@ export const IDL: Drip = {
           },
         ],
       },
-    },
-  ],
-  events: [
-    {
-      name: "Log",
-      fields: [
-        {
-          name: "data",
-          type: {
-            option: "u64",
-          },
-          index: false,
-        },
-        {
-          name: "message",
-          type: "string",
-          index: true,
-        },
-      ],
     },
   ],
   errors: [
@@ -2654,6 +2711,11 @@ export const IDL: Drip = {
       code: 6027,
       name: "V1DripOracleNotSupported",
       msg: "Oracle enabled vaults must use a drip_XXX_v2 ix",
+    },
+    {
+      code: 6028,
+      name: "InvalidOracleConfig",
+      msg: "Oracle provided does not match expected value",
     },
   ],
 };

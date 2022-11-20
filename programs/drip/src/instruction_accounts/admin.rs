@@ -18,8 +18,8 @@ pub struct InitializeVaultAccounts<'info> {
     /* DRIP ACCOUNTS */
     #[account(
         init,
-        // Allocate an extra 96 bytes to future proof this
-        space = Vault::ACCOUNT_SPACE + 96,
+        // Allocate an extra 94 bytes to future proof this
+        space = Vault::ACCOUNT_SPACE + 94,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
@@ -68,32 +68,29 @@ pub struct InitializeVaultAccounts<'info> {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct UpdateVaultWhitelistedSwapsParams {
+pub struct SetVaultWhitelistedSwapsParams {
     pub whitelisted_swaps: Vec<Pubkey>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct SetVaultMaxPriceDeviationParams {
+    pub max_price_deviation_bps: u16,
+}
+
 #[derive(Accounts)]
-pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
+pub struct SetVaultFieldCommonAccounts<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
     // mut needed because we are changing state
     #[account(mut)]
     pub vault: Account<'info, Vault>,
-
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
 
 #[derive(Accounts)]
 pub struct SetVaultOracleConfigAccounts<'info> {
-    #[account(mut)]
-    pub admin: Signer<'info>,
-
-    // mut needed because we are changing state
-    #[account(mut)]
-    pub vault: Account<'info, Vault>,
-    pub vault_proto_config: Account<'info, VaultProtoConfig>,
-
+    pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
     pub new_oracle_config: Account<'info, OracleConfig>,
 }
 

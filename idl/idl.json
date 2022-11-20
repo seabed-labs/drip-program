@@ -775,13 +775,13 @@
         {
           "name": "params",
           "type": {
-            "defined": "UpdateVaultWhitelistedSwapsParams"
+            "defined": "SetVaultWhitelistedSwapsParams"
           }
         }
       ]
     },
     {
-      "name": "setVaultOracleConfig",
+      "name": "setVaultMaxPriceDeviation",
       "accounts": [
         {
           "name": "admin",
@@ -797,6 +797,39 @@
           "name": "vaultProtoConfig",
           "isMut": false,
           "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "SetVaultMaxPriceDeviationParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "setVaultOracleConfig",
+      "accounts": [
+        {
+          "name": "vaultUpdateCommonAccounts",
+          "accounts": [
+            {
+              "name": "admin",
+              "isMut": true,
+              "isSigner": true
+            },
+            {
+              "name": "vault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultProtoConfig",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
         },
         {
           "name": "newOracleConfig",
@@ -1055,7 +1088,7 @@
       }
     },
     {
-      "name": "UpdateVaultWhitelistedSwapsParams",
+      "name": "SetVaultWhitelistedSwapsParams",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1064,6 +1097,18 @@
             "type": {
               "vec": "publicKey"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetVaultMaxPriceDeviationParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maxPriceDeviationBps",
+            "type": "u16"
           }
         ]
       }
@@ -1163,25 +1208,6 @@
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "Log",
-      "fields": [
-        {
-          "name": "data",
-          "type": {
-            "option": "u64"
-          },
-          "index": false
-        },
-        {
-          "name": "message",
-          "type": "string",
-          "index": true
-        }
-      ]
     }
   ],
   "errors": [
@@ -1324,6 +1350,11 @@
       "code": 6027,
       "name": "V1DripOracleNotSupported",
       "msg": "Oracle enabled vaults must use a drip_XXX_v2 ix"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidOracleConfig",
+      "msg": "Oracle provided does not match expected value"
     }
   ]
 }
