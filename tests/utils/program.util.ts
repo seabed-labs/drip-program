@@ -60,4 +60,16 @@ export class ProgramUtil extends TestUtil {
       programId: new PublicKey("FsJ3A3u2vn5cTVofAjvy6y5kwABJAqYWpe4975bi2epH"),
     };
   }
+
+  static get pythETHPriceAccount(): { address: PublicKey } {
+    return {
+      address: new PublicKey("JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"),
+    };
+  }
+
+  static get pythUSDCPriceAccount(): { address: PublicKey } {
+    return {
+      address: new PublicKey("Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"),
+    };
+  }
 }

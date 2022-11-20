@@ -9,6 +9,7 @@ import {
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { TokenUtil } from "../../utils/token.util";
 import { SolUtil } from "../../utils/sol.util";
+import { ProgramUtil } from "../../utils/program.util";
 
 describe("#initOracleConfig", testInitOracleConfig);
 
@@ -47,13 +48,9 @@ export function testInitOracleConfig() {
     const accounts = {
       oracleConfig: oracleConfigKeypair,
       tokenAMint: tokenAMint.publicKey,
-      tokenAPrice: new PublicKey(
-        "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
-      ),
+      tokenAPrice: ProgramUtil.pythETHPriceAccount.address,
       tokenBMint: tokenBMint.publicKey,
-      tokenBPrice: new PublicKey(
-        "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
-      ),
+      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
       creator: payerKeypair,
     };
     const params = {
@@ -90,13 +87,9 @@ export function testInitOracleConfig() {
     const accounts = {
       oracleConfig: oracleConfigKeypair,
       tokenAMint: tokenAMint.publicKey,
-      tokenAPrice: new PublicKey(
-        "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
-      ),
+      tokenAPrice: ProgramUtil.pythETHPriceAccount.address,
       tokenBMint: tokenBMint.publicKey,
-      tokenBPrice: new PublicKey(
-        "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
-      ),
+      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
       creator: payerKeypair,
     };
     const params = {
@@ -121,9 +114,7 @@ export function testInitOracleConfig() {
         "EMkxjGC1CQ7JLiutDbfYb7UKb3zm9SJcUmr1YicBsdpZ"
       ),
       tokenBMint: tokenBMint.publicKey,
-      tokenBPrice: new PublicKey(
-        "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
-      ),
+      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
       creator: payerKeypair,
     };
     const params = {
@@ -143,9 +134,7 @@ export function testInitOracleConfig() {
     const accounts = {
       oracleConfig: oracleConfigKeypair,
       tokenAMint: tokenAMint.publicKey,
-      tokenAPrice: new PublicKey(
-        "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
-      ),
+      tokenAPrice: ProgramUtil.pythETHPriceAccount.address,
       tokenBMint: tokenBMint.publicKey,
       // passing product account instead of price account
       tokenBPrice: new PublicKey(
