@@ -1,7 +1,12 @@
 import "should";
 import { SolUtil } from "../../utils/sol.util";
 import { TokenUtil } from "../../utils/token.util";
-import { amount, Denom, generatePairs } from "../../utils/common.util";
+import {
+  amount,
+  Denom,
+  generatePair,
+  generatePairs,
+} from "../../utils/common.util";
 import {
   deploySPLTokenSwap,
   depositToVault,
@@ -10,10 +15,11 @@ import {
   DripSPLTokenSwapWrapper,
 } from "../../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
+import { ProgramUtil } from "../../utils/program.util";
 
 describe("#dripSPLTokenSwap", testDripSPLTokenSwap);
 
@@ -271,17 +277,10 @@ export function testDripSPLTokenSwap() {
       );
       await sleep(1500);
     }
-    try {
-      await dripTrigger(
-        deployVaultRes.vaultPeriods[4],
-        deployVaultRes.vaultPeriods[5]
-      );
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Periodic drip amount == 0")
-      ).should.not.be.undefined();
-    }
+    await dripTrigger(
+      deployVaultRes.vaultPeriods[4],
+      deployVaultRes.vaultPeriods[5]
+    ).should.be.rejectedWith(/0x177e/); // PeriodicDripAmountIsZero
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
@@ -289,40 +288,58 @@ export function testDripSPLTokenSwap() {
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1]
     );
-    try {
-      await dripTrigger(
-        deployVaultRes.vaultPeriods[1],
-        deployVaultRes.vaultPeriods[2]
-      );
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Drip already triggered for the current period")
-      ).should.not.be.undefined();
-    }
+    await dripTrigger(
+      deployVaultRes.vaultPeriods[1],
+      deployVaultRes.vaultPeriods[2]
+    ).should.be.rejectedWith(/1773/); // DuplicateDripError
   });
 
   it("should fail if non-whitelisted swaps is used", async () => {
-    try {
-      await dripSPLTokenSwapWrapper(
-        deployVaultRes.botKeypair,
-        deployVaultRes.botTokenAAcount,
-        deployVaultRes.vault,
-        deployVaultRes.vaultProtoConfig,
-        deployVaultRes.vaultTokenAAccount,
-        deployVaultRes.vaultTokenBAccount,
-        swapTokenMint3,
-        swapTokenAAccount3,
-        swapTokenBAccount3,
-        swapFeeAccount3,
-        swapAuthority3,
-        swap3
-      )(deployVaultRes.vaultPeriods[0], deployVaultRes.vaultPeriods[1]);
-    } catch (e) {
-      findError(
-        e,
-        new RegExp(".*Token Swap is Not Whitelisted")
-      ).should.not.be.undefined();
-    }
+    await dripSPLTokenSwapWrapper(
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      swapTokenMint3,
+      swapTokenAAccount3,
+      swapTokenBAccount3,
+      swapFeeAccount3,
+      swapAuthority3,
+      swap3
+    )(
+      deployVaultRes.vaultPeriods[0],
+      deployVaultRes.vaultPeriods[1]
+    ).should.be.rejectedWith(/0x1778/); // InvalidSwapAccount
+  });
+
+  it("should throw an error if the vault has an oracle config defined", async () => {
+    const oracleConfig = generatePair();
+    await DripUtil.initOracleConfig(
+      {
+        oracleConfig: oracleConfig,
+        tokenAMint: deployVaultRes.tokenAMint.publicKey,
+        tokenAPrice: new PublicKey(ProgramUtil.pythETHPriceAccount.address),
+        tokenBMint: deployVaultRes.tokenBMint.publicKey,
+        tokenBPrice: new PublicKey(ProgramUtil.pythUSDCPriceAccount.address),
+        creator: deployVaultRes.admin,
+      },
+      {
+        enabled: true,
+        source: 0,
+        updateAuthority: deployVaultRes.admin.publicKey,
+      }
+    );
+    await DripUtil.setVaultOracleConfig({
+      admin: deployVaultRes.admin,
+      vault: deployVaultRes.vault,
+      vaultProtoConfig: deployVaultRes.vaultProtoConfig,
+      newOracleConfig: oracleConfig.publicKey,
+    });
+    await dripTrigger(
+      deployVaultRes.vaultPeriods[0],
+      deployVaultRes.vaultPeriods[1]
+    ).should.be.rejectedWith(/0x178b/);
   });
 }
