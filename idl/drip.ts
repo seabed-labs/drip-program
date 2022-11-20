@@ -1319,6 +1319,11 @@ export type Drip = {
       code: 6026;
       name: "InvalidOracleSource";
       msg: "Supplied oracle Source is not supported";
+    },
+    {
+      code: 6027;
+      name: "V1DripOracleNotSupported";
+      msg: "Oracle enabled vaults must use a drip_XXX_v2 ix";
     }
   ];
 };
@@ -2644,6 +2649,11 @@ export const IDL: Drip = {
       code: 6026,
       name: "InvalidOracleSource",
       msg: "Supplied oracle Source is not supported",
+    },
+    {
+      code: 6027,
+      name: "V1DripOracleNotSupported",
+      msg: "Oracle enabled vaults must use a drip_XXX_v2 ix",
     },
   ],
 };

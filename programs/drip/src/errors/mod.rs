@@ -56,4 +56,6 @@ pub enum DripError {
     InvalidReferrer,
     #[msg("Supplied oracle Source is not supported")]
     InvalidOracleSource,
+    #[msg("Oracle enabled vaults must use a drip_XXX_v2 ix")]
+    V1DripOracleNotSupported,
 }
