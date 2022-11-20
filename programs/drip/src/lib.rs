@@ -46,7 +46,7 @@ pub mod drip {
         ctx: Context<InitializeOracleConfigAccounts>,
         params: InitializeOracleConfigParams,
     ) -> Result<()> {
-        handle_action(Init::InitOracleConfig {
+        handle_action(Init::OracleConfig {
             accounts: ctx.accounts,
             params,
         })

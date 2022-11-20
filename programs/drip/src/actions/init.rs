@@ -25,7 +25,7 @@ pub enum Init<'a, 'info> {
         params: InitializeVaultPeriodParams,
         bumps: BTreeMap<String, u8>,
     },
-    InitOracleConfig {
+    OracleConfig {
         accounts: &'a mut InitializeOracleConfigAccounts<'info>,
         params: InitializeOracleConfigParams,
     },
@@ -45,7 +45,7 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 Ok(())
             }
             Init::VaultPeriod { .. } => Ok(()),
-            Init::InitOracleConfig {
+            Init::OracleConfig {
                 accounts, params, ..
             } => validate_oracle(
                 params.source,
@@ -87,7 +87,7 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
                 params,
                 bumps,
             } => init_vault_period(accounts, params, bumps),
-            Init::InitOracleConfig { accounts, params } => {
+            Init::OracleConfig { accounts, params } => {
                 accounts.oracle_config.init(
                     params.enabled,
                     params.source,
