@@ -519,6 +519,7 @@ export class DripUtil extends TestUtil {
       tokenAPrice: PublicKey;
       tokenBMint: PublicKey;
       tokenBPrice: PublicKey;
+      creator: Keypair | Signer;
     },
     params: {
       enabled: boolean;
@@ -532,11 +533,15 @@ export class DripUtil extends TestUtil {
       })
       .accounts({
         ...accounts,
+        creator: accounts.creator.publicKey,
         oracleConfig: accounts.oracleConfig.publicKey.toString(),
         systemProgram: ProgramUtil.systemProgram.programId,
       })
       .transaction();
-    return this.provider.sendAndConfirm(tx, [accounts.oracleConfig]);
+    return this.provider.sendAndConfirm(tx, [
+      accounts.creator,
+      accounts.oracleConfig,
+    ]);
   }
 
   static async updateOracleConfig(

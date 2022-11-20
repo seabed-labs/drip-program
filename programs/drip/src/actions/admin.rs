@@ -1,7 +1,8 @@
+use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
-    InitializeOracleConfigAccounts, InitializeOracleConfigParams, SetVaultOracleConfigAccounts,
-    SetVaultOracleConfigParams, UpdateOracleConfigAccounts, UpdateOracleConfigParams,
+    SetVaultOracleConfigAccounts, SetVaultOracleConfigParams, UpdateOracleConfigAccounts,
+    UpdateOracleConfigParams,
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{
@@ -16,7 +17,7 @@ use crate::{
     UpdateVaultWhitelistedSwapsAccounts, UpdateVaultWhitelistedSwapsParams,
 };
 use anchor_lang::prelude::*;
-use pyth_sdk_solana::load_price_feed_from_account_info;
+
 use spl_token::state::AccountState;
 use std::collections::BTreeMap;
 
@@ -34,10 +35,7 @@ pub enum Admin<'a, 'info> {
         accounts: &'a mut SetVaultOracleConfigAccounts<'info>,
         params: SetVaultOracleConfigParams,
     },
-    InitOracleConfig {
-        accounts: &'a mut InitializeOracleConfigAccounts<'info>,
-        params: InitializeOracleConfigParams,
-    },
+
     UpdateOracleConfig {
         accounts: &'a mut UpdateOracleConfigAccounts<'info>,
         params: UpdateOracleConfigParams,
@@ -104,15 +102,6 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     Some(&accounts.vault),
                 )?;
             }
-            Admin::InitOracleConfig {
-                accounts, params, ..
-            } => {
-                validate_oracle(
-                    params.source,
-                    &accounts.token_a_price.to_account_info(),
-                    &accounts.token_b_price.to_account_info(),
-                )?;
-            }
             Admin::UpdateOracleConfig {
                 accounts, params, ..
             } => {
@@ -150,26 +139,6 @@ fn validate_vault_admin(
     Ok(())
 }
 
-fn validate_oracle(
-    source: u8,
-    token_a_price_info: &AccountInfo,
-    token_b_price_info: &AccountInfo,
-) -> Result<()> {
-    match source {
-        0 => {
-            let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
-            price_feed.get_current_price().unwrap();
-
-            let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
-            price_feed.get_current_price().unwrap();
-        }
-        _ => {
-            return Err(DripError::InvalidOracleSource.into());
-        }
-    }
-    Ok(())
-}
-
 impl<'a, 'info> Executable for Admin<'a, 'info> {
     fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
@@ -198,17 +167,6 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
             }
             Admin::SetVaultOracleConfig { accounts, params } => {
                 accounts.vault.set_oracle_config(params.oracle_config);
-            }
-            Admin::InitOracleConfig { accounts, params } => {
-                accounts.oracle_config.init(
-                    params.enabled,
-                    params.source,
-                    params.update_authority,
-                    accounts.token_a_mint.key(),
-                    accounts.token_a_price.key(),
-                    accounts.token_b_mint.key(),
-                    accounts.token_b_price.key(),
-                );
             }
             Admin::UpdateOracleConfig { accounts, params } => {
                 accounts.oracle_config.init(

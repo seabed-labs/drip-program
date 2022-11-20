@@ -64,6 +64,54 @@ export type Drip = {
       ];
     },
     {
+      name: "initOracleConfig";
+      accounts: [
+        {
+          name: "oracleConfig";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "tokenAMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenAPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenBMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenBPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "creator";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "InitializeOracleConfigParams";
+          };
+        }
+      ];
+    },
+    {
       name: "deposit";
       accounts: [
         {
@@ -662,54 +710,6 @@ export type Drip = {
       ];
     },
     {
-      name: "initOracleConfig";
-      accounts: [
-        {
-          name: "oracleConfig";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "tokenAMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenAPrice";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenBMint";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "tokenBPrice";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "creator";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "systemProgram";
-          isMut: false;
-          isSigner: false;
-        }
-      ];
-      args: [
-        {
-          name: "params";
-          type: {
-            defined: "InitializeOracleConfigParams";
-          };
-        }
-      ];
-    },
-    {
       name: "updateOracleConfig";
       accounts: [
         {
@@ -1073,26 +1073,6 @@ export type Drip = {
       };
     },
     {
-      name: "InitializeOracleConfigParams";
-      type: {
-        kind: "struct";
-        fields: [
-          {
-            name: "enabled";
-            type: "bool";
-          },
-          {
-            name: "source";
-            type: "u8";
-          },
-          {
-            name: "updateAuthority";
-            type: "publicKey";
-          }
-        ];
-      };
-    },
-    {
       name: "UpdateOracleConfigParams";
       type: {
         kind: "struct";
@@ -1172,6 +1152,26 @@ export type Drip = {
           {
             name: "periodId";
             type: "u64";
+          }
+        ];
+      };
+    },
+    {
+      name: "InitializeOracleConfigParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "enabled";
+            type: "bool";
+          },
+          {
+            name: "source";
+            type: "u8";
+          },
+          {
+            name: "updateAuthority";
+            type: "publicKey";
           }
         ];
       };
@@ -1396,6 +1396,54 @@ export const IDL: Drip = {
           name: "params",
           type: {
             defined: "InitializeVaultPeriodParams",
+          },
+        },
+      ],
+    },
+    {
+      name: "initOracleConfig",
+      accounts: [
+        {
+          name: "oracleConfig",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "tokenAMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenAPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "creator",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "InitializeOracleConfigParams",
           },
         },
       ],
@@ -1999,54 +2047,6 @@ export const IDL: Drip = {
       ],
     },
     {
-      name: "initOracleConfig",
-      accounts: [
-        {
-          name: "oracleConfig",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "tokenAMint",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenAPrice",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenBMint",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "tokenBPrice",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "creator",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "systemProgram",
-          isMut: false,
-          isSigner: false,
-        },
-      ],
-      args: [
-        {
-          name: "params",
-          type: {
-            defined: "InitializeOracleConfigParams",
-          },
-        },
-      ],
-    },
-    {
       name: "updateOracleConfig",
       accounts: [
         {
@@ -2410,26 +2410,6 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "InitializeOracleConfigParams",
-      type: {
-        kind: "struct",
-        fields: [
-          {
-            name: "enabled",
-            type: "bool",
-          },
-          {
-            name: "source",
-            type: "u8",
-          },
-          {
-            name: "updateAuthority",
-            type: "publicKey",
-          },
-        ],
-      },
-    },
-    {
       name: "UpdateOracleConfigParams",
       type: {
         kind: "struct",
@@ -2509,6 +2489,26 @@ export const IDL: Drip = {
           {
             name: "periodId",
             type: "u64",
+          },
+        ],
+      },
+    },
+    {
+      name: "InitializeOracleConfigParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "enabled",
+            type: "bool",
+          },
+          {
+            name: "source",
+            type: "u8",
+          },
+          {
+            name: "updateAuthority",
+            type: "publicKey",
           },
         ],
       },

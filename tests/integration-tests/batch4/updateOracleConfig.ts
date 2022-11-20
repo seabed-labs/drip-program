@@ -51,6 +51,7 @@ function testUpdateOracleConfig() {
       tokenAPrice,
       tokenBMint: tokenBMint.publicKey,
       tokenBPrice,
+      creator: updateAuthority,
     };
     const params = {
       enabled: true,

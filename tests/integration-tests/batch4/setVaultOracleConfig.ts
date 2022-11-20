@@ -1,8 +1,9 @@
 import "should";
 import { AccountUtil } from "../../utils/account.util";
 import { DripUtil } from "../../utils/drip.util";
-import { generatePair } from "../../utils/common.util";
+import { generatePair, generatePairs } from "../../utils/common.util";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { SolUtil } from "../../utils/sol.util";
 
 describe("#setVaultOracleConfig", setVaultOracleConfig);
 
@@ -13,6 +14,10 @@ function setVaultOracleConfig() {
   let admin: Keypair | Signer;
 
   beforeEach(async () => {
+    const payerKeypair = generatePair();
+    await Promise.all([
+      SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
+    ]);
     const res = await DripUtil.deployVault({});
     const oracleConfigKeypair = generatePair();
     const updateAuthority = generatePair();
@@ -26,7 +31,7 @@ function setVaultOracleConfig() {
       tokenBPrice: new PublicKey(
         "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
       ),
-      creator: updateAuthority,
+      creator: payerKeypair,
     };
     const params = {
       enabled: true,

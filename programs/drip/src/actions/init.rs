@@ -1,4 +1,6 @@
+use crate::errors::DripError;
 use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
+use crate::instruction_accounts::{InitializeOracleConfigAccounts, InitializeOracleConfigParams};
 use crate::interactions::executor::CpiExecutor;
 use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
 use crate::{
@@ -10,6 +12,7 @@ use crate::{
     validate,
 };
 use anchor_lang::prelude::*;
+use pyth_sdk_solana::load_price_feed_from_account_info;
 use std::collections::BTreeMap;
 
 pub enum Init<'a, 'info> {
@@ -21,6 +24,10 @@ pub enum Init<'a, 'info> {
         accounts: &'a mut InitializeVaultPeriodAccounts<'info>,
         params: InitializeVaultPeriodParams,
         bumps: BTreeMap<String, u8>,
+    },
+    InitOracleConfig {
+        accounts: &'a mut InitializeOracleConfigAccounts<'info>,
+        params: InitializeOracleConfigParams,
     },
 }
 
@@ -38,8 +45,35 @@ impl<'a, 'info> Validatable for Init<'a, 'info> {
                 Ok(())
             }
             Init::VaultPeriod { .. } => Ok(()),
+            Init::InitOracleConfig {
+                accounts, params, ..
+            } => validate_oracle(
+                params.source,
+                &accounts.token_a_price.to_account_info(),
+                &accounts.token_b_price.to_account_info(),
+            ),
         }
     }
+}
+pub fn validate_oracle(
+    source: u8,
+    token_a_price_info: &AccountInfo,
+    token_b_price_info: &AccountInfo,
+) -> Result<()> {
+    match source {
+        0 => {
+            // note: we don't have an owner check here, however its not needed as only using the oracle
+            // config is something an admin does intentionally
+            let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
+            price_feed.get_current_price().unwrap();
+            let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
+            price_feed.get_current_price().unwrap();
+        }
+        _ => {
+            return Err(DripError::InvalidOracleSource.into());
+        }
+    }
+    Ok(())
 }
 
 impl<'a, 'info> Executable for Init<'a, 'info> {
@@ -53,6 +87,18 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
                 params,
                 bumps,
             } => init_vault_period(accounts, params, bumps),
+            Init::InitOracleConfig { accounts, params } => {
+                accounts.oracle_config.init(
+                    params.enabled,
+                    params.source,
+                    params.update_authority,
+                    accounts.token_a_mint.key(),
+                    accounts.token_a_price.key(),
+                    accounts.token_b_mint.key(),
+                    accounts.token_b_price.key(),
+                );
+                Ok(())
+            }
         }
     }
 }

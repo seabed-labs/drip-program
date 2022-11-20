@@ -15,9 +15,11 @@ describe("#initOracleConfig", testInitOracleConfig);
 export function testInitOracleConfig() {
   let tokenAMint;
   let tokenBMint;
+  let tokenOwnerKeypair;
+  let payerKeypair;
 
   before(async () => {
-    const [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
+    [tokenOwnerKeypair, payerKeypair] = generatePairs(2);
     await Promise.all([
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
@@ -38,6 +40,7 @@ export function testInitOracleConfig() {
       payerKeypair
     );
   });
+
   it("initializes the oracle config account correctly", async () => {
     const oracleConfigKeypair = generatePair();
     const updateAuthority = generatePair();
@@ -51,7 +54,7 @@ export function testInitOracleConfig() {
       tokenBPrice: new PublicKey(
         "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
       ),
-      creator: updateAuthority,
+      creator: payerKeypair,
     };
     const params = {
       enabled: true,
@@ -94,6 +97,7 @@ export function testInitOracleConfig() {
       tokenBPrice: new PublicKey(
         "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
       ),
+      creator: payerKeypair,
     };
     const params = {
       enabled: true,
@@ -120,6 +124,7 @@ export function testInitOracleConfig() {
       tokenBPrice: new PublicKey(
         "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
       ),
+      creator: payerKeypair,
     };
     const params = {
       enabled: true,
@@ -146,6 +151,7 @@ export function testInitOracleConfig() {
       tokenBPrice: new PublicKey(
         "8GWTTbNiXdmyZREXbjsZBmCRuzdPrW55dnZGDkTRjWvb"
       ),
+      creator: payerKeypair,
     };
     const params = {
       enabled: true,

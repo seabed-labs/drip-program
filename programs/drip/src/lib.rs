@@ -42,6 +42,16 @@ pub mod drip {
         })
     }
 
+    pub fn init_oracle_config(
+        ctx: Context<InitializeOracleConfigAccounts>,
+        params: InitializeOracleConfigParams,
+    ) -> Result<()> {
+        handle_action(Init::InitOracleConfig {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
+
     pub fn deposit(ctx: Context<DepositAccounts>, params: DepositParams) -> Result<()> {
         handle_action(Deposit::WithoutMetadata {
             accounts: ctx.accounts,
@@ -95,16 +105,6 @@ pub mod drip {
             accounts: ctx.accounts,
             params,
             bumps: ctx.bumps,
-        })
-    }
-
-    pub fn init_oracle_config(
-        ctx: Context<InitializeOracleConfigAccounts>,
-        params: InitializeOracleConfigParams,
-    ) -> Result<()> {
-        handle_action(Admin::InitOracleConfig {
-            accounts: ctx.accounts,
-            params,
         })
     }
 

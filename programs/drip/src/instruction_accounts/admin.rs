@@ -102,38 +102,6 @@ pub struct SetVaultOracleConfigAccounts<'info> {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct InitializeOracleConfigParams {
-    pub enabled: bool,
-    pub source: u8,
-    pub update_authority: Pubkey,
-}
-
-#[derive(Accounts)]
-#[instruction(params: InitializeOracleConfigParams)]
-pub struct InitializeOracleConfigAccounts<'info> {
-    #[account(
-        init,
-        // Allocate an extra 128 bytes to future proof this
-        space = OracleConfig::ACCOUNT_SPACE + 128,
-        payer = creator,
-    )]
-    pub oracle_config: Account<'info, OracleConfig>,
-
-    pub token_a_mint: Account<'info, Mint>,
-    /// CHECK: Need to custom decode based on "source"
-    pub token_a_price: UncheckedAccount<'info>,
-
-    pub token_b_mint: Account<'info, Mint>,
-    /// CHECK: Need to custom decode based on "source"
-    pub token_b_price: UncheckedAccount<'info>,
-
-    // mut needed because we are debiting SOL from the signer to create the oracle_config account
-    #[account(mut)]
-    pub creator: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct UpdateOracleConfigParams {
     pub enabled: bool,
     pub source: u8,
