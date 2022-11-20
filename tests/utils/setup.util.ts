@@ -264,6 +264,10 @@ export const deploySPLTokenSwap = async (
   ];
 };
 
+export type DripSPLTokenSwapWrapper = (
+  prevPeriod: PublicKey,
+  currPeriod: PublicKey
+) => Promise<void>;
 export const dripSPLTokenSwapWrapper = (
   user: Keypair,
   dripFeeTokenAAccount: PublicKey,
@@ -277,11 +281,11 @@ export const dripSPLTokenSwapWrapper = (
   swapFeeAccount: PublicKey,
   swapAuthority: PublicKey,
   swap: PublicKey
-) => {
+): DripSPLTokenSwapWrapper => {
   return async (
     previousDripPeriod: PublicKey,
     currentDripPeriod: PublicKey
-  ) => {
+  ): Promise<void> => {
     await DripUtil.dripSPLTokenSwap(
       user,
       dripFeeTokenAAccount,
@@ -301,6 +305,14 @@ export const dripSPLTokenSwapWrapper = (
   };
 };
 
+export type DripOrcaWhirlpoolWrapper = (
+  prevPeriod: PublicKey,
+  currPeriod: PublicKey,
+  ta1: PublicKey,
+  ta2: PublicKey,
+  ta3: PublicKey
+) => Promise<void>;
+
 export const dripOrcaWhirlpoolWrapper = (
   botKeypair: Keypair,
   dripFeeTokenAAccount: PublicKey,
@@ -312,7 +324,7 @@ export const dripOrcaWhirlpoolWrapper = (
   swapTokenBAccount: PublicKey,
   whirlpool: PublicKey,
   oracle: PublicKey
-) => {
+): DripOrcaWhirlpoolWrapper => {
   return async (
     lastVaultPeriod: PublicKey,
     currentVaultPeriod: PublicKey,
