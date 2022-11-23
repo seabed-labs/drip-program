@@ -169,7 +169,7 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     .set_oracle_config(accounts.new_oracle_config.key());
             }
             Admin::UpdateOracleConfig { accounts, params } => {
-                accounts.oracle_config.init(
+                accounts.oracle_config.set(
                     params.enabled,
                     params.source,
                     params.new_update_authority,

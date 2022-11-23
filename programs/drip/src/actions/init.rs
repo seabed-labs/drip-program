@@ -89,7 +89,7 @@ impl<'a, 'info> Executable for Init<'a, 'info> {
                 bumps,
             } => init_vault_period(accounts, params, bumps),
             Init::OracleConfig { accounts, params } => {
-                accounts.oracle_config.init(
+                accounts.oracle_config.set(
                     params.enabled,
                     params.source,
                     params.update_authority,

@@ -17,7 +17,7 @@ pub struct OracleConfig {
 impl OracleConfig {
     pub const ACCOUNT_SPACE: usize = 170;
 
-    pub fn init(
+    pub fn set(
         &mut self,
         enabled: bool,
         source: u8,
