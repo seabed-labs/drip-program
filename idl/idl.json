@@ -785,7 +785,7 @@
       "accounts": [
         {
           "name": "admin",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {

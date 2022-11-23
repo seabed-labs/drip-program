@@ -785,7 +785,7 @@ export type Drip = {
       accounts: [
         {
           name: "admin";
-          isMut: true;
+          isMut: false;
           isSigner: true;
         },
         {
@@ -2110,7 +2110,7 @@ export const IDL: Drip = {
       accounts: [
         {
           name: "admin",
-          isMut: true,
+          isMut: false,
           isSigner: true,
         },
         {

@@ -86,7 +86,6 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
 
 #[derive(Accounts)]
 pub struct SetVaultOracleConfigAccounts<'info> {
-    #[account(mut)]
     pub admin: Signer<'info>,
 
     // mut needed because we are changing state
