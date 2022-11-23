@@ -45,7 +45,10 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
             Admin::InitVault {
                 accounts, params, ..
             } => {
-                validate_vault_admin(accounts.creator.key(), &accounts.vault_proto_config, None)?;
+                validate!(
+                    accounts.creator.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
 
                 validate!(
                     accounts.token_a_account.mint == accounts.token_a_mint.key(),
@@ -81,10 +84,10 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
             Admin::SetVaultSwapWhitelist {
                 accounts, params, ..
             } => {
-                validate_vault_admin(
-                    accounts.admin.key(),
+                validate_signer_is_vault_admin(
+                    &accounts.admin,
                     &accounts.vault_proto_config,
-                    Some(&accounts.vault),
+                    &accounts.vault,
                 )?;
 
                 validate!(
@@ -93,10 +96,10 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 );
             }
             Admin::SetVaultOracleConfig { accounts, .. } => {
-                validate_vault_admin(
-                    accounts.admin.key(),
+                validate_signer_is_vault_admin(
+                    &accounts.admin,
                     &accounts.vault_proto_config,
-                    Some(&accounts.vault),
+                    &accounts.vault,
                 )?;
             }
             Admin::UpdateOracleConfig {
@@ -119,21 +122,22 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
     }
 }
 
-fn validate_vault_admin(
-    admin: Pubkey,
+// validates that the signer has the authority to update a vault
+// - checks that the vault matches the proto config
+// - checks that the proto config admin matches the signer
+fn validate_signer_is_vault_admin(
+    admin: &Signer,
     vault_proto_config: &Account<VaultProtoConfig>,
-    vault: Option<&Account<Vault>>,
+    vault: &Account<Vault>,
 ) -> Result<()> {
     validate!(
-        admin == vault_proto_config.admin,
+        admin.key() == vault_proto_config.admin,
         DripError::SignerIsNotAdmin
     );
-    if let Some(vault) = vault {
-        validate!(
-            vault_proto_config.key() == vault.proto_config,
-            DripError::InvalidVaultProtoConfigReference
-        );
-    };
+    validate!(
+        vault_proto_config.key() == vault.proto_config,
+        DripError::InvalidVaultProtoConfigReference
+    );
     Ok(())
 }
 
