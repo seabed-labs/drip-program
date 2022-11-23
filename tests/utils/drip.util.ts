@@ -84,10 +84,13 @@ export type DeployVaultRes = {
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
   vaultTokenBAccount: PublicKey;
+  tokenAMint: Token;
+  tokenBMint: Token;
+  admin: Keypair;
 };
 
 // TODO(Mocha): Replace the program interaction with the SDK
-export class VaultUtil extends TestUtil {
+export class DripUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
     vaultProtoConfig: VaultProtoConfigParams
@@ -110,41 +113,41 @@ export class VaultUtil extends TestUtil {
   }
 
   static async initVault(
-    vaultPubkey: PublicKey,
-    vaultProtoConfigAccount: PublicKey,
-    tokenAMint: PublicKey,
-    tokenBMint: PublicKey,
-    tokenA_ATA: PublicKey,
-    tokenB_ATA: PublicKey,
-    treasuryTokenBAccount: PublicKey,
-    params: {
-      whitelistedSwaps: PublicKey[] | null | undefined;
+    accounts: {
+      vaultPubkey: PublicKey;
+      vaultProtoConfigAccount: PublicKey;
+      tokenAMint: PublicKey;
+      tokenBMint: PublicKey;
+      tokenAAccount: PublicKey;
+      tokenBAccount: PublicKey;
+      treasuryTokenBAccount: PublicKey;
+    },
+    params?: {
+      whitelistedSwaps?: PublicKey[];
       maxSlippageBps?: number;
-    } = {
-      whitelistedSwaps: undefined,
-      maxSlippageBps: 1000,
     },
     programs?: {
       systemProgram?: PublicKey;
       tokenProgram?: PublicKey;
       associatedTokenProgram?: PublicKey;
       rent?: PublicKey;
-    }
+    },
+    admin?: Keypair | Signer
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVault({
-        whitelistedSwaps: params.whitelistedSwaps ?? [],
-        maxSlippageBps: params.maxSlippageBps,
+        whitelistedSwaps: params?.whitelistedSwaps ?? [],
+        maxSlippageBps: params?.maxSlippageBps ?? 1000,
       })
       .accounts({
-        vault: vaultPubkey.toBase58(),
-        vaultProtoConfig: vaultProtoConfigAccount.toBase58(),
-        tokenAMint: tokenAMint.toBase58(),
-        tokenBMint: tokenBMint.toBase58(),
-        tokenAAccount: tokenA_ATA.toBase58(),
-        tokenBAccount: tokenB_ATA.toBase58(),
-        treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
-        creator: this.provider.wallet.publicKey.toBase58(),
+        vault: accounts.vaultPubkey.toBase58(),
+        vaultProtoConfig: accounts.vaultProtoConfigAccount.toBase58(),
+        tokenAMint: accounts.tokenAMint.toBase58(),
+        tokenBMint: accounts.tokenBMint.toBase58(),
+        tokenAAccount: accounts.tokenAAccount.toBase58(),
+        tokenBAccount: accounts.tokenBAccount.toBase58(),
+        treasuryTokenBAccount: accounts.treasuryTokenBAccount.toBase58(),
+        creator: admin?.publicKey ?? this.provider.wallet.publicKey.toBase58(),
         systemProgram:
           programs?.systemProgram?.toBase58() ??
           ProgramUtil.systemProgram.programId.toBase58(),
@@ -159,10 +162,25 @@ export class VaultUtil extends TestUtil {
           ProgramUtil.rentProgram.programId.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, undefined);
+    if (admin) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        admin,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
   }
 
-  static async updateVaultWhitelistedSwaps(
+  static async setVaultSwapWhitelist(
     vaultPubkey: PublicKey,
     vaultProtoConfigPubkey: PublicKey,
     admin?: Keypair,
@@ -202,6 +220,37 @@ export class VaultUtil extends TestUtil {
     }
   }
 
+  static async setVaultOracleConfig(accounts: {
+    admin?: Keypair | Signer;
+    vault: PublicKey;
+    vaultProtoConfig: PublicKey;
+    newOracleConfig: PublicKey;
+  }): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .setVaultOracleConfig()
+      .accounts({
+        ...accounts,
+        admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+      })
+      .transaction();
+    if (accounts.admin) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        accounts.admin,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
+  }
+
   static async initVaultPeriod(
     vault: PublicKey,
     vaultPeriod: PublicKey,
@@ -213,9 +262,8 @@ export class VaultUtil extends TestUtil {
         periodId: new u64(periodId),
       })
       .accounts({
-        vault: vault.toBase58(),
         vaultPeriod: vaultPeriod.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
+        vault: vault.toBase58(),
         creator: this.provider.wallet.publicKey.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
@@ -460,6 +508,81 @@ export class VaultUtil extends TestUtil {
     return this.provider.sendAndConfirm(tx, [withdrawer]);
   }
 
+  static async initOracleConfig(
+    accounts: {
+      oracleConfig: Keypair | Signer;
+      tokenAMint: PublicKey;
+      tokenAPrice: PublicKey;
+      tokenBMint: PublicKey;
+      tokenBPrice: PublicKey;
+      creator: Keypair | Signer;
+    },
+    params: {
+      enabled: boolean;
+      source: number;
+      updateAuthority: PublicKey;
+    }
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .initOracleConfig({
+        ...params,
+      })
+      .accounts({
+        ...accounts,
+        creator: accounts.creator.publicKey,
+        oracleConfig: accounts.oracleConfig.publicKey.toString(),
+        systemProgram: ProgramUtil.systemProgram.programId,
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [
+      accounts.creator,
+      accounts.oracleConfig,
+    ]);
+  }
+
+  static async updateOracleConfig(
+    accounts: {
+      oracleConfig: PublicKey;
+      newTokenAMint: PublicKey;
+      newTokenAPrice: PublicKey;
+      newTokenBMint: PublicKey;
+      newTokenBPrice: PublicKey;
+    },
+    params: {
+      enabled: boolean;
+      source: number;
+      newUpdateAuthority: PublicKey;
+    },
+    updateAuthority?: Keypair | Signer
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .updateOracleConfig({
+        ...params,
+      })
+      .accounts({
+        ...accounts,
+        currentUpdateAuthority:
+          updateAuthority?.publicKey ?? this.provider.wallet.publicKey,
+      })
+      .transaction();
+    if (updateAuthority) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        updateAuthority,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
+  }
+
   /*
     Deploy Vault Proto Config if not provided
     Create token accounts
@@ -472,16 +595,16 @@ export class VaultUtil extends TestUtil {
     tokenB,
     vaultProtoConfig,
     whitelistedSwaps,
-    tokenOwnerKeypair,
+    tokenOwnerKeypair = generatePair(),
     maxSlippageBps = 1000,
     adminKeypair = generatePair(),
     botKeypair = generatePair(),
     userKeypair = generatePair(),
     vaultPeriodIndex = 10,
   }: {
-    tokenA: Token;
-    tokenB: Token;
-    tokenOwnerKeypair: Keypair;
+    tokenA?: Token;
+    tokenB?: Token;
+    tokenOwnerKeypair?: Keypair;
     maxSlippageBps?: number;
     adminKeypair?: Keypair;
     botKeypair?: Keypair;
@@ -500,6 +623,22 @@ export class VaultUtil extends TestUtil {
       SolUtil.fundAccount(botKeypair.publicKey, SolUtil.solToLamports(0.1)),
     ]);
 
+    if (!tokenA) {
+      tokenA = await TokenUtil.createMint(
+        tokenOwnerKeypair.publicKey,
+        null,
+        6,
+        tokenOwnerKeypair
+      );
+    }
+    if (!tokenB) {
+      tokenB = await TokenUtil.createMint(
+        tokenOwnerKeypair.publicKey,
+        null,
+        6,
+        tokenOwnerKeypair
+      );
+    }
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
       tokenA
@@ -519,12 +658,12 @@ export class VaultUtil extends TestUtil {
 
     if (!vaultProtoConfig) {
       const vaultProtoConfigKeypair = generatePair();
-      await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+      await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
         granularity: 1,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
         tokenBReferralSpread: 10,
-        admin: TestUtil.provider.wallet.publicKey,
+        admin: adminKeypair.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;
     }
@@ -538,19 +677,24 @@ export class VaultUtil extends TestUtil {
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
       findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
     ]);
-
-    await VaultUtil.initVault(
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      {
-        whitelistedSwaps,
-        maxSlippageBps,
-      }
+    const initVaultAccounts = {
+      vaultPubkey: vaultPDA.publicKey,
+      vaultProtoConfigAccount: vaultProtoConfig,
+      tokenAMint: tokenA.publicKey,
+      tokenBMint: tokenB.publicKey,
+      tokenAAccount: vaultTokenAAccount,
+      tokenBAccount: vaultTokenBAccount,
+      treasuryTokenBAccount: vaultTreasuryTokenBAccount,
+    };
+    const initVaultParams = {
+      whitelistedSwaps,
+      maxSlippageBps,
+    };
+    await DripUtil.initVault(
+      initVaultAccounts,
+      initVaultParams,
+      undefined,
+      adminKeypair
     );
 
     const vaultPeriods = (
@@ -595,6 +739,9 @@ export class VaultUtil extends TestUtil {
       vaultTreasuryTokenBAccount,
       vaultTokenAAccount,
       vaultTokenBAccount,
+      tokenAMint: tokenA,
+      tokenBMint: tokenB,
+      admin: adminKeypair,
     };
   }
 }

@@ -51,6 +51,7 @@ export class AccountUtil extends TestUtil {
       | "bump"
       | "limitSwaps"
       | "maxSlippageBps"
+      | "oracleConfig"
     >
   > {
     return await ProgramUtil.dripProgram.account.vault.fetch(pubkey);
@@ -86,5 +87,24 @@ export class AccountUtil extends TestUtil {
     >
   > {
     return await ProgramUtil.dripProgram.account.position.fetch(pubkey);
+  }
+
+  static async fetchOracleConfigAccount(
+    pubkey: web3.PublicKey
+  ): Promise<
+    Pick<
+      AsyncReturnType<
+        typeof ProgramUtil.dripProgram.account.oracleConfig.fetch
+      >,
+      | "enabled"
+      | "source"
+      | "updateAuthority"
+      | "tokenAMint"
+      | "tokenAPrice"
+      | "tokenBMint"
+      | "tokenBPrice"
+    >
+  > {
+    return await ProgramUtil.dripProgram.account.oracleConfig.fetch(pubkey);
   }
 }

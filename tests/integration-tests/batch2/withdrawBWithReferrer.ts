@@ -23,16 +23,11 @@ import {
 import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "@project-serum/anchor";
-import { AccountUtil } from "../../utils/account.util";
-import { findError } from "../../utils/error.util";
-import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 
 describe("#withdrawBWithReferrer", testWithdrawB);
 
 export function testWithdrawB() {
-  initLog();
-
   let tokenOwnerKeypair: Keypair;
   let payerKeypair: Keypair;
 

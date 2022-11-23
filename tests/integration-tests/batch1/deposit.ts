@@ -2,7 +2,7 @@ import "should";
 import { DECIMALS, TokenUtil } from "../../utils/token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
 import { Token, u64 } from "@solana/spl-token";
-import { VaultUtil } from "../../utils/vault.util";
+import { DripUtil } from "../../utils/drip.util";
 import { SolUtil } from "../../utils/sol.util";
 import { AccountUtil } from "../../utils/account.util";
 import {
@@ -61,7 +61,7 @@ export function testDeposit() {
     ]);
 
     const vaultProtoConfigKeypair = generatePair();
-    await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
+    await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
       granularity: Granularity.DAILY,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
@@ -82,22 +82,22 @@ export function testDeposit() {
         findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
         TokenUtil.createTokenAccount(tokenB, treasuryOwner.publicKey),
       ]);
-    await VaultUtil.initVault(
-      vaultPDA.publicKey,
-      vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      undefined
-    );
+    const initVaultAccounts = {
+      vaultPubkey: vaultPDA.publicKey,
+      vaultProtoConfigAccount: vaultProtoConfigPubkey,
+      tokenAMint: tokenA.publicKey,
+      tokenBMint: tokenB.publicKey,
+      tokenAAccount: vaultTokenAAccount,
+      tokenBAccount: vaultTokenBAccount,
+      treasuryTokenBAccount: vaultTreasuryTokenBAccount,
+    };
+    await DripUtil.initVault(initVaultAccounts);
 
     vaultPubkey = vaultPDA.publicKey;
 
     const vaultPeriodPDA = await getVaultPeriodPDA(vaultPubkey, 69);
 
-    await VaultUtil.initVaultPeriod(
+    await DripUtil.initVaultPeriod(
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
@@ -140,7 +140,7 @@ export function testDeposit() {
       depositAmount
     );
 
-    await VaultUtil.deposit({
+    await DripUtil.deposit({
       params: {
         tokenADepositAmount: depositAmount,
         numberOfSwaps: new u64(69),
@@ -265,7 +265,7 @@ export function testDeposit() {
     const referrerTokenBAccount =
       await TokenUtil.getOrCreateAssociatedTokenAccount(tokenB, referrer);
 
-    await VaultUtil.deposit({
+    await DripUtil.deposit({
       params: {
         tokenADepositAmount: depositAmount,
         numberOfSwaps: new u64(69),
@@ -324,7 +324,7 @@ export function testDeposit() {
     const referrerTokenBAccount =
       await TokenUtil.getOrCreateAssociatedTokenAccount(tokenA, referrer);
 
-    await VaultUtil.deposit({
+    await DripUtil.deposit({
       params: {
         tokenADepositAmount: depositAmount,
         numberOfSwaps: new u64(69),

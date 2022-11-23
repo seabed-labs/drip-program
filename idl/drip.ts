@@ -64,6 +64,54 @@ export type Drip = {
       ];
     },
     {
+      name: "initOracleConfig";
+      accounts: [
+        {
+          name: "oracleConfig";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "tokenAMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenAPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenBMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenBPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "creator";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "systemProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "InitializeOracleConfigParams";
+          };
+        }
+      ];
+    },
+    {
       name: "deposit";
       accounts: [
         {
@@ -662,6 +710,49 @@ export type Drip = {
       ];
     },
     {
+      name: "updateOracleConfig";
+      accounts: [
+        {
+          name: "oracleConfig";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "newTokenAMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "newTokenAPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "newTokenBMint";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "newTokenBPrice";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "currentUpdateAuthority";
+          isMut: false;
+          isSigner: true;
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "UpdateOracleConfigParams";
+          };
+        }
+      ];
+    },
+    {
       name: "setVaultSwapWhitelist";
       accounts: [
         {
@@ -688,9 +779,71 @@ export type Drip = {
           };
         }
       ];
+    },
+    {
+      name: "setVaultOracleConfig";
+      accounts: [
+        {
+          name: "admin";
+          isMut: false;
+          isSigner: true;
+        },
+        {
+          name: "vault";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "vaultProtoConfig";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "newOracleConfig";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [];
     }
   ];
   accounts: [
+    {
+      name: "oracleConfig";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "enabled";
+            type: "bool";
+          },
+          {
+            name: "source";
+            type: "u8";
+          },
+          {
+            name: "updateAuthority";
+            type: "publicKey";
+          },
+          {
+            name: "tokenAMint";
+            type: "publicKey";
+          },
+          {
+            name: "tokenAPrice";
+            type: "publicKey";
+          },
+          {
+            name: "tokenBMint";
+            type: "publicKey";
+          },
+          {
+            name: "tokenBPrice";
+            type: "publicKey";
+          }
+        ];
+      };
+    },
     {
       name: "position";
       type: {
@@ -861,6 +1014,10 @@ export type Drip = {
           {
             name: "maxSlippageBps";
             type: "u16";
+          },
+          {
+            name: "oracleConfig";
+            type: "publicKey";
           }
         ];
       };
@@ -907,6 +1064,26 @@ export type Drip = {
             type: {
               vec: "publicKey";
             };
+          }
+        ];
+      };
+    },
+    {
+      name: "UpdateOracleConfigParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "enabled";
+            type: "bool";
+          },
+          {
+            name: "source";
+            type: "u8";
+          },
+          {
+            name: "newUpdateAuthority";
+            type: "publicKey";
           }
         ];
       };
@@ -963,6 +1140,26 @@ export type Drip = {
           {
             name: "periodId";
             type: "u64";
+          }
+        ];
+      };
+    },
+    {
+      name: "InitializeOracleConfigParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "enabled";
+            type: "bool";
+          },
+          {
+            name: "source";
+            type: "u8";
+          },
+          {
+            name: "updateAuthority";
+            type: "publicKey";
           }
         ];
       };
@@ -1117,6 +1314,11 @@ export type Drip = {
       code: 6025;
       name: "InvalidReferrer";
       msg: "Referrer does not match position referrer";
+    },
+    {
+      code: 6026;
+      name: "InvalidOracleSource";
+      msg: "Supplied oracle Source is not supported";
     }
   ];
 };
@@ -1182,6 +1384,54 @@ export const IDL: Drip = {
           name: "params",
           type: {
             defined: "InitializeVaultPeriodParams",
+          },
+        },
+      ],
+    },
+    {
+      name: "initOracleConfig",
+      accounts: [
+        {
+          name: "oracleConfig",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "tokenAMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenAPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "creator",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "systemProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "InitializeOracleConfigParams",
           },
         },
       ],
@@ -1785,6 +2035,49 @@ export const IDL: Drip = {
       ],
     },
     {
+      name: "updateOracleConfig",
+      accounts: [
+        {
+          name: "oracleConfig",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "newTokenAMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "newTokenAPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "newTokenBMint",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "newTokenBPrice",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "currentUpdateAuthority",
+          isMut: false,
+          isSigner: true,
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "UpdateOracleConfigParams",
+          },
+        },
+      ],
+    },
+    {
       name: "setVaultSwapWhitelist",
       accounts: [
         {
@@ -1812,8 +2105,70 @@ export const IDL: Drip = {
         },
       ],
     },
+    {
+      name: "setVaultOracleConfig",
+      accounts: [
+        {
+          name: "admin",
+          isMut: false,
+          isSigner: true,
+        },
+        {
+          name: "vault",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "vaultProtoConfig",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "newOracleConfig",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
   ],
   accounts: [
+    {
+      name: "oracleConfig",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "enabled",
+            type: "bool",
+          },
+          {
+            name: "source",
+            type: "u8",
+          },
+          {
+            name: "updateAuthority",
+            type: "publicKey",
+          },
+          {
+            name: "tokenAMint",
+            type: "publicKey",
+          },
+          {
+            name: "tokenAPrice",
+            type: "publicKey",
+          },
+          {
+            name: "tokenBMint",
+            type: "publicKey",
+          },
+          {
+            name: "tokenBPrice",
+            type: "publicKey",
+          },
+        ],
+      },
+    },
     {
       name: "position",
       type: {
@@ -1985,6 +2340,10 @@ export const IDL: Drip = {
             name: "maxSlippageBps",
             type: "u16",
           },
+          {
+            name: "oracleConfig",
+            type: "publicKey",
+          },
         ],
       },
     },
@@ -2030,6 +2389,26 @@ export const IDL: Drip = {
             type: {
               vec: "publicKey",
             },
+          },
+        ],
+      },
+    },
+    {
+      name: "UpdateOracleConfigParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "enabled",
+            type: "bool",
+          },
+          {
+            name: "source",
+            type: "u8",
+          },
+          {
+            name: "newUpdateAuthority",
+            type: "publicKey",
           },
         ],
       },
@@ -2086,6 +2465,26 @@ export const IDL: Drip = {
           {
             name: "periodId",
             type: "u64",
+          },
+        ],
+      },
+    },
+    {
+      name: "InitializeOracleConfigParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "enabled",
+            type: "bool",
+          },
+          {
+            name: "source",
+            type: "u8",
+          },
+          {
+            name: "updateAuthority",
+            type: "publicKey",
           },
         ],
       },
@@ -2240,6 +2639,11 @@ export const IDL: Drip = {
       code: 6025,
       name: "InvalidReferrer",
       msg: "Referrer does not match position referrer",
+    },
+    {
+      code: 6026,
+      name: "InvalidOracleSource",
+      msg: "Supplied oracle Source is not supported",
     },
   ],
 };

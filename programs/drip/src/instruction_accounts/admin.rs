@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultProtoConfig};
+use crate::state::{OracleConfig, Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -18,8 +18,8 @@ pub struct InitializeVaultAccounts<'info> {
     /* DRIP ACCOUNTS */
     #[account(
         init,
-        // Allocate an extra 128 bytes to future proof this
-        space = Vault::ACCOUNT_SPACE + 128,
+        // Allocate an extra 96 bytes to future proof this
+        space = Vault::ACCOUNT_SPACE + 96,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
@@ -72,7 +72,6 @@ pub struct UpdateVaultWhitelistedSwapsParams {
     pub whitelisted_swaps: Vec<Pubkey>,
 }
 
-// TODO(Mocha): this naming is awkward
 #[derive(Accounts)]
 pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     #[account(mut)]
@@ -83,4 +82,40 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
     pub vault: Account<'info, Vault>,
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
+}
+
+#[derive(Accounts)]
+pub struct SetVaultOracleConfigAccounts<'info> {
+    pub admin: Signer<'info>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub vault: Account<'info, Vault>,
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub new_oracle_config: Account<'info, OracleConfig>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct UpdateOracleConfigParams {
+    pub enabled: bool,
+    pub source: u8,
+    pub new_update_authority: Pubkey,
+}
+
+#[derive(Accounts)]
+pub struct UpdateOracleConfigAccounts<'info> {
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub oracle_config: Account<'info, OracleConfig>,
+
+    pub new_token_a_mint: Account<'info, Mint>,
+    /// CHECK: Need to custom decode based on "source"
+    pub new_token_a_price: UncheckedAccount<'info>,
+
+    pub new_token_b_mint: Account<'info, Mint>,
+    /// CHECK: Need to custom decode based on "source"
+    pub new_token_b_price: UncheckedAccount<'info>,
+
+    pub current_update_authority: Signer<'info>,
 }

@@ -42,6 +42,16 @@ pub mod drip {
         })
     }
 
+    pub fn init_oracle_config(
+        ctx: Context<InitializeOracleConfigAccounts>,
+        params: InitializeOracleConfigParams,
+    ) -> Result<()> {
+        handle_action(Init::OracleConfig {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
+
     pub fn deposit(ctx: Context<DepositAccounts>, params: DepositParams) -> Result<()> {
         handle_action(Deposit::WithoutMetadata {
             accounts: ctx.accounts,
@@ -98,6 +108,16 @@ pub mod drip {
         })
     }
 
+    pub fn update_oracle_config(
+        ctx: Context<UpdateOracleConfigAccounts>,
+        params: UpdateOracleConfigParams,
+    ) -> Result<()> {
+        handle_action(Admin::UpdateOracleConfig {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
+
     pub fn set_vault_swap_whitelist(
         ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
         params: UpdateVaultWhitelistedSwapsParams,
@@ -105,6 +125,12 @@ pub mod drip {
         handle_action(Admin::SetVaultSwapWhitelist {
             accounts: ctx.accounts,
             params,
+        })
+    }
+
+    pub fn set_vault_oracle_config(ctx: Context<SetVaultOracleConfigAccounts>) -> Result<()> {
+        handle_action(Admin::SetVaultOracleConfig {
+            accounts: ctx.accounts,
         })
     }
 }
