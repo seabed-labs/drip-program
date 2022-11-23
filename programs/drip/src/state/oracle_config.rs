@@ -1,6 +1,8 @@
 use crate::test_account_size;
 use anchor_lang::prelude::*;
 
+pub const PYTH_SOURCE_ID: u8 = 0;
+
 #[account]
 #[derive(Default)]
 pub struct OracleConfig {

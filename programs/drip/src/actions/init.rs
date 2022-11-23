@@ -2,7 +2,7 @@ use crate::errors::DripError;
 use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
 use crate::instruction_accounts::{InitializeOracleConfigAccounts, InitializeOracleConfigParams};
 use crate::interactions::executor::CpiExecutor;
-use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
+use crate::state::{MAX_TOKEN_SPREAD_EXCLUSIVE, PYTH_SOURCE_ID};
 use crate::{
     instruction_accounts::{
         InitializeVaultPeriodAccounts, InitializeVaultPeriodParams,
@@ -61,7 +61,7 @@ pub fn validate_oracle(
     token_b_price_info: &AccountInfo,
 ) -> Result<()> {
     match source {
-        0 => {
+        PYTH_SOURCE_ID => {
             // note: we don't have an owner check here, however its not needed as
             // using the oracle config is something an admin does intentionally
             // they are responsible for supplying the correct account
