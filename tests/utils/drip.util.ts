@@ -75,18 +75,25 @@ export interface DepositWithMetadataTxParams {
 }
 
 export type DeployVaultRes = {
+  tokenOwnerKeypair: Keypair;
+  userKeypair: Keypair;
+  botKeypair: Keypair;
+  admin: Keypair;
+
   vault: PublicKey;
   vaultProtoConfig: PublicKey;
   vaultPeriods: PublicKey[];
   userTokenAAccount: PublicKey;
-  botKeypair: Keypair;
+  userTokenBAccount: PublicKey;
+  userPositionNFTAccount: PublicKey;
+  userPositionAccount: PublicKey;
   botTokenAAcount: PublicKey;
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
   vaultTokenBAccount: PublicKey;
   tokenAMint: Token;
   tokenBMint: Token;
-  admin: Keypair;
+  userPositionNFTMint: Token;
 };
 
 // TODO(Mocha): Replace the program interaction with the SDK
@@ -643,9 +650,10 @@ export class DripUtil extends TestUtil {
       amount(2, Denom.Thousand),
       tokenA
     );
-    const userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      userKeypair.publicKey
-    );
+    const [userTokenAAccount, userTokenBAccount] = await Promise.all([
+      tokenA.createAssociatedTokenAccount(userKeypair.publicKey),
+      tokenB.createAssociatedTokenAccount(userKeypair.publicKey),
+    ]);
     await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
 
     const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
@@ -718,30 +726,40 @@ export class DripUtil extends TestUtil {
       tokenA
     );
 
-    await depositToVault(
-      userKeypair,
-      tokenA,
-      depositAmount,
-      new u64(4),
-      vaultPDA.publicKey,
-      vaultPeriods[4],
-      userTokenAAccount,
-      vaultTreasuryTokenBAccount
-    );
+    const [userPositionNFTMint, userPositionAccount, userPositionNFTAccount] =
+      await depositToVault(
+        userKeypair,
+        tokenA,
+        depositAmount,
+        new u64(4),
+        vaultPDA.publicKey,
+        vaultPeriods[4],
+        userTokenAAccount,
+        vaultTreasuryTokenBAccount
+      );
+
+    const userPosition = TokenUtil.fetchMint(userPositionNFTMint, userKeypair);
 
     return {
+      tokenOwnerKeypair,
+      admin: adminKeypair,
+      userKeypair,
+      botKeypair,
+
       vault: vaultPDA.publicKey,
       vaultProtoConfig,
       vaultPeriods,
       userTokenAAccount,
-      botKeypair,
+      userTokenBAccount,
+      userPositionNFTAccount,
+      userPositionAccount,
       botTokenAAcount,
       vaultTreasuryTokenBAccount,
       vaultTokenAAccount,
       vaultTokenBAccount,
       tokenAMint: tokenA,
       tokenBMint: tokenB,
-      admin: adminKeypair,
+      userPositionNFTMint: userPosition,
     };
   }
 }

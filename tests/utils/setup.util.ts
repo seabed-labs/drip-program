@@ -94,13 +94,22 @@ export const deployVaultPeriod = async (
   return vaultPeriodPDA;
 };
 
-// TODO(Mocha): might be useful to return the new user
+export type DeployWithNewUserWrapper = ({
+  numberOfCycles,
+  newUserEndVaultPeriod,
+  mintAmount,
+}: {
+  numberOfCycles: number;
+  newUserEndVaultPeriod: PublicKey;
+  mintAmount: number;
+}) => Promise<void>;
+
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
   tokenA: Token,
   referrer: PublicKey
-) => {
+): DeployWithNewUserWrapper => {
   return async ({
     numberOfCycles,
     newUserEndVaultPeriod,
@@ -201,67 +210,68 @@ export const deploySPLTokenSwap = async (
     b?: number;
   }
 ): Promise<PublicKey[]> => {
-  const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
-    generatePairs(5);
-  await SolUtil.fundAccount(
-    swapPayerKeypair.publicKey,
-    SolUtil.solToLamports(0.2)
-  );
-  await SolUtil.fundAccount(
-    swapOwnerKeyPair.publicKey,
-    SolUtil.solToLamports(0.2)
-  );
-  const swapAuthorityPDA = await getSwapAuthorityPDA(
-    tokenSwapKeypair.publicKey
-  );
-  const swapLPToken = await TokenUtil.createMint(
-    swapAuthorityPDA.publicKey,
-    null,
-    2,
-    payerKeypair
-  );
-  const swapLPTokenAccount = await swapLPToken.createAccount(
-    swapOwnerKeyPair.publicKey
-  );
-  const swapLPTokenFeeAccount = await swapLPToken.createAccount(
-    new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
-  );
-  const swapTokenAAccount = await tokenA.createAccount(
-    swapAuthorityPDA.publicKey
-  );
-  const mintAmountA = await TokenUtil.scaleAmount(
-    amount(mintAmount?.a ?? 1, Denom.Million),
-    tokenA
-  );
-  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
-  const swapTokenBAccount = await tokenB.createAccount(
-    swapAuthorityPDA.publicKey
-  );
-  const mintAmountB = await TokenUtil.scaleAmount(
-    amount(mintAmount?.b ?? 1, Denom.Million),
-    tokenB
-  );
-  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
-  await TokenSwapUtil.deployTokenSwap(
-    swapPayerKeypair,
-    tokenSwapKeypair,
-    swapAuthorityPDA,
-    tokenA.publicKey,
-    tokenB.publicKey,
-    swapTokenAAccount,
-    swapTokenBAccount,
-    swapLPToken.publicKey,
-    swapLPTokenFeeAccount,
-    swapLPTokenAccount
-  );
-  return [
-    tokenSwapKeypair.publicKey,
-    swapLPToken.publicKey,
-    swapTokenAAccount,
-    swapTokenBAccount,
-    swapLPTokenFeeAccount,
-    swapAuthorityPDA.publicKey,
-  ];
+  throw new Error("deprecated");
+  // const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
+  //   generatePairs(5);
+  // await SolUtil.fundAccount(
+  //   swapPayerKeypair.publicKey,
+  //   SolUtil.solToLamports(0.2)
+  // );
+  // await SolUtil.fundAccount(
+  //   swapOwnerKeyPair.publicKey,
+  //   SolUtil.solToLamports(0.2)
+  // );
+  // const swapAuthorityPDA = await getSwapAuthorityPDA(
+  //   tokenSwapKeypair.publicKey
+  // );
+  // const swapLPToken = await TokenUtil.createMint(
+  //   swapAuthorityPDA.publicKey,
+  //   null,
+  //   2,
+  //   payerKeypair
+  // );
+  // const swapLPTokenAccount = await swapLPToken.createAccount(
+  //   swapOwnerKeyPair.publicKey
+  // );
+  // const swapLPTokenFeeAccount = await swapLPToken.createAccount(
+  //   new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
+  // );
+  // const swapTokenAAccount = await tokenA.createAccount(
+  //   swapAuthorityPDA.publicKey
+  // );
+  // const mintAmountA = await TokenUtil.scaleAmount(
+  //   amount(mintAmount?.a ?? 1, Denom.Million),
+  //   tokenA
+  // );
+  // await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
+  // const swapTokenBAccount = await tokenB.createAccount(
+  //   swapAuthorityPDA.publicKey
+  // );
+  // const mintAmountB = await TokenUtil.scaleAmount(
+  //   amount(mintAmount?.b ?? 1, Denom.Million),
+  //   tokenB
+  // );
+  // await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
+  // await TokenSwapUtil.deployTokenSwap(
+  //   swapPayerKeypair,
+  //   tokenSwapKeypair,
+  //   swapAuthorityPDA,
+  //   tokenA.publicKey,
+  //   tokenB.publicKey,
+  //   swapTokenAAccount,
+  //   swapTokenBAccount,
+  //   swapLPToken.publicKey,
+  //   swapLPTokenFeeAccount,
+  //   swapLPTokenAccount
+  // );
+  // return [
+  //   tokenSwapKeypair.publicKey,
+  //   swapLPToken.publicKey,
+  //   swapTokenAAccount,
+  //   swapTokenBAccount,
+  //   swapLPTokenFeeAccount,
+  //   swapAuthorityPDA.publicKey,
+  // ];
 };
 
 export type DripSPLTokenSwapWrapper = (
@@ -353,6 +363,11 @@ export const dripOrcaWhirlpoolWrapper = (
   };
 };
 
+export type WithdrawBWrapper = (
+  vaultPeriodI: PublicKey,
+  vaultPeriodJ: PublicKey
+) => Promise<string>;
+
 export const withdrawBWrapper = (
   user: Keypair,
   vault: PublicKey,
@@ -363,9 +378,9 @@ export const withdrawBWrapper = (
   vaultTreasuryTokenBAccount: PublicKey,
   userTokenBAccount: PublicKey,
   referrer?: PublicKey
-) => {
+): WithdrawBWrapper => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    const txHash = await DripUtil.withdrawB(
+    return await DripUtil.withdrawB(
       user,
       vault,
       vaultProtoConfig,
@@ -381,6 +396,12 @@ export const withdrawBWrapper = (
   };
 };
 
+export type ClosePositionWrapper = (
+  vaultPeriodI: PublicKey,
+  vaultPeriodJ: PublicKey,
+  vaultPeriodUserExpiry: PublicKey
+) => Promise<string>;
+
 export const closePositionWrapper = (
   withdrawer: Keypair,
   vault: PublicKey,
@@ -393,13 +414,13 @@ export const closePositionWrapper = (
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
   userPositionNftMint: PublicKey
-) => {
+): ClosePositionWrapper => {
   return async (
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
-  ) => {
-    const txHash = await DripUtil.closePosition(
+  ): Promise<string> => {
+    return await DripUtil.closePosition(
       withdrawer,
       vault,
       vaultProtoConfig,
