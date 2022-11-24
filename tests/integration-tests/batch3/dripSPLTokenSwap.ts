@@ -15,9 +15,8 @@ import {
   DripSPLTokenSwapWrapper,
 } from "../../utils/setup.util";
 import { Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
-import { findError } from "../../utils/error.util";
 import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
 import { ProgramUtil } from "../../utils/program.util";
 
