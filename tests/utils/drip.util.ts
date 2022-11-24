@@ -91,6 +91,7 @@ export type DeployVaultRes = {
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
   vaultTokenBAccount: PublicKey;
+  referrerTokenBAccount: PublicKey;
   tokenAMint: Token;
   tokenBMint: Token;
   userPositionNFTMint: Token;
@@ -608,6 +609,7 @@ export class DripUtil extends TestUtil {
     botKeypair = generatePair(),
     userKeypair = generatePair(),
     vaultPeriodIndex = 10,
+    referrerTokenBAccount,
   }: {
     tokenA?: Token;
     tokenB?: Token;
@@ -619,6 +621,7 @@ export class DripUtil extends TestUtil {
     vaultProtoConfig?: PublicKey;
     whitelistedSwaps?: PublicKey[];
     vaultPeriodIndex?: number;
+    referrerTokenBAccount?: PublicKey;
   }): Promise<DeployVaultRes> {
     await Promise.all([
       SolUtil.fundAccount(adminKeypair.publicKey, SolUtil.solToLamports(0.1)),
@@ -735,7 +738,7 @@ export class DripUtil extends TestUtil {
         vaultPDA.publicKey,
         vaultPeriods[4],
         userTokenAAccount,
-        vaultTreasuryTokenBAccount
+        referrerTokenBAccount ?? vaultTreasuryTokenBAccount
       );
 
     const userPosition = TokenUtil.fetchMint(userPositionNFTMint, userKeypair);
@@ -757,6 +760,7 @@ export class DripUtil extends TestUtil {
       vaultTreasuryTokenBAccount,
       vaultTokenAAccount,
       vaultTokenBAccount,
+      referrerTokenBAccount,
       tokenAMint: tokenA,
       tokenBMint: tokenB,
       userPositionNFTMint: userPosition,

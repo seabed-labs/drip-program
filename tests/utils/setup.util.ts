@@ -3,10 +3,7 @@ import {
   Denom,
   findAssociatedTokenAddress,
   generatePair,
-  generatePairs,
   getPositionPDA,
-  getSwapAuthorityPDA,
-  getVaultPDA,
   getVaultPeriodPDA,
   PDA,
 } from "./common.util";
@@ -14,67 +11,12 @@ import { DripUtil } from "./drip.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./token.util";
 import { SolUtil } from "./sol.util";
-import { TokenSwapUtil } from "./tokenSwapUtil";
 import { Token, u64 } from "@solana/spl-token";
 
 export const sleep = async (ms: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-};
-
-export const deployVaultProtoConfig = async (
-  granularity: number,
-  tokenADripTriggerSpread: number,
-  tokenBWithdrawalSpread: number,
-  tokenBReferralSpread: number,
-  admin: PublicKey
-): Promise<PublicKey> => {
-  const vaultProtoConfigKeypair = generatePair();
-  await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-    granularity,
-    tokenADripTriggerSpread,
-    tokenBWithdrawalSpread,
-    tokenBReferralSpread,
-    admin,
-  });
-  return vaultProtoConfigKeypair.publicKey;
-};
-
-/**
- * @deprecated Use DripUtil.deployVault
- */
-export const deployVault = async (
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey,
-  vaultTreasuryTokenBAccount: PublicKey,
-  vaultProtoConfigAccount: PublicKey,
-  whitelistedSwaps?: PublicKey[]
-): Promise<PDA> => {
-  const vaultPDA = await getVaultPDA(
-    tokenAMint,
-    tokenBMint,
-    vaultProtoConfigAccount
-  );
-  const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-    findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint),
-    findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint),
-  ]);
-  const initVaultAccounts = {
-    vaultPubkey: vaultPDA.publicKey,
-    vaultProtoConfigAccount: vaultProtoConfigAccount,
-    tokenAMint: tokenAMint,
-    tokenBMint: tokenBMint,
-    tokenAAccount: vaultTokenA_ATA,
-    tokenBAccount: vaultTokenB_ATA,
-    treasuryTokenBAccount: vaultTreasuryTokenBAccount,
-  };
-  const initVaultParams = {
-    whitelistedSwaps,
-    maxSlippageBps: 1000,
-  };
-  await DripUtil.initVault(initVaultAccounts, initVaultParams);
-  return vaultPDA;
 };
 
 export const deployVaultPeriod = async (
@@ -197,81 +139,6 @@ export const depositToVault = async (
     positionPDA.publicKey,
     userPositionNftAccount,
   ];
-};
-
-export const deploySPLTokenSwap = async (
-  tokenA: Token,
-  tokenAMintOwner: Keypair,
-  tokenB: Token,
-  tokenBMintOwner: Keypair,
-  payerKeypair: Keypair,
-  mintAmount?: {
-    a?: number;
-    b?: number;
-  }
-): Promise<PublicKey[]> => {
-  throw new Error("deprecated");
-  // const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
-  //   generatePairs(5);
-  // await SolUtil.fundAccount(
-  //   swapPayerKeypair.publicKey,
-  //   SolUtil.solToLamports(0.2)
-  // );
-  // await SolUtil.fundAccount(
-  //   swapOwnerKeyPair.publicKey,
-  //   SolUtil.solToLamports(0.2)
-  // );
-  // const swapAuthorityPDA = await getSwapAuthorityPDA(
-  //   tokenSwapKeypair.publicKey
-  // );
-  // const swapLPToken = await TokenUtil.createMint(
-  //   swapAuthorityPDA.publicKey,
-  //   null,
-  //   2,
-  //   payerKeypair
-  // );
-  // const swapLPTokenAccount = await swapLPToken.createAccount(
-  //   swapOwnerKeyPair.publicKey
-  // );
-  // const swapLPTokenFeeAccount = await swapLPToken.createAccount(
-  //   new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
-  // );
-  // const swapTokenAAccount = await tokenA.createAccount(
-  //   swapAuthorityPDA.publicKey
-  // );
-  // const mintAmountA = await TokenUtil.scaleAmount(
-  //   amount(mintAmount?.a ?? 1, Denom.Million),
-  //   tokenA
-  // );
-  // await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
-  // const swapTokenBAccount = await tokenB.createAccount(
-  //   swapAuthorityPDA.publicKey
-  // );
-  // const mintAmountB = await TokenUtil.scaleAmount(
-  //   amount(mintAmount?.b ?? 1, Denom.Million),
-  //   tokenB
-  // );
-  // await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
-  // await TokenSwapUtil.deployTokenSwap(
-  //   swapPayerKeypair,
-  //   tokenSwapKeypair,
-  //   swapAuthorityPDA,
-  //   tokenA.publicKey,
-  //   tokenB.publicKey,
-  //   swapTokenAAccount,
-  //   swapTokenBAccount,
-  //   swapLPToken.publicKey,
-  //   swapLPTokenFeeAccount,
-  //   swapLPTokenAccount
-  // );
-  // return [
-  //   tokenSwapKeypair.publicKey,
-  //   swapLPToken.publicKey,
-  //   swapTokenAAccount,
-  //   swapTokenBAccount,
-  //   swapLPTokenFeeAccount,
-  //   swapAuthorityPDA.publicKey,
-  // ];
 };
 
 export type DripSPLTokenSwapWrapper = (
