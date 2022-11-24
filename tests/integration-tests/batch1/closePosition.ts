@@ -29,11 +29,11 @@ export function testClosePosition() {
   let depositWithNewUser: DeployWithNewUserWrapper;
 
   beforeEach(async () => {
-    const deploySwap = await TokenSwapUtil.deployTokenSwap({});
+    const deploySwapRes = await TokenSwapUtil.deployTokenSwap({});
     deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
-      tokenA: deploySwap.tokenA,
-      tokenB: deploySwap.tokenB,
-      tokenOwnerKeypair: deploySwap.tokenOwnerKeypair,
+      tokenA: deploySwapRes.tokenA,
+      tokenB: deploySwapRes.tokenB,
+      tokenOwnerKeypair: deploySwapRes.tokenOwnerKeypair,
     });
     dripTrigger = dripSPLTokenSwapWrapper(
       deployVaultRes.botKeypair,
@@ -42,14 +42,13 @@ export function testClosePosition() {
       deployVaultRes.vaultProtoConfig,
       deployVaultRes.vaultTokenAAccount,
       deployVaultRes.vaultTokenBAccount,
-      deploySwap.tokenSwap.poolToken,
-      deploySwap.tokenSwap.tokenAccountA,
-      deploySwap.tokenSwap.tokenAccountB,
-      deploySwap.tokenSwap.feeAccount,
-      deploySwap.tokenSwap.authority,
-      deploySwap.tokenSwap.tokenSwap
+      deploySwapRes.tokenSwap.poolToken,
+      deploySwapRes.tokenSwap.tokenAccountA,
+      deploySwapRes.tokenSwap.tokenAccountB,
+      deploySwapRes.tokenSwap.feeAccount,
+      deploySwapRes.tokenSwap.authority,
+      deploySwapRes.tokenSwap.tokenSwap
     );
-
     closePosition = closePositionWrapper(
       deployVaultRes.userKeypair,
       deployVaultRes.vault,
@@ -63,7 +62,6 @@ export function testClosePosition() {
       deployVaultRes.userPositionNFTAccount,
       deployVaultRes.userPositionNFTMint.publicKey
     );
-
     withdrawB = withdrawBWrapper(
       deployVaultRes.userKeypair,
       deployVaultRes.vault,
@@ -74,7 +72,6 @@ export function testClosePosition() {
       deployVaultRes.vaultTreasuryTokenBAccount,
       deployVaultRes.userTokenBAccount
     );
-
     depositWithNewUser = depositWithNewUserWrapper(
       deployVaultRes.vault,
       deployVaultRes.tokenOwnerKeypair,
