@@ -14,7 +14,7 @@ import { DripUtil } from "./drip.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./token.util";
 import { SolUtil } from "./sol.util";
-import { SwapUtil } from "./swap.util";
+import { TokenSwapUtil } from "./tokenSwapUtil";
 import { Token, u64 } from "@solana/spl-token";
 
 export const sleep = async (ms: number) => {
@@ -242,7 +242,7 @@ export const deploySPLTokenSwap = async (
     tokenB
   );
   await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
-  await SwapUtil.createSwap(
+  await TokenSwapUtil.deployTokenSwap(
     swapPayerKeypair,
     tokenSwapKeypair,
     swapAuthorityPDA,

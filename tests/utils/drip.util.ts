@@ -590,7 +590,7 @@ export class DripUtil extends TestUtil {
     Deposit into vault
     Create Vault Periods
    */
-  static async deployVault({
+  static async deployVaultAndCreatePosition({
     tokenA,
     tokenB,
     vaultProtoConfig,

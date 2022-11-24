@@ -32,7 +32,7 @@ export function testDripOrcaWhirlpool() {
   });
 
   beforeEach(async () => {
-    deployVaultRes = await DripUtil.deployVault({
+    deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
       tokenA: deployWhirlpoolRes.tokenA,
       tokenB: deployWhirlpoolRes.tokenB,
       whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],
@@ -134,7 +134,7 @@ export function testDripOrcaWhirlpool() {
       deployWhirlpoolRes.tokenA,
     ];
 
-    const deployVaultRes = await DripUtil.deployVault({
+    const deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
       tokenA,
       tokenB,
       whitelistedSwaps: [deployWhirlpoolRes.initWhirlpoolRes.whirlpool],

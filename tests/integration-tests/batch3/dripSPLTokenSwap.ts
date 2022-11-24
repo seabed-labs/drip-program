@@ -1,177 +1,103 @@
 import "should";
-import { SolUtil } from "../../utils/sol.util";
 import { TokenUtil } from "../../utils/token.util";
+import { generatePair } from "../../utils/common.util";
 import {
-  amount,
-  Denom,
-  generatePair,
-  generatePairs,
-} from "../../utils/common.util";
-import {
-  deploySPLTokenSwap,
-  depositToVault,
   sleep,
   dripSPLTokenSwapWrapper,
   DripSPLTokenSwapWrapper,
 } from "../../utils/setup.util";
-import { Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
 import { ProgramUtil } from "../../utils/program.util";
+import { TokenSwapUtil } from "../../utils/tokenSwapUtil";
 
 describe("#dripSPLTokenSwap", testDripSPLTokenSwap);
 
 export function testDripSPLTokenSwap() {
-  let tokenOwnerKeypair: Keypair;
-  let payerKeypair: Keypair;
-
-  let userKeypair: Keypair;
-
-  let tokenA: Token;
-  let tokenB: Token;
-
   let deployVaultRes: DeployVaultRes;
-
-  // tokenA -> token B swap
-  let swap: PublicKey;
-  let swapTokenMint: PublicKey;
-  let swapTokenAAccount: PublicKey;
-  let swapTokenBAccount: PublicKey;
-  let swapFeeAccount: PublicKey;
-  let swapAuthority: PublicKey;
-
-  // tokenB -> tokenA swap
-  let swap2: PublicKey;
-  let swapTokenMint2: PublicKey;
-  let swapTokenAAccount2: PublicKey;
-  let swapTokenBAccount2: PublicKey;
-  let swapFeeAccount2: PublicKey;
-  let swapAuthority2: PublicKey;
-
-  // Non-whitelisted tokenA -> tokenB swap
-  let swap3: PublicKey;
-  let swapTokenMint3: PublicKey;
-  let swapTokenAAccount3: PublicKey;
-  let swapTokenBAccount3: PublicKey;
-  let swapFeeAccount3: PublicKey;
-  let swapAuthority3: PublicKey;
-
-  let dripTrigger: DripSPLTokenSwapWrapper;
+  // whitelisted a -> b
+  let dripWithSwap1: DripSPLTokenSwapWrapper;
+  // whitelisted b -> a
+  let dripWithSwap2: DripSPLTokenSwapWrapper;
+  // non-whitelisted a -> b
+  let dripWithSwap3: DripSPLTokenSwapWrapper;
 
   beforeEach(async () => {
-    // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
-    // sleep to progress to the next block
-    await sleep(500);
-    [tokenOwnerKeypair, payerKeypair, userKeypair] = generatePairs(3);
-    await Promise.all([
-      SolUtil.fundAccount(userKeypair.publicKey, SolUtil.solToLamports(0.1)),
-      SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
-      SolUtil.fundAccount(
-        tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
-      ),
+    const deploySwap1Res = await TokenSwapUtil.deployTokenSwap({});
+    const [deploySwap2Res, deploySwap3Res] = await Promise.all([
+      TokenSwapUtil.deployTokenSwap({
+        tokenA: deploySwap1Res.tokenB,
+        tokenB: deploySwap1Res.tokenA,
+        tokenOwnerKeypair: deploySwap1Res.tokenOwnerKeypair,
+      }),
+      TokenSwapUtil.deployTokenSwap({
+        tokenA: deploySwap1Res.tokenA,
+        tokenB: deploySwap1Res.tokenB,
+        tokenOwnerKeypair: deploySwap1Res.tokenOwnerKeypair,
+      }),
     ]);
-    [tokenA, tokenB] = await Promise.all([
-      await TokenUtil.createMint(
-        tokenOwnerKeypair.publicKey,
-        null,
-        6,
-        payerKeypair
-      ),
-      await TokenUtil.createMint(
-        tokenOwnerKeypair.publicKey,
-        null,
-        6,
-        payerKeypair
-      ),
-    ]);
-
-    [
-      swap,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-    ] = await deploySPLTokenSwap(
-      tokenA,
-      tokenOwnerKeypair,
-      tokenB,
-      tokenOwnerKeypair,
-      payerKeypair
-    );
-
-    [
-      swap2,
-      swapTokenMint2,
-      swapTokenAAccount2,
-      swapTokenBAccount2,
-      swapFeeAccount2,
-      swapAuthority2,
-    ] = await deploySPLTokenSwap(
-      tokenB,
-      tokenOwnerKeypair,
-      tokenA,
-      tokenOwnerKeypair,
-      payerKeypair
-    );
-
-    [
-      swap3,
-      swapTokenMint3,
-      swapTokenAAccount3,
-      swapTokenBAccount3,
-      swapFeeAccount3,
-      swapAuthority3,
-    ] = await deploySPLTokenSwap(
-      tokenA,
-      tokenOwnerKeypair,
-      tokenB,
-      tokenOwnerKeypair,
-      payerKeypair
-    );
-    deployVaultRes = await DripUtil.deployVault({
-      tokenA,
-      tokenB,
-      userKeypair,
-      tokenOwnerKeypair,
-      whitelistedSwaps: [swap, swap2],
+    deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
+      tokenA: deploySwap1Res.tokenA,
+      tokenB: deploySwap1Res.tokenB,
+      tokenOwnerKeypair: deploySwap1Res.tokenOwnerKeypair,
+      whitelistedSwaps: [
+        deploySwap1Res.tokenSwap.tokenSwap,
+        deploySwap2Res.tokenSwap.tokenSwap,
+      ],
     });
 
-    const depositAmount = await TokenUtil.scaleAmount(
-      amount(1, Denom.Thousand),
-      tokenA
-    );
-    await depositToVault(
-      userKeypair,
-      tokenA,
-      depositAmount,
-      new u64(4),
-      deployVaultRes.vault,
-      deployVaultRes.vaultPeriods[4],
-      deployVaultRes.userTokenAAccount,
-      deployVaultRes.vaultTreasuryTokenBAccount
-    );
-
-    dripTrigger = dripSPLTokenSwapWrapper(
+    dripWithSwap1 = dripSPLTokenSwapWrapper(
       deployVaultRes.botKeypair,
       deployVaultRes.botTokenAAcount,
       deployVaultRes.vault,
       deployVaultRes.vaultProtoConfig,
       deployVaultRes.vaultTokenAAccount,
       deployVaultRes.vaultTokenBAccount,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-      swap
+      deploySwap1Res.tokenSwap.poolToken,
+      deploySwap1Res.tokenSwap.tokenAccountA,
+      deploySwap1Res.tokenSwap.tokenAccountB,
+      deploySwap1Res.tokenSwap.feeAccount,
+      deploySwap1Res.tokenSwap.authority,
+      deploySwap1Res.tokenSwap.tokenSwap
+    );
+
+    // swap2 has tokenA and tokenB swapped from swap1
+    // so here we are swapping the tokenAccounts (this is how tokenSwap facilitates a -> b and b ->a for the same swap)
+    dripWithSwap2 = dripSPLTokenSwapWrapper(
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      deploySwap2Res.tokenSwap.poolToken,
+      deploySwap2Res.tokenSwap.tokenAccountB,
+      deploySwap2Res.tokenSwap.tokenAccountA,
+      deploySwap2Res.tokenSwap.feeAccount,
+      deploySwap2Res.tokenSwap.authority,
+      deploySwap2Res.tokenSwap.tokenSwap
+    );
+
+    // non-whitelisted swap
+    dripWithSwap3 = dripSPLTokenSwapWrapper(
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      deploySwap3Res.tokenSwap.poolToken,
+      deploySwap3Res.tokenSwap.tokenAccountA,
+      deploySwap3Res.tokenSwap.tokenAccountB,
+      deploySwap3Res.tokenSwap.feeAccount,
+      deploySwap3Res.tokenSwap.authority,
+      deploySwap3Res.tokenSwap.tokenSwap
     );
   });
 
   it("should trigger drip twice with expected TWAP and Balance values", async () => {
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1]
     );
@@ -191,15 +117,14 @@ export function testDripSPLTokenSwap() {
     ]);
 
     vaultAfter.lastDripPeriod.toString().should.equal("1");
-    vaultTokenAAccountAfter.balance.toString().should.equal("1500000000");
-    vaultTokenBAccountAfter.balance.toString().should.equal("497753617");
-    botTokenAAccountAfter.balance.toString().should.equal("500000");
-    // Calculated manually by doing b/a
-    lastVaultPeriod.twap.toString().should.equal("18382249418543030879");
+    vaultTokenAAccountAfter.balance.toString().should.equal("750000000");
+    vaultTokenBAccountAfter.balance.toString().should.equal("248994550");
+    botTokenAAccountAfter.balance.toString().should.equal("250000");
+    lastVaultPeriod.twap.toString().should.equal("18390945904298204746");
     lastVaultPeriod.dripTimestamp.toString().should.not.equal("0");
 
     await sleep(1500);
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[1],
       deployVaultRes.vaultPeriods[2]
     );
@@ -219,35 +144,22 @@ export function testDripSPLTokenSwap() {
     ]);
 
     vaultAfter.lastDripPeriod.toString().should.equal("2");
-    vaultTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    vaultTokenBAccountAfter.balance.toString().should.equal("995011219");
-    botTokenAAccountAfter.balance.toString().should.equal("1000000");
-    lastVaultPeriod.twap.toString().should.equal("18373090397760527332");
+    vaultTokenAAccountAfter.balance.toString().should.equal("500000000");
+    vaultTokenBAccountAfter.balance.toString().should.equal("497976682");
+    botTokenAAccountAfter.balance.toString().should.equal("500000");
+    lastVaultPeriod.twap.toString().should.equal("18390487302360452343");
   });
 
   it("should trigger drip with inverted swap", async () => {
-    await dripSPLTokenSwapWrapper(
-      deployVaultRes.botKeypair,
-      deployVaultRes.botTokenAAcount,
-      deployVaultRes.vault,
-      deployVaultRes.vaultProtoConfig,
-      deployVaultRes.vaultTokenAAccount,
-      deployVaultRes.vaultTokenBAccount,
-      swapTokenMint2,
-
-      // Order swapped here
-      swapTokenBAccount2,
-      swapTokenAAccount2,
-
-      swapFeeAccount2,
-      swapAuthority2,
-      swap2
-    )(deployVaultRes.vaultPeriods[0], deployVaultRes.vaultPeriods[1]);
+    await dripWithSwap2(
+      deployVaultRes.vaultPeriods[0],
+      deployVaultRes.vaultPeriods[1]
+    );
   });
 
   it("should trigger drip number_of_cycles number of times", async () => {
     for (let i = 0; i < 4; i++) {
-      await dripTrigger(
+      await dripWithSwap1(
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
@@ -264,50 +176,37 @@ export function testDripSPLTokenSwap() {
       TokenUtil.fetchTokenAccountInfo(deployVaultRes.botTokenAAcount),
     ]);
     vaultTokenAAccountAfter.balance.toString().should.equal("0");
-    vaultTokenBAccountAfter.balance.toString().should.equal("1988041342");
-    botTokenAAccountAfter.balance.toString().should.equal("2000000");
+    vaultTokenBAccountAfter.balance.toString().should.equal("995903694");
+    botTokenAAccountAfter.balance.toString().should.equal("1000000");
   });
 
   it("should fail to trigger drip if vault token A balance is 0", async () => {
     for (let i = 0; i < 4; i++) {
-      await dripTrigger(
+      await dripWithSwap1(
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
       await sleep(1500);
     }
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[4],
       deployVaultRes.vaultPeriods[5]
     ).should.be.rejectedWith(/0x177e/); // PeriodicDripAmountIsZero
   });
 
   it("should fail if we trigger twice in the same granularity", async () => {
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1]
     );
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[1],
       deployVaultRes.vaultPeriods[2]
     ).should.be.rejectedWith(/1773/); // DuplicateDripError
   });
 
   it("should fail if non-whitelisted swaps is used", async () => {
-    await dripSPLTokenSwapWrapper(
-      deployVaultRes.botKeypair,
-      deployVaultRes.botTokenAAcount,
-      deployVaultRes.vault,
-      deployVaultRes.vaultProtoConfig,
-      deployVaultRes.vaultTokenAAccount,
-      deployVaultRes.vaultTokenBAccount,
-      swapTokenMint3,
-      swapTokenAAccount3,
-      swapTokenBAccount3,
-      swapFeeAccount3,
-      swapAuthority3,
-      swap3
-    )(
+    await dripWithSwap3(
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1]
     ).should.be.rejectedWith(/0x1778/); // InvalidSwapAccount
@@ -336,7 +235,7 @@ export function testDripSPLTokenSwap() {
       vaultProtoConfig: deployVaultRes.vaultProtoConfig,
       newOracleConfig: oracleConfig.publicKey,
     });
-    await dripTrigger(
+    await dripWithSwap1(
       deployVaultRes.vaultPeriods[0],
       deployVaultRes.vaultPeriods[1]
     ).should.be.rejectedWith(/0x178b/);
