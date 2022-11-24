@@ -341,7 +341,7 @@ export class DripUtil extends TestUtil {
   }
 
   static async dripSPLTokenSwap(
-    user: Keypair | Signer,
+    botKeypair: Keypair | Signer,
     dripFeeTokenAAccount: PublicKey,
     vault: PublicKey,
     vaultProtoConfig: PublicKey,
@@ -360,7 +360,7 @@ export class DripUtil extends TestUtil {
       .dripSplTokenSwap()
       .accounts({
         common: {
-          dripTriggerSource: user.publicKey.toBase58(),
+          dripTriggerSource: botKeypair.publicKey.toBase58(),
           dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
           vault: vault.toBase58(),
           vaultProtoConfig: vaultProtoConfig.toBase58(),
@@ -379,7 +379,7 @@ export class DripUtil extends TestUtil {
         tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, [user]);
+    return await this.provider.sendAndConfirm(tx, [botKeypair]);
   }
 
   static async dripOrcaWhirlpool(params: {

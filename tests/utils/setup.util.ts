@@ -268,6 +268,7 @@ export type DripSPLTokenSwapWrapper = (
   prevPeriod: PublicKey,
   currPeriod: PublicKey
 ) => Promise<void>;
+
 export const dripSPLTokenSwapWrapper = (
   user: Keypair,
   dripFeeTokenAAccount: PublicKey,
@@ -331,28 +332,24 @@ export const dripOrcaWhirlpoolWrapper = (
     tickArray0: PublicKey,
     tickArray1: PublicKey,
     tickArray2: PublicKey
-  ) => {
-    try {
-      await DripUtil.dripOrcaWhirlpool({
-        botKeypair,
-        dripFeeTokenAAccount,
-        vault,
-        vaultProtoConfig,
-        vaultTokenAAccount,
-        vaultTokenBAccount,
-        lastVaultPeriod,
-        currentVaultPeriod,
-        swapTokenAAccount,
-        swapTokenBAccount,
-        whirlpool,
-        tickArray0,
-        tickArray1,
-        tickArray2,
-        oracle,
-      });
-    } catch (e) {
-      console.log(e);
-    }
+  ): Promise<void> => {
+    await DripUtil.dripOrcaWhirlpool({
+      botKeypair,
+      dripFeeTokenAAccount,
+      vault,
+      vaultProtoConfig,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      lastVaultPeriod,
+      currentVaultPeriod,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      whirlpool,
+      tickArray0,
+      tickArray1,
+      tickArray2,
+      oracle,
+    });
   };
 };
 
