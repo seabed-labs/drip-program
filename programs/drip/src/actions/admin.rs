@@ -1,6 +1,7 @@
 use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
+    SetVaultMaxPriceDeviationBpsAccounts, SetVaultMaxPriceDeviationBpsParams,
     SetVaultOracleConfigAccounts, SetVaultWhitelistedSwapsAccounts, UpdateOracleConfigAccounts,
     UpdateOracleConfigParams,
 };
@@ -33,6 +34,10 @@ pub enum Admin<'a, 'info> {
     },
     SetVaultOracleConfig {
         accounts: &'a mut SetVaultOracleConfigAccounts<'info>,
+    },
+    SetVaultMaxPriceDeviationBps {
+        accounts: &'a mut SetVaultMaxPriceDeviationBpsAccounts<'info>,
+        params: SetVaultMaxPriceDeviationBpsParams,
     },
     UpdateOracleConfig {
         accounts: &'a mut UpdateOracleConfigAccounts<'info>,
@@ -97,6 +102,13 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 );
             }
             Admin::SetVaultOracleConfig { accounts, .. } => {
+                validate_signer_is_vault_admin(
+                    &accounts.vault_update_common_accounts.admin,
+                    &accounts.vault_update_common_accounts.vault_proto_config,
+                    &accounts.vault_update_common_accounts.vault,
+                )?;
+            }
+            Admin::SetVaultMaxPriceDeviationBps { accounts, .. } => {
                 validate_signer_is_vault_admin(
                     &accounts.vault_update_common_accounts.admin,
                     &accounts.vault_update_common_accounts.vault_proto_config,
@@ -174,6 +186,12 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     .vault_update_common_accounts
                     .vault
                     .set_oracle_config(accounts.new_oracle_config.key());
+            }
+            Admin::SetVaultMaxPriceDeviationBps { accounts, params } => {
+                accounts
+                    .vault_update_common_accounts
+                    .vault
+                    .set_max_price_deviation_bps(params.max_price_deviation);
             }
             Admin::UpdateOracleConfig { accounts, params } => {
                 accounts.oracle_config.set(

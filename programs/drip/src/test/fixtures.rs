@@ -269,5 +269,6 @@ lazy_static! {
         limit_swaps: true,
         max_slippage_bps: 1000,
         oracle_config: ORACLE_CONFIG.key,
+        max_price_deviation_bps: 1000,
     }, None);
 }
