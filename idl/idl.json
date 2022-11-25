@@ -775,7 +775,7 @@
         {
           "name": "params",
           "type": {
-            "defined": "UpdateVaultWhitelistedSwapsParams"
+            "defined": "SetVaultWhitelistedSwapsParams"
           }
         }
       ]
@@ -784,19 +784,24 @@
       "name": "setVaultOracleConfig",
       "accounts": [
         {
-          "name": "admin",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultProtoConfig",
-          "isMut": false,
-          "isSigner": false
+          "name": "vaultUpdateCommonAccounts",
+          "accounts": [
+            {
+              "name": "admin",
+              "isMut": true,
+              "isSigner": true
+            },
+            {
+              "name": "vault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultProtoConfig",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
         },
         {
           "name": "newOracleConfig",
@@ -1055,7 +1060,7 @@
       }
     },
     {
-      "name": "UpdateVaultWhitelistedSwapsParams",
+      "name": "SetVaultWhitelistedSwapsParams",
       "type": {
         "kind": "struct",
         "fields": [

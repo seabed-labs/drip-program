@@ -238,8 +238,12 @@ export class DripUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .setVaultOracleConfig()
       .accounts({
-        ...accounts,
-        admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+        vaultUpdateCommonAccounts: {
+          vault: accounts.vault,
+          vaultProtoConfig: accounts.vaultProtoConfig,
+          admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+        },
+        newOracleConfig: accounts.newOracleConfig,
       })
       .transaction();
     if (accounts.admin) {

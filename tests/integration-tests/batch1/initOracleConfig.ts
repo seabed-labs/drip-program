@@ -94,7 +94,7 @@ export function testInitOracleConfig() {
     };
     const params = {
       enabled: true,
-      source: 0, // only 0 for pyth is supported for now
+      source: 1, // only 0 for pyth is supported for now
       updateAuthority: updateAuthority.publicKey,
     };
     // InvalidOracleSource

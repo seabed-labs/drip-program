@@ -68,12 +68,12 @@ pub struct InitializeVaultAccounts<'info> {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct UpdateVaultWhitelistedSwapsParams {
+pub struct SetVaultWhitelistedSwapsParams {
     pub whitelisted_swaps: Vec<Pubkey>,
 }
 
 #[derive(Accounts)]
-pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
+pub struct SetVaultFieldCommonAccounts<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
 
@@ -86,12 +86,7 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
 
 #[derive(Accounts)]
 pub struct SetVaultOracleConfigAccounts<'info> {
-    pub admin: Signer<'info>,
-
-    // mut needed because we are changing state
-    #[account(mut)]
-    pub vault: Account<'info, Vault>,
-    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+    pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
 
     pub new_oracle_config: Account<'info, OracleConfig>,
 }
