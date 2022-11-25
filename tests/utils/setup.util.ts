@@ -3,78 +3,30 @@ import {
   Denom,
   findAssociatedTokenAddress,
   generatePair,
-  generatePairs,
   getPositionPDA,
-  getSwapAuthorityPDA,
-  getVaultPDA,
   getVaultPeriodPDA,
   PDA,
 } from "./common.util";
-import { DripUtil } from "./drip.util";
+import { DeployVaultRes, DripUtil } from "./drip.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./token.util";
 import { SolUtil } from "./sol.util";
-import { SwapUtil } from "./swap.util";
 import { Token, u64 } from "@solana/spl-token";
+import {
+  AccountFetcher,
+  buildWhirlpoolClient,
+  swapQuoteByInputToken,
+} from "@orca-so/whirlpools-sdk";
+import { WhirlpoolUtil } from "./whirlpool.util";
+import { Percentage } from "@orca-so/common-sdk";
+import { ProgramUtil } from "./program.util";
+import { AccountUtil } from "./account.util";
+import { BN } from "@project-serum/anchor";
 
 export const sleep = async (ms: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-};
-
-export const deployVaultProtoConfig = async (
-  granularity: number,
-  tokenADripTriggerSpread: number,
-  tokenBWithdrawalSpread: number,
-  tokenBReferralSpread: number,
-  admin: PublicKey
-): Promise<PublicKey> => {
-  const vaultProtoConfigKeypair = generatePair();
-  await DripUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-    granularity,
-    tokenADripTriggerSpread,
-    tokenBWithdrawalSpread,
-    tokenBReferralSpread,
-    admin,
-  });
-  return vaultProtoConfigKeypair.publicKey;
-};
-
-/**
- * @deprecated Use DripUtil.deployVault
- */
-export const deployVault = async (
-  tokenAMint: PublicKey,
-  tokenBMint: PublicKey,
-  vaultTreasuryTokenBAccount: PublicKey,
-  vaultProtoConfigAccount: PublicKey,
-  whitelistedSwaps?: PublicKey[]
-): Promise<PDA> => {
-  const vaultPDA = await getVaultPDA(
-    tokenAMint,
-    tokenBMint,
-    vaultProtoConfigAccount
-  );
-  const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-    findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint),
-    findAssociatedTokenAddress(vaultPDA.publicKey, tokenBMint),
-  ]);
-  const initVaultAccounts = {
-    vaultPubkey: vaultPDA.publicKey,
-    vaultProtoConfigAccount: vaultProtoConfigAccount,
-    tokenAMint: tokenAMint,
-    tokenBMint: tokenBMint,
-    tokenAAccount: vaultTokenA_ATA,
-    tokenBAccount: vaultTokenB_ATA,
-    treasuryTokenBAccount: vaultTreasuryTokenBAccount,
-  };
-  const initVaultParams = {
-    whitelistedSwaps,
-    maxSlippageBps: 1000,
-  };
-  await DripUtil.initVault(initVaultAccounts, initVaultParams);
-  return vaultPDA;
 };
 
 export const deployVaultPeriod = async (
@@ -94,13 +46,22 @@ export const deployVaultPeriod = async (
   return vaultPeriodPDA;
 };
 
-// TODO(Mocha): might be useful to return the new user
+export type DeployWithNewUserWrapper = ({
+  numberOfCycles,
+  newUserEndVaultPeriod,
+  mintAmount,
+}: {
+  numberOfCycles: number;
+  newUserEndVaultPeriod: PublicKey;
+  mintAmount: number;
+}) => Promise<void>;
+
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
   tokenA: Token,
   referrer: PublicKey
-) => {
+): DeployWithNewUserWrapper => {
   return async ({
     numberOfCycles,
     newUserEndVaultPeriod,
@@ -190,105 +151,32 @@ export const depositToVault = async (
   ];
 };
 
-export const deploySPLTokenSwap = async (
-  tokenA: Token,
-  tokenAMintOwner: Keypair,
-  tokenB: Token,
-  tokenBMintOwner: Keypair,
-  payerKeypair: Keypair,
-  mintAmount?: {
-    a?: number;
-    b?: number;
-  }
-): Promise<PublicKey[]> => {
-  const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
-    generatePairs(5);
-  await SolUtil.fundAccount(
-    swapPayerKeypair.publicKey,
-    SolUtil.solToLamports(0.2)
-  );
-  await SolUtil.fundAccount(
-    swapOwnerKeyPair.publicKey,
-    SolUtil.solToLamports(0.2)
-  );
-  const swapAuthorityPDA = await getSwapAuthorityPDA(
-    tokenSwapKeypair.publicKey
-  );
-  const swapLPToken = await TokenUtil.createMint(
-    swapAuthorityPDA.publicKey,
-    null,
-    2,
-    payerKeypair
-  );
-  const swapLPTokenAccount = await swapLPToken.createAccount(
-    swapOwnerKeyPair.publicKey
-  );
-  const swapLPTokenFeeAccount = await swapLPToken.createAccount(
-    new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
-  );
-  const swapTokenAAccount = await tokenA.createAccount(
-    swapAuthorityPDA.publicKey
-  );
-  const mintAmountA = await TokenUtil.scaleAmount(
-    amount(mintAmount?.a ?? 1, Denom.Million),
-    tokenA
-  );
-  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
-  const swapTokenBAccount = await tokenB.createAccount(
-    swapAuthorityPDA.publicKey
-  );
-  const mintAmountB = await TokenUtil.scaleAmount(
-    amount(mintAmount?.b ?? 1, Denom.Million),
-    tokenB
-  );
-  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
-  await SwapUtil.createSwap(
-    swapPayerKeypair,
-    tokenSwapKeypair,
-    swapAuthorityPDA,
-    tokenA.publicKey,
-    tokenB.publicKey,
-    swapTokenAAccount,
-    swapTokenBAccount,
-    swapLPToken.publicKey,
-    swapLPTokenFeeAccount,
-    swapLPTokenAccount
-  );
-  return [
-    tokenSwapKeypair.publicKey,
-    swapLPToken.publicKey,
-    swapTokenAAccount,
-    swapTokenBAccount,
-    swapLPTokenFeeAccount,
-    swapAuthorityPDA.publicKey,
-  ];
-};
+export type GenericDripWrapper = (
+  deployVaultRes: DeployVaultRes,
+  prevPeriod: PublicKey,
+  currPeriod: PublicKey
+) => Promise<void>;
 
 export const dripSPLTokenSwapWrapper = (
-  user: Keypair,
-  dripFeeTokenAAccount: PublicKey,
-  vault: PublicKey,
-  vaultProtoConfig: PublicKey,
-  vaultTokenA_ATA: PublicKey,
-  vaultTokenB_ATA,
   swapTokenMint: PublicKey,
   swapTokenAAccount: PublicKey,
   swapTokenBAccount: PublicKey,
   swapFeeAccount: PublicKey,
   swapAuthority: PublicKey,
   swap: PublicKey
-) => {
+): GenericDripWrapper => {
   return async (
+    deployVaultRes: DeployVaultRes,
     previousDripPeriod: PublicKey,
     currentDripPeriod: PublicKey
-  ) => {
+  ): Promise<void> => {
     await DripUtil.dripSPLTokenSwap(
-      user,
-      dripFeeTokenAAccount,
-      vault,
-      vaultProtoConfig,
-      vaultTokenA_ATA,
-      vaultTokenB_ATA,
+      deployVaultRes.botKeypair,
+      deployVaultRes.botTokenAAcount,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
       previousDripPeriod,
       currentDripPeriod,
       swapTokenMint,
@@ -301,48 +189,58 @@ export const dripSPLTokenSwapWrapper = (
   };
 };
 
-export const dripOrcaWhirlpoolWrapper = (
-  botKeypair: Keypair,
-  dripFeeTokenAAccount: PublicKey,
-  vault: PublicKey,
-  vaultProtoConfig: PublicKey,
-  vaultTokenAAccount: PublicKey,
-  vaultTokenBAccount: PublicKey,
+export const dripOrcaWhirlpoolWrapper = async (
   swapTokenAAccount: PublicKey,
   swapTokenBAccount: PublicKey,
   whirlpool: PublicKey,
   oracle: PublicKey
-) => {
+): Promise<GenericDripWrapper> => {
+  const whirlpoolClient = buildWhirlpoolClient(WhirlpoolUtil.whirlpoolCtx);
+  const fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
+  const whirlpoolAccount = await whirlpoolClient.getPool(whirlpool, false);
   return async (
+    deployVaultRes: DeployVaultRes,
     lastVaultPeriod: PublicKey,
-    currentVaultPeriod: PublicKey,
-    tickArray0: PublicKey,
-    tickArray1: PublicKey,
-    tickArray2: PublicKey
-  ) => {
-    try {
-      await DripUtil.dripOrcaWhirlpool({
-        botKeypair,
-        dripFeeTokenAAccount,
-        vault,
-        vaultProtoConfig,
-        vaultTokenAAccount,
-        vaultTokenBAccount,
-        lastVaultPeriod,
-        currentVaultPeriod,
-        swapTokenAAccount,
-        swapTokenBAccount,
-        whirlpool,
-        tickArray0,
-        tickArray1,
-        tickArray2,
-        oracle,
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    currentVaultPeriod: PublicKey
+  ): Promise<void> => {
+    const vaultAccount = await AccountUtil.fetchVaultAccount(
+      deployVaultRes.vault
+    );
+    const dripAmount = vaultAccount.dripAmount.toNumber();
+    const tokenAmount = dripAmount <= 0 ? 1 : dripAmount;
+    const quote = await swapQuoteByInputToken(
+      whirlpoolAccount,
+      deployVaultRes.tokenAMint.publicKey,
+      new BN(tokenAmount),
+      Percentage.fromFraction(10, 100),
+      ProgramUtil.orcaWhirlpoolProgram.programId,
+      fetcher,
+      true
+    );
+    await DripUtil.dripOrcaWhirlpool({
+      botKeypair: deployVaultRes.botKeypair,
+      dripFeeTokenAAccount: deployVaultRes.botTokenAAcount,
+      vault: deployVaultRes.vault,
+      vaultProtoConfig: deployVaultRes.vaultProtoConfig,
+      vaultTokenAAccount: deployVaultRes.vaultTokenAAccount,
+      vaultTokenBAccount: deployVaultRes.vaultTokenBAccount,
+      lastVaultPeriod,
+      currentVaultPeriod,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      whirlpool,
+      tickArray0: quote.tickArray0,
+      tickArray1: quote.tickArray1,
+      tickArray2: quote.tickArray2,
+      oracle,
+    });
   };
 };
+
+export type WithdrawBWrapper = (
+  vaultPeriodI: PublicKey,
+  vaultPeriodJ: PublicKey
+) => Promise<string>;
 
 export const withdrawBWrapper = (
   user: Keypair,
@@ -354,9 +252,9 @@ export const withdrawBWrapper = (
   vaultTreasuryTokenBAccount: PublicKey,
   userTokenBAccount: PublicKey,
   referrer?: PublicKey
-) => {
+): WithdrawBWrapper => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
-    const txHash = await DripUtil.withdrawB(
+    return await DripUtil.withdrawB(
       user,
       vault,
       vaultProtoConfig,
@@ -372,6 +270,12 @@ export const withdrawBWrapper = (
   };
 };
 
+export type ClosePositionWrapper = (
+  vaultPeriodI: PublicKey,
+  vaultPeriodJ: PublicKey,
+  vaultPeriodUserExpiry: PublicKey
+) => Promise<string>;
+
 export const closePositionWrapper = (
   withdrawer: Keypair,
   vault: PublicKey,
@@ -384,13 +288,13 @@ export const closePositionWrapper = (
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
   userPositionNftMint: PublicKey
-) => {
+): ClosePositionWrapper => {
   return async (
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey
-  ) => {
-    const txHash = await DripUtil.closePosition(
+  ): Promise<string> => {
+    return await DripUtil.closePosition(
       withdrawer,
       vault,
       vaultProtoConfig,

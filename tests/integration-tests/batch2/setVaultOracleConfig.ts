@@ -4,6 +4,7 @@ import { DripUtil } from "../../utils/drip.util";
 import { generatePair, generatePairs } from "../../utils/common.util";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { SolUtil } from "../../utils/sol.util";
+import { ProgramUtil } from "../../utils/program.util";
 
 describe("#setVaultOracleConfig", setVaultOracleConfig);
 
@@ -24,13 +25,9 @@ function setVaultOracleConfig() {
     const accounts = {
       oracleConfig: oracleConfigKeypair,
       tokenAMint: res.tokenAMint.publicKey,
-      tokenAPrice: new PublicKey(
-        "JBu1AL4obBcCMqKBBxhpWCNUt136ijcuMZLFvTP7iWdB"
-      ),
+      tokenAPrice: new PublicKey(ProgramUtil.pythETHPriceAccount.address),
       tokenBMint: res.tokenBMint.publicKey,
-      tokenBPrice: new PublicKey(
-        "Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD"
-      ),
+      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
       creator: payerKeypair,
     };
     const params = {

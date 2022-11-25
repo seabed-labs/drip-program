@@ -419,7 +419,6 @@ export class WhirlpoolUtil extends TestUtil {
     }
   }
 
-  // TODO(Mocha): this technically does not need to be in the static class
   static async deployWhirlpool({
     whirlpoolKeypair = generatePair(),
     whirlpoolAuth = generatePair(),
@@ -435,17 +434,17 @@ export class WhirlpoolUtil extends TestUtil {
     tokenB?: Token;
     initSqrtPrice?: BN;
   }): Promise<DeployWhirlpoolRes> {
-    [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
-      tokenAMint: tokenA,
-      tokenBMint: tokenB,
-      tokenOwnerKeypair,
-    });
     await Promise.all([
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
         SolUtil.solToLamports(0.1)
       ),
     ]);
+    [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
+      tokenAMint: tokenA,
+      tokenBMint: tokenB,
+      tokenOwnerKeypair,
+    });
 
     const initWhirlpoolConfigRes = await WhirlpoolUtil.initConfig(
       whirlpoolKeypair,
@@ -493,7 +492,7 @@ export class WhirlpoolUtil extends TestUtil {
       TestUtil.provider.wallet.publicKey
     );
     const mintAmountA = await TokenUtil.scaleAmount(
-      amount(1e4, Denom.Billion),
+      amount(1e2, Denom.Billion),
       tokenA
     );
     await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
@@ -503,7 +502,7 @@ export class WhirlpoolUtil extends TestUtil {
       TestUtil.provider.wallet.publicKey
     );
     const mintAmountB = await TokenUtil.scaleAmount(
-      amount(1e4, Denom.Billion),
+      amount(1e2, Denom.Billion),
       tokenB
     );
     await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
@@ -511,28 +510,27 @@ export class WhirlpoolUtil extends TestUtil {
     // Based off of swap.test.ts swaps across three tick arrays
     const fundParams: FundedPositionParams[] = [
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: new u64("10000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 1,
         tickUpperIndex:
           startIndex + initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 1,
       },
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: new u64("1000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 2,
         tickUpperIndex:
           startIndex + initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 2,
       },
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: new u64("1000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 3,
         tickUpperIndex:
           startIndex + initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 3,
       },
     ];
-
     const positions = await WhirlpoolUtil.fundPositions(
       initWhirlpoolRes.whirlpool,
       tokenAAccount,
@@ -543,7 +541,6 @@ export class WhirlpoolUtil extends TestUtil {
       initWhirlpoolRes.initSqrtPrice,
       fundParams
     );
-
     return {
       initWhirlpoolConfigRes,
       initWhirlpoolRes,

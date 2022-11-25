@@ -1,556 +1,404 @@
 import "should";
-import { SolUtil } from "../../utils/sol.util";
 import { TokenUtil } from "../../utils/token.util";
 import {
-  amount,
-  Denom,
-  findAssociatedTokenAddress,
-  generatePair,
-  generatePairs,
-  PDA,
-} from "../../utils/common.util";
-import {
   closePositionWrapper,
-  deploySPLTokenSwap,
-  deployVault,
-  deployVaultPeriod,
-  deployVaultProtoConfig,
-  depositToVault,
   depositWithNewUserWrapper,
   sleep,
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
+  GenericDripWrapper,
+  ClosePositionWrapper,
+  WithdrawBWrapper,
+  DeployWithNewUserWrapper,
 } from "../../utils/setup.util";
-import { MintLayout, Token, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
-import { TestUtil } from "../../utils/config.util";
 import should from "should";
+import { TokenSwapUtil } from "../../utils/tokenSwapUtil";
+import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
+import { describe } from "mocha";
 
 describe("#closePosition", testClosePosition);
 
 export function testClosePosition() {
-  let tokenOwnerKeypair: Keypair;
-  let payerKeypair: Keypair;
+  let deployVaultRes: DeployVaultRes;
 
-  let user: Keypair;
-  let userTokenAAccount: PublicKey;
-  let userTokenBAccount: PublicKey;
-
-  let bot: Keypair;
-  let botTokenAAccount: PublicKey;
-
-  let userPositionNFTMint: PublicKey;
-  let userPositionAccount: PublicKey;
-  let userPositionNFTAccount: PublicKey;
-  let userPosition: Token;
-
-  let tokenA: Token;
-  let tokenB: Token;
-  let swap: PublicKey;
-  let vaultProtoConfig: PublicKey;
-  let vaultPDA: PDA;
-  let vaultPeriods: PDA[];
-  let vaultTokenAAccount: PublicKey;
-  let vaultTokenBAccount: PublicKey;
-  let vaultTreasuryTokenBAccount: PublicKey;
-
-  let swapTokenMint: PublicKey;
-  let swapTokenAAccount: PublicKey;
-  let swapTokenBAccount: PublicKey;
-  let swapFeeAccount: PublicKey;
-  let swapAuthority: PublicKey;
-
-  let dripTrigger;
-  let closePosition;
-  let withdraw;
-  let depositWithNewUser;
+  let dripTrigger: GenericDripWrapper;
+  let closePosition: ClosePositionWrapper;
+  let withdrawB: WithdrawBWrapper;
+  let depositWithNewUser: DeployWithNewUserWrapper;
 
   beforeEach(async () => {
-    // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
-    // sleep to progress to the next block
-    await sleep(500);
-    [user, bot, tokenOwnerKeypair, payerKeypair] = generatePairs(4);
-    await Promise.all([
-      SolUtil.fundAccount(user.publicKey, SolUtil.solToLamports(0.1)),
-      SolUtil.fundAccount(bot.publicKey, SolUtil.solToLamports(0.1)),
-      SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
-      SolUtil.fundAccount(
-        tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
-      ),
-    ]);
-
-    tokenA = await TokenUtil.createMint(
-      tokenOwnerKeypair.publicKey,
-      null,
-      6,
-      payerKeypair
-    );
-
-    tokenB = await TokenUtil.createMint(
-      tokenOwnerKeypair.publicKey,
-      null,
-      6,
-      payerKeypair
-    );
-
-    [
-      swap,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-    ] = await deploySPLTokenSwap(
-      tokenA,
-      tokenOwnerKeypair,
-      tokenB,
-      tokenOwnerKeypair,
-      payerKeypair
-    );
-
-    vaultProtoConfig = await deployVaultProtoConfig(
-      1,
-      5,
-      5,
-      0,
-      TestUtil.provider.wallet.publicKey
-    );
-
-    vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
-      tokenB,
-      payerKeypair.publicKey
-    );
-
-    vaultPDA = await deployVault(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultTreasuryTokenBAccount,
-      vaultProtoConfig
-    );
-
-    [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
-    ]);
-
-    vaultPeriods = await Promise.all(
-      [...Array(6).keys()].map((i) =>
-        deployVaultPeriod(
-          vaultProtoConfig,
-          vaultPDA.publicKey,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          i
-        )
-      )
-    );
-
-    userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user.publicKey
-    );
-    const mintAmount = await TokenUtil.scaleAmount(
-      amount(2, Denom.Thousand),
-      tokenA
-    );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
-
-    botTokenAAccount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
-
-    userTokenBAccount = await tokenB.createAssociatedTokenAccount(
-      user.publicKey
-    );
-
-    const depositAmount = await TokenUtil.scaleAmount(
-      amount(1, Denom.Thousand),
-      tokenA
-    );
-    [userPositionNFTMint, userPositionAccount, userPositionNFTAccount] =
-      await depositToVault(
-        user,
-        tokenA,
-        depositAmount,
-        new u64(4),
-        vaultPDA.publicKey,
-        vaultPeriods[4].publicKey,
-        userTokenAAccount,
-        vaultTreasuryTokenBAccount
-      );
-
-    userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
-
-    dripTrigger = dripSPLTokenSwapWrapper(
-      bot,
-      botTokenAAccount,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      swapTokenMint,
-      swapTokenAAccount,
-      swapTokenBAccount,
-      swapFeeAccount,
-      swapAuthority,
-      swap
-    );
-
-    closePosition = closePositionWrapper(
-      user,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      userPositionAccount,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      userTokenAAccount,
-      userTokenBAccount,
-      userPositionNFTAccount,
-      userPositionNFTMint
-    );
-
-    withdraw = withdrawBWrapper(
-      user,
-      vaultPDA.publicKey,
-      vaultProtoConfig,
-      userPositionAccount,
-      userPositionNFTAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      userTokenBAccount
-    );
-
-    depositWithNewUser = depositWithNewUserWrapper(
-      vaultPDA.publicKey,
-      tokenOwnerKeypair,
-      tokenA,
-      vaultTreasuryTokenBAccount
-    );
-  });
-
-  it("should be able to close position before first drip", async () => {
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-
-    let [i, j, k] = [0, 0, 4];
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
-    const [
-      userTokenAAccountAfter,
-      userTokenBAccountAfter,
-      vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccountAfter,
-      userPositionAccountAfter,
-      vault_After,
-      vaultPeriodUserExpiryAfter,
-    ] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
-      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
-    ]);
-
-    userTokenAAccountAfter.balance.toString().should.equal("2000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("0");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
-    should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
-    vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
-    vault_After.dripAmount.toString().should.equal("0");
-  });
-
-  it("should be able to close position in the middle of the drip", async () => {
-    for (let i = 0; i < 2; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-
-    let [i, j, k] = [0, 2, 4];
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
-
-    const [
-      userTokenAAccountAfter,
-      userTokenBAccountAfter,
-      vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccountAfter,
-      userPositionAccountAfter,
-      vault_After,
-      vaultPeriodUserExpiryAfter,
-    ] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
-      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
-    ]);
-
-    userTokenAAccountAfter.balance.toString().should.equal("1500000000");
-    userTokenBAccountAfter.balance.toString().should.equal("497753433");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
-    should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
-    vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
-    vault_After.dripAmount.toString().should.equal("0");
-  });
-
-  it("should be able to close position at the end of the drip", async () => {
-    for (let i = 0; i < 4; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-
-    let [i, j, k] = [0, 4, 4];
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
-
-    const [
-      userTokenAAccountAfter,
-      userTokenBAccountAfter,
-      vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccountAfter,
-      userPositionAccountAfter,
-      vault_After,
-      vaultPeriodUserExpiryAfter,
-    ] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
-      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
-    ]);
-
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("995010603");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
-    should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
-    vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
-    vault_After.dripAmount.toString().should.equal("0");
-  });
-
-  it("should be able to close position after withdrawing", async () => {
-    for (let i = 0; i < 4; i++) {
-      await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
-      );
-      await sleep(1500);
-    }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-
-    let [i, j, k] = [0, 4, 4];
-    await withdraw(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
-
-    const [
-      userTokenAAccountAfter,
-      userTokenBAccountAfter,
-      vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccountAfter,
-      userPositionAccountAfter,
-      vault_After,
-      vaultPeriodUserExpiryAfter,
-    ] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-      AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
-      AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
-    ]);
-
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("995010603");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
-    should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
-    vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
-    vault_After.dripAmount.toString().should.equal("0");
-  });
-
-  it("should be able to close position past the end of the drip", async () => {
-    await depositWithNewUser({
-      mintAmount: 3,
-      numberOfCycles: 5,
-      newUserEndVaultPeriod: vaultPeriods[5].publicKey,
+    const deploySwapRes = await TokenSwapUtil.deployTokenSwap({});
+    deployVaultRes = await DripUtil.deployVault({
+      tokenA: deploySwapRes.tokenA,
+      tokenB: deploySwapRes.tokenB,
+      tokenOwnerKeypair: deploySwapRes.tokenOwnerKeypair,
+      shouldCreateUserPosition: true,
     });
-    for (let i = 0; i < 5; i++) {
+    dripTrigger = dripSPLTokenSwapWrapper(
+      deploySwapRes.tokenSwap.poolToken,
+      deploySwapRes.tokenSwap.tokenAccountA,
+      deploySwapRes.tokenSwap.tokenAccountB,
+      deploySwapRes.tokenSwap.feeAccount,
+      deploySwapRes.tokenSwap.authority,
+      deploySwapRes.tokenSwap.tokenSwap
+    );
+    closePosition = closePositionWrapper(
+      deployVaultRes.userKeypair,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.userPositionAccount,
+      deployVaultRes.vaultTokenAAccount,
+      deployVaultRes.vaultTokenBAccount,
+      deployVaultRes.vaultTreasuryTokenBAccount,
+      deployVaultRes.userTokenAAccount,
+      deployVaultRes.userTokenBAccount,
+      deployVaultRes.userPositionNFTAccount,
+      deployVaultRes.userPositionNFTMint.publicKey
+    );
+    withdrawB = withdrawBWrapper(
+      deployVaultRes.userKeypair,
+      deployVaultRes.vault,
+      deployVaultRes.vaultProtoConfig,
+      deployVaultRes.userPositionAccount,
+      deployVaultRes.userPositionNFTAccount,
+      deployVaultRes.vaultTokenBAccount,
+      deployVaultRes.vaultTreasuryTokenBAccount,
+      deployVaultRes.userTokenBAccount
+    );
+    depositWithNewUser = depositWithNewUserWrapper(
+      deployVaultRes.vault,
+      deployVaultRes.tokenOwnerKeypair,
+      deployVaultRes.tokenAMint,
+      deployVaultRes.vaultTreasuryTokenBAccount
+    );
+  });
+
+  describe("when NFT position is delegated to the vault:", async () => {
+    beforeEach(async () => {
+      await deployVaultRes.userPositionNFTMint.approve(
+        deployVaultRes.userPositionNFTAccount,
+        deployVaultRes.vault,
+        deployVaultRes.userKeypair.publicKey,
+        [deployVaultRes.userKeypair],
+        1
+      );
+    });
+
+    it("should be able to close position before first drip", async () => {
+      let [i, j, k] = [0, 0, 4];
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+      const [
+        userTokenAAccountAfter,
+        userTokenBAccountAfter,
+        vaultTreasuryTokenBAccountAfter,
+        userPositionNFTAccountAfter,
+        userPositionAccountAfter,
+        vault_After,
+        vaultPeriodUserExpiryAfter,
+      ] = await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenAAccount),
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(
+          deployVaultRes.vaultTreasuryTokenBAccount
+        ),
+        AccountUtil.provider.connection.getAccountInfo(
+          deployVaultRes.userPositionNFTAccount
+        ),
+        AccountUtil.fetchPositionAccount(deployVaultRes.userPositionAccount),
+        AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+        AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[k]),
+      ]);
+
+      userTokenAAccountAfter.balance.toString().should.equal("2000000000");
+      userTokenBAccountAfter.balance.toString().should.equal("0");
+      vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
+      should(userPositionNFTAccountAfter).be.null();
+      userPositionAccountAfter.isClosed.should.be.true();
+      vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
+      vault_After.dripAmount.toString().should.equal("0");
+    });
+
+    it("should be able to close position in the middle of the drip", async () => {
+      for (let i = 0; i < 2; i++) {
+        await dripTrigger(
+          deployVaultRes,
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[i + 1]
+        );
+        await sleep(1500);
+      }
+
+      let [i, j, k] = [0, 2, 4];
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+
+      const [
+        userTokenAAccountAfter,
+        userTokenBAccountAfter,
+        vaultTreasuryTokenBAccountAfter,
+        userPositionNFTAccountAfter,
+        userPositionAccountAfter,
+        vault_After,
+        vaultPeriodUserExpiryAfter,
+      ] = await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenAAccount),
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(
+          deployVaultRes.vaultTreasuryTokenBAccount
+        ),
+        AccountUtil.provider.connection.getAccountInfo(
+          deployVaultRes.userPositionNFTAccount
+        ),
+        AccountUtil.fetchPositionAccount(deployVaultRes.userPositionAccount),
+        AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+        AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[k]),
+      ]);
+
+      userTokenAAccountAfter.balance.toString().should.equal("1500000000");
+      userTokenBAccountAfter.balance.toString().should.equal("496980729");
+      vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("995952");
+      should(userPositionNFTAccountAfter).be.null();
+      userPositionAccountAfter.isClosed.should.be.true();
+      vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
+      vault_After.dripAmount.toString().should.equal("0");
+    });
+
+    it("should be able to close position at the end of the drip", async () => {
+      for (let i = 0; i < 4; i++) {
+        await dripTrigger(
+          deployVaultRes,
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[i + 1]
+        );
+        await sleep(1500);
+      }
+
+      let [i, j, k] = [0, 4, 4];
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+
+      const [
+        userTokenAAccountAfter,
+        userTokenBAccountAfter,
+        vaultTreasuryTokenBAccountAfter,
+        userPositionNFTAccountAfter,
+        userPositionAccountAfter,
+        vault_After,
+        vaultPeriodUserExpiryAfter,
+      ] = await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenAAccount),
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(
+          deployVaultRes.vaultTreasuryTokenBAccount
+        ),
+        AccountUtil.provider.connection.getAccountInfo(
+          deployVaultRes.userPositionNFTAccount
+        ),
+        AccountUtil.fetchPositionAccount(deployVaultRes.userPositionAccount),
+        AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+        AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[k]),
+      ]);
+
+      userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+      userTokenBAccountAfter.balance.toString().should.equal("993911887");
+      vaultTreasuryTokenBAccountAfter.balance
+        .toString()
+        .should.equal("1991806");
+      should(userPositionNFTAccountAfter).be.null();
+      userPositionAccountAfter.isClosed.should.be.true();
+      vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
+      vault_After.dripAmount.toString().should.equal("0");
+    });
+
+    it("should be able to close position after withdrawing", async () => {
+      for (let i = 0; i < 4; i++) {
+        await dripTrigger(
+          deployVaultRes,
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[i + 1]
+        );
+        await sleep(1500);
+      }
+
+      let [i, j, k] = [0, 4, 4];
+      await withdrawB(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j]
+      );
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+
+      const [
+        userTokenAAccountAfter,
+        userTokenBAccountAfter,
+        vaultTreasuryTokenBAccountAfter,
+        userPositionNFTAccountAfter,
+        userPositionAccountAfter,
+        vault_After,
+        vaultPeriodUserExpiryAfter,
+      ] = await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenAAccount),
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(
+          deployVaultRes.vaultTreasuryTokenBAccount
+        ),
+        AccountUtil.provider.connection.getAccountInfo(
+          deployVaultRes.userPositionNFTAccount
+        ),
+        AccountUtil.fetchPositionAccount(deployVaultRes.userPositionAccount),
+        AccountUtil.fetchVaultAccount(deployVaultRes.vault),
+        AccountUtil.fetchVaultPeriodAccount(deployVaultRes.vaultPeriods[k]),
+      ]);
+
+      userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+      userTokenBAccountAfter.balance.toString().should.equal("993911887");
+      vaultTreasuryTokenBAccountAfter.balance
+        .toString()
+        .should.equal("1991806");
+      should(userPositionNFTAccountAfter).be.null();
+      userPositionAccountAfter.isClosed.should.be.true();
+      vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
+      vault_After.dripAmount.toString().should.equal("0");
+    });
+
+    it("should be able to close position past the end of the drip", async () => {
+      await depositWithNewUser({
+        mintAmount: 3,
+        numberOfCycles: 5,
+        newUserEndVaultPeriod: deployVaultRes.vaultPeriods[5],
+      });
+      for (let i = 0; i < 5; i++) {
+        await dripTrigger(
+          deployVaultRes,
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[i + 1]
+        );
+        await sleep(1500);
+      }
+
+      let [i, j, k] = [0, 4, 4];
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+
+      const [
+        userTokenAAccountAfter,
+        userTokenBAccountAfter,
+        vaultTreasuryTokenBAccountAfter,
+        userPositionNFTAccountAfter,
+        userPositionAccountAfter,
+      ] = await Promise.all([
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenAAccount),
+        TokenUtil.fetchTokenAccountInfo(deployVaultRes.userTokenBAccount),
+        TokenUtil.fetchTokenAccountInfo(
+          deployVaultRes.vaultTreasuryTokenBAccount
+        ),
+        AccountUtil.provider.connection.getAccountInfo(
+          deployVaultRes.userPositionNFTAccount
+        ),
+        AccountUtil.fetchPositionAccount(deployVaultRes.userPositionAccount),
+      ]);
+
+      userTokenAAccountAfter.balance.toString().should.equal("1000000000");
+      userTokenBAccountAfter.balance.toString().should.equal("993674115");
+      vaultTreasuryTokenBAccountAfter.balance
+        .toString()
+        .should.equal("1991330");
+      should(userPositionNFTAccountAfter).be.null();
+      userPositionAccountAfter.isClosed.should.be.true();
+    });
+
+    it("should fail if invalid vault periods are provided", async () => {
       await dripTrigger(
-        vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        deployVaultRes,
+        deployVaultRes.vaultPeriods[0],
+        deployVaultRes.vaultPeriods[1]
       );
       await sleep(1500);
-    }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
 
-    let [i, j, k] = [0, 4, 4];
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
+      const testCases = [
+        [0, 0, 0],
+        [0, 0, 1],
+        [0, 1, 0],
+        [1, 0, 0],
+      ];
+      for (const [i, j, k] of testCases) {
+        await closePosition(
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[j],
+          deployVaultRes.vaultPeriods[k]
+        ).should.be.rejectedWith(/0x177b/);
+      }
+      await dripTrigger(
+        deployVaultRes,
+        deployVaultRes.vaultPeriods[1],
+        deployVaultRes.vaultPeriods[2]
+      );
+      for (const [i, j, k] of testCases) {
+        await closePosition(
+          deployVaultRes.vaultPeriods[i],
+          deployVaultRes.vaultPeriods[j],
+          deployVaultRes.vaultPeriods[k]
+        ).should.be.rejectedWith(/0x177b/);
+      }
+    });
 
-    const [
-      userTokenAAccountAfter,
-      userTokenBAccountAfter,
-      vaultTreasuryTokenBAccountAfter,
-      userPositionNFTAccountAfter,
-      userPositionAccountAfter,
-    ] = await Promise.all([
-      TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
-      TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
-      TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
-      AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
-    ]);
+    it("should not be able to close position more than once", async () => {
+      let [i, j, k] = [0, 0, 4];
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      );
+      const mint = TokenUtil.fetchMint(
+        deployVaultRes.userPositionNFTMint.publicKey,
+        deployVaultRes.userKeypair
+      );
+      const newUserPositionNFTAccount = await mint.createAssociatedTokenAccount(
+        deployVaultRes.userKeypair.publicKey
+      );
+      newUserPositionNFTAccount
+        .toString()
+        .should.equal(deployVaultRes.userPositionNFTAccount.toString());
 
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("992636304");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("496566");
-    should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
+      await deployVaultRes.userPositionNFTMint.approve(
+        newUserPositionNFTAccount,
+        deployVaultRes.vault,
+        deployVaultRes.userKeypair.publicKey,
+        [deployVaultRes.userKeypair],
+        1
+      );
+      await closePosition(
+        deployVaultRes.vaultPeriods[i],
+        deployVaultRes.vaultPeriods[j],
+        deployVaultRes.vaultPeriods[k]
+      ).should.be.rejectedWith(/0x177f/);
+    });
   });
 
-  it("should fail if invalid vault periods are provided", async () => {
-    await dripTrigger(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
-    await sleep(1500);
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-    const testCases = [
-      [0, 0, 0],
-      [0, 0, 1],
-      [0, 1, 0],
-      [1, 0, 0],
-    ];
-    for (const [i, j, k] of testCases) {
-      try {
-        await closePosition(
-          vaultPeriods[i].publicKey,
-          vaultPeriods[j].publicKey,
-          vaultPeriods[k].publicKey
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(".*Invalid vault-period")
-        ).should.not.be.undefined();
-      }
-    }
-    await dripTrigger(vaultPeriods[1].publicKey, vaultPeriods[2].publicKey);
-    for (const [i, j, k] of testCases) {
-      try {
-        await closePosition(
-          vaultPeriods[i].publicKey,
-          vaultPeriods[j].publicKey,
-          vaultPeriods[k].publicKey
-        );
-      } catch (e) {
-        findError(
-          e,
-          new RegExp(".*Invalid vault-period")
-        ).should.not.be.undefined();
-      }
-    }
-  });
-
-  it("should not be able to close position more than once", async () => {
+  it("should not be able to close position when NFT is not delegated to the vault", async () => {
     let [i, j, k] = [0, 0, 4];
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
     await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    );
-    const mint = TokenUtil.fetchMint(userPositionNFTMint, user);
-    const newUserPositionNFTAccount = await mint.createAssociatedTokenAccount(
-      user.publicKey
-    );
-    newUserPositionNFTAccount
-      .toString()
-      .should.equal(userPositionNFTAccount.toString());
-
-    await userPosition.approve(
-      newUserPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-    await closePosition(
-      vaultPeriods[i].publicKey,
-      vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
-    ).should.be.rejectedWith(/0x177f/);
+      deployVaultRes.vaultPeriods[i],
+      deployVaultRes.vaultPeriods[j],
+      deployVaultRes.vaultPeriods[k]
+    ).should.be.rejectedWith(/0x4/); // Owner does not match
   });
 }

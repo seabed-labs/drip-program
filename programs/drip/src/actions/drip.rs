@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::errors::DripError::{
     DuplicateDripError, IncorrectVaultTokenAccount, InvalidSwapAccount, InvalidVaultPeriod,
     InvalidVaultProtoConfigReference, InvalidVaultReference, PeriodicDripAmountIsZero,
+    V1DripOracleNotSupported,
 };
 
 use crate::errors::DripError;
@@ -33,13 +34,20 @@ impl<'a, 'info> Validatable for Drip<'a, 'info> {
     fn validate(&self) -> Result<()> {
         match self {
             Drip::SPLTokenSwap { accounts, .. } => {
-                validate_common(&accounts.common, &accounts.swap.key())
+                validate_drip_v1(&accounts.common, &accounts.swap.key())
             }
             Drip::OrcaWhirlpool { accounts, .. } => {
-                validate_common(&accounts.common, &accounts.whirlpool.key())
+                validate_drip_v1(&accounts.common, &accounts.whirlpool.key())
             }
         }
     }
+}
+fn validate_drip_v1(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
+    validate!(
+        accounts.vault.oracle_config == Pubkey::default(),
+        V1DripOracleNotSupported
+    );
+    validate_common(accounts, swap)
 }
 
 fn validate_common(accounts: &DripCommonAccounts, swap: &Pubkey) -> Result<()> {
@@ -94,6 +102,21 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
         match self {
             Drip::SPLTokenSwap { accounts } => {
                 let (swap_amount, _) = get_token_a_swap_and_spread_amount(&accounts.common);
+                let (swap_token_a_account, swap_token_b_account) =
+                    if accounts.common.vault_token_a_account.mint.key()
+                        == accounts.common.swap_token_a_account.mint.key()
+                    {
+                        (
+                            &accounts.common.swap_token_a_account,
+                            &accounts.common.swap_token_b_account,
+                        )
+                    } else {
+                        (
+                            &accounts.common.swap_token_b_account,
+                            &accounts.common.swap_token_a_account,
+                        )
+                    };
+
                 let swap = SwapSPLTokenSwap::new(
                     &accounts.token_swap_program,
                     &accounts.common.token_program,
@@ -101,8 +124,8 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
                     &accounts.swap_authority,
                     &accounts.common.vault.to_account_info(),
                     &accounts.common.vault_token_a_account,
-                    &accounts.common.swap_token_a_account,
-                    &accounts.common.swap_token_b_account,
+                    swap_token_a_account,
+                    swap_token_b_account,
                     &accounts.common.vault_token_b_account,
                     &accounts.swap_token_mint,
                     &accounts.swap_fee_account,

@@ -75,18 +75,27 @@ export interface DepositWithMetadataTxParams {
 }
 
 export type DeployVaultRes = {
+  tokenOwnerKeypair: Keypair;
+  botKeypair: Keypair;
+  admin: Keypair;
+
   vault: PublicKey;
   vaultProtoConfig: PublicKey;
   vaultPeriods: PublicKey[];
-  userTokenAAccount: PublicKey;
-  botKeypair: Keypair;
   botTokenAAcount: PublicKey;
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
   vaultTokenBAccount: PublicKey;
+  referrerTokenBAccount: PublicKey;
   tokenAMint: Token;
   tokenBMint: Token;
-  admin: Keypair;
+
+  userKeypair: Keypair;
+  userTokenAAccount?: PublicKey;
+  userTokenBAccount?: PublicKey;
+  userPositionNFTAccount?: PublicKey;
+  userPositionAccount?: PublicKey;
+  userPositionNFTMint?: Token;
 };
 
 // TODO(Mocha): Replace the program interaction with the SDK
@@ -341,7 +350,7 @@ export class DripUtil extends TestUtil {
   }
 
   static async dripSPLTokenSwap(
-    user: Keypair | Signer,
+    botKeypair: Keypair | Signer,
     dripFeeTokenAAccount: PublicKey,
     vault: PublicKey,
     vaultProtoConfig: PublicKey,
@@ -360,7 +369,7 @@ export class DripUtil extends TestUtil {
       .dripSplTokenSwap()
       .accounts({
         common: {
-          dripTriggerSource: user.publicKey.toBase58(),
+          dripTriggerSource: botKeypair.publicKey.toBase58(),
           dripFeeTokenAAccount: dripFeeTokenAAccount.toBase58(),
           vault: vault.toBase58(),
           vaultProtoConfig: vaultProtoConfig.toBase58(),
@@ -379,7 +388,7 @@ export class DripUtil extends TestUtil {
         tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, [user]);
+    return await this.provider.sendAndConfirm(tx, [botKeypair]);
   }
 
   static async dripOrcaWhirlpool(params: {
@@ -601,7 +610,10 @@ export class DripUtil extends TestUtil {
     botKeypair = generatePair(),
     userKeypair = generatePair(),
     vaultPeriodIndex = 10,
+    referrerTokenBAccount,
+    shouldCreateUserPosition,
   }: {
+    shouldCreateUserPosition: boolean;
     tokenA?: Token;
     tokenB?: Token;
     tokenOwnerKeypair?: Keypair;
@@ -612,6 +624,7 @@ export class DripUtil extends TestUtil {
     vaultProtoConfig?: PublicKey;
     whitelistedSwaps?: PublicKey[];
     vaultPeriodIndex?: number;
+    referrerTokenBAccount?: PublicKey;
   }): Promise<DeployVaultRes> {
     await Promise.all([
       SolUtil.fundAccount(adminKeypair.publicKey, SolUtil.solToLamports(0.1)),
@@ -639,14 +652,6 @@ export class DripUtil extends TestUtil {
         tokenOwnerKeypair
       );
     }
-    const mintAmount = await TokenUtil.scaleAmount(
-      amount(2, Denom.Thousand),
-      tokenA
-    );
-    const userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      userKeypair.publicKey
-    );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
 
     const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
@@ -712,36 +717,62 @@ export class DripUtil extends TestUtil {
     ).map((vaultPeriodPDA: PDA) => {
       return vaultPeriodPDA.publicKey;
     });
+    const res: DeployVaultRes = {
+      tokenOwnerKeypair,
+      admin: adminKeypair,
+      botKeypair,
+
+      vault: vaultPDA.publicKey,
+      vaultProtoConfig,
+      vaultPeriods,
+      botTokenAAcount,
+      vaultTreasuryTokenBAccount,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      referrerTokenBAccount,
+      tokenAMint: tokenA,
+      tokenBMint: tokenB,
+
+      userKeypair,
+    };
+
+    if (!shouldCreateUserPosition) {
+      return res;
+    }
+
+    const mintAmount = await TokenUtil.scaleAmount(
+      amount(2, Denom.Thousand),
+      tokenA
+    );
+    const [userTokenAAccount, userTokenBAccount] = await Promise.all([
+      tokenA.createAssociatedTokenAccount(userKeypair.publicKey),
+      tokenB.createAssociatedTokenAccount(userKeypair.publicKey),
+    ]);
+    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    res.userTokenAAccount = userTokenAAccount;
+    res.userTokenBAccount = userTokenBAccount;
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
       tokenA
     );
 
-    await depositToVault(
-      userKeypair,
-      tokenA,
-      depositAmount,
-      new u64(4),
-      vaultPDA.publicKey,
-      vaultPeriods[4],
-      userTokenAAccount,
-      vaultTreasuryTokenBAccount
-    );
+    const [userPositionNFTMint, userPositionAccount, userPositionNFTAccount] =
+      await depositToVault(
+        userKeypair,
+        tokenA,
+        depositAmount,
+        new u64(4),
+        vaultPDA.publicKey,
+        vaultPeriods[4],
+        userTokenAAccount,
+        referrerTokenBAccount ?? vaultTreasuryTokenBAccount
+      );
+    const userPosition = TokenUtil.fetchMint(userPositionNFTMint, userKeypair);
 
-    return {
-      vault: vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultPeriods,
-      userTokenAAccount,
-      botKeypair,
-      botTokenAAcount,
-      vaultTreasuryTokenBAccount,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      tokenAMint: tokenA,
-      tokenBMint: tokenB,
-      admin: adminKeypair,
-    };
+    res.userPositionNFTAccount = userPositionNFTAccount;
+    res.userPositionAccount = userPositionAccount;
+    res.userPositionNFTMint = userPosition;
+    return res;
   }
 }
