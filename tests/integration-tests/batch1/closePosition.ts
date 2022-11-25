@@ -6,7 +6,7 @@ import {
   sleep,
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
-  DripSPLTokenSwapWrapper,
+  GenericDripWrapper,
   ClosePositionWrapper,
   WithdrawBWrapper,
   DeployWithNewUserWrapper,
@@ -23,25 +23,20 @@ describe("#closePosition", testClosePosition);
 export function testClosePosition() {
   let deployVaultRes: DeployVaultRes;
 
-  let dripTrigger: DripSPLTokenSwapWrapper;
+  let dripTrigger: GenericDripWrapper;
   let closePosition: ClosePositionWrapper;
   let withdrawB: WithdrawBWrapper;
   let depositWithNewUser: DeployWithNewUserWrapper;
 
   beforeEach(async () => {
     const deploySwapRes = await TokenSwapUtil.deployTokenSwap({});
-    deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
+    deployVaultRes = await DripUtil.deployVault({
       tokenA: deploySwapRes.tokenA,
       tokenB: deploySwapRes.tokenB,
       tokenOwnerKeypair: deploySwapRes.tokenOwnerKeypair,
+      shouldCreateUserPosition: true,
     });
     dripTrigger = dripSPLTokenSwapWrapper(
-      deployVaultRes.botKeypair,
-      deployVaultRes.botTokenAAcount,
-      deployVaultRes.vault,
-      deployVaultRes.vaultProtoConfig,
-      deployVaultRes.vaultTokenAAccount,
-      deployVaultRes.vaultTokenBAccount,
       deploySwapRes.tokenSwap.poolToken,
       deploySwapRes.tokenSwap.tokenAccountA,
       deploySwapRes.tokenSwap.tokenAccountB,
@@ -132,6 +127,7 @@ export function testClosePosition() {
     it("should be able to close position in the middle of the drip", async () => {
       for (let i = 0; i < 2; i++) {
         await dripTrigger(
+          deployVaultRes,
           deployVaultRes.vaultPeriods[i],
           deployVaultRes.vaultPeriods[i + 1]
         );
@@ -179,6 +175,7 @@ export function testClosePosition() {
     it("should be able to close position at the end of the drip", async () => {
       for (let i = 0; i < 4; i++) {
         await dripTrigger(
+          deployVaultRes,
           deployVaultRes.vaultPeriods[i],
           deployVaultRes.vaultPeriods[i + 1]
         );
@@ -228,6 +225,7 @@ export function testClosePosition() {
     it("should be able to close position after withdrawing", async () => {
       for (let i = 0; i < 4; i++) {
         await dripTrigger(
+          deployVaultRes,
           deployVaultRes.vaultPeriods[i],
           deployVaultRes.vaultPeriods[i + 1]
         );
@@ -286,6 +284,7 @@ export function testClosePosition() {
       });
       for (let i = 0; i < 5; i++) {
         await dripTrigger(
+          deployVaultRes,
           deployVaultRes.vaultPeriods[i],
           deployVaultRes.vaultPeriods[i + 1]
         );
@@ -328,6 +327,7 @@ export function testClosePosition() {
 
     it("should fail if invalid vault periods are provided", async () => {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[0],
         deployVaultRes.vaultPeriods[1]
       );
@@ -347,6 +347,7 @@ export function testClosePosition() {
         ).should.be.rejectedWith(/0x177b/);
       }
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[1],
         deployVaultRes.vaultPeriods[2]
       );

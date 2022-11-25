@@ -102,6 +102,21 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
         match self {
             Drip::SPLTokenSwap { accounts } => {
                 let (swap_amount, _) = get_token_a_swap_and_spread_amount(&accounts.common);
+                let (swap_token_a_account, swap_token_b_account) =
+                    if accounts.common.vault_token_a_account.mint.key()
+                        == accounts.common.swap_token_a_account.mint.key()
+                    {
+                        (
+                            &accounts.common.swap_token_a_account,
+                            &accounts.common.swap_token_b_account,
+                        )
+                    } else {
+                        (
+                            &accounts.common.swap_token_b_account,
+                            &accounts.common.swap_token_a_account,
+                        )
+                    };
+
                 let swap = SwapSPLTokenSwap::new(
                     &accounts.token_swap_program,
                     &accounts.common.token_program,
@@ -109,8 +124,8 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
                     &accounts.swap_authority,
                     &accounts.common.vault.to_account_info(),
                     &accounts.common.vault_token_a_account,
-                    &accounts.common.swap_token_a_account,
-                    &accounts.common.swap_token_b_account,
+                    swap_token_a_account,
+                    swap_token_b_account,
                     &accounts.common.vault_token_b_account,
                     &accounts.swap_token_mint,
                     &accounts.swap_fee_account,

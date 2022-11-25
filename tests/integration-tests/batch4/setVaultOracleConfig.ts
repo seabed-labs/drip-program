@@ -19,7 +19,7 @@ function setVaultOracleConfig() {
     await Promise.all([
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
     ]);
-    const res = await DripUtil.deployVaultAndCreatePosition({});
+    const res = await DripUtil.deployVault({});
     const oracleConfigKeypair = generatePair();
     const updateAuthority = generatePair();
     const accounts = {

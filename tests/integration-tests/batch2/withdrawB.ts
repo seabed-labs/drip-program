@@ -5,7 +5,7 @@ import {
   sleep,
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
-  DripSPLTokenSwapWrapper,
+  GenericDripWrapper,
   WithdrawBWrapper,
   DeployWithNewUserWrapper,
 } from "../../utils/setup.util";
@@ -19,24 +19,19 @@ describe("#withdrawB", testWithdrawB);
 export function testWithdrawB() {
   let deployVaultRes: DeployVaultRes;
 
-  let dripTrigger: DripSPLTokenSwapWrapper;
+  let dripTrigger: GenericDripWrapper;
   let withdrawB: WithdrawBWrapper;
   let depositWithNewUser: DeployWithNewUserWrapper;
 
   beforeEach(async () => {
     const deploySwapRes = await TokenSwapUtil.deployTokenSwap({});
-    deployVaultRes = await DripUtil.deployVaultAndCreatePosition({
+    deployVaultRes = await DripUtil.deployVault({
       tokenA: deploySwapRes.tokenA,
       tokenB: deploySwapRes.tokenB,
       tokenOwnerKeypair: deploySwapRes.tokenOwnerKeypair,
+      shouldCreateUserPosition: true,
     });
     dripTrigger = dripSPLTokenSwapWrapper(
-      deployVaultRes.botKeypair,
-      deployVaultRes.botTokenAAcount,
-      deployVaultRes.vault,
-      deployVaultRes.vaultProtoConfig,
-      deployVaultRes.vaultTokenAAccount,
-      deployVaultRes.vaultTokenBAccount,
       deploySwapRes.tokenSwap.poolToken,
       deploySwapRes.tokenSwap.tokenAccountA,
       deploySwapRes.tokenSwap.tokenAccountB,
@@ -70,6 +65,7 @@ export function testWithdrawB() {
 
     for (let i = 0; i < 2; i++) {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
@@ -108,6 +104,7 @@ export function testWithdrawB() {
 
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
@@ -141,6 +138,7 @@ export function testWithdrawB() {
   it("should be able to withdraw in the middle of the drip and at the end", async () => {
     for (let i = 0; i < 2; i++) {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
@@ -161,6 +159,7 @@ export function testWithdrawB() {
     vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("995952");
     for (let i = 2; i < 4; i++) {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );
@@ -190,6 +189,7 @@ export function testWithdrawB() {
     });
     for (let i = 0; i < 2; i++) {
       await dripTrigger(
+        deployVaultRes,
         deployVaultRes.vaultPeriods[i],
         deployVaultRes.vaultPeriods[i + 1]
       );

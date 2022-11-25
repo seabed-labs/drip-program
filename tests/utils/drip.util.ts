@@ -76,17 +76,12 @@ export interface DepositWithMetadataTxParams {
 
 export type DeployVaultRes = {
   tokenOwnerKeypair: Keypair;
-  userKeypair: Keypair;
   botKeypair: Keypair;
   admin: Keypair;
 
   vault: PublicKey;
   vaultProtoConfig: PublicKey;
   vaultPeriods: PublicKey[];
-  userTokenAAccount: PublicKey;
-  userTokenBAccount: PublicKey;
-  userPositionNFTAccount: PublicKey;
-  userPositionAccount: PublicKey;
   botTokenAAcount: PublicKey;
   vaultTreasuryTokenBAccount: PublicKey;
   vaultTokenAAccount: PublicKey;
@@ -94,7 +89,13 @@ export type DeployVaultRes = {
   referrerTokenBAccount: PublicKey;
   tokenAMint: Token;
   tokenBMint: Token;
-  userPositionNFTMint: Token;
+
+  userKeypair: Keypair;
+  userTokenAAccount?: PublicKey;
+  userTokenBAccount?: PublicKey;
+  userPositionNFTAccount?: PublicKey;
+  userPositionAccount?: PublicKey;
+  userPositionNFTMint?: Token;
 };
 
 // TODO(Mocha): Replace the program interaction with the SDK
@@ -598,7 +599,7 @@ export class DripUtil extends TestUtil {
     Deposit into vault
     Create Vault Periods
    */
-  static async deployVaultAndCreatePosition({
+  static async deployVault({
     tokenA,
     tokenB,
     vaultProtoConfig,
@@ -610,7 +611,9 @@ export class DripUtil extends TestUtil {
     userKeypair = generatePair(),
     vaultPeriodIndex = 10,
     referrerTokenBAccount,
+    shouldCreateUserPosition,
   }: {
+    shouldCreateUserPosition: boolean;
     tokenA?: Token;
     tokenB?: Token;
     tokenOwnerKeypair?: Keypair;
@@ -649,15 +652,6 @@ export class DripUtil extends TestUtil {
         tokenOwnerKeypair
       );
     }
-    const mintAmount = await TokenUtil.scaleAmount(
-      amount(2, Denom.Thousand),
-      tokenA
-    );
-    const [userTokenAAccount, userTokenBAccount] = await Promise.all([
-      tokenA.createAssociatedTokenAccount(userKeypair.publicKey),
-      tokenB.createAssociatedTokenAccount(userKeypair.publicKey),
-    ]);
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
 
     const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
@@ -723,6 +717,40 @@ export class DripUtil extends TestUtil {
     ).map((vaultPeriodPDA: PDA) => {
       return vaultPeriodPDA.publicKey;
     });
+    const res: DeployVaultRes = {
+      tokenOwnerKeypair,
+      admin: adminKeypair,
+      botKeypair,
+
+      vault: vaultPDA.publicKey,
+      vaultProtoConfig,
+      vaultPeriods,
+      botTokenAAcount,
+      vaultTreasuryTokenBAccount,
+      vaultTokenAAccount,
+      vaultTokenBAccount,
+      referrerTokenBAccount,
+      tokenAMint: tokenA,
+      tokenBMint: tokenB,
+
+      userKeypair,
+    };
+
+    if (!shouldCreateUserPosition) {
+      return res;
+    }
+
+    const mintAmount = await TokenUtil.scaleAmount(
+      amount(2, Denom.Thousand),
+      tokenA
+    );
+    const [userTokenAAccount, userTokenBAccount] = await Promise.all([
+      tokenA.createAssociatedTokenAccount(userKeypair.publicKey),
+      tokenB.createAssociatedTokenAccount(userKeypair.publicKey),
+    ]);
+    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    res.userTokenAAccount = userTokenAAccount;
+    res.userTokenBAccount = userTokenBAccount;
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
@@ -740,30 +768,11 @@ export class DripUtil extends TestUtil {
         userTokenAAccount,
         referrerTokenBAccount ?? vaultTreasuryTokenBAccount
       );
-
     const userPosition = TokenUtil.fetchMint(userPositionNFTMint, userKeypair);
 
-    return {
-      tokenOwnerKeypair,
-      admin: adminKeypair,
-      userKeypair,
-      botKeypair,
-
-      vault: vaultPDA.publicKey,
-      vaultProtoConfig,
-      vaultPeriods,
-      userTokenAAccount,
-      userTokenBAccount,
-      userPositionNFTAccount,
-      userPositionAccount,
-      botTokenAAcount,
-      vaultTreasuryTokenBAccount,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      referrerTokenBAccount,
-      tokenAMint: tokenA,
-      tokenBMint: tokenB,
-      userPositionNFTMint: userPosition,
-    };
+    res.userPositionNFTAccount = userPositionNFTAccount;
+    res.userPositionAccount = userPositionAccount;
+    res.userPositionNFTMint = userPosition;
+    return res;
   }
 }
