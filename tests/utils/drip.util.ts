@@ -204,11 +204,13 @@ export class DripUtil extends TestUtil {
         whitelistedSwaps: params.whitelistedSwaps ?? [],
       })
       .accounts({
-        vault: vaultPubkey.toBase58(),
-        vaultProtoConfig: vaultProtoConfigPubkey.toBase58(),
-        admin:
-          admin?.publicKey.toBase58() ??
-          this.provider.wallet.publicKey.toBase58(),
+        vaultUpdateCommonAccounts: {
+          vault: vaultPubkey.toBase58(),
+          vaultProtoConfig: vaultProtoConfigPubkey.toBase58(),
+          admin:
+            admin?.publicKey.toBase58() ??
+            this.provider.wallet.publicKey.toBase58(),
+        },
       })
       .transaction();
     if (admin) {

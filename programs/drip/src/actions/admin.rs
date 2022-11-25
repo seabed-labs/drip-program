@@ -1,7 +1,8 @@
 use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
-    SetVaultOracleConfigAccounts, UpdateOracleConfigAccounts, UpdateOracleConfigParams,
+    SetVaultOracleConfigAccounts, SetVaultWhitelistedSwapsAccounts, UpdateOracleConfigAccounts,
+    UpdateOracleConfigParams,
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{
@@ -13,7 +14,7 @@ use crate::ProgramError::UninitializedAccount;
 use crate::{
     instruction_accounts::{InitializeVaultAccounts, InitializeVaultParams},
     state::traits::{Executable, Validatable},
-    SetVaultFieldCommonAccounts, SetVaultWhitelistedSwapsParams,
+    SetVaultWhitelistedSwapsParams,
 };
 use anchor_lang::prelude::*;
 
@@ -27,7 +28,7 @@ pub enum Admin<'a, 'info> {
         bumps: BTreeMap<String, u8>,
     },
     SetVaultSwapWhitelist {
-        accounts: &'a mut SetVaultFieldCommonAccounts<'info>,
+        accounts: &'a mut SetVaultWhitelistedSwapsAccounts<'info>,
         params: SetVaultWhitelistedSwapsParams,
     },
     SetVaultOracleConfig {
@@ -85,9 +86,9 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                 accounts, params, ..
             } => {
                 validate_signer_is_vault_admin(
-                    &accounts.admin,
-                    &accounts.vault_proto_config,
-                    &accounts.vault,
+                    &accounts.vault_update_common_accounts.admin,
+                    &accounts.vault_update_common_accounts.vault_proto_config,
+                    &accounts.vault_update_common_accounts.vault,
                 )?;
 
                 validate!(
@@ -164,6 +165,7 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
             }
             Admin::SetVaultSwapWhitelist { accounts, params } => {
                 accounts
+                    .vault_update_common_accounts
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
             }

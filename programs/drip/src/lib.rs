@@ -119,7 +119,7 @@ pub mod drip {
     }
 
     pub fn set_vault_swap_whitelist(
-        ctx: Context<SetVaultFieldCommonAccounts>,
+        ctx: Context<SetVaultWhitelistedSwapsAccounts>,
         params: SetVaultWhitelistedSwapsParams,
     ) -> Result<()> {
         handle_action(Admin::SetVaultSwapWhitelist {

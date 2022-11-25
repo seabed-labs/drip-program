@@ -756,19 +756,24 @@ export type Drip = {
       name: "setVaultSwapWhitelist";
       accounts: [
         {
-          name: "admin";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "vault";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultProtoConfig";
-          isMut: false;
-          isSigner: false;
+          name: "vaultUpdateCommonAccounts";
+          accounts: [
+            {
+              name: "admin";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         }
       ];
       args: [
@@ -2091,19 +2096,24 @@ export const IDL: Drip = {
       name: "setVaultSwapWhitelist",
       accounts: [
         {
-          name: "admin",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "vault",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
+          name: "vaultUpdateCommonAccounts",
+          accounts: [
+            {
+              name: "admin",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
       ],
       args: [

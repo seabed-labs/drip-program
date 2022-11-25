@@ -85,6 +85,11 @@ pub struct SetVaultFieldCommonAccounts<'info> {
 }
 
 #[derive(Accounts)]
+pub struct SetVaultWhitelistedSwapsAccounts<'info> {
+    pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
+}
+
+#[derive(Accounts)]
 pub struct SetVaultOracleConfigAccounts<'info> {
     pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
 
