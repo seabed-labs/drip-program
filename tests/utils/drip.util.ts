@@ -204,11 +204,13 @@ export class DripUtil extends TestUtil {
         whitelistedSwaps: params.whitelistedSwaps ?? [],
       })
       .accounts({
-        vault: vaultPubkey.toBase58(),
-        vaultProtoConfig: vaultProtoConfigPubkey.toBase58(),
-        admin:
-          admin?.publicKey.toBase58() ??
-          this.provider.wallet.publicKey.toBase58(),
+        vaultUpdateCommonAccounts: {
+          vault: vaultPubkey.toBase58(),
+          vaultProtoConfig: vaultProtoConfigPubkey.toBase58(),
+          admin:
+            admin?.publicKey.toBase58() ??
+            this.provider.wallet.publicKey.toBase58(),
+        },
       })
       .transaction();
     if (admin) {
@@ -238,8 +240,12 @@ export class DripUtil extends TestUtil {
     const tx = await ProgramUtil.dripProgram.methods
       .setVaultOracleConfig()
       .accounts({
-        ...accounts,
-        admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+        vaultUpdateCommonAccounts: {
+          vault: accounts.vault,
+          vaultProtoConfig: accounts.vaultProtoConfig,
+          admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+        },
+        newOracleConfig: accounts.newOracleConfig,
       })
       .transaction();
     if (accounts.admin) {

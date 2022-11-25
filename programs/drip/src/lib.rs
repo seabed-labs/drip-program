@@ -119,8 +119,8 @@ pub mod drip {
     }
 
     pub fn set_vault_swap_whitelist(
-        ctx: Context<UpdateVaultWhitelistedSwapsAccounts>,
-        params: UpdateVaultWhitelistedSwapsParams,
+        ctx: Context<SetVaultWhitelistedSwapsAccounts>,
+        params: SetVaultWhitelistedSwapsParams,
     ) -> Result<()> {
         handle_action(Admin::SetVaultSwapWhitelist {
             accounts: ctx.accounts,

@@ -756,26 +756,31 @@ export type Drip = {
       name: "setVaultSwapWhitelist";
       accounts: [
         {
-          name: "admin";
-          isMut: true;
-          isSigner: true;
-        },
-        {
-          name: "vault";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultProtoConfig";
-          isMut: false;
-          isSigner: false;
+          name: "vaultUpdateCommonAccounts";
+          accounts: [
+            {
+              name: "admin";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         }
       ];
       args: [
         {
           name: "params";
           type: {
-            defined: "UpdateVaultWhitelistedSwapsParams";
+            defined: "SetVaultWhitelistedSwapsParams";
           };
         }
       ];
@@ -784,19 +789,24 @@ export type Drip = {
       name: "setVaultOracleConfig";
       accounts: [
         {
-          name: "admin";
-          isMut: false;
-          isSigner: true;
-        },
-        {
-          name: "vault";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "vaultProtoConfig";
-          isMut: false;
-          isSigner: false;
+          name: "vaultUpdateCommonAccounts";
+          accounts: [
+            {
+              name: "admin";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         },
         {
           name: "newOracleConfig";
@@ -1055,7 +1065,7 @@ export type Drip = {
       };
     },
     {
-      name: "UpdateVaultWhitelistedSwapsParams";
+      name: "SetVaultWhitelistedSwapsParams";
       type: {
         kind: "struct";
         fields: [
@@ -2086,26 +2096,31 @@ export const IDL: Drip = {
       name: "setVaultSwapWhitelist",
       accounts: [
         {
-          name: "admin",
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: "vault",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
+          name: "vaultUpdateCommonAccounts",
+          accounts: [
+            {
+              name: "admin",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
       ],
       args: [
         {
           name: "params",
           type: {
-            defined: "UpdateVaultWhitelistedSwapsParams",
+            defined: "SetVaultWhitelistedSwapsParams",
           },
         },
       ],
@@ -2114,19 +2129,24 @@ export const IDL: Drip = {
       name: "setVaultOracleConfig",
       accounts: [
         {
-          name: "admin",
-          isMut: false,
-          isSigner: true,
-        },
-        {
-          name: "vault",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "vaultProtoConfig",
-          isMut: false,
-          isSigner: false,
+          name: "vaultUpdateCommonAccounts",
+          accounts: [
+            {
+              name: "admin",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
         {
           name: "newOracleConfig",
@@ -2385,7 +2405,7 @@ export const IDL: Drip = {
       },
     },
     {
-      name: "UpdateVaultWhitelistedSwapsParams",
+      name: "SetVaultWhitelistedSwapsParams",
       type: {
         kind: "struct",
         fields: [
