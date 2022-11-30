@@ -6,53 +6,34 @@ import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import { SolUtil } from "../../utils/sol.util";
 import { ProgramUtil } from "../../utils/program.util";
 
-describe("#setVaultOracleConfig", setVaultOracleConfig);
+describe("#setVaultMaxPriceDeviationBps", setVaultMaxPriceDeviationBps);
 
-function setVaultOracleConfig() {
+function setVaultMaxPriceDeviationBps() {
   let vault: PublicKey;
   let vaultProtoConfig: PublicKey;
-  let oracleConfig: PublicKey;
   let admin: Keypair | Signer;
 
   beforeEach(async () => {
-    const payerKeypair = generatePair();
-    await Promise.all([
-      SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
-    ]);
     const res = await DripUtil.deployVault({
       shouldCreateUserPosition: false,
     });
-    const oracleConfigKeypair = generatePair();
-    const updateAuthority = generatePair();
-    const accounts = {
-      oracleConfig: oracleConfigKeypair,
-      tokenAMint: res.tokenAMint.publicKey,
-      tokenAPrice: new PublicKey(ProgramUtil.pythETHPriceAccount.address),
-      tokenBMint: res.tokenBMint.publicKey,
-      tokenBPrice: ProgramUtil.pythUSDCPriceAccount.address,
-      creator: payerKeypair,
-    };
-    const params = {
-      enabled: true,
-      source: 0,
-      updateAuthority: updateAuthority.publicKey,
-    };
-    await DripUtil.initOracleConfig(accounts, params);
-
     vault = res.vault;
     vaultProtoConfig = res.vaultProtoConfig;
-    oracleConfig = oracleConfigKeypair.publicKey;
     admin = res.admin;
   });
 
-  it("should update the oracle account to provided input if admin signs the transaction", async () => {
+  it("should update the maxPriceDeviation to provided input if admin signs the transaction", async () => {
     const vaultBefore = await AccountUtil.fetchVaultAccount(vault);
-    await DripUtil.setVaultOracleConfig({
-      admin,
-      vault,
-      vaultProtoConfig,
-      newOracleConfig: oracleConfig,
-    });
+    await DripUtil.setVaultMaxPriceDeviationBps(
+      {
+        maxPriceDeviation: 1000,
+      },
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      }
+    );
     const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
 
     vaultAfter.protoConfig
@@ -88,39 +69,58 @@ function setVaultOracleConfig() {
     vaultAfter.dripActivationTimestamp
       .toString()
       .should.equal(vaultBefore.dripActivationTimestamp.toString());
+    vaultAfter.oracleConfig
+      .toString()
+      .should.equal(vaultBefore.oracleConfig.toString());
     vaultAfter.bump.should.equal(vaultBefore.bump);
     vaultAfter.limitSwaps.should.equal(vaultBefore.limitSwaps);
     vaultAfter.maxSlippageBps.should.equal(vaultBefore.maxSlippageBps);
 
-    vaultAfter.oracleConfig
-      .toBase58()
-      .should.not.equal(vaultBefore.oracleConfig.toBase58());
-    vaultAfter.oracleConfig.toBase58().should.equal(oracleConfig.toBase58());
+    vaultAfter.maxPriceDeviationBps
+      .toString()
+      .should.not.equal(vaultBefore.maxPriceDeviationBps.toString());
+    vaultAfter.maxPriceDeviationBps.toString().should.equal("1000");
   });
 
-  it("should be able to set oracle config 2 times", async () => {
-    await DripUtil.setVaultOracleConfig({
-      admin,
-      vault,
-      vaultProtoConfig,
-      newOracleConfig: oracleConfig,
-    });
-    await DripUtil.setVaultOracleConfig({
-      admin,
-      vault,
-      vaultProtoConfig,
-      newOracleConfig: oracleConfig,
-    });
-    const vaultAfter = await AccountUtil.fetchVaultAccount(vault);
-    vaultAfter.oracleConfig.toBase58().should.equal(oracleConfig.toBase58());
+  it("should display idempotent behaviour when setting maxPriceDeviationBps", async () => {
+    const vaultBefore = await AccountUtil.fetchVaultAccount(vault);
+    vaultBefore.maxPriceDeviationBps.toString().should.equal("0");
+    await DripUtil.setVaultMaxPriceDeviationBps(
+      {
+        maxPriceDeviation: 1000,
+      },
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      }
+    );
+    let vaultAfter = await AccountUtil.fetchVaultAccount(vault);
+    vaultAfter.maxPriceDeviationBps.toString().should.equal("1000");
+    await DripUtil.setVaultMaxPriceDeviationBps(
+      {
+        maxPriceDeviation: 1000,
+      },
+      {
+        admin,
+        vault,
+        vaultProtoConfig,
+      }
+    );
+    vaultAfter = await AccountUtil.fetchVaultAccount(vault);
+    vaultAfter.maxPriceDeviationBps.toString().should.equal("1000");
   });
 
-  it("should throw an error a non-admin tries to update the oracle config", async () => {
-    await DripUtil.setVaultOracleConfig({
-      admin: undefined,
-      vault,
-      vaultProtoConfig,
-      newOracleConfig: oracleConfig,
-    }).should.be.rejectedWith(/0x1785/); // SignerIsNotAdmin
+  it("should throw an error a non-admin tries to update the maxPriceDeviationBps", async () => {
+    await DripUtil.setVaultMaxPriceDeviationBps(
+      {
+        maxPriceDeviation: 0,
+      },
+      {
+        admin: undefined,
+        vault,
+        vaultProtoConfig,
+      }
+    ).should.be.rejectedWith(/0x1785/); // SignerIsNotAdmin
   });
 }

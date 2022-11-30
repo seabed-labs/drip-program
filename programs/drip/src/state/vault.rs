@@ -117,7 +117,7 @@ impl Vault {
     }
 
     pub fn set_max_price_deviation_bps(&mut self, new_max_price_deviation_bps: u16) {
-        self.max_slippage_bps = new_max_price_deviation_bps;
+        self.max_price_deviation_bps = new_max_price_deviation_bps;
     }
 
     pub fn is_drip_activated(&self) -> bool {
