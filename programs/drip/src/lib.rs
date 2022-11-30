@@ -133,6 +133,16 @@ pub mod drip {
             accounts: ctx.accounts,
         })
     }
+
+    pub fn set_vault_max_price_deviation_bps(
+        ctx: Context<SetVaultMaxPriceDeviationBpsAccounts>,
+        params: SetVaultMaxPriceDeviationBpsParams,
+    ) -> Result<()> {
+        handle_action(Admin::SetVaultMaxPriceDeviationBps {
+            accounts: ctx.accounts,
+            params,
+        })
+    }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {

@@ -34,12 +34,13 @@ pub struct Vault {
     pub max_slippage_bps: u16,          // 2
 
     //  new fields added after mainnet release
-    pub oracle_config: Pubkey, // 32
+    pub oracle_config: Pubkey,        // 32
+    pub max_price_deviation_bps: u16, //2
 }
 
 impl Vault {
-    // total space -> 410
-    // allocation needed: ceil( (410+8)/8 )*8 -> 424
+    // total space -> 412
+    // allocation needed: ceil( (412+8)/8 )*8 -> 424
     pub const ACCOUNT_SPACE: usize = 424;
 
     pub fn init(
@@ -113,6 +114,10 @@ impl Vault {
 
     pub fn set_oracle_config(&mut self, new_oracle_config: Pubkey) {
         self.oracle_config = new_oracle_config
+    }
+
+    pub fn set_max_price_deviation_bps(&mut self, new_max_price_deviation_bps: u16) {
+        self.max_price_deviation_bps = new_max_price_deviation_bps;
     }
 
     pub fn is_drip_activated(&self) -> bool {

@@ -266,6 +266,46 @@ export class DripUtil extends TestUtil {
     }
   }
 
+  static async setVaultMaxPriceDeviationBps(
+    params: {
+      maxPriceDeviation: number;
+    },
+    accounts: {
+      admin?: Keypair | Signer;
+      vault: PublicKey;
+      vaultProtoConfig: PublicKey;
+    }
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .setVaultMaxPriceDeviationBps({
+        maxPriceDeviation: params.maxPriceDeviation,
+      })
+      .accounts({
+        vaultUpdateCommonAccounts: {
+          vault: accounts.vault,
+          vaultProtoConfig: accounts.vaultProtoConfig,
+          admin: accounts.admin?.publicKey ?? this.provider.wallet.publicKey,
+        },
+      })
+      .transaction();
+    if (accounts.admin) {
+      const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
+      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
+        accounts.admin,
+      ]);
+      await TestUtil.provider.connection.confirmTransaction(
+        {
+          signature: txId,
+          ...blockhash,
+        },
+        "confirmed"
+      );
+      return txId;
+    } else {
+      return await this.provider.sendAndConfirm(tx, undefined);
+    }
+  }
+
   static async initVaultPeriod(
     vault: PublicKey,
     vaultPeriod: PublicKey,

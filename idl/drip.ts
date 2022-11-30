@@ -815,6 +815,39 @@ export type Drip = {
         }
       ];
       args: [];
+    },
+    {
+      name: "setVaultMaxPriceDeviationBps";
+      accounts: [
+        {
+          name: "vaultUpdateCommonAccounts";
+          accounts: [
+            {
+              name: "admin";
+              isMut: true;
+              isSigner: true;
+            },
+            {
+              name: "vault";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "vaultProtoConfig";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
+        }
+      ];
+      args: [
+        {
+          name: "params";
+          type: {
+            defined: "SetVaultMaxPriceDeviationBpsParams";
+          };
+        }
+      ];
     }
   ];
   accounts: [
@@ -1028,6 +1061,10 @@ export type Drip = {
           {
             name: "oracleConfig";
             type: "publicKey";
+          },
+          {
+            name: "maxPriceDeviationBps";
+            type: "u16";
           }
         ];
       };
@@ -1074,6 +1111,18 @@ export type Drip = {
             type: {
               vec: "publicKey";
             };
+          }
+        ];
+      };
+    },
+    {
+      name: "SetVaultMaxPriceDeviationBpsParams";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "maxPriceDeviation";
+            type: "u16";
           }
         ];
       };
@@ -2156,6 +2205,39 @@ export const IDL: Drip = {
       ],
       args: [],
     },
+    {
+      name: "setVaultMaxPriceDeviationBps",
+      accounts: [
+        {
+          name: "vaultUpdateCommonAccounts",
+          accounts: [
+            {
+              name: "admin",
+              isMut: true,
+              isSigner: true,
+            },
+            {
+              name: "vault",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "vaultProtoConfig",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
+        },
+      ],
+      args: [
+        {
+          name: "params",
+          type: {
+            defined: "SetVaultMaxPriceDeviationBpsParams",
+          },
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -2369,6 +2451,10 @@ export const IDL: Drip = {
             name: "oracleConfig",
             type: "publicKey",
           },
+          {
+            name: "maxPriceDeviationBps",
+            type: "u16",
+          },
         ],
       },
     },
@@ -2414,6 +2500,18 @@ export const IDL: Drip = {
             type: {
               vec: "publicKey",
             },
+          },
+        ],
+      },
+    },
+    {
+      name: "SetVaultMaxPriceDeviationBpsParams",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "maxPriceDeviation",
+            type: "u16",
           },
         ],
       },

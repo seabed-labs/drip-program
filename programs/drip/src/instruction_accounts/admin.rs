@@ -18,8 +18,8 @@ pub struct InitializeVaultAccounts<'info> {
     /* DRIP ACCOUNTS */
     #[account(
         init,
-        // Allocate an extra 96 bytes to future proof this
-        space = Vault::ACCOUNT_SPACE + 96,
+        // Allocate an extra 94 bytes to future proof this
+        space = Vault::ACCOUNT_SPACE + 94,
         seeds = [
             b"drip-v1".as_ref(),
             token_a_mint.key().as_ref(),
@@ -67,11 +67,6 @@ pub struct InitializeVaultAccounts<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct SetVaultWhitelistedSwapsParams {
-    pub whitelisted_swaps: Vec<Pubkey>,
-}
-
 #[derive(Accounts)]
 pub struct SetVaultFieldCommonAccounts<'info> {
     #[account(mut)]
@@ -84,8 +79,23 @@ pub struct SetVaultFieldCommonAccounts<'info> {
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct SetVaultWhitelistedSwapsParams {
+    pub whitelisted_swaps: Vec<Pubkey>,
+}
+
 #[derive(Accounts)]
 pub struct SetVaultWhitelistedSwapsAccounts<'info> {
+    pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct SetVaultMaxPriceDeviationBpsParams {
+    pub max_price_deviation: u16,
+}
+
+#[derive(Accounts)]
+pub struct SetVaultMaxPriceDeviationBpsAccounts<'info> {
     pub vault_update_common_accounts: SetVaultFieldCommonAccounts<'info>,
 }
 
