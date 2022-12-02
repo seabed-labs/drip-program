@@ -218,6 +218,11 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
                     accounts.common.vault_token_a_account.mint.key()
                         == accounts.common.swap_token_a_account.mint.key(),
                 );
+                let oracle_accounts = if accounts.oracle_common.oracle_config.enabled {
+                    Some(&mut accounts.oracle_common)
+                } else {
+                    None
+                };
 
                 let swap = SwapOrcaWhirlpool::new(
                     &accounts.whirlpool_program,
@@ -236,12 +241,7 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
                     sqrt_price_limit,
                 );
 
-                execute_drip(
-                    &mut accounts.common,
-                    Some(&mut accounts.oracle_common),
-                    &swap,
-                    cpi_executor,
-                )
+                execute_drip(&mut accounts.common, oracle_accounts, &swap, cpi_executor)
             }
         }
     }
