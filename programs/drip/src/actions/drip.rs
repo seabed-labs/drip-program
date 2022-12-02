@@ -72,11 +72,11 @@ fn validate_drip_v2(
         V2DripInvalidOracleAccount
     );
     validate!(
-        common_accounts.vault.token_b_mint == oracle_accounts.oracle_config.token_b_mint,
+        oracle_accounts.oracle_config.token_a_price == oracle_accounts.token_a_price.key(),
         V2DripInvalidOracleAccount
     );
     validate!(
-        oracle_accounts.oracle_config.token_a_price == oracle_accounts.token_a_price.key(),
+        common_accounts.vault.token_b_mint == oracle_accounts.oracle_config.token_b_mint,
         V2DripInvalidOracleAccount
     );
     validate!(
