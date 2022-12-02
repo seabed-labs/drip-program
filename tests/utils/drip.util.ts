@@ -481,6 +481,62 @@ export class DripUtil extends TestUtil {
     return await this.provider.sendAndConfirm(tx, [params.botKeypair]);
   }
 
+  static async dripV2OrcaWhirlpool(params: {
+    botKeypair: Keypair | Signer;
+    dripFeeTokenAAccount: PublicKey;
+    vault: PublicKey;
+    vaultProtoConfig: PublicKey;
+    vaultTokenAAccount: PublicKey;
+    vaultTokenBAccount: PublicKey;
+    lastVaultPeriod: PublicKey;
+    currentVaultPeriod: PublicKey;
+    swapTokenAAccount: PublicKey;
+    swapTokenBAccount: PublicKey;
+    whirlpool: PublicKey;
+    tickArray0: PublicKey;
+    tickArray1: PublicKey;
+    tickArray2: PublicKey;
+    oracle: PublicKey;
+    oracleConfig: PublicKey;
+    tokenAMint: PublicKey;
+    tokenAPriceAccount: PublicKey;
+    tokenBMint: PublicKey;
+    tokenBPriceAccount: PublicKey;
+  }): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .dripV2OrcaWhirlpool()
+      .accounts({
+        common: {
+          dripTriggerSource: params.botKeypair.publicKey.toBase58(),
+          vault: params.vault.toBase58(),
+          vaultProtoConfig: params.vaultProtoConfig.toBase58(),
+          lastVaultPeriod: params.lastVaultPeriod.toBase58(),
+          currentVaultPeriod: params.currentVaultPeriod.toBase58(),
+          vaultTokenAAccount: params.vaultTokenAAccount.toBase58(),
+          vaultTokenBAccount: params.vaultTokenBAccount.toBase58(),
+          swapTokenAAccount: params.swapTokenAAccount.toBase58(),
+          swapTokenBAccount: params.swapTokenBAccount.toBase58(),
+          dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
+          tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
+        },
+        oracleCommon: {
+          oracleConfig: params.oracleConfig,
+          tokenAMint: params.tokenAMint,
+          tokenAPrice: params.tokenAPriceAccount,
+          tokenBMint: params.tokenBMint,
+          tokenBPrice: params.tokenBPriceAccount,
+        },
+        whirlpool: params.whirlpool.toBase58(),
+        tickArray0: params.tickArray0.toBase58(),
+        tickArray1: params.tickArray1.toBase58(),
+        tickArray2: params.tickArray2.toBase58(),
+        oracle: params.oracle.toBase58(),
+        whirlpoolProgram: ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+      })
+      .transaction();
+    return await this.provider.sendAndConfirm(tx, [params.botKeypair]);
+  }
+
   static async withdrawB(
     withdrawer: Keypair | Signer,
     vault: PublicKey,

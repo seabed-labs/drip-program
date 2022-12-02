@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
+use crate::state::{OracleConfig, Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -63,6 +63,17 @@ pub struct DripCommonAccounts<'info> {
 }
 
 #[derive(Accounts)]
+pub struct DripOracleAccounts<'info> {
+    pub oracle_config: Box<Account<'info, OracleConfig>>,
+    pub token_a_mint: Box<Account<'info, Mint>>,
+    /// CHECK: Need to manually decode and parse in ix
+    pub token_a_price: UncheckedAccount<'info>,
+    pub token_b_mint: Box<Account<'info, Mint>>,
+    /// CHECK: Need to manually decode and parse in ix
+    pub token_b_price: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
 pub struct DripSPLTokenSwapAccounts<'info> {
     pub common: DripCommonAccounts<'info>,
 
@@ -86,6 +97,34 @@ pub struct DripSPLTokenSwapAccounts<'info> {
 #[derive(Accounts)]
 pub struct DripOrcaWhirlpoolAccounts<'info> {
     pub common: DripCommonAccounts<'info>,
+
+    // mut reason: CPI
+    #[account(mut)]
+    pub whirlpool: Box<Account<'info, Whirlpool>>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_0: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_1: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Checked by Whirlpool
+    pub tick_array_2: UncheckedAccount<'info>,
+
+    /// CHECK: Checked by Whirlpool
+    pub oracle: UncheckedAccount<'info>,
+
+    pub whirlpool_program: Program<'info, WhirlpoolProgram>,
+}
+
+#[derive(Accounts)]
+pub struct DripV2OrcaWhirlpoolAccounts<'info> {
+    pub common: DripCommonAccounts<'info>,
+
+    pub oracle_common: DripOracleAccounts<'info>,
 
     // mut reason: CPI
     #[account(mut)]

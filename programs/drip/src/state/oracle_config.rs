@@ -1,5 +1,7 @@
+use crate::errors::DripError;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
+use pyth_sdk_solana::load_price_feed_from_account_info;
 
 pub const PYTH_SOURCE_ID: u8 = 0;
 
@@ -36,6 +38,31 @@ impl OracleConfig {
         self.token_a_price = token_a_price;
         self.token_b_mint = token_b_mint;
         self.token_b_price = token_b_price;
+    }
+}
+
+pub fn get_oracle_price(
+    source: u8,
+    token_a_price_info: &AccountInfo,
+    token_b_price_info: &AccountInfo,
+) -> Result<i64> {
+    match source {
+        PYTH_SOURCE_ID => {
+            let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
+            let token_a_price_max = price_feed.get_current_price().unwrap();
+            let token_a_price_max = token_a_price_max
+                .price
+                .checked_add(token_a_price_max.conf as i64)
+                .unwrap();
+            let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
+            let token_b_price_min = price_feed.get_current_price().unwrap();
+            let token_b_price_min = token_b_price_min
+                .price
+                .checked_sub(token_b_price_min.conf as i64)
+                .unwrap();
+            Ok(token_a_price_max.checked_div(token_b_price_min).unwrap())
+        }
+        _ => Err(DripError::InvalidOracleSource.into()),
     }
 }
 

@@ -3,14 +3,14 @@ import { WhirlpoolUtil } from "../../utils/whirlpool.util";
 import { dripOrcaWhirlpoolWrapper } from "../../utils/setup.util";
 import { DripUtil } from "../../utils/drip.util";
 import {
-  DripV1CommonSetup,
+  DripCommonSetup,
   testV1DripCommon,
 } from "../../utils/dripV1Common.utils";
 
 describe("#dripOrcaWhirlpool", testDripOrcaWhirlpool);
 
 export function testDripOrcaWhirlpool() {
-  const setup: DripV1CommonSetup = async () => {
+  const setup: DripCommonSetup = async () => {
     const deploySwap1Res = await WhirlpoolUtil.deployWhirlpool({});
     const deployVaultABRes = await DripUtil.deployVault({
       tokenA: deploySwap1Res.tokenA,

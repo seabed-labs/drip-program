@@ -237,6 +237,64 @@ export const dripOrcaWhirlpoolWrapper = async (
   };
 };
 
+export const dripV2OrcaWhirlpoolWrapper = async (
+  swapTokenAAccount: PublicKey,
+  swapTokenBAccount: PublicKey,
+  whirlpool: PublicKey,
+  oracle: PublicKey,
+  oracleConfig: PublicKey,
+  tokenAMint: PublicKey,
+  tokenAPriceAccount: PublicKey,
+  tokenBMint: PublicKey,
+  tokenBPriceAccount: PublicKey
+): Promise<GenericDripWrapper> => {
+  const whirlpoolClient = buildWhirlpoolClient(WhirlpoolUtil.whirlpoolCtx);
+  const fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
+  const whirlpoolAccount = await whirlpoolClient.getPool(whirlpool, false);
+  return async (
+    deployVaultRes: DeployVaultRes,
+    lastVaultPeriod: PublicKey,
+    currentVaultPeriod: PublicKey
+  ): Promise<void> => {
+    const vaultAccount = await AccountUtil.fetchVaultAccount(
+      deployVaultRes.vault
+    );
+    const dripAmount = vaultAccount.dripAmount.toNumber();
+    const tokenAmount = dripAmount <= 0 ? 1 : dripAmount;
+    const quote = await swapQuoteByInputToken(
+      whirlpoolAccount,
+      deployVaultRes.tokenAMint.publicKey,
+      new BN(tokenAmount),
+      Percentage.fromFraction(10, 100),
+      ProgramUtil.orcaWhirlpoolProgram.programId,
+      fetcher,
+      true
+    );
+    await DripUtil.dripV2OrcaWhirlpool({
+      botKeypair: deployVaultRes.botKeypair,
+      dripFeeTokenAAccount: deployVaultRes.botTokenAAcount,
+      vault: deployVaultRes.vault,
+      vaultProtoConfig: deployVaultRes.vaultProtoConfig,
+      vaultTokenAAccount: deployVaultRes.vaultTokenAAccount,
+      vaultTokenBAccount: deployVaultRes.vaultTokenBAccount,
+      lastVaultPeriod,
+      currentVaultPeriod,
+      swapTokenAAccount,
+      swapTokenBAccount,
+      whirlpool,
+      tickArray0: quote.tickArray0,
+      tickArray1: quote.tickArray1,
+      tickArray2: quote.tickArray2,
+      oracle,
+      oracleConfig: oracleConfig,
+      tokenAMint,
+      tokenBMint,
+      tokenAPriceAccount,
+      tokenBPriceAccount,
+    });
+  };
+};
+
 export type WithdrawBWrapper = (
   vaultPeriodI: PublicKey,
   vaultPeriodJ: PublicKey

@@ -9,7 +9,7 @@ import { AccountUtil } from "../../utils/account.util";
 import { DeployVaultRes, DripUtil } from "../../utils/drip.util";
 import { TokenSwapUtil } from "../../utils/tokenSwapUtil";
 import {
-  DripV1CommonSetup,
+  DripCommonSetup,
   testV1DripCommon,
 } from "../../utils/dripV1Common.utils";
 
@@ -19,7 +19,7 @@ export function testDripSPLTokenSwap() {
   let dripWithWhitelistedSwap: GenericDripWrapper;
   let deployVaultABRes: DeployVaultRes;
 
-  const setup: DripV1CommonSetup = async () => {
+  const setup: DripCommonSetup = async () => {
     const deploySwap1Res = await TokenSwapUtil.deployTokenSwap({});
     const deployVaultABRes = await DripUtil.deployVault({
       tokenA: deploySwap1Res.tokenA,
