@@ -6,13 +6,13 @@ import { ProgramUtil } from "./program.util";
 import { TokenUtil } from "./token.util";
 import { AccountUtil } from "./account.util";
 
-export type DripV1CommonSetup = () => Promise<{
+export type DripCommonSetup = () => Promise<{
   dripWithWhitelistedSwap: GenericDripWrapper;
   dripWithNonWhitelistedSwap: GenericDripWrapper;
   deployVaultABRes: DeployVaultRes;
   deployVaultBARes: DeployVaultRes;
 }>;
-export function testV1DripCommon(setup: DripV1CommonSetup) {
+export function testV1DripCommon(setup: DripCommonSetup) {
   describe("test common dripV1 validations and logic", function () {
     let dripWithWhitelistedSwap: GenericDripWrapper;
     let dripWithNonWhitelistedSwap: GenericDripWrapper;

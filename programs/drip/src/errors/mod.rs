@@ -64,4 +64,6 @@ pub enum DripError {
     FailedToReadOracle,
     #[msg("Deviation between swap price and oracle is higher then allowed")]
     SwapPricePastMaxDeviation,
+    #[msg("Oracle is offline")]
+    OracleIsOffline,
 }

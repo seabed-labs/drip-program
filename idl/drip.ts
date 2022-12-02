@@ -1524,6 +1524,11 @@ export type Drip = {
       code: 6030;
       name: "SwapPricePastMaxDeviation";
       msg: "Deviation between swap price and oracle is higher then allowed";
+    },
+    {
+      code: 6031;
+      name: "OracleIsOffline";
+      msg: "Oracle is offline";
     }
   ];
 };
@@ -3054,6 +3059,11 @@ export const IDL: Drip = {
       code: 6030,
       name: "SwapPricePastMaxDeviation",
       msg: "Deviation between swap price and oracle is higher then allowed",
+    },
+    {
+      code: 6031,
+      name: "OracleIsOffline",
+      msg: "Oracle is offline",
     },
   ],
 };
