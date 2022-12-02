@@ -17,6 +17,7 @@ use crate::state::{get_oracle_price, Vault};
 
 use crate::interactions::swap_orca_whirlpool::SwapOrcaWhirlpool;
 
+use crate::actions::validate_oracle;
 use crate::instruction_accounts::{DripOracleAccounts, DripV2OrcaWhirlpoolAccounts};
 use crate::{
     instruction_accounts::{DripOrcaWhirlpoolAccounts, DripSPLTokenSwapAccounts},
@@ -86,6 +87,11 @@ fn validate_drip_v2(
         oracle_accounts.oracle_config.token_b_price == oracle_accounts.token_b_price.key(),
         V2DripInvalidOracleAccount
     );
+    validate_oracle(
+        oracle_accounts.oracle_config.source,
+        &oracle_accounts.token_a_price.to_account_info(),
+        &oracle_accounts.token_b_price.to_account_info(),
+    )?;
     validate_common(common_accounts, swap)
 }
 

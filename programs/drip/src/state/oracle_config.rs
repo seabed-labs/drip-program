@@ -1,7 +1,7 @@
 use crate::errors::DripError;
 use crate::test_account_size;
 use anchor_lang::prelude::*;
-use pyth_sdk_solana::{load_price_feed_from_account_info, PriceStatus};
+use pyth_sdk_solana::load_price_feed_from_account_info;
 
 pub const PYTH_SOURCE_ID: u8 = 0;
 
@@ -49,18 +49,12 @@ pub fn get_oracle_price(
     match source {
         PYTH_SOURCE_ID => {
             let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
-            if price_feed.status != PriceStatus::Trading {
-                return Err(DripError::OracleIsOffline.into());
-            }
             let token_a_price_max = price_feed.get_current_price().unwrap();
             let token_a_price_max = token_a_price_max
                 .price
                 .checked_add(token_a_price_max.conf as i64)
                 .unwrap();
             let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
-            if price_feed.status != PriceStatus::Trading {
-                return Err(DripError::OracleIsOffline.into());
-            }
             let token_b_price_min = price_feed.get_current_price().unwrap();
             let token_b_price_min = token_b_price_min
                 .price

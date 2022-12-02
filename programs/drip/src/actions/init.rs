@@ -1,5 +1,5 @@
 use crate::errors::DripError;
-use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
+use crate::errors::DripError::{InvalidGranularity, InvalidSpread, OracleIsOffline};
 use crate::instruction_accounts::{InitializeOracleConfigAccounts, InitializeOracleConfigParams};
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{MAX_TOKEN_SPREAD_EXCLUSIVE, PYTH_SOURCE_ID};
@@ -12,7 +12,7 @@ use crate::{
     validate,
 };
 use anchor_lang::prelude::*;
-use pyth_sdk_solana::load_price_feed_from_account_info;
+use pyth_sdk_solana::{load_price_feed_from_account_info, PriceStatus};
 use std::collections::BTreeMap;
 
 pub enum Init<'a, 'info> {
@@ -66,9 +66,9 @@ pub fn validate_oracle(
             // using the oracle config is something an admin does intentionally
             // they are responsible for supplying the correct account
             let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
-            price_feed.get_current_price().unwrap();
+            validate!(price_feed.status == PriceStatus::Trading, OracleIsOffline);
             let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
-            price_feed.get_current_price().unwrap();
+            validate!(price_feed.status == PriceStatus::Trading, OracleIsOffline);
         }
         _ => {
             return Err(DripError::InvalidOracleSource.into());
