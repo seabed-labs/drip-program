@@ -65,8 +65,10 @@ pub struct DripCommonAccounts<'info> {
 #[derive(Accounts)]
 pub struct DripOracleAccounts<'info> {
     pub oracle_config: Box<Account<'info, OracleConfig>>,
+    pub token_a_mint: Box<Account<'info, Mint>>,
     /// CHECK: Need to manually decode and parse in ix
     pub token_a_price: UncheckedAccount<'info>,
+    pub token_b_mint: Box<Account<'info, Mint>>,
     /// CHECK: Need to manually decode and parse in ix
     pub token_b_price: UncheckedAccount<'info>,
 }

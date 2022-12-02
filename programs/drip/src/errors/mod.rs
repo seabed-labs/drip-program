@@ -58,4 +58,10 @@ pub enum DripError {
     InvalidOracleSource,
     #[msg("Oracle enabled vaults must use a drip_XXX_v2 ix")]
     V1DripOracleNotSupported,
+    #[msg("Oracle enabled vaults must provide a valid oracle config")]
+    V2DripInvalidOracleAccount,
+    #[msg("Failed to read oracle price data")]
+    FailedToReadOracle,
+    #[msg("Deviation between swap price and oracle is higher then allowed")]
+    SwapPricePastMaxDeviation,
 }

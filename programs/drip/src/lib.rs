@@ -83,6 +83,12 @@ pub mod drip {
         })
     }
 
+    pub fn drip_v2_orca_whirlpool(ctx: Context<DripV2OrcaWhirlpoolAccounts>) -> Result<()> {
+        handle_action(Drip::V2OrcaWhirlpool {
+            accounts: ctx.accounts,
+        })
+    }
+
     pub fn withdraw_b(ctx: Context<WithdrawBAccounts>) -> Result<()> {
         handle_action(Withdraw::WithoutClosePosition {
             accounts: ctx.accounts,

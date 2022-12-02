@@ -475,6 +475,132 @@
       "args": []
     },
     {
+      "name": "dripV2OrcaWhirlpool",
+      "accounts": [
+        {
+          "name": "common",
+          "accounts": [
+            {
+              "name": "dripTriggerSource",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "vault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultProtoConfig",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "lastVaultPeriod",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "currentVaultPeriod",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultTokenAAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultTokenBAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "swapTokenAAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "swapTokenBAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "dripFeeTokenAAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "tokenProgram",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "oracleCommon",
+          "accounts": [
+            {
+              "name": "oracleConfig",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "tokenAMint",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "tokenAPrice",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "tokenBMint",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "tokenBPrice",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "whirlpool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tickArray0",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tickArray1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tickArray2",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "oracle",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whirlpoolProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "withdrawB",
       "accounts": [
         {
@@ -1383,6 +1509,21 @@
       "code": 6027,
       "name": "V1DripOracleNotSupported",
       "msg": "Oracle enabled vaults must use a drip_XXX_v2 ix"
+    },
+    {
+      "code": 6028,
+      "name": "V2DripInvalidOracleAccount",
+      "msg": "Oracle enabled vaults must provide a valid oracle config"
+    },
+    {
+      "code": 6029,
+      "name": "FailedToReadOracle",
+      "msg": "Failed to read oracle price data"
+    },
+    {
+      "code": 6030,
+      "name": "SwapPricePastMaxDeviation",
+      "msg": "Deviation between swap price and oracle is higher then allowed"
     }
   ]
 }

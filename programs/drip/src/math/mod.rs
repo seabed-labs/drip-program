@@ -136,10 +136,41 @@ pub fn calculate_new_twap_amount(twap_i_minus_1: u128, i: u64, price_i: u128) ->
         .unwrap()
 }
 
+pub fn compute_ui_price(
+    token_b_amount: u64,
+    token_b_decimal: u8,
+    token_a_amount: u64,
+    token_a_decimal: u8,
+) -> i64 {
+    let numerator = token_b_amount
+        .checked_mul(10_u64.pow(token_a_decimal as u32))
+        .unwrap();
+    let denominator = token_a_amount
+        .checked_mul(10_u64.pow(token_b_decimal as u32))
+        .unwrap();
+    (numerator as i64).checked_div(denominator as i64).unwrap()
+}
+
 pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
     let numerator_x64 = u128::from(token_b_amount).checked_shl(64).unwrap();
     let denominator = u128::from(token_a_amount);
     numerator_x64.checked_div(denominator).unwrap()
+}
+
+/// Given two prices, return their relative change in bps
+/// # Arguments
+///
+/// * `swap_ui_price`: the current swap price normalized to ui units
+/// * `oracle_ui_price`: the oracle price for b/a normalized to ui units
+///
+/// returns: i64
+pub fn compute_price_difference(swap_ui_price: i64, oracle_ui_price: i64) -> i64 {
+    let numerator = oracle_ui_price.checked_sub(swap_ui_price).unwrap();
+    numerator
+        .checked_mul(10000)
+        .unwrap()
+        .checked_div(swap_ui_price)
+        .unwrap()
 }
 
 ///
@@ -211,6 +242,43 @@ mod test {
         should_snap_forward: bool,
     ) {
         calculate_drip_activation_timestamp(current_time, granularity, should_snap_forward);
+    }
+
+    #[test_case(100, 1000, 90000)]
+    fn compute_price_difference_tests(
+        swap_ui_price: i64,
+        oracle_ui_price: i64,
+        expected_value: i64,
+    ) {
+        assert_eq!(
+            compute_price_difference(swap_ui_price, oracle_ui_price),
+            expected_value
+        )
+    }
+
+    #[test_case(0, 1000)]
+    #[should_panic]
+    fn compute_price_difference_panic_tests(swap_ui_price: i64, oracle_ui_price: i64) {
+        compute_price_difference(swap_ui_price, oracle_ui_price);
+    }
+
+    #[test_case(100000, 2, 10000, 3, 100)]
+    fn compute_ui_price_tests(
+        token_b_amount: u64,
+        token_b_decimal: u8,
+        token_a_amount: u64,
+        token_a_decimal: u8,
+        expected_price: i64,
+    ) {
+        assert_eq!(
+            compute_ui_price(
+                token_b_amount,
+                token_b_decimal,
+                token_a_amount,
+                token_a_decimal
+            ),
+            expected_price
+        );
     }
 
     #[test_case(0, 1, 0)]
