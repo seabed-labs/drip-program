@@ -13,7 +13,7 @@ echo $UPGRADE_AUTH
 solana balance $UPGRADE_AUTH
 
 
-# Replace Progrma ID 
+# Replace Program ID
 find . -name '*.toml' -exec sed -i -e "s/dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk/$PROGRAM_ID/g" {} \;
 find . -name '*.rs' -exec sed -i -e "s/dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk/$PROGRAM_ID/g" {} \;
 rm -rf **/*.rs-e
