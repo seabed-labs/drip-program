@@ -1503,7 +1503,7 @@ export type Drip = {
     {
       code: 6026;
       name: "InvalidOracleSource";
-      msg: "Supplied oracle Source is not supported";
+      msg: "Supplied oracle source is not supported";
     },
     {
       code: 6027;
@@ -3038,7 +3038,7 @@ export const IDL: Drip = {
     {
       code: 6026,
       name: "InvalidOracleSource",
-      msg: "Supplied oracle Source is not supported",
+      msg: "Supplied oracle source is not supported",
     },
     {
       code: 6027,

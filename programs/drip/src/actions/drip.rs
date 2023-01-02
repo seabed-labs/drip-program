@@ -330,7 +330,7 @@ fn execute_drip(
             &oracle_accounts.token_b_price.to_account_info(),
         )?;
         if compute_price_difference(swap_ui_price, oracle_ui_price)
-            > common_accounts.vault.max_slippage_bps as i64
+            > common_accounts.vault.max_price_deviation_bps as i64
         {
             return Err(DripError::SwapPricePastMaxDeviation.into());
         }
