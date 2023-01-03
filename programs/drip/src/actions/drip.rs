@@ -18,7 +18,9 @@ use crate::state::{get_oracle_price, Vault};
 use crate::interactions::swap_orca_whirlpool::SwapOrcaWhirlpool;
 
 use crate::actions::validate_oracle;
-use crate::instruction_accounts::{DripOracleAccounts, DripV2OrcaWhirlpoolAccounts};
+use crate::instruction_accounts::{
+    DripOracleAccounts, DripV2OrcaWhirlpoolAccounts, OrcaWhirlpoolSwapAccounts,
+};
 use crate::{
     instruction_accounts::{DripOrcaWhirlpoolAccounts, DripSPLTokenSwapAccounts},
     state::traits::{Executable, Validatable},
@@ -43,13 +45,14 @@ impl<'a, 'info> Validatable for Drip<'a, 'info> {
             Drip::SPLTokenSwap { accounts, .. } => {
                 validate_drip_v1(&accounts.common, &accounts.swap.key())
             }
-            Drip::OrcaWhirlpool { accounts, .. } => {
-                validate_drip_v1(&accounts.common, &accounts.whirlpool.key())
-            }
+            Drip::OrcaWhirlpool { accounts, .. } => validate_drip_v1(
+                &accounts.common,
+                &accounts.orca_whirlpool_swap_accounts.whirlpool.key(),
+            ),
             Drip::V2OrcaWhirlpool { accounts } => validate_drip_v2(
                 &accounts.common,
                 &accounts.oracle_common,
-                &accounts.whirlpool.key(),
+                &accounts.orca_whirlpool_swap_accounts.whirlpool.key(),
             ),
         }
     }
@@ -188,67 +191,18 @@ impl<'a, 'info> Executable for Drip<'a, 'info> {
 
                 execute_drip(&mut accounts.common, None, &swap, cpi_executor)
             }
-            Drip::OrcaWhirlpool { accounts } => {
-                let (swap_amount, _) = get_token_a_swap_and_spread_amount(&accounts.common);
-                let sqrt_price_limit = calculate_sqrt_price_limit(
-                    accounts.whirlpool.sqrt_price,
-                    accounts.common.vault.max_slippage_bps,
-                    accounts.common.vault_token_a_account.mint.key()
-                        == accounts.common.swap_token_a_account.mint.key(),
-                );
-
-                let swap = SwapOrcaWhirlpool::new(
-                    &accounts.whirlpool_program,
-                    &accounts.common.token_program,
-                    &accounts.common.vault.to_account_info(),
-                    &accounts.whirlpool.to_account_info(),
-                    &accounts.common.vault_token_a_account,
-                    &accounts.common.swap_token_a_account,
-                    &accounts.common.vault_token_b_account,
-                    &accounts.common.swap_token_b_account,
-                    &accounts.tick_array_0,
-                    &accounts.tick_array_1,
-                    &accounts.tick_array_2,
-                    &accounts.oracle,
-                    swap_amount,
-                    sqrt_price_limit,
-                );
-
-                execute_drip(&mut accounts.common, None, &swap, cpi_executor)
-            }
-            Drip::V2OrcaWhirlpool { accounts } => {
-                let (swap_amount, _) = get_token_a_swap_and_spread_amount(&accounts.common);
-                let sqrt_price_limit = calculate_sqrt_price_limit(
-                    accounts.whirlpool.sqrt_price,
-                    accounts.common.vault.max_slippage_bps,
-                    accounts.common.vault_token_a_account.mint.key()
-                        == accounts.common.swap_token_a_account.mint.key(),
-                );
-                let oracle_accounts = if accounts.oracle_common.oracle_config.enabled {
-                    Some(&mut accounts.oracle_common)
-                } else {
-                    None
-                };
-
-                let swap = SwapOrcaWhirlpool::new(
-                    &accounts.whirlpool_program,
-                    &accounts.common.token_program,
-                    &accounts.common.vault.to_account_info(),
-                    &accounts.whirlpool.to_account_info(),
-                    &accounts.common.vault_token_a_account,
-                    &accounts.common.swap_token_a_account,
-                    &accounts.common.vault_token_b_account,
-                    &accounts.common.swap_token_b_account,
-                    &accounts.tick_array_0,
-                    &accounts.tick_array_1,
-                    &accounts.tick_array_2,
-                    &accounts.oracle,
-                    swap_amount,
-                    sqrt_price_limit,
-                );
-
-                execute_drip(&mut accounts.common, oracle_accounts, &swap, cpi_executor)
-            }
+            Drip::OrcaWhirlpool { accounts } => execute_orca_whirlpool_drip(
+                &mut accounts.orca_whirlpool_swap_accounts,
+                &mut accounts.common,
+                None,
+                cpi_executor,
+            ),
+            Drip::V2OrcaWhirlpool { accounts } => execute_orca_whirlpool_drip(
+                &mut accounts.orca_whirlpool_swap_accounts,
+                &mut accounts.common,
+                Some(&mut accounts.oracle_common),
+                cpi_executor,
+            ),
         }
     }
 }
@@ -266,6 +220,50 @@ fn get_token_a_swap_and_spread_amount(accounts: &DripCommonAccounts) -> (u64, u6
         .unwrap();
 
     (swap_amount, drip_trigger_spread_amount)
+}
+
+#[inline(never)]
+fn execute_orca_whirlpool_drip<'info>(
+    orca_whirlpool_accounts: &mut OrcaWhirlpoolSwapAccounts<'info>,
+    drip_common_accounts: &mut DripCommonAccounts<'info>,
+    oracle_accounts: Option<&mut DripOracleAccounts<'info>>,
+    cpi_executor: &mut impl CpiExecutor,
+) -> Result<()> {
+    let (swap_amount, _) = get_token_a_swap_and_spread_amount(drip_common_accounts);
+    let sqrt_price_limit = calculate_sqrt_price_limit(
+        orca_whirlpool_accounts.whirlpool.sqrt_price,
+        drip_common_accounts.vault.max_slippage_bps,
+        drip_common_accounts.vault_token_a_account.mint.key()
+            == drip_common_accounts.swap_token_a_account.mint.key(),
+    );
+    let oracle_accounts = if let Some(oracle_accounts) = oracle_accounts {
+        if oracle_accounts.oracle_config.enabled {
+            Some(oracle_accounts)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let swap = SwapOrcaWhirlpool::new(
+        &orca_whirlpool_accounts.whirlpool_program,
+        &drip_common_accounts.token_program,
+        &drip_common_accounts.vault.to_account_info(),
+        &orca_whirlpool_accounts.whirlpool.to_account_info(),
+        &drip_common_accounts.vault_token_a_account,
+        &drip_common_accounts.swap_token_a_account,
+        &drip_common_accounts.vault_token_b_account,
+        &drip_common_accounts.swap_token_b_account,
+        &orca_whirlpool_accounts.tick_array_0,
+        &orca_whirlpool_accounts.tick_array_1,
+        &orca_whirlpool_accounts.tick_array_2,
+        &orca_whirlpool_accounts.oracle,
+        swap_amount,
+        sqrt_price_limit,
+    );
+
+    execute_drip(drip_common_accounts, oracle_accounts, &swap, cpi_executor)
 }
 
 #[inline(never)]

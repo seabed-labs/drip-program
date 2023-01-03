@@ -470,12 +470,15 @@ export class DripUtil extends TestUtil {
           dripFeeTokenAAccount: params.dripFeeTokenAAccount.toBase58(),
           tokenProgram: ProgramUtil.tokenProgram.programId.toBase58(),
         },
-        whirlpool: params.whirlpool.toBase58(),
-        tickArray0: params.tickArray0.toBase58(),
-        tickArray1: params.tickArray1.toBase58(),
-        tickArray2: params.tickArray2.toBase58(),
-        oracle: params.oracle.toBase58(),
-        whirlpoolProgram: ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+        orcaWhirlpoolSwapAccounts: {
+          whirlpool: params.whirlpool.toBase58(),
+          tickArray0: params.tickArray0.toBase58(),
+          tickArray1: params.tickArray1.toBase58(),
+          tickArray2: params.tickArray2.toBase58(),
+          oracle: params.oracle.toBase58(),
+          whirlpoolProgram:
+            ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+        },
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [params.botKeypair]);
@@ -526,12 +529,15 @@ export class DripUtil extends TestUtil {
           tokenBMint: params.tokenBMint,
           tokenBPrice: params.tokenBPriceAccount,
         },
-        whirlpool: params.whirlpool.toBase58(),
-        tickArray0: params.tickArray0.toBase58(),
-        tickArray1: params.tickArray1.toBase58(),
-        tickArray2: params.tickArray2.toBase58(),
-        oracle: params.oracle.toBase58(),
-        whirlpoolProgram: ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+        orcaWhirlpoolSwapAccounts: {
+          whirlpool: params.whirlpool.toBase58(),
+          tickArray0: params.tickArray0.toBase58(),
+          tickArray1: params.tickArray1.toBase58(),
+          tickArray2: params.tickArray2.toBase58(),
+          oracle: params.oracle.toBase58(),
+          whirlpoolProgram:
+            ProgramUtil.orcaWhirlpoolProgram.programId.toBase58(),
+        },
       })
       .transaction();
     return await this.provider.sendAndConfirm(tx, [params.botKeypair]);

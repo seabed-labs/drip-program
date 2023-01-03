@@ -442,34 +442,39 @@ export type Drip = {
           ];
         },
         {
-          name: "whirlpool";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray0";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray1";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray2";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "oracle";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "whirlpoolProgram";
-          isMut: false;
-          isSigner: false;
+          name: "orcaWhirlpoolSwapAccounts";
+          accounts: [
+            {
+              name: "whirlpool";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray0";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray1";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray2";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "oracle";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "whirlpoolProgram";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         }
       ];
       args: [];
@@ -568,34 +573,39 @@ export type Drip = {
           ];
         },
         {
-          name: "whirlpool";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray0";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray1";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "tickArray2";
-          isMut: true;
-          isSigner: false;
-        },
-        {
-          name: "oracle";
-          isMut: false;
-          isSigner: false;
-        },
-        {
-          name: "whirlpoolProgram";
-          isMut: false;
-          isSigner: false;
+          name: "orcaWhirlpoolSwapAccounts";
+          accounts: [
+            {
+              name: "whirlpool";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray0";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray1";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "tickArray2";
+              isMut: true;
+              isSigner: false;
+            },
+            {
+              name: "oracle";
+              isMut: false;
+              isSigner: false;
+            },
+            {
+              name: "whirlpoolProgram";
+              isMut: false;
+              isSigner: false;
+            }
+          ];
         }
       ];
       args: [];
@@ -1977,34 +1987,39 @@ export const IDL: Drip = {
           ],
         },
         {
-          name: "whirlpool",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray0",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray1",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray2",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "oracle",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "whirlpoolProgram",
-          isMut: false,
-          isSigner: false,
+          name: "orcaWhirlpoolSwapAccounts",
+          accounts: [
+            {
+              name: "whirlpool",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray0",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray1",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray2",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "oracle",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "whirlpoolProgram",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
       ],
       args: [],
@@ -2103,34 +2118,39 @@ export const IDL: Drip = {
           ],
         },
         {
-          name: "whirlpool",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray0",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray1",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tickArray2",
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "oracle",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "whirlpoolProgram",
-          isMut: false,
-          isSigner: false,
+          name: "orcaWhirlpoolSwapAccounts",
+          accounts: [
+            {
+              name: "whirlpool",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray0",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray1",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "tickArray2",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "oracle",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "whirlpoolProgram",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
         },
       ],
       args: [],
