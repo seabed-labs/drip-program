@@ -250,6 +250,8 @@ mod test {
     }
 
     #[test_case(I80F48::from_num(100), I80F48::from_num(1000), I80F48::from_num(9000))]
+    #[test_case(I80F48::from_num(90), I80F48::from_num(100), I80F48::from_num(1000))]
+    #[test_case(I80F48::from_num(100), I80F48::from_num(90), I80F48::from_num(-10).checked_mul(I80F48::from_num(10000)).unwrap().checked_div(I80F48::from_num(90)).unwrap())]
     fn compute_price_difference_tests(
         swap_ui_price: I80F48,
         oracle_ui_price: I80F48,
