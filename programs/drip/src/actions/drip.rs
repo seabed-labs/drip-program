@@ -14,7 +14,7 @@ use crate::interactions::transfer_token::TransferToken;
 use crate::math::{
     calculate_spread_amount, calculate_sqrt_price_limit, compute_price_difference, compute_ui_price,
 };
-use crate::state::{get_oracle_price, validate_oracle, Vault};
+use crate::state::{get_best_oracle_b_over_a_ui_price, validate_oracle, Vault};
 use crate::{
     instruction_accounts::{DripOrcaWhirlpoolAccounts, DripSPLTokenSwapAccounts},
     state::traits::{Executable, Validatable},
@@ -317,7 +317,7 @@ fn execute_drip(
             swap_amount,
             oracle_accounts.token_a_mint.decimals,
         );
-        let oracle_ui_price = get_oracle_price(
+        let oracle_ui_price = get_best_oracle_b_over_a_ui_price(
             oracle_accounts.oracle_config.source,
             &oracle_accounts.token_a_price.to_account_info(),
             &oracle_accounts.token_b_price.to_account_info(),

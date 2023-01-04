@@ -1,3 +1,4 @@
+use fixed::types::I80F48;
 use std::{convert::TryFrom, u128};
 
 fn calculate_slippage_factor(max_slippage_bps: u16, a_to_b: bool) -> f64 {
@@ -141,14 +142,16 @@ pub fn compute_ui_price(
     token_b_decimal: u8,
     token_a_amount: u64,
     token_a_decimal: u8,
-) -> i64 {
+) -> I80F48 {
     let numerator = token_b_amount
         .checked_mul(10_u64.pow(token_a_decimal as u32))
         .unwrap();
     let denominator = token_a_amount
         .checked_mul(10_u64.pow(token_b_decimal as u32))
         .unwrap();
-    (numerator as i64).checked_div(denominator as i64).unwrap()
+    I80F48::from_num(numerator)
+        .checked_div(I80F48::from_num(denominator))
+        .unwrap()
 }
 
 pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
@@ -158,18 +161,20 @@ pub fn compute_price(token_b_amount: u64, token_a_amount: u64) -> u128 {
 }
 
 /// Given two prices, return their relative change in bps
+/// (reference-observed) / reference
+///
 /// # Arguments
 ///
-/// * `swap_ui_price`: the current swap price normalized to ui units
-/// * `oracle_ui_price`: the oracle price for b/a normalized to ui units
+/// * `swap_ui_price`: the current swap price normalized to ui units (observed)
+/// * `oracle_ui_price`: the oracle price for b/a normalized to ui units (reference)
 ///
-/// returns: i64
-pub fn compute_price_difference(swap_ui_price: i64, oracle_ui_price: i64) -> i64 {
+/// returns: I80F48
+pub fn compute_price_difference(swap_ui_price: I80F48, oracle_ui_price: I80F48) -> I80F48 {
     let numerator = oracle_ui_price.checked_sub(swap_ui_price).unwrap();
     numerator
-        .checked_mul(10000)
+        .checked_mul(I80F48::from_num(10000))
         .unwrap()
-        .checked_div(swap_ui_price)
+        .checked_div(oracle_ui_price)
         .unwrap()
 }
 
@@ -244,11 +249,11 @@ mod test {
         calculate_drip_activation_timestamp(current_time, granularity, should_snap_forward);
     }
 
-    #[test_case(100, 1000, 90000)]
+    #[test_case(I80F48::from_num(100), I80F48::from_num(1000), I80F48::from_num(9000))]
     fn compute_price_difference_tests(
-        swap_ui_price: i64,
-        oracle_ui_price: i64,
-        expected_value: i64,
+        swap_ui_price: I80F48,
+        oracle_ui_price: I80F48,
+        expected_value: I80F48,
     ) {
         assert_eq!(
             compute_price_difference(swap_ui_price, oracle_ui_price),
@@ -256,9 +261,9 @@ mod test {
         )
     }
 
-    #[test_case(0, 1000)]
+    #[test_case(I80F48::from_num(1000), I80F48::from_num(0))]
     #[should_panic]
-    fn compute_price_difference_panic_tests(swap_ui_price: i64, oracle_ui_price: i64) {
+    fn compute_price_difference_panic_tests(swap_ui_price: I80F48, oracle_ui_price: I80F48) {
         compute_price_difference(swap_ui_price, oracle_ui_price);
     }
 

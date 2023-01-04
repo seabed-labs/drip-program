@@ -23,6 +23,9 @@ spl-token = { version = "3.2.0", features = ["no-entrypoint"] }
 spl-token-swap = { version = "2.0.0", features = ["no-entrypoint", "production"] }
 mpl-token-metadata = { version = "1.3.3", features = ["no-entrypoint"] }
 whirlpool = { path = "../whirlpool", features = ["no-entrypoint"] }
+# higher versions of fixed don't work until rustc used by solana bpf is upgraded
+fixed = { version = ">=1.11.0, <1.12.0", features = ["serde"] }
+fixed-macro = "^1.1.1"
 
 [dev-dependencies]
 test-case = "2.0.0"
