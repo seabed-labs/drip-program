@@ -1,7 +1,8 @@
 use crate::errors::DripError;
-use crate::test_account_size;
+use crate::errors::DripError::{InvalidOracleSource, OracleIsOffline};
+use crate::{test_account_size, validate};
 use anchor_lang::prelude::*;
-use pyth_sdk_solana::load_price_feed_from_account_info;
+use pyth_sdk_solana::{load_price_feed_from_account_info, PriceStatus};
 
 pub const PYTH_SOURCE_ID: u8 = 0;
 
@@ -64,6 +65,28 @@ pub fn get_oracle_price(
         }
         _ => Err(DripError::InvalidOracleSource.into()),
     }
+}
+
+pub fn validate_oracle(
+    source: u8,
+    token_a_price_info: &AccountInfo,
+    token_b_price_info: &AccountInfo,
+) -> Result<()> {
+    match source {
+        PYTH_SOURCE_ID => {
+            // note: we don't have an owner check here, however its not needed as
+            // using the oracle config is something an admin does intentionally
+            // they are responsible for supplying the correct account
+            let price_feed = load_price_feed_from_account_info(token_a_price_info).unwrap();
+            validate!(price_feed.status == PriceStatus::Trading, OracleIsOffline);
+            let price_feed = load_price_feed_from_account_info(token_b_price_info).unwrap();
+            validate!(price_feed.status == PriceStatus::Trading, OracleIsOffline);
+        }
+        _ => {
+            return Err(InvalidOracleSource.into());
+        }
+    }
+    Ok(())
 }
 
 test_account_size!(OracleConfig);

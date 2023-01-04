@@ -1,4 +1,3 @@
-use crate::actions::validate_oracle;
 use crate::errors::DripError;
 use crate::instruction_accounts::{
     SetVaultMaxPriceDeviationBpsAccounts, SetVaultMaxPriceDeviationBpsParams,
@@ -7,7 +6,7 @@ use crate::instruction_accounts::{
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::state::{
-    Vault, VaultProtoConfig, MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE,
+    validate_oracle, Vault, VaultProtoConfig, MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE,
     MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE, VAULT_SWAP_WHITELIST_SIZE,
 };
 use crate::validate;
