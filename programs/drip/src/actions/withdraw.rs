@@ -133,7 +133,7 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
 
     validate!(
         accounts.user_position.referrer == accounts.referrer.key(),
-        DripError::InvalidMint
+        DripError::InvalidReferrer
     );
 
     validate!(
