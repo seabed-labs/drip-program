@@ -465,12 +465,14 @@ export class VaultUtil extends TestUtil {
     vaultTokenAAccount: PublicKey,
     adminTokenAAccount: PublicKey,
     vaultProtoConfig: PublicKey,
-    tokenProgram: PublicKey
+    tokenProgram: PublicKey,
+    admin?: Keypair | Signer
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawA()
       .accounts({
-        admin: this.provider.publicKey.toBase58(),
+        admin:
+          admin?.publicKey.toBase58() ?? this.provider.publicKey.toBase58(),
         vault: vault.toBase58(),
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),
         adminTokenAAccount: adminTokenAAccount.toBase58(),
@@ -478,6 +480,10 @@ export class VaultUtil extends TestUtil {
         tokenProgram: tokenProgram.toBase58(),
       })
       .transaction();
+
+    if (admin) {
+      return this.provider.connection.sendTransaction(tx, [admin]);
+    }
 
     return this.provider.sendAndConfirm(tx);
   }

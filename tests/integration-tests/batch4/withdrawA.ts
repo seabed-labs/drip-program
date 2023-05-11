@@ -16,7 +16,6 @@ describe("#withdrawA", () => {
 
   let tokensAuthority: Keypair;
   let tokenA: Token, tokenB: Token;
-  let adminTokenAAccount: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vault: PublicKey;
   let vaultTokenAAccount: PublicKey, vaultTokenBAccount: PublicKey;
@@ -32,10 +31,6 @@ describe("#withdrawA", () => {
     [tokenA, tokenB] = await TokenUtil.createMints(
       [tokensAuthority.publicKey, tokensAuthority.publicKey],
       [6, 9]
-    );
-
-    adminTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      TestUtil.provider.publicKey
     );
   });
 
@@ -71,19 +66,23 @@ describe("#withdrawA", () => {
   });
 
   it("allows admin to withdraw funds to admin's token A account", async () => {
+    const adminTokenAccount = await tokenA.createAssociatedTokenAccount(
+      TestUtil.provider.publicKey
+    );
+
     const adminTokenABalanceBefore = await tokenA.getAccountInfo(
-      adminTokenAAccount
+      adminTokenAccount
     );
     adminTokenABalanceBefore.amount.toString().should.equal("0");
     await VaultUtil.withdrawA(
       vault,
       vaultTokenAAccount,
-      adminTokenAAccount,
+      adminTokenAccount,
       vaultProtoConfig,
       TOKEN_PROGRAM_ID
     );
     const adminTokenABalanceAfter = await tokenA.getAccountInfo(
-      adminTokenAAccount
+      adminTokenAccount
     );
     adminTokenABalanceAfter.amount.toString().should.equal("1000000000");
   });
@@ -102,21 +101,14 @@ describe("#withdrawA", () => {
 
     adminTokenABalanceBefore.amount.toString().should.equal("0");
 
-    const tx = await ProgramUtil.dripProgram.methods
-      .withdrawA()
-      .accounts({
-        admin: admin.publicKey,
-        vault: vault.toBase58(),
-        vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-        adminTokenAAccount: adminTokenAccount.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .transaction();
-
-    await TestUtil.provider.connection
-      .sendTransaction(tx, [admin])
-      .should.be.rejectedWith(/0x1785/);
+    await VaultUtil.withdrawA(
+      vault,
+      vaultTokenAAccount,
+      adminTokenAccount,
+      vaultProtoConfig,
+      TOKEN_PROGRAM_ID,
+      admin
+    ).should.be.rejectedWith(/0x1785/);
 
     const adminTokenABalanceAfter = await tokenA.getAccountInfo(
       adminTokenAccount
