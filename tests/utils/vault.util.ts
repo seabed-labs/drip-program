@@ -460,6 +460,28 @@ export class VaultUtil extends TestUtil {
     return this.provider.sendAndConfirm(tx, [withdrawer]);
   }
 
+  static async withdrawA(
+    vault: PublicKey,
+    vaultTokenAAccount: PublicKey,
+    adminTokenAAccount: PublicKey,
+    vaultProtoConfig: PublicKey,
+    tokenProgram: PublicKey
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .withdrawA()
+      .accounts({
+        admin: this.provider.publicKey.toBase58(),
+        vault: vault.toBase58(),
+        vaultTokenAAccount: vaultTokenAAccount.toBase58(),
+        adminTokenAAccount: adminTokenAAccount.toBase58(),
+        vaultProtoConfig: vaultProtoConfig.toBase58(),
+        tokenProgram: tokenProgram.toBase58(),
+      })
+      .transaction();
+
+    return this.provider.sendAndConfirm(tx);
+  }
+
   /*
     Deploy Vault Proto Config if not provided
     Create token accounts
@@ -477,6 +499,7 @@ export class VaultUtil extends TestUtil {
     adminKeypair = generatePair(),
     botKeypair = generatePair(),
     userKeypair = generatePair(),
+    protoConfigAdmin,
     vaultPeriodIndex = 10,
   }: {
     tokenA: Token;
@@ -489,6 +512,7 @@ export class VaultUtil extends TestUtil {
     vaultProtoConfig?: PublicKey;
     whitelistedSwaps?: PublicKey[];
     vaultPeriodIndex?: number;
+    protoConfigAdmin?: Keypair;
   }): Promise<DeployVaultRes> {
     await Promise.all([
       SolUtil.fundAccount(adminKeypair.publicKey, SolUtil.solToLamports(0.1)),
@@ -499,6 +523,13 @@ export class VaultUtil extends TestUtil {
       ),
       SolUtil.fundAccount(botKeypair.publicKey, SolUtil.solToLamports(0.1)),
     ]);
+
+    if (protoConfigAdmin) {
+      await SolUtil.fundAccount(
+        protoConfigAdmin.publicKey,
+        SolUtil.solToLamports(0.1)
+      );
+    }
 
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
@@ -524,7 +555,7 @@ export class VaultUtil extends TestUtil {
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
         tokenBReferralSpread: 10,
-        admin: TestUtil.provider.wallet.publicKey,
+        admin: protoConfigAdmin.publicKey ?? TestUtil.provider.wallet.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;
     }
