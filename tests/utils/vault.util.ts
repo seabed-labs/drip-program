@@ -561,7 +561,8 @@ export class VaultUtil extends TestUtil {
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
         tokenBReferralSpread: 10,
-        admin: protoConfigAdmin.publicKey ?? TestUtil.provider.wallet.publicKey,
+        admin:
+          protoConfigAdmin?.publicKey ?? TestUtil.provider.wallet.publicKey,
       });
       vaultProtoConfig = vaultProtoConfigKeypair.publicKey;
     }
