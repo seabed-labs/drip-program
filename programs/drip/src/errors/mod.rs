@@ -54,4 +54,8 @@ pub enum DripError {
     PositionBalanceIsZero,
     #[msg("Referrer does not match position referrer")]
     InvalidReferrer,
+    #[msg("Admin cannot withdraw A if drip amount is non-zero")]
+    CannotWithdrawAWithNonZeroDripAmount,
+    #[msg("Vault Token A Account is empty")]
+    VaultTokenAAccountIsEmpty,
 }

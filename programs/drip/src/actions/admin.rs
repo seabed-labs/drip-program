@@ -1,7 +1,9 @@
 use crate::errors::DripError;
+use crate::instruction_accounts::WithdrawAAccounts;
 use crate::interactions::executor::CpiExecutor;
+use crate::interactions::transfer_token::TransferToken;
 use crate::state::{
-    MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE, MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
+    Vault, MAX_SLIPPAGE_LOWER_LIMIT_EXCLUSIVE, MAX_SLIPPAGE_UPPER_LIMIT_EXCLUSIVE,
     VAULT_SWAP_WHITELIST_SIZE,
 };
 use crate::validate;
@@ -24,6 +26,9 @@ pub enum Admin<'a, 'info> {
     SetVaultSwapWhitelist {
         accounts: &'a mut UpdateVaultWhitelistedSwapsAccounts<'info>,
         params: UpdateVaultWhitelistedSwapsParams,
+    },
+    WithdrawA {
+        accounts: &'a mut WithdrawAAccounts<'info>,
     },
 }
 
@@ -87,6 +92,37 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::InvalidNumSwaps
                 );
             }
+            Admin::WithdrawA { accounts } => {
+                validate!(
+                    accounts.admin.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
+
+                validate!(
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
+                    DripError::InvalidVaultProtoConfigReference
+                );
+
+                validate!(
+                    accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
+                    DripError::IncorrectVaultTokenAccount
+                );
+
+                validate!(
+                    accounts.admin_token_a_account.owner == accounts.admin.key(),
+                    DripError::InvalidOwner
+                );
+
+                validate!(
+                    accounts.vault.drip_amount == 0,
+                    DripError::CannotWithdrawAWithNonZeroDripAmount
+                );
+
+                validate!(
+                    accounts.vault_token_a_account.amount > 0,
+                    DripError::VaultTokenAAccountIsEmpty
+                );
+            }
         }
 
         Ok(())
@@ -94,7 +130,7 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
 }
 
 impl<'a, 'info> Executable for Admin<'a, 'info> {
-    fn execute(self, _cpi_executor: &mut impl CpiExecutor) -> Result<()> {
+    fn execute(self, cpi_executor: &mut impl CpiExecutor) -> Result<()> {
         match self {
             Admin::InitVault {
                 accounts,
@@ -118,6 +154,20 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                 accounts
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
+            }
+            Admin::WithdrawA { accounts } => {
+                let withdrawable_amount_a = accounts.vault_token_a_account.amount;
+
+                let transfer_a_to_admin = TransferToken::new(
+                    &accounts.token_program,
+                    &accounts.vault_token_a_account,
+                    &accounts.admin_token_a_account,
+                    &accounts.vault.to_account_info(),
+                    withdrawable_amount_a,
+                );
+
+                let signer: &Vault = &accounts.vault;
+                cpi_executor.execute_all(vec![&Some(&transfer_a_to_admin)], signer)?;
             }
         }
 

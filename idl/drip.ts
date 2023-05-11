@@ -688,6 +688,42 @@ export type Drip = {
           };
         }
       ];
+    },
+    {
+      name: "withdrawA";
+      accounts: [
+        {
+          name: "admin";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "vault";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "vaultTokenAAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "adminTokenAAccount";
+          isMut: true;
+          isSigner: false;
+        },
+        {
+          name: "vaultProtoConfig";
+          isMut: false;
+          isSigner: false;
+        },
+        {
+          name: "tokenProgram";
+          isMut: false;
+          isSigner: false;
+        }
+      ];
+      args: [];
     }
   ];
   accounts: [
@@ -1117,6 +1153,16 @@ export type Drip = {
       code: 6025;
       name: "InvalidReferrer";
       msg: "Referrer does not match position referrer";
+    },
+    {
+      code: 6026;
+      name: "CannotWithdrawAWithNonZeroDripAmount";
+      msg: "Admin cannot withdraw A if drip amount is non-zero";
+    },
+    {
+      code: 6027;
+      name: "VaultTokenAAccountIsEmpty";
+      msg: "Vault Token A Account is empty";
     }
   ];
 };
@@ -1812,6 +1858,42 @@ export const IDL: Drip = {
         },
       ],
     },
+    {
+      name: "withdrawA",
+      accounts: [
+        {
+          name: "admin",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "vault",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "vaultTokenAAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "adminTokenAAccount",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "vaultProtoConfig",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
   ],
   accounts: [
     {
@@ -2240,6 +2322,16 @@ export const IDL: Drip = {
       code: 6025,
       name: "InvalidReferrer",
       msg: "Referrer does not match position referrer",
+    },
+    {
+      code: 6026,
+      name: "CannotWithdrawAWithNonZeroDripAmount",
+      msg: "Admin cannot withdraw A if drip amount is non-zero",
+    },
+    {
+      code: 6027,
+      name: "VaultTokenAAccountIsEmpty",
+      msg: "Vault Token A Account is empty",
     },
   ],
 };

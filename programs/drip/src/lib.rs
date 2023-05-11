@@ -107,6 +107,12 @@ pub mod drip {
             params,
         })
     }
+
+    pub fn withdraw_a(ctx: Context<WithdrawAAccounts>) -> Result<()> {
+        handle_action(Admin::WithdrawA {
+            accounts: ctx.accounts,
+        })
+    }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {

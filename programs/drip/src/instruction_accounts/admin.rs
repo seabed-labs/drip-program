@@ -84,3 +84,23 @@ pub struct UpdateVaultWhitelistedSwapsAccounts<'info> {
 
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }
+
+#[derive(Accounts)]
+pub struct WithdrawAAccounts<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    pub vault: Account<'info, Vault>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub vault_token_a_account: Account<'info, TokenAccount>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub admin_token_a_account: Account<'info, TokenAccount>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub token_program: Program<'info, Token>,
+}
