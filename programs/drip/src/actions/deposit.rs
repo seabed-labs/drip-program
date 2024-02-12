@@ -1,4 +1,5 @@
 use crate::errors::DripError;
+use crate::instruction_accounts::{DepositAccountsBumps, DepositWithMetadataAccountsBumps};
 use crate::interactions::create_token_metadata::CreateTokenMetadata;
 use crate::interactions::executor::CpiExecutor;
 use crate::interactions::mint_token::MintToken;
@@ -14,7 +15,6 @@ use crate::{
 };
 use crate::{validate, DepositCommonAccounts};
 use anchor_lang::prelude::*;
-use std::collections::BTreeMap;
 
 const DRIP_METADATA_NAME: &str = "Drip Position";
 const DRIP_METADATA_SYMBOL: &str = "DP";
@@ -23,12 +23,12 @@ pub enum Deposit<'a, 'info> {
     WithoutMetadata {
         accounts: &'a mut DepositAccounts<'info>,
         params: DepositParams,
-        bumps: BTreeMap<String, u8>,
+        bumps: DepositAccountsBumps,
     },
     WithMetadata {
         accounts: &'a mut DepositWithMetadataAccounts<'info>,
         params: DepositParams,
-        bumps: BTreeMap<String, u8>,
+        bumps: DepositWithMetadataAccountsBumps,
     },
 }
 
@@ -91,7 +91,13 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 accounts,
                 params,
                 bumps,
-            } => execute_deposit(&mut accounts.common, params, bumps, None, cpi_executor),
+            } => execute_deposit(
+                &mut accounts.common,
+                params,
+                DepositBumps::WithoutMetadata(bumps),
+                None,
+                cpi_executor,
+            ),
             Deposit::WithMetadata {
                 accounts,
                 params,
@@ -113,7 +119,7 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
                 execute_deposit(
                     &mut accounts.common,
                     params,
-                    bumps,
+                    DepositBumps::WithMetadata(bumps),
                     Some(&create_token_metadata),
                     cpi_executor,
                 )
@@ -122,10 +128,15 @@ impl<'a, 'info> Executable for Deposit<'a, 'info> {
     }
 }
 
+enum DepositBumps {
+    WithoutMetadata(DepositAccountsBumps),
+    WithMetadata(DepositWithMetadataAccountsBumps),
+}
+
 fn execute_deposit(
     accounts: &mut DepositCommonAccounts,
     params: DepositParams,
-    bumps: BTreeMap<String, u8>,
+    bumps: DepositBumps,
     create_token_metadata: Option<&dyn CPI>,
     cpi_executor: &mut impl CpiExecutor,
 ) -> Result<()> {
@@ -151,9 +162,12 @@ fn execute_deposit(
         &accounts.vault.to_account_info(),
         None,
     );
-
+    let user_position_bump = match bumps {
+        DepositBumps::WithoutMetadata(bumps) => bumps.common.user_position,
+        DepositBumps::WithMetadata(bumps) => bumps.common.user_position,
+    };
     /* STATE UPDATES (EFFECTS) */
-    update_state(accounts, params, bumps)?;
+    update_state(accounts, params, user_position_bump);
 
     /* MANUAL CPI (INTERACTIONS) */
 
@@ -175,8 +189,8 @@ fn execute_deposit(
 fn update_state(
     accounts: &mut DepositCommonAccounts,
     params: DepositParams,
-    bumps: BTreeMap<String, u8>,
-) -> Result<()> {
+    user_position_bump: u8,
+) {
     let periodic_drip_amount =
         calculate_periodic_drip_amount(params.token_a_deposit_amount, params.number_of_swaps);
 
@@ -194,8 +208,8 @@ fn update_state(
         accounts.vault.last_drip_period,
         params.number_of_swaps,
         periodic_drip_amount,
-        bumps.get("user_position"),
-    )
+        user_position_bump,
+    );
 }
 
 fn get_metadata_url(position_nft_mint_pubkey: &Pubkey) -> String {

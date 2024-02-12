@@ -5,7 +5,8 @@ use crate::state::traits::{CPI, PDA};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program::invoke_signed;
 use anchor_spl::token::Mint;
-use mpl_token_metadata::instruction::create_metadata_accounts_v3;
+use mpl_token_metadata::instructions::CreateMetadataAccountV3Builder;
+use mpl_token_metadata::types::DataV2;
 
 use super::executor::CpiIdentifier;
 
@@ -83,24 +84,25 @@ impl<'info> fmt::Debug for CreateTokenMetadata<'info> {
 impl<'info> CPI for CreateTokenMetadata<'info> {
     fn execute(&self, signer: &dyn PDA) -> Result<()> {
         invoke_signed(
-            &create_metadata_accounts_v3(
-                self.metadata_program.key(),
-                self.metadata_account.key(),
-                self.mint.key(),
-                self.authority.key(),
-                self.payer.key(),
-                self.authority.key(),
-                self.name.clone(),
-                self.symbol.clone(),
-                self.metadata_uri.clone(),
-                None,
-                0,
-                true,
-                true,
-                None,
-                None,
-                None,
-            ),
+            &CreateMetadataAccountV3Builder::default()
+                .metadata(self.metadata_account.key())
+                .mint(self.mint.key())
+                .mint_authority(self.authority.key())
+                .payer(self.payer.key())
+                .update_authority(self.authority.key(), true)
+                .system_program(self.system_program.key())
+                .rent(Some(self.rent.key()))
+                .data(DataV2 {
+                    name: self.name.clone(),
+                    symbol: self.symbol.clone(),
+                    uri: self.metadata_uri.clone(),
+                    seller_fee_basis_points: 0,
+                    creators: None,
+                    collection: None,
+                    uses: None,
+                })
+                .is_mutable(true)
+                .instruction(),
             &[
                 self.metadata_account.to_account_info(),
                 self.mint.to_account_info(),

@@ -13,7 +13,7 @@ pub struct Whirlpool {
     // u16::MAX corresponds to ~6.5%
     pub fee_rate: u16, // 2
 
-    // Denominator for portion of fee rate taken (1/x)%
+    // Portion of fee rate taken stored as basis points
     pub protocol_fee_rate: u16, // 2
 
     // Maximum amount that can be held by Solana account
@@ -64,4 +64,9 @@ pub struct WhirlpoolRewardInfo {
     /// Q64.64 number that tracks the total tokens earned per unit of liquidity since the reward
     /// emissions were turned on.
     pub growth_global_x64: u128,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
+pub struct WhirlpoolBumps {
+    pub whirlpool_bump: u8,
 }

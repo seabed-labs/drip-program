@@ -1,8 +1,8 @@
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::program_option::COption;
 use anchor_lang::{
-    accounts::account::Account,
-    prelude::{AccountInfo, Program, Pubkey, Signer},
+    prelude::{AccountInfo, Pubkey},
     solana_program::program_pack::Pack,
     solana_program::stake_history::Epoch,
     system_program::System,
@@ -11,8 +11,6 @@ use anchor_lang::{
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use lazy_static::lazy_static;
 use spl_token::state::AccountState;
-
-use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 
 #[account]
 #[derive(Default)]
@@ -102,18 +100,6 @@ where
             self.executable,
             self.rent_epoch,
         )
-    }
-
-    pub fn to_account<'info>(&'info mut self) -> Account<'info, AnchorAccount> {
-        Account::try_from(&self.to_account_info()).unwrap()
-    }
-
-    pub fn to_signer<'info>(&'info mut self) -> Signer<'info> {
-        Signer::try_from(&self.to_account_info()).unwrap()
-    }
-
-    pub fn to_program<'info, T: Id + Clone>(&'info mut self) -> Program<'info, T> {
-        Program::try_from(&self.to_account_info()).unwrap()
     }
 }
 

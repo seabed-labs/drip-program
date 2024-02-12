@@ -6,3 +6,4 @@ build
 .anchor
 *.rs
 deps/
+**/idl/**/

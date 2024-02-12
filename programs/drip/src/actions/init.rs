@@ -1,4 +1,5 @@
 use crate::errors::DripError::{InvalidGranularity, InvalidSpread};
+use crate::instruction_accounts::InitializeVaultPeriodAccountsBumps;
 use crate::interactions::executor::CpiExecutor;
 use crate::state::MAX_TOKEN_SPREAD_EXCLUSIVE;
 use crate::{
@@ -10,7 +11,6 @@ use crate::{
     validate,
 };
 use anchor_lang::prelude::*;
-use std::collections::BTreeMap;
 
 pub enum Init<'a, 'info> {
     VaultProtoConfig {
@@ -20,7 +20,7 @@ pub enum Init<'a, 'info> {
     VaultPeriod {
         accounts: &'a mut InitializeVaultPeriodAccounts<'info>,
         params: InitializeVaultPeriodParams,
-        bumps: BTreeMap<String, u8>,
+        bumps: InitializeVaultPeriodAccountsBumps,
     },
 }
 
@@ -74,25 +74,23 @@ fn init_vault_proto_config(
 fn init_vault_period(
     accounts: &mut InitializeVaultPeriodAccounts,
     params: InitializeVaultPeriodParams,
-    bumps: BTreeMap<String, u8>,
+    bumps: InitializeVaultPeriodAccountsBumps,
 ) -> Result<()> {
-    accounts.vault_period.init(
-        accounts.vault.key(),
-        params.period_id,
-        bumps.get("vault_period"),
-    )
+    accounts
+        .vault_period
+        .init(accounts.vault.key(), params.period_id, bumps.vault_period);
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use super::*;
     use crate::interactions::executor::test::TestCpiExecutor;
     use crate::test::fixtures::{
         ADMIN, EMPTY_VAULT_PERIOD, EMPTY_VAULT_PROTO_CONFIG, SYSTEM_PROGRAM, VAULT,
     };
     use crate::Init;
+    use std::convert::TryFrom;
     use test_case::test_case;
 
     #[test_case(0, 0, 0, 0, Pubkey::new_unique(), Err(InvalidGranularity.into()); "Returns error for invalid granularity")]
@@ -112,10 +110,17 @@ mod tests {
         let mut system_program = SYSTEM_PROGRAM.clone();
         let mut vault_proto_config = EMPTY_VAULT_PROTO_CONFIG.clone();
 
+        let creator_account_info = &signer.to_account_info();
+        let creator = Signer::try_from(creator_account_info).unwrap();
+        let vault_proto_config_account_info = &vault_proto_config.to_account_info();
+        let vault_proto_config = Account::try_from(vault_proto_config_account_info).unwrap();
+        let system_program_account_info = &system_program.to_account_info();
+        let system_program = Program::try_from(system_program_account_info).unwrap();
+
         let initialize_vault_proto_config_accounts = &mut InitializeVaultProtoConfigAccounts {
-            creator: signer.to_signer(),
-            vault_proto_config: vault_proto_config.to_account(),
-            system_program: system_program.to_program(),
+            creator,
+            vault_proto_config,
+            system_program,
         };
 
         let initialize_vault_proto_config_params = InitializeVaultProtoConfigParams {
@@ -140,10 +145,17 @@ mod tests {
         let mut system_program = SYSTEM_PROGRAM.clone();
         let mut vault_proto_config = EMPTY_VAULT_PROTO_CONFIG.clone();
 
+        let creator_account_info = &signer.to_account_info();
+        let creator = Signer::try_from(creator_account_info).unwrap();
+        let vault_proto_config_account_info = &vault_proto_config.to_account_info();
+        let vault_proto_config = Account::try_from(vault_proto_config_account_info).unwrap();
+        let system_program_account_info = &system_program.to_account_info();
+        let system_program = Program::try_from(system_program_account_info).unwrap();
+
         let mut initialize_vault_proto_config_accounts = InitializeVaultProtoConfigAccounts {
-            creator: signer.to_signer(),
-            vault_proto_config: vault_proto_config.to_account(),
-            system_program: system_program.to_program(),
+            creator,
+            vault_proto_config,
+            system_program,
         };
 
         let vault_proto_config_before = &initialize_vault_proto_config_accounts.vault_proto_config;
@@ -192,16 +204,28 @@ mod tests {
     }
 
     #[test]
-    fn init_vault_period_happy_path() {
+    fn init_vault_period_happy_path<'a>() {
         let mut signer = ADMIN.clone();
         let mut system_program = SYSTEM_PROGRAM.clone();
         let mut vault = VAULT.clone();
         let mut vault_period = EMPTY_VAULT_PERIOD.clone();
+
+        let creator_account_info = &signer.to_account_info();
+        let creator = Signer::try_from(creator_account_info).unwrap();
+
+        let vault_period_account_info = &vault_period.to_account_info();
+        let vault_period = Account::try_from(vault_period_account_info).unwrap();
+
+        let vault_account_info = &vault.to_account_info();
+        let vault = Account::try_from(vault_account_info).unwrap();
+
+        let system_program_account_info = &system_program.to_account_info();
+        let system_program = Program::try_from(system_program_account_info).unwrap();
         let mut initialize_vault_period_accounts = InitializeVaultPeriodAccounts {
-            vault_period: vault_period.to_account(),
-            vault: vault.to_account(),
-            creator: signer.to_signer(),
-            system_program: system_program.to_program(),
+            vault_period,
+            vault,
+            creator,
+            system_program,
         };
 
         let vault_period_before = &initialize_vault_period_accounts.vault_period;
@@ -214,13 +238,10 @@ mod tests {
 
         let initialize_vault_period_params = InitializeVaultPeriodParams { period_id: 1 };
 
-        let mut bumps = BTreeMap::new();
-        bumps.insert(String::from_str("vault_period").unwrap(), 5);
-
         let vault_proto_config_action = Init::VaultPeriod {
             accounts: &mut initialize_vault_period_accounts,
             params: initialize_vault_period_params,
-            bumps,
+            bumps: InitializeVaultPeriodAccountsBumps { vault_period: 5 },
         };
 
         let res = vault_proto_config_action.validate();
