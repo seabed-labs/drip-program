@@ -182,7 +182,7 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     &accounts.common.token_program,
                     &accounts.user_position_nft_mint,
                     &accounts.common.user_position_nft_account,
-                    &accounts.common.vault.to_account_info(),
+                    &accounts.common.withdrawer.to_account_info(),
                     1,
                 );
 
@@ -195,11 +195,6 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
 
                 /* STATE UPDATES (EFFECTS) */
                 // Update the user's position state to reflect the newly withdrawn amount
-                accounts
-                    .common
-                    .user_position
-                    .close(accounts.common.withdrawer.to_account_info())
-                    .unwrap();
                 // Only reduce drip amount and dar if we haven't done so already
                 if accounts.common.vault_period_j.period_id
                     < accounts.vault_period_user_expiry.period_id
@@ -225,6 +220,12 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     ],
                     signer,
                 )?;
+
+                accounts
+                    .common
+                    .user_position
+                    .close(accounts.common.withdrawer.to_account_info())
+                    .unwrap();
 
                 Ok(())
             }

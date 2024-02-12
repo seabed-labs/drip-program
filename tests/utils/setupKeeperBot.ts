@@ -27,11 +27,11 @@ export function setupKeeperBot() {
     await Promise.all([
       await SolUtil.fundAccount(
         payerKeypair.publicKey,
-        SolUtil.solToLamports(0.5)
+        SolUtil.solToLamports(0.5),
       ),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.5)
+        SolUtil.solToLamports(0.5),
       ),
     ]);
 
@@ -53,16 +53,16 @@ export function setupKeeperBot() {
           tokenOwnerKeypair.publicKey,
           null,
           6,
-          payerKeypair
+          payerKeypair,
         ),
         // BTC
         TokenUtil.createMint(
           tokenOwnerKeypair.publicKey,
           null,
           6,
-          payerKeypair
+          payerKeypair,
         ),
-      ]))
+      ])),
     );
     for (const token of tokens) {
       console.log(token.publicKey.toString());
@@ -77,7 +77,7 @@ export function setupKeeperBot() {
         5,
         5,
         10,
-        tokenOwnerKeypair.publicKey
+        tokenOwnerKeypair.publicKey,
       );
     }
 
@@ -93,9 +93,9 @@ export function setupKeeperBot() {
       tokenOwnerKeypair,
       payerKeypair,
       {
-        a: 20000,
-        b: 1,
-      }
+        a: BigInt(20000),
+        b: BigInt(1),
+      },
     );
     console.log("usdc - btc splTokenSwap", splTokenSwapKeys[0].toString());
 
@@ -118,12 +118,12 @@ export function setupKeeperBot() {
     });
     console.log(
       "usdc - btc whirlpool",
-      whirlpool.initWhirlpoolRes.whirlpool.toString()
+      whirlpool.initWhirlpoolRes.whirlpool.toString(),
     );
     console.log(
       "minta - mintb",
       whirlpool.initWhirlpoolRes.tokenMintA.toBase58(),
-      whirlpool.initWhirlpoolRes.tokenMintB.toBase58()
+      whirlpool.initWhirlpoolRes.tokenMintB.toBase58(),
     );
 
     // for (const [granularity, vaultProtoConfig] of Object.entries(

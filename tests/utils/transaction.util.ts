@@ -1,6 +1,6 @@
 import { TestUtil } from "./config.util";
 import { Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { web3 } from "@project-serum/anchor";
+import { web3 } from "@coral-xyz/anchor";
 
 export class TransactionUtil extends TestUtil {
   static async executeInstructions(
@@ -17,13 +17,13 @@ export class TransactionUtil extends TestUtil {
     const signedTx = await this.provider.wallet.signTransaction(tx);
     await web3.sendAndConfirmRawTransaction(
       this.provider.connection,
-      signedTx.serialize()
+      signedTx.serialize(),
     );
   }
 
   static async executeInstructionsWithSigners(
     ixs: TransactionInstruction[],
-    signers: Signer[]
+    signers: Signer[],
   ): Promise<void> {
     const tx = new Transaction({
       feePayer: this.provider.wallet.publicKey,
@@ -37,7 +37,7 @@ export class TransactionUtil extends TestUtil {
     const signedTx = await this.provider.wallet.signTransaction(tx);
     await web3.sendAndConfirmRawTransaction(
       this.provider.connection,
-      signedTx.serialize()
+      signedTx.serialize(),
     );
   }
 }

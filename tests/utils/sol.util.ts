@@ -14,14 +14,14 @@ export class SolUtil extends TestUtil {
 
   static async fundAccount(
     address: PublicKey,
-    lamports: number
+    lamports: number,
   ): Promise<void> {
     await TransactionUtil.executeInstructions(
       ProgramUtil.systemProgram.transfer({
         fromPubkey: this.provider.wallet.publicKey,
         toPubkey: address,
         lamports,
-      })
+      }),
     );
   }
 

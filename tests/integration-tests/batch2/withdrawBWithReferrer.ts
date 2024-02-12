@@ -20,13 +20,13 @@ import {
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
 } from "../../utils/setup.util";
-import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { BN } from "@project-serum/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
+import { Mint } from "@solana/spl-token";
 
 describe("#withdrawBWithReferrer", testWithdrawB);
 
@@ -47,8 +47,8 @@ export function testWithdrawB() {
   let userPositionAccount: PublicKey;
   let userPostionNFTAccount: PublicKey;
 
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
   let swap: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
@@ -83,7 +83,7 @@ export function testWithdrawB() {
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       ),
     ]);
 
@@ -91,14 +91,14 @@ export function testWithdrawB() {
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
 
     tokenB = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
 
     [
@@ -113,7 +113,7 @@ export function testWithdrawB() {
       tokenOwnerKeypair,
       tokenB,
       tokenOwnerKeypair,
-      payerKeypair
+      payerKeypair,
     );
 
     vaultProtoConfig = await deployVaultProtoConfig(
@@ -121,24 +121,25 @@ export function testWithdrawB() {
       5,
       5,
       5,
-      TestUtil.provider.wallet.publicKey
+      TestUtil.provider.wallet.publicKey,
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      payerKeypair.publicKey
+      payerKeypair.publicKey,
+      payerKeypair,
     );
 
     vaultPDA = await deployVault(
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTreasuryTokenBAccount,
-      vaultProtoConfig
+      vaultProtoConfig,
     );
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     vaultPeriods = await Promise.all(
@@ -146,44 +147,64 @@ export function testWithdrawB() {
         deployVaultPeriod(
           vaultProtoConfig,
           vaultPDA.publicKey,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          i
-        )
-      )
+          tokenA.address,
+          tokenB.address,
+          i,
+        ),
+      ),
     );
 
     const referrerWallet = generatePair().publicKey;
-    referrer = await tokenB.createAssociatedTokenAccount(referrerWallet);
-    userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user.publicKey
+
+    referrer = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenB,
+      referrerWallet,
+      payerKeypair,
+    );
+
+    userTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      user.publicKey,
+      payerKeypair,
     );
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    await TokenUtil.mintTo({
+      payer: payerKeypair,
+      amount: mintAmount,
+      token: tokenA,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: userTokenAAccount,
+    });
 
-    botTokenAAccount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
+    botTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      bot.publicKey,
+      payerKeypair,
+    );
 
-    userTokenBAccount = await tokenB.createAssociatedTokenAccount(
-      user.publicKey
+    userTokenBAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenB,
+      user.publicKey,
+      payerKeypair,
     );
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
-      tokenA
+      tokenA,
     );
     [userPositionNFTMint, userPositionAccount, userPostionNFTAccount] =
       await depositToVault(
         user,
         tokenA,
         depositAmount,
-        new u64(4),
+        BigInt(4),
         vaultPDA.publicKey,
         vaultPeriods[4].publicKey,
         userTokenAAccount,
-        referrer
+        referrer,
       );
 
     dripTrigger = dripSPLTokenSwapWrapper(
@@ -198,7 +219,7 @@ export function testWithdrawB() {
       swapTokenBAccount,
       swapFeeAccount,
       swapAuthority,
-      swap
+      swap,
     );
 
     withdrawB = withdrawBWrapper(
@@ -210,14 +231,14 @@ export function testWithdrawB() {
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
       userTokenBAccount,
-      referrer
+      referrer,
     );
 
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
       tokenA,
-      referrer
+      referrer,
     );
   });
 
@@ -229,7 +250,7 @@ export function testWithdrawB() {
     for (let i = 0; i < 2; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
@@ -249,11 +270,11 @@ export function testWithdrawB() {
       TokenUtil.fetchTokenAccountInfo(referrer),
     ]);
 
-    userTokenBAccountAfter.balance.toString().should.equal("497504432");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
-    referrerTokenBAccountAfter.balance.toString().should.equal("249001");
+    userTokenBAccountAfter.amount.toString().should.equal("497504432");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("249001");
+    referrerTokenBAccountAfter.amount.toString().should.equal("249001");
     // The vault token b balance is 1 here, likely due to rounding issues
-    vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
+    (vaultTokenBAccountAfter.amount < BigInt(10)).should.be.true();
   });
 
   it("should be able to withdraw at the end of the drip", async () => {
@@ -264,7 +285,7 @@ export function testWithdrawB() {
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
@@ -284,10 +305,10 @@ export function testWithdrawB() {
       TokenUtil.fetchTokenAccountInfo(referrer),
     ]);
 
-    userTokenBAccountAfter.balance.toString().should.equal("994512849");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
-    referrerTokenBAccountAfter.balance.toString().should.equal("497754");
+    userTokenBAccountAfter.amount.toString().should.equal("994512849");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("497754");
+    referrerTokenBAccountAfter.amount.toString().should.equal("497754");
     // The vault token b balance is 1 here, likely due to rounding issues
-    vaultTokenBAccountAfter.balance.lt(new BN(10)).should.be.true();
+    (vaultTokenBAccountAfter.amount < new BN(10)).should.be.true();
   });
 }

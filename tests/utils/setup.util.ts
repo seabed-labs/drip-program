@@ -15,7 +15,8 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { TokenUtil } from "./token.util";
 import { SolUtil } from "./sol.util";
 import { SwapUtil } from "./swap.util";
-import { Token, u64 } from "@solana/spl-token";
+import { Mint } from "@solana/spl-token";
+import { BN } from "@coral-xyz/anchor";
 
 export const sleep = async (ms: number) => {
   return new Promise((resolve) => {
@@ -28,7 +29,7 @@ export const deployVaultProtoConfig = async (
   tokenADripTriggerSpread: number,
   tokenBWithdrawalSpread: number,
   tokenBReferralSpread: number,
-  admin: PublicKey
+  admin: PublicKey,
 ): Promise<PublicKey> => {
   const vaultProtoConfigKeypair = generatePair();
   await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
@@ -49,12 +50,12 @@ export const deployVault = async (
   tokenBMint: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
   vaultProtoConfigAccount: PublicKey,
-  whitelistedSwaps?: PublicKey[]
+  whitelistedSwaps?: PublicKey[],
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
     tokenAMint,
     tokenBMint,
-    vaultProtoConfigAccount
+    vaultProtoConfigAccount,
   );
   const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
     findAssociatedTokenAddress(vaultPDA.publicKey, tokenAMint),
@@ -71,7 +72,7 @@ export const deployVault = async (
     {
       whitelistedSwaps,
       maxSlippageBps: 1000,
-    }
+    },
   );
   return vaultPDA;
 };
@@ -81,14 +82,14 @@ export const deployVaultPeriod = async (
   vault: PublicKey,
   tokenAMint: PublicKey,
   tokenBMint: PublicKey,
-  period: number
+  period: number,
 ): Promise<PDA> => {
   const vaultPeriodPDA = await getVaultPeriodPDA(vault, period);
   await VaultUtil.initVaultPeriod(
     vault,
     vaultPeriodPDA.publicKey,
     vaultProtoConfig,
-    period
+    period,
   );
   return vaultPeriodPDA;
 };
@@ -97,8 +98,8 @@ export const deployVaultPeriod = async (
 export const depositWithNewUserWrapper = (
   vault: PublicKey,
   tokenOwnerKeypair: Keypair,
-  tokenA: Token,
-  referrer: PublicKey
+  tokenA: Mint,
+  referrer: PublicKey,
 ) => {
   return async ({
     numberOfCycles,
@@ -111,59 +112,57 @@ export const depositWithNewUserWrapper = (
   }) => {
     const user2 = generatePair();
     await SolUtil.fundAccount(user2.publicKey, SolUtil.solToLamports(0.2));
-    const user2TokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user2.publicKey
-    );
+    const user2TokenAAccount =
+      await TokenUtil.getOrCreateAssociatedTokenAccount(
+        tokenA,
+        user2.publicKey,
+        user2,
+      );
     const user2MintAmount = await TokenUtil.scaleAmount(
       amount(mintAmount, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-    await tokenA.mintTo(
-      user2TokenAAccount,
-      tokenOwnerKeypair,
-      [],
-      user2MintAmount
-    );
+
+    await TokenUtil.mintTo({
+      payer: user2,
+      token: tokenA,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: user2TokenAAccount,
+      amount: user2MintAmount,
+    });
     await depositToVault(
       user2,
       tokenA,
       user2MintAmount,
-      new u64(numberOfCycles),
+      BigInt(numberOfCycles),
       vault,
       newUserEndVaultPeriod,
       user2TokenAAccount,
-      referrer
+      referrer,
     );
   };
 };
 
 export const depositToVault = async (
   user: Keypair,
-  tokenA: Token,
-  tokenADepositAmount: u64,
-  numberOfSwaps: u64,
+  tokenA: Mint,
+  tokenADepositAmount: bigint,
+  numberOfSwaps: bigint,
   vault: PublicKey,
   vaultPeriodEnd: PublicKey,
   userTokenAAccount: PublicKey,
-  referrer: PublicKey
+  referrer: PublicKey,
 ): Promise<PublicKey[]> => {
-  await tokenA.approve(
-    userTokenAAccount,
-    vault,
-    user.publicKey,
-    [user],
-    tokenADepositAmount
-  );
   const userPositionNftMint = generatePair();
   const positionPDA = await getPositionPDA(userPositionNftMint.publicKey);
   const [vaultTokenAAccount, userPositionNftAccount] = await Promise.all([
-    findAssociatedTokenAddress(vault, tokenA.publicKey),
+    findAssociatedTokenAddress(vault, tokenA.address),
     findAssociatedTokenAddress(user.publicKey, userPositionNftMint.publicKey),
   ]);
   await VaultUtil.deposit({
     params: {
-      tokenADepositAmount,
-      numberOfSwaps,
+      tokenADepositAmount: new BN(tokenADepositAmount),
+      numberOfSwaps: new BN(numberOfSwaps),
     },
     accounts: {
       vault,
@@ -190,72 +189,95 @@ export const depositToVault = async (
 };
 
 export const deploySPLTokenSwap = async (
-  tokenA: Token,
+  tokenA: Mint,
   tokenAMintOwner: Keypair,
-  tokenB: Token,
+  tokenB: Mint,
   tokenBMintOwner: Keypair,
   payerKeypair: Keypair,
   mintAmount?: {
-    a?: number;
-    b?: number;
-  }
+    a?: bigint;
+    b?: bigint;
+  },
 ): Promise<PublicKey[]> => {
   const [swapOwnerKeyPair, tokenSwapKeypair, swapPayerKeypair] =
     generatePairs(5);
   await SolUtil.fundAccount(
     swapPayerKeypair.publicKey,
-    SolUtil.solToLamports(0.2)
+    SolUtil.solToLamports(0.2),
   );
   await SolUtil.fundAccount(
     swapOwnerKeyPair.publicKey,
-    SolUtil.solToLamports(0.2)
+    SolUtil.solToLamports(0.2),
   );
   const swapAuthorityPDA = await getSwapAuthorityPDA(
-    tokenSwapKeypair.publicKey
+    tokenSwapKeypair.publicKey,
   );
   const swapLPToken = await TokenUtil.createMint(
     swapAuthorityPDA.publicKey,
     null,
     2,
-    payerKeypair
+    payerKeypair,
   );
-  const swapLPTokenAccount = await swapLPToken.createAccount(
-    swapOwnerKeyPair.publicKey
+
+  const swapLPTokenAccount = await TokenUtil.createTokenAccount(
+    swapLPToken,
+    swapOwnerKeyPair.publicKey,
+    swapOwnerKeyPair,
   );
-  const swapLPTokenFeeAccount = await swapLPToken.createAccount(
-    new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN")
+  const swapLPTokenFeeAccount = await TokenUtil.createTokenAccount(
+    swapLPToken,
+    new PublicKey("HfoTxFR1Tm6kGmWgYWD6J7YHVy1UwqSULUGVLXkJqaKN"),
+    swapOwnerKeyPair,
   );
-  const swapTokenAAccount = await tokenA.createAccount(
-    swapAuthorityPDA.publicKey
+
+  const swapTokenAAccount = await TokenUtil.createTokenAccount(
+    tokenA,
+    swapAuthorityPDA.publicKey,
+    swapOwnerKeyPair,
   );
-  const mintAmountA = await TokenUtil.scaleAmount(
+  const mintAmountA = TokenUtil.scaleAmount(
     amount(mintAmount?.a ?? 1, Denom.Million),
-    tokenA
+    tokenA,
   );
-  await tokenA.mintTo(swapTokenAAccount, tokenAMintOwner, [], mintAmountA);
-  const swapTokenBAccount = await tokenB.createAccount(
-    swapAuthorityPDA.publicKey
+  await TokenUtil.mintTo({
+    payer: swapOwnerKeyPair,
+    token: tokenA,
+    mintAuthority: tokenAMintOwner,
+    recipient: swapTokenAAccount,
+    amount: mintAmountA,
+  });
+
+  const swapTokenBAccount = await TokenUtil.createTokenAccount(
+    tokenB,
+    swapAuthorityPDA.publicKey,
+    swapOwnerKeyPair,
   );
-  const mintAmountB = await TokenUtil.scaleAmount(
+  const mintAmountB = TokenUtil.scaleAmount(
     amount(mintAmount?.b ?? 1, Denom.Million),
-    tokenB
+    tokenB,
   );
-  await tokenB.mintTo(swapTokenBAccount, tokenBMintOwner, [], mintAmountB);
+  await TokenUtil.mintTo({
+    payer: swapOwnerKeyPair,
+    token: tokenB,
+    mintAuthority: tokenBMintOwner,
+    recipient: swapTokenBAccount,
+    amount: mintAmountB,
+  });
   await SwapUtil.createSwap(
     swapPayerKeypair,
     tokenSwapKeypair,
     swapAuthorityPDA,
-    tokenA.publicKey,
-    tokenB.publicKey,
+    tokenA.address,
+    tokenB.address,
     swapTokenAAccount,
     swapTokenBAccount,
-    swapLPToken.publicKey,
+    swapLPToken.address,
     swapLPTokenFeeAccount,
-    swapLPTokenAccount
+    swapLPTokenAccount,
   );
   return [
     tokenSwapKeypair.publicKey,
-    swapLPToken.publicKey,
+    swapLPToken.address,
     swapTokenAAccount,
     swapTokenBAccount,
     swapLPTokenFeeAccount,
@@ -275,11 +297,11 @@ export const dripSPLTokenSwapWrapper = (
   swapTokenBAccount: PublicKey,
   swapFeeAccount: PublicKey,
   swapAuthority: PublicKey,
-  swap: PublicKey
+  swap: PublicKey,
 ) => {
   return async (
     previousDripPeriod: PublicKey,
-    currentDripPeriod: PublicKey
+    currentDripPeriod: PublicKey,
   ) => {
     await VaultUtil.dripSPLTokenSwap(
       user,
@@ -295,7 +317,7 @@ export const dripSPLTokenSwapWrapper = (
       swapTokenBAccount,
       swapFeeAccount,
       swapAuthority,
-      swap
+      swap,
     );
   };
 };
@@ -310,14 +332,14 @@ export const dripOrcaWhirlpoolWrapper = (
   swapTokenAAccount: PublicKey,
   swapTokenBAccount: PublicKey,
   whirlpool: PublicKey,
-  oracle: PublicKey
+  oracle: PublicKey,
 ) => {
   return async (
     lastVaultPeriod: PublicKey,
     currentVaultPeriod: PublicKey,
     tickArray0: PublicKey,
     tickArray1: PublicKey,
-    tickArray2: PublicKey
+    tickArray2: PublicKey,
   ) => {
     try {
       await VaultUtil.dripOrcaWhirlpool({
@@ -352,7 +374,7 @@ export const withdrawBWrapper = (
   vaultTokenB: PublicKey,
   vaultTreasuryTokenBAccount: PublicKey,
   userTokenBAccount: PublicKey,
-  referrer?: PublicKey
+  referrer?: PublicKey,
 ) => {
   return async (vaultPeriodI: PublicKey, vaultPeriodJ: PublicKey) => {
     const txHash = await VaultUtil.withdrawB(
@@ -366,7 +388,7 @@ export const withdrawBWrapper = (
       vaultPeriodI,
       vaultPeriodJ,
       userTokenBAccount,
-      referrer
+      referrer,
     );
   };
 };
@@ -382,12 +404,12 @@ export const closePositionWrapper = (
   userTokenAAccount: PublicKey,
   userTokenBAccount: PublicKey,
   userPositionNftAccount: PublicKey,
-  userPositionNftMint: PublicKey
+  userPositionNftMint: PublicKey,
 ) => {
   return async (
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
-    vaultPeriodUserExpiry: PublicKey
+    vaultPeriodUserExpiry: PublicKey,
   ) => {
     const txHash = await VaultUtil.closePosition(
       withdrawer,
@@ -403,7 +425,7 @@ export const closePositionWrapper = (
       userTokenAAccount,
       userTokenBAccount,
       userPositionNftAccount,
-      userPositionNftMint
+      userPositionNftMint,
     );
   };
 };

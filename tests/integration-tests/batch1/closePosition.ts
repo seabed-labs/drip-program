@@ -5,7 +5,6 @@ import {
   amount,
   Denom,
   findAssociatedTokenAddress,
-  generatePair,
   generatePairs,
   PDA,
 } from "../../utils/common.util";
@@ -21,7 +20,7 @@ import {
   dripSPLTokenSwapWrapper,
   withdrawBWrapper,
 } from "../../utils/setup.util";
-import { MintLayout, Token, u64 } from "@solana/spl-token";
+import { Mint } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
@@ -47,10 +46,9 @@ export function testClosePosition() {
   let userPositionNFTMint: PublicKey;
   let userPositionAccount: PublicKey;
   let userPositionNFTAccount: PublicKey;
-  let userPosition: Token;
 
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
   let swap: PublicKey;
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
@@ -81,7 +79,7 @@ export function testClosePosition() {
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       ),
     ]);
 
@@ -89,14 +87,14 @@ export function testClosePosition() {
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
 
     tokenB = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
 
     [
@@ -111,7 +109,7 @@ export function testClosePosition() {
       tokenOwnerKeypair,
       tokenB,
       tokenOwnerKeypair,
-      payerKeypair
+      payerKeypair,
     );
 
     vaultProtoConfig = await deployVaultProtoConfig(
@@ -119,24 +117,25 @@ export function testClosePosition() {
       5,
       5,
       0,
-      TestUtil.provider.wallet.publicKey
+      TestUtil.provider.wallet.publicKey,
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      payerKeypair.publicKey
+      payerKeypair.publicKey,
+      payerKeypair,
     );
 
     vaultPDA = await deployVault(
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTreasuryTokenBAccount,
-      vaultProtoConfig
+      vaultProtoConfig,
     );
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     vaultPeriods = await Promise.all(
@@ -144,45 +143,59 @@ export function testClosePosition() {
         deployVaultPeriod(
           vaultProtoConfig,
           vaultPDA.publicKey,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          i
-        )
-      )
+          tokenA.address,
+          tokenB.address,
+          i,
+        ),
+      ),
     );
 
-    userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user.publicKey
+    userTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      user.publicKey,
+      user,
     );
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    await TokenUtil.mintTo({
+      payer: user,
+      token: tokenA,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: userTokenAAccount,
+      amount: mintAmount,
+    });
 
-    botTokenAAccount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
+    botTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      bot.publicKey,
+      bot,
+    );
 
-    userTokenBAccount = await tokenB.createAssociatedTokenAccount(
-      user.publicKey
+    userTokenBAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenB,
+      user.publicKey,
+      user,
     );
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
-      tokenA
+      tokenA,
     );
     [userPositionNFTMint, userPositionAccount, userPositionNFTAccount] =
       await depositToVault(
         user,
         tokenA,
         depositAmount,
-        new u64(4),
+        BigInt(4),
         vaultPDA.publicKey,
         vaultPeriods[4].publicKey,
         userTokenAAccount,
-        vaultTreasuryTokenBAccount
+        vaultTreasuryTokenBAccount,
       );
 
-    userPosition = TokenUtil.fetchMint(userPositionNFTMint, user);
+    const userPosition = await TokenUtil.fetchMint(userPositionNFTMint);
 
     dripTrigger = dripSPLTokenSwapWrapper(
       bot,
@@ -196,7 +209,7 @@ export function testClosePosition() {
       swapTokenBAccount,
       swapFeeAccount,
       swapAuthority,
-      swap
+      swap,
     );
 
     closePosition = closePositionWrapper(
@@ -210,7 +223,7 @@ export function testClosePosition() {
       userTokenAAccount,
       userTokenBAccount,
       userPositionNFTAccount,
-      userPositionNFTMint
+      userPositionNFTMint,
     );
 
     withdraw = withdrawBWrapper(
@@ -221,38 +234,29 @@ export function testClosePosition() {
       userPositionNFTAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      userTokenBAccount
+      userTokenBAccount,
     );
 
     depositWithNewUser = depositWithNewUserWrapper(
       vaultPDA.publicKey,
       tokenOwnerKeypair,
       tokenA,
-      vaultTreasuryTokenBAccount
+      vaultTreasuryTokenBAccount,
     );
   });
 
   it("should be able to close position before first drip", async () => {
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
-
     let [i, j, k] = [0, 0, 4];
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
     const [
       userTokenAAccountAfter,
       userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccountAfter,
-      userPositionAccountAfter,
       vault_After,
       vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
@@ -260,16 +264,17 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccountAfter.balance.toString().should.equal("2000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("0");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("0");
+    userTokenAAccountAfter.amount.toString().should.equal("2000000000");
+    userTokenBAccountAfter.amount.toString().should.equal("0");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("0");
+    await AccountUtil.fetchPositionAccount(
+      userPositionAccount,
+    ).should.be.rejectedWith(/Account does not exist or has no data/);
     should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
   });
@@ -278,23 +283,16 @@ export function testClosePosition() {
     for (let i = 0; i < 2; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
 
     let [i, j, k] = [0, 2, 4];
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
 
     const [
@@ -302,7 +300,6 @@ export function testClosePosition() {
       userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccountAfter,
-      userPositionAccountAfter,
       vault_After,
       vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
@@ -310,16 +307,17 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccountAfter.balance.toString().should.equal("1500000000");
-    userTokenBAccountAfter.balance.toString().should.equal("497753433");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("249001");
+    userTokenAAccountAfter.amount.toString().should.equal("1500000000");
+    userTokenBAccountAfter.amount.toString().should.equal("497753433");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("249001");
     should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
+    await AccountUtil.fetchPositionAccount(
+      userPositionAccount,
+    ).should.be.rejectedWith(/Account does not exist or has no data/);
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("0");
     vault_After.dripAmount.toString().should.equal("0");
   });
@@ -328,23 +326,16 @@ export function testClosePosition() {
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
 
     let [i, j, k] = [0, 4, 4];
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
 
     const [
@@ -352,7 +343,6 @@ export function testClosePosition() {
       userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccountAfter,
-      userPositionAccountAfter,
       vault_After,
       vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
@@ -360,16 +350,17 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("995010603");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
+    userTokenAAccountAfter.amount.toString().should.equal("1000000000");
+    userTokenBAccountAfter.amount.toString().should.equal("995010603");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("497754");
     should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
+    await AccountUtil.fetchPositionAccount(
+      userPositionAccount,
+    ).should.be.rejectedWith(/Account does not exist or has no data/);
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
     vault_After.dripAmount.toString().should.equal("0");
   });
@@ -378,24 +369,17 @@ export function testClosePosition() {
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
 
     let [i, j, k] = [0, 4, 4];
     await withdraw(vaultPeriods[i].publicKey, vaultPeriods[j].publicKey);
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
 
     const [
@@ -403,7 +387,6 @@ export function testClosePosition() {
       userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccountAfter,
-      userPositionAccountAfter,
       vault_After,
       vaultPeriodUserExpiryAfter,
     ] = await Promise.all([
@@ -411,16 +394,17 @@ export function testClosePosition() {
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
       AccountUtil.fetchVaultAccount(vaultPDA.publicKey),
       AccountUtil.fetchVaultPeriodAccount(vaultPeriods[k].publicKey),
     ]);
 
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("995010603");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("497754");
+    userTokenAAccountAfter.amount.toString().should.equal("1000000000");
+    userTokenBAccountAfter.amount.toString().should.equal("995010603");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("497754");
     should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
+    await AccountUtil.fetchPositionAccount(
+      userPositionAccount,
+    ).should.be.rejectedWith(/Account does not exist or has no data/);
     vaultPeriodUserExpiryAfter.dar.toString().should.equal("250000000");
     vault_After.dripAmount.toString().should.equal("0");
   });
@@ -434,23 +418,16 @@ export function testClosePosition() {
     for (let i = 0; i < 5; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
 
     let [i, j, k] = [0, 4, 4];
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
 
     const [
@@ -458,32 +435,26 @@ export function testClosePosition() {
       userTokenBAccountAfter,
       vaultTreasuryTokenBAccountAfter,
       userPositionNFTAccountAfter,
-      userPositionAccountAfter,
     ] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(vaultTreasuryTokenBAccount),
       AccountUtil.provider.connection.getAccountInfo(userPositionNFTAccount),
-      AccountUtil.fetchPositionAccount(userPositionAccount),
     ]);
 
-    userTokenAAccountAfter.balance.toString().should.equal("1000000000");
-    userTokenBAccountAfter.balance.toString().should.equal("992636304");
-    vaultTreasuryTokenBAccountAfter.balance.toString().should.equal("496566");
+    userTokenAAccountAfter.amount.toString().should.equal("1000000000");
+    userTokenBAccountAfter.amount.toString().should.equal("992636304");
+    vaultTreasuryTokenBAccountAfter.amount.toString().should.equal("496566");
     should(userPositionNFTAccountAfter).be.null();
-    userPositionAccountAfter.isClosed.should.be.true();
+    await AccountUtil.fetchPositionAccount(
+      userPositionAccount,
+    ).should.be.rejectedWith(/Account does not exist or has no data/);
   });
 
   it("should fail if invalid vault periods are provided", async () => {
     await dripTrigger(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     await sleep(1500);
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
+
     const testCases = [
       [0, 0, 0],
       [0, 0, 1],
@@ -495,12 +466,12 @@ export function testClosePosition() {
         await closePosition(
           vaultPeriods[i].publicKey,
           vaultPeriods[j].publicKey,
-          vaultPeriods[k].publicKey
+          vaultPeriods[k].publicKey,
         );
       } catch (e) {
         findError(
           e,
-          new RegExp(".*Invalid vault-period")
+          new RegExp(".*Invalid vault-period"),
         ).should.not.be.undefined();
       }
     }
@@ -510,12 +481,12 @@ export function testClosePosition() {
         await closePosition(
           vaultPeriods[i].publicKey,
           vaultPeriods[j].publicKey,
-          vaultPeriods[k].publicKey
+          vaultPeriods[k].publicKey,
         );
       } catch (e) {
         findError(
           e,
-          new RegExp(".*Invalid vault-period")
+          new RegExp(".*Invalid vault-period"),
         ).should.not.be.undefined();
       }
     }
@@ -523,37 +494,27 @@ export function testClosePosition() {
 
   it("should not be able to close position more than once", async () => {
     let [i, j, k] = [0, 0, 4];
-    await userPosition.approve(
-      userPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     );
-    const mint = TokenUtil.fetchMint(userPositionNFTMint, user);
-    const newUserPositionNFTAccount = await mint.createAssociatedTokenAccount(
-      user.publicKey
-    );
+    const mint = await TokenUtil.fetchMint(userPositionNFTMint);
+    const newUserPositionNFTAccount =
+      await TokenUtil.getOrCreateAssociatedTokenAccount(
+        mint,
+        user.publicKey,
+        user,
+      );
+
     newUserPositionNFTAccount
       .toString()
       .should.equal(userPositionNFTAccount.toString());
 
-    await userPosition.approve(
-      newUserPositionNFTAccount,
-      vaultPDA.publicKey,
-      user.publicKey,
-      [user],
-      1
-    );
     await closePosition(
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
-      vaultPeriods[k].publicKey
+      vaultPeriods[k].publicKey,
     ).should.be.rejectedWith(/0x177f/);
   });
 }

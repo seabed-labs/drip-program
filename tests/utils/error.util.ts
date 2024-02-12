@@ -1,4 +1,4 @@
-import { AnchorError } from "@project-serum/anchor";
+import { AnchorError } from "@coral-xyz/anchor";
 
 export function findError(e: AnchorError, errMsg: RegExp) {
   if (!e.logs) {

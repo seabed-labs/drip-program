@@ -18,12 +18,12 @@ import {
   sleep,
   dripSPLTokenSwapWrapper,
 } from "../../utils/setup.util";
-import { Token, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { AccountUtil } from "../../utils/account.util";
 import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
+import { Mint } from "@solana/spl-token";
 
 describe("#dripSPLTokenSwap", testDripSPLTokenSwap);
 
@@ -39,8 +39,8 @@ export function testDripSPLTokenSwap() {
   let bot: Keypair;
   let botTokenAAcount: PublicKey;
 
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
 
   let vaultProtoConfig: PublicKey;
   let vaultPDA: PDA;
@@ -88,20 +88,20 @@ export function testDripSPLTokenSwap() {
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       ),
     ]);
     tokenA = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
     tokenB = await TokenUtil.createMint(
       tokenOwnerKeypair.publicKey,
       null,
       6,
-      payerKeypair
+      payerKeypair,
     );
     [
       swap,
@@ -115,7 +115,7 @@ export function testDripSPLTokenSwap() {
       tokenOwnerKeypair,
       tokenB,
       tokenOwnerKeypair,
-      payerKeypair
+      payerKeypair,
     );
 
     [
@@ -130,7 +130,7 @@ export function testDripSPLTokenSwap() {
       tokenOwnerKeypair,
       tokenA,
       tokenOwnerKeypair,
-      payerKeypair
+      payerKeypair,
     );
 
     [
@@ -145,7 +145,7 @@ export function testDripSPLTokenSwap() {
       tokenOwnerKeypair,
       tokenB,
       tokenOwnerKeypair,
-      payerKeypair
+      payerKeypair,
     );
 
     vaultProtoConfig = await deployVaultProtoConfig(
@@ -153,24 +153,25 @@ export function testDripSPLTokenSwap() {
       5,
       5,
       10,
-      TestUtil.provider.wallet.publicKey
+      TestUtil.provider.wallet.publicKey,
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      payerKeypair.publicKey
+      payerKeypair.publicKey,
+      payerKeypair,
     );
 
     vaultPDA = await deployVault(
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTreasuryTokenBAccount,
       vaultProtoConfig,
-      [swap, swap2]
+      [swap, swap2],
     );
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     vaultPeriods = await Promise.all(
@@ -178,37 +179,49 @@ export function testDripSPLTokenSwap() {
         deployVaultPeriod(
           vaultProtoConfig,
           vaultPDA.publicKey,
-          tokenA.publicKey,
-          tokenB.publicKey,
-          i
-        )
-      )
+          tokenA.address,
+          tokenB.address,
+          i,
+        ),
+      ),
     );
 
-    userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      user.publicKey
+    userTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      user.publicKey,
+      user,
     );
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    await TokenUtil.mintTo({
+      payer: payerKeypair,
+      token: tokenA,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: userTokenAAccount,
+      amount: mintAmount,
+    });
 
-    botTokenAAcount = await tokenA.createAssociatedTokenAccount(bot.publicKey);
+    botTokenAAcount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      bot.publicKey,
+      bot,
+    );
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
-      tokenA
+      tokenA,
     );
     await depositToVault(
       user,
       tokenA,
       depositAmount,
-      new u64(4),
+      BigInt(4),
       vaultPDA.publicKey,
       vaultPeriods[4].publicKey,
       userTokenAAccount,
-      vaultTreasuryTokenBAccount
+      vaultTreasuryTokenBAccount,
     );
 
     dripTrigger = dripSPLTokenSwapWrapper(
@@ -223,7 +236,7 @@ export function testDripSPLTokenSwap() {
       swapTokenBAccount,
       swapFeeAccount,
       swapAuthority,
-      swap
+      swap,
     );
   });
 
@@ -245,9 +258,9 @@ export function testDripSPLTokenSwap() {
     ]);
 
     vaultAfter.lastDripPeriod.toString().should.equal("1");
-    vaultTokenAAccountAfter.balance.toString().should.equal("750000000");
-    vaultTokenBAccountAfter.balance.toString().should.equal("249063328");
-    botTokenAAccountAfter.balance.toString().should.equal("125000");
+    vaultTokenAAccountAfter.amount.toString().should.equal("750000000");
+    vaultTokenBAccountAfter.amount.toString().should.equal("249063328");
+    botTokenAAccountAfter.amount.toString().should.equal("125000");
     // Calculated manually by doing b/a
     lastVaultPeriod.twap.toString().should.equal("18386823290694860353");
     lastVaultPeriod.dripTimestamp.toString().should.not.equal("0");
@@ -270,9 +283,9 @@ export function testDripSPLTokenSwap() {
     ]);
 
     vaultAfter.lastDripPeriod.toString().should.equal("2");
-    vaultTokenAAccountAfter.balance.toString().should.equal("500000000");
-    vaultTokenBAccountAfter.balance.toString().should.equal("498002435");
-    botTokenAAccountAfter.balance.toString().should.equal("250000");
+    vaultTokenAAccountAfter.amount.toString().should.equal("500000000");
+    vaultTokenBAccountAfter.amount.toString().should.equal("498002435");
+    botTokenAAccountAfter.amount.toString().should.equal("250000");
     lastVaultPeriod.twap.toString().should.equal("18382238052084394572");
   });
 
@@ -292,7 +305,7 @@ export function testDripSPLTokenSwap() {
 
       swapFeeAccount2,
       swapAuthority2,
-      swap2
+      swap2,
     )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
   });
 
@@ -300,7 +313,7 @@ export function testDripSPLTokenSwap() {
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
@@ -314,16 +327,16 @@ export function testDripSPLTokenSwap() {
       TokenUtil.fetchTokenAccountInfo(vaultTokenBAccount),
       TokenUtil.fetchTokenAccountInfo(botTokenAAcount),
     ]);
-    vaultTokenAAccountAfter.balance.toString().should.equal("0");
-    vaultTokenBAccountAfter.balance.toString().should.equal("995508358");
-    botTokenAAccountAfter.balance.toString().should.equal("500000");
+    vaultTokenAAccountAfter.amount.toString().should.equal("0");
+    vaultTokenBAccountAfter.amount.toString().should.equal("995508358");
+    botTokenAAccountAfter.amount.toString().should.equal("500000");
   });
 
   it("should fail to trigger drip if vault token A balance is 0", async () => {
     for (let i = 0; i < 4; i++) {
       await dripTrigger(
         vaultPeriods[i].publicKey,
-        vaultPeriods[i + 1].publicKey
+        vaultPeriods[i + 1].publicKey,
       );
       await sleep(1500);
     }
@@ -332,7 +345,7 @@ export function testDripSPLTokenSwap() {
     } catch (e) {
       findError(
         e,
-        new RegExp(".*Periodic drip amount == 0")
+        new RegExp(".*Periodic drip amount == 0"),
       ).should.not.be.undefined();
     }
   });
@@ -344,7 +357,7 @@ export function testDripSPLTokenSwap() {
     } catch (e) {
       findError(
         e,
-        new RegExp(".*Drip already triggered for the current period")
+        new RegExp(".*Drip already triggered for the current period"),
       ).should.not.be.undefined();
     }
   });
@@ -363,12 +376,12 @@ export function testDripSPLTokenSwap() {
         swapTokenBAccount3,
         swapFeeAccount3,
         swapAuthority3,
-        swap3
+        swap3,
       )(vaultPeriods[0].publicKey, vaultPeriods[1].publicKey);
     } catch (e) {
       findError(
         e,
-        new RegExp(".*Token Swap is Not Whitelisted")
+        new RegExp(".*Token Swap is Not Whitelisted"),
       ).should.not.be.undefined();
     }
   });

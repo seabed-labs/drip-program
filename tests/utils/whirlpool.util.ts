@@ -17,14 +17,18 @@ import {
   toTx,
   WhirlpoolContext,
   buildWhirlpoolClient,
-  AccountFetcher,
 } from "@orca-so/whirlpools-sdk";
-import { BN } from "@project-serum/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { ProgramUtil } from "./program.util";
-import { Token, u64 } from "@solana/spl-token";
 import { TokenUtil } from "./token.util";
-import { amount, Denom, generatePair } from "./common.util";
+import {
+  amount,
+  Denom,
+  findAssociatedTokenAddress,
+  generatePair,
+} from "./common.util";
 import { SolUtil } from "./sol.util";
+import { Mint } from "@solana/spl-token";
 
 const defaultInitSqrtPrice = PriceMath.tickIndexToSqrtPriceX64(27500);
 const defaultTickSpacing = 8;
@@ -61,7 +65,7 @@ export type InitTickArrayRes = {
 };
 
 export type FundedPositionParams = {
-  liquidityAmount: u64;
+  liquidityAmount: bigint;
   tickLowerIndex: number;
   tickUpperIndex: number;
 };
@@ -81,14 +85,14 @@ export type DeployWhirlpoolRes = {
   whirlpoolKeypair: Keypair;
   whirlpoolAuth: Keypair;
   tokenOwnerKeypair: Keypair;
-  tokenA: Token;
-  tokenB: Token;
+  tokenA: Mint;
+  tokenB: Mint;
 };
 export class WhirlpoolUtil extends TestUtil {
   static get whirlpoolCtx(): WhirlpoolContext {
     return WhirlpoolContext.withProvider(
       this.provider,
-      ProgramUtil.orcaWhirlpoolProgram.programId
+      ProgramUtil.orcaWhirlpoolProgram.programId,
     );
   }
 
@@ -105,7 +109,7 @@ export class WhirlpoolUtil extends TestUtil {
     }: {
       defaultProtocolFeeRate?: number;
       tickSpacing?: number;
-    }
+    },
   ): Promise<InitWhirlpoolConfigRes> {
     const ctx = this.whirlpoolCtx;
 
@@ -120,7 +124,7 @@ export class WhirlpoolUtil extends TestUtil {
     const feeTierPda = PDAUtil.getFeeTier(
       ctx.program.programId,
       whirlpoolsConfigKeypair.publicKey,
-      tickSpacing
+      tickSpacing,
     );
     const initFeeTierIx = initializeFeeTierIx(ctx.program, {
       whirlpoolsConfig: whirlpoolsConfigKeypair.publicKey,
@@ -156,7 +160,7 @@ export class WhirlpoolUtil extends TestUtil {
       initSqrtPrice?: BN;
       tokenVaultAKeypair?: Keypair;
       tokenVaultBKeypair?: Keypair;
-    }
+    },
   ): Promise<InitWhirlpoolRes> {
     const ctx = this.whirlpoolCtx;
 
@@ -165,7 +169,7 @@ export class WhirlpoolUtil extends TestUtil {
       whirlpoolsConfig,
       tokenMintA,
       tokenMintB,
-      tickSpacing
+      tickSpacing,
     );
     const initPoolIx = initializePoolIx(ctx.program, {
       initSqrtPrice,
@@ -181,7 +185,7 @@ export class WhirlpoolUtil extends TestUtil {
     });
     const oracle = PDAUtil.getOracle(
       ProgramUtil.orcaWhirlpoolProgram.programId,
-      whirlpoolPda.publicKey
+      whirlpoolPda.publicKey,
     ).publicKey;
     return {
       whirlpool: whirlpoolPda.publicKey,
@@ -198,13 +202,13 @@ export class WhirlpoolUtil extends TestUtil {
 
   static async initTickArray(
     whirlpool: PublicKey,
-    startTick: number
+    startTick: number,
   ): Promise<InitTickArrayRes> {
     const ctx = this.whirlpoolCtx;
     const tickArrayPda = PDAUtil.getTickArray(
       ctx.program.programId,
       whirlpool,
-      startTick
+      startTick,
     );
 
     const tx = toTx(
@@ -214,7 +218,7 @@ export class WhirlpoolUtil extends TestUtil {
         tickArrayPda,
         startTick,
         funder: this.provider.wallet.publicKey,
-      })
+      }),
     );
 
     return {
@@ -226,21 +230,19 @@ export class WhirlpoolUtil extends TestUtil {
   private static async openPosition(
     whirlpool: PublicKey,
     tickLowerIndex: number,
-    tickUpperIndex: number
+    tickUpperIndex: number,
   ): Promise<OpenPositionRes> {
     const ctx = this.whirlpoolCtx;
 
     const positionMintKeypair = Keypair.generate();
     const positionPda = PDAUtil.getPosition(
       ctx.program.programId,
-      positionMintKeypair.publicKey
+      positionMintKeypair.publicKey,
     );
 
-    const positionTokenAccountAddress = await Token.getAssociatedTokenAddress(
-      ProgramUtil.associatedTokenProgram.programId,
-      ProgramUtil.tokenProgram.programId,
+    const positionTokenAccountAddress = await findAssociatedTokenAddress(
+      this.provider.wallet.publicKey,
       positionMintKeypair.publicKey,
-      this.provider.wallet.publicKey
     );
 
     let tx = toTx(
@@ -254,7 +256,7 @@ export class WhirlpoolUtil extends TestUtil {
         tickLowerIndex,
         tickUpperIndex,
         funder: this.provider.wallet.publicKey,
-      })
+      }),
     );
     tx.addSigner(positionMintKeypair);
     const txId = await tx.buildAndExecute();
@@ -274,47 +276,47 @@ export class WhirlpoolUtil extends TestUtil {
     tokenVaultBKeypair: Keypair,
     tickSpacing: number,
     initSqrtPrice: BN,
-    fundParams: FundedPositionParams[]
+    fundParams: FundedPositionParams[],
   ): Promise<FundedPositionRes[]> {
     const ctx = this.whirlpoolCtx;
-    const fetcher = new AccountFetcher(WhirlpoolUtil.provider.connection);
+    const fetcher = WhirlpoolUtil.whirlpoolCtx.fetcher;
     return await Promise.all(
       fundParams.map(async (param): Promise<FundedPositionRes> => {
         const openPositionRes = await WhirlpoolUtil.openPosition(
           whirlpool,
           param.tickLowerIndex,
-          param.tickUpperIndex
+          param.tickUpperIndex,
         );
 
         const lowerTick = TickUtil.getStartTickIndex(
           param.tickLowerIndex,
-          tickSpacing
+          tickSpacing,
         );
         const tickArrayLower = PDAUtil.getTickArray(
           ctx.program.programId,
           whirlpool,
-          lowerTick
+          lowerTick,
         ).publicKey;
         const tickArrayLowerData = await fetcher.getTickArray(tickArrayLower);
 
         const upperTick = TickUtil.getStartTickIndex(
           param.tickUpperIndex,
-          tickSpacing
+          tickSpacing,
         );
         const tickArrayUpper = PDAUtil.getTickArray(
           ctx.program.programId,
           whirlpool,
-          upperTick
+          upperTick,
         ).publicKey;
         const tickArrayUpperData = await fetcher.getTickArray(tickArrayLower);
 
-        if (param.liquidityAmount.gt(new BN(0))) {
+        if (param.liquidityAmount < BigInt(0)) {
           const { tokenA, tokenB } = PoolUtil.getTokenAmountsFromLiquidity(
             param.liquidityAmount,
             initSqrtPrice,
             PriceMath.tickIndexToSqrtPriceX64(param.tickLowerIndex),
             PriceMath.tickIndexToSqrtPriceX64(param.tickUpperIndex),
-            true
+            true,
           );
 
           await toTx(
@@ -333,7 +335,7 @@ export class WhirlpoolUtil extends TestUtil {
               tokenVaultB: tokenVaultBKeypair.publicKey,
               tickArrayLower,
               tickArrayUpper,
-            })
+            }),
           ).buildAndExecute();
         }
 
@@ -344,7 +346,7 @@ export class WhirlpoolUtil extends TestUtil {
           tickArrayLower,
           tickArrayUpper,
         };
-      })
+      }),
     );
   }
 
@@ -355,7 +357,7 @@ export class WhirlpoolUtil extends TestUtil {
     startTickIndex: number,
     arrayCount: number,
     aToB: boolean,
-    tickSpacing: number
+    tickSpacing: number,
   ): Promise<PublicKey[]> {
     const ticksInArray = tickSpacing * TICK_ARRAY_SIZE;
     const direction = aToB ? -1 : 1;
@@ -367,7 +369,7 @@ export class WhirlpoolUtil extends TestUtil {
         tickIndex = TickUtil.getStartTickIndex(tickIndex, tickSpacing);
         const initTickArrayRes = await WhirlpoolUtil.initTickArray(
           whirlpool,
-          tickIndex
+          tickIndex,
         );
         result.push(initTickArrayRes.tickArray);
       } catch (e) {
@@ -384,33 +386,33 @@ export class WhirlpoolUtil extends TestUtil {
     tokenOwnerKeypair,
   }:
     | {
-        tokenAMint: Token;
-        tokenBMint: Token;
+        tokenAMint: Mint;
+        tokenBMint: Mint;
         tokenOwnerKeypair?: Keypair;
       }
     | {
-        tokenAMint?: Token;
-        tokenBMint?: Token;
+        tokenAMint?: Mint;
+        tokenBMint?: Mint;
         tokenOwnerKeypair: Keypair;
-      }): Promise<Token[]> {
+      }): Promise<Mint[]> {
     if (!tokenAMint) {
       tokenAMint = await TokenUtil.createMint(
         tokenOwnerKeypair.publicKey,
         null,
-        6
+        6,
       );
     }
     if (!tokenBMint) {
       tokenBMint = await TokenUtil.createMint(
         tokenOwnerKeypair.publicKey,
         null,
-        6
+        6,
       );
     }
     if (
       Buffer.compare(
-        tokenAMint.publicKey.toBuffer(),
-        tokenBMint.publicKey.toBuffer()
+        tokenAMint.address.toBuffer(),
+        tokenBMint.address.toBuffer(),
       ) < 0
     ) {
       return [tokenAMint, tokenBMint];
@@ -431,8 +433,8 @@ export class WhirlpoolUtil extends TestUtil {
     whirlpoolKeypair?: Keypair;
     whirlpoolAuth?: Keypair;
     tokenOwnerKeypair?: Keypair;
-    tokenA?: Token;
-    tokenB?: Token;
+    tokenA?: Mint;
+    tokenB?: Mint;
     initSqrtPrice?: BN;
   }): Promise<DeployWhirlpoolRes> {
     [tokenA, tokenB] = await WhirlpoolUtil.getOrderedMints({
@@ -443,7 +445,7 @@ export class WhirlpoolUtil extends TestUtil {
     await Promise.all([
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       ),
     ]);
 
@@ -452,24 +454,21 @@ export class WhirlpoolUtil extends TestUtil {
       whirlpoolAuth,
       whirlpoolAuth.publicKey,
       whirlpoolAuth.publicKey,
-      {}
+      {},
     );
 
     const initWhirlpoolRes = await WhirlpoolUtil.initPool(
       initWhirlpoolConfigRes.config,
       initWhirlpoolConfigRes.feeTier,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       initWhirlpoolConfigRes.tickSpacing,
       {
         initSqrtPrice,
-      }
+      },
     );
     const whirlpoolClient = buildWhirlpoolClient(WhirlpoolUtil.whirlpoolCtx);
-    const whirlpool = await whirlpoolClient.getPool(
-      initWhirlpoolRes.whirlpool,
-      false
-    );
+    const whirlpool = await whirlpoolClient.getPool(initWhirlpoolRes.whirlpool);
     const startIndex = whirlpool.getData().tickCurrentIndex;
     // Based off of swap.test.ts swaps across three tick arrays
     await WhirlpoolUtil.initTickArrayRange(
@@ -477,7 +476,7 @@ export class WhirlpoolUtil extends TestUtil {
       startIndex,
       10,
       true,
-      initWhirlpoolConfigRes.tickSpacing
+      initWhirlpoolConfigRes.tickSpacing,
     );
     // Based off of swap.test.ts swaps across three tick arrays
     await WhirlpoolUtil.initTickArrayRange(
@@ -485,47 +484,65 @@ export class WhirlpoolUtil extends TestUtil {
       startIndex,
       10,
       false,
-      initWhirlpoolConfigRes.tickSpacing
+      initWhirlpoolConfigRes.tickSpacing,
     );
 
     // Token A -> USDC
-    const tokenAAccount = await tokenA.createAccount(
-      TestUtil.provider.wallet.publicKey
+
+    const tokenAAccount = await TokenUtil.createTokenAccount(
+      tokenA,
+      TestUtil.provider.wallet.publicKey,
+      tokenOwnerKeypair,
     );
-    const mintAmountA = await TokenUtil.scaleAmount(
+    const mintAmountA = TokenUtil.scaleAmount(
       amount(1e4, Denom.Billion),
-      tokenA
+      tokenA,
     );
-    await tokenA.mintTo(tokenAAccount, tokenOwnerKeypair, [], mintAmountA);
+    await TokenUtil.mintTo({
+      payer: tokenOwnerKeypair,
+      token: tokenA,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: tokenAAccount,
+      amount: mintAmountA,
+    });
 
     // Token B -> SOL
-    const tokenBAccount = await tokenB.createAccount(
-      TestUtil.provider.wallet.publicKey
+
+    const tokenBAccount = await TokenUtil.createTokenAccount(
+      tokenB,
+      TestUtil.provider.wallet.publicKey,
+      tokenOwnerKeypair,
     );
-    const mintAmountB = await TokenUtil.scaleAmount(
+    const mintAmountB = TokenUtil.scaleAmount(
       amount(1e4, Denom.Billion),
-      tokenB
+      tokenB,
     );
-    await tokenB.mintTo(tokenBAccount, tokenOwnerKeypair, [], mintAmountB);
+    await TokenUtil.mintTo({
+      payer: tokenOwnerKeypair,
+      token: tokenB,
+      mintAuthority: tokenOwnerKeypair,
+      recipient: tokenBAccount,
+      amount: mintAmountB,
+    });
 
     // Based off of swap.test.ts swaps across three tick arrays
     const fundParams: FundedPositionParams[] = [
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: BigInt("100000000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 1,
         tickUpperIndex:
           startIndex + initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 1,
       },
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: BigInt("100000000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 2,
         tickUpperIndex:
           startIndex + initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 2,
       },
       {
-        liquidityAmount: new u64("100000000000000000"),
+        liquidityAmount: BigInt("100000000000000000"),
         tickLowerIndex:
           startIndex - initWhirlpoolConfigRes.tickSpacing * TICK_ARRAY_SIZE * 3,
         tickUpperIndex:
@@ -541,7 +558,7 @@ export class WhirlpoolUtil extends TestUtil {
       initWhirlpoolRes.tokenVaultBKeypair,
       initWhirlpoolConfigRes.tickSpacing,
       initWhirlpoolRes.initSqrtPrice,
-      fundParams
+      fundParams,
     );
 
     return {

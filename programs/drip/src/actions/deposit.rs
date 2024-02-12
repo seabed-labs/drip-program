@@ -144,7 +144,8 @@ fn execute_deposit(
         &accounts.token_program,
         &accounts.user_token_a_account,
         &accounts.vault_token_a_account,
-        &accounts.vault.to_account_info(),
+        &accounts.depositor.to_account_info(),
+        // &accounts.vault.to_account_info(),
         params.token_a_deposit_amount,
     );
 
