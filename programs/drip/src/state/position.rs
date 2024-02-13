@@ -1,4 +1,4 @@
-use crate::{errors::DripError::CannotGetPositionBump, test_account_size};
+use crate::test_account_size;
 use anchor_lang::prelude::*;
 
 #[account]
@@ -39,8 +39,8 @@ impl Position {
         last_drip_period: u64,
         number_of_swaps: u64,
         periodic_drip_amount: u64,
-        bump: Option<&u8>,
-    ) -> Result<()> {
+        bump: u8,
+    ) {
         self.vault = vault;
         self.position_authority = position_authority;
         self.deposited_token_a_amount = deposited_amount;
@@ -51,13 +51,7 @@ impl Position {
         self.periodic_drip_amount = periodic_drip_amount;
         self.is_closed = false;
         self.referrer = referrer;
-        match bump {
-            Some(val) => {
-                self.bump = *val;
-                Ok(())
-            }
-            None => Err(CannotGetPositionBump.into()),
-        }
+        self.bump = bump;
     }
 
     pub fn get_withdrawable_amount_with_max(&self, max_withdrawable_token_b_amount: u64) -> u64 {

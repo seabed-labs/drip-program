@@ -1,7 +1,6 @@
 import "should";
 import { DECIMALS, TokenUtil } from "../../utils/token.util";
 import { PublicKey, Signer } from "@solana/web3.js";
-import { Token, u64 } from "@solana/spl-token";
 import { VaultUtil } from "../../utils/vault.util";
 import { SolUtil } from "../../utils/sol.util";
 import { AccountUtil } from "../../utils/account.util";
@@ -17,21 +16,24 @@ import {
   Granularity,
 } from "../../utils/common.util";
 import { initLog } from "../../utils/log.util";
-import { PDAUtil } from "@orca-so/whirlpools-sdk";
 import { TestUtil } from "../../utils/config.util";
+import { Mint } from "@solana/spl-token";
+import { getMetadataGpaBuilder } from "@metaplex-foundation/mpl-token-metadata";
+import { Metaplex } from "@metaplex-foundation/js";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 describe("#depositWithMetadata", testDepositWithMetadata);
 
 export function testDepositWithMetadata() {
   initLog();
+  const metaplex = Metaplex.make(TestUtil.provider.connection);
 
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
   let vaultPeriodPubkey: PublicKey;
   let usdcMinter: Signer, btcMinter: Signer, user: Signer;
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
   let vaultTokenAAccount: PublicKey;
   let vaultTokenBAccount: PublicKey;
   let vaultTreasuryTokenBAccount: PublicKey;
@@ -47,7 +49,7 @@ export function testDepositWithMetadata() {
 
     [tokenA, tokenB] = await TokenUtil.createMints(
       [usdcMinter.publicKey, btcMinter.publicKey],
-      [DECIMALS.USDC, DECIMALS.BTC]
+      [DECIMALS.USDC, DECIMALS.BTC],
     );
 
     const [usdcAmount] = await TokenUtil.scaleAmountBatch([
@@ -59,8 +61,13 @@ export function testDepositWithMetadata() {
       {
         token: tokenA,
         mintAuthority: usdcMinter,
-        recipient: user.publicKey,
+        recipient: await TokenUtil.getOrCreateAssociatedTokenAccount(
+          tokenA,
+          user.publicKey,
+          user,
+        ),
         amount: usdcAmount,
+        payer: user,
       },
     ]);
 
@@ -75,26 +82,30 @@ export function testDepositWithMetadata() {
     vaultProtoConfigPubkey = vaultProtoConfigKeypair.publicKey;
 
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigPubkey
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigPubkey,
     );
 
     [vaultTokenAAccount, vaultTokenBAccount, vaultTreasuryTokenBAccount] =
       await Promise.all([
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
-        TokenUtil.createTokenAccount(tokenB, treasuryOwner.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
+        TokenUtil.getOrCreateAssociatedTokenAccount(
+          tokenB,
+          treasuryOwner.publicKey,
+          treasuryOwner,
+        ),
       ]);
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenAAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
-      undefined
+      undefined,
     );
 
     vaultPubkey = vaultPDA.publicKey;
@@ -105,7 +116,7 @@ export function testDepositWithMetadata() {
       vaultPubkey,
       vaultPeriodPDA.publicKey,
       vaultProtoConfigPubkey,
-      69
+      69,
     );
 
     vaultPeriodPubkey = vaultPeriodPDA.publicKey;
@@ -122,32 +133,24 @@ export function testDepositWithMetadata() {
     ] = await Promise.all([
       findAssociatedTokenAddress(
         user.publicKey,
-        positionNftMintKeypair.publicKey
+        positionNftMintKeypair.publicKey,
       ),
       TokenUtil.fetchTokenAccountInfo(vaultTokenAAccount),
       TokenUtil.fetchTokenAccountInfo(userTokenAAccount),
     ]);
 
-    vaultTokenAAccountBefore.balance.toString().should.equal("0");
-    userTokenAAccountBefore.balance.toString().should.equal("10000000000000");
+    vaultTokenAAccountBefore.amount.toString().should.equal("0");
+    userTokenAAccountBefore.amount.toString().should.equal("10000000000000");
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(10, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-
-    await tokenA.approve(
-      userTokenAAccount,
-      vaultPubkey,
-      user.publicKey,
-      [user],
-      depositAmount
-    );
-
+    getMetadataGpaBuilder;
     await VaultUtil.depositWithMetadata({
       params: {
         tokenADepositAmount: depositAmount,
-        numberOfSwaps: new u64(69),
+        numberOfSwaps: BigInt(69),
       },
       accounts: {
         vault: vaultPubkey,
@@ -158,9 +161,10 @@ export function testDepositWithMetadata() {
         userTokenAAccount: userTokenAAccount,
         userPositionNftAccount: userPositionNft_ATA,
         depositor: user.publicKey,
-        positionMetadataAccount: PDAUtil.getPositionMetadata(
-          positionNftMintKeypair.publicKey
-        ).publicKey,
+        positionMetadataAccount: metaplex
+          .nfts()
+          .pdas()
+          .metadata({ mint: positionNftMintKeypair.publicKey }),
         referrer: vaultTreasuryTokenBAccount,
       },
       signers: {
@@ -170,11 +174,10 @@ export function testDepositWithMetadata() {
     });
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(vaultPubkey);
-    const vaultPeriodEndAccount = await AccountUtil.fetchVaultPeriodAccount(
-      vaultPeriodPubkey
-    );
+    const vaultPeriodEndAccount =
+      await AccountUtil.fetchVaultPeriodAccount(vaultPeriodPubkey);
     const positionAccount = await AccountUtil.fetchPositionAccount(
-      positionPDA.publicKey
+      positionPDA.publicKey,
     );
 
     vaultAccount.dripAmount.toString().should.equal("144927536");
@@ -199,41 +202,38 @@ export function testDepositWithMetadata() {
       .should.equal("10000000000");
     positionAccount.withdrawnTokenBAmount.toString().should.equal("0");
 
-    const vaultTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
-      vaultTokenAAccount
-    );
+    const vaultTokenAAccountAfter =
+      await TokenUtil.fetchTokenAccountInfo(vaultTokenAAccount);
 
-    const userTokenAAccountAfter = await TokenUtil.fetchTokenAccountInfo(
-      userTokenAAccount
-    );
+    const userTokenAAccountAfter =
+      await TokenUtil.fetchTokenAccountInfo(userTokenAAccount);
 
     // TODO(matcha): Any other tests to add here? Maybe better to be on the paranoid side and check everything
-    vaultTokenAAccountAfter.balance.toString().should.equal("10000000000");
+    vaultTokenAAccountAfter.amount.toString().should.equal("10000000000");
     vaultTokenAAccountAfter.delegatedAmount.toString().should.equal("0");
-    userTokenAAccountAfter.balance.toString().should.equal("9990000000000");
+    userTokenAAccountAfter.amount.toString().should.equal("9990000000000");
     userTokenAAccountAfter.delegatedAmount.toString().should.equal("0");
 
-    const userPositionNftMintAccount = await TokenUtil.fetchTokenMintInfo(
-      positionNftMintKeypair.publicKey
+    const userPositionNftMintAccount = await TokenUtil.fetchMint(
+      positionNftMintKeypair.publicKey,
     );
 
-    await TokenUtil.fetchTokenMintInfo(tokenA.publicKey);
+    // await TokenUtil.fetchTokenMintInfo(tokenA.address);
 
     (userPositionNftMintAccount.mintAuthority == null).should.be.true();
     (userPositionNftMintAccount.freezeAuthority == null).should.be.true();
     userPositionNftMintAccount.supply.toString().should.equal("1");
     userPositionNftMintAccount.decimals.toString().should.equal("0");
-    userPositionNftMintAccount.isInitialized.should.equal(1);
+    userPositionNftMintAccount.isInitialized.should.equal(true);
 
-    const userPositionNftTokenAccount = await TokenUtil.fetchTokenAccountInfo(
-      userPositionNft_ATA
-    );
+    const userPositionNftTokenAccount =
+      await TokenUtil.fetchTokenAccountInfo(userPositionNft_ATA);
 
     userPositionNftTokenAccount.owner
       .toBase58()
       .should.equal(user.publicKey.toBase58());
     userPositionNftTokenAccount.delegatedAmount.toString().should.equal("0");
-    userPositionNftTokenAccount.balance.toString().should.equal("1");
+    userPositionNftTokenAccount.amount.toString().should.equal("1");
     userPositionNftTokenAccount.address
       .toBase58()
       .should.equal(userPositionNft_ATA.toBase58());

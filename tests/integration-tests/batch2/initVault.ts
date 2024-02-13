@@ -3,7 +3,6 @@ import { AccountUtil } from "../../utils/account.util";
 import { TokenUtil } from "../../utils/token.util";
 import { VaultUtil } from "../../utils/vault.util";
 import { PublicKey, Keypair, Transaction } from "@solana/web3.js";
-import { Token } from "@solana/spl-token";
 import {
   findAssociatedTokenAddress,
   generatePair,
@@ -16,7 +15,8 @@ import { SolUtil } from "../../utils/sol.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 import { ProgramUtil } from "../../utils/program.util";
-import { BN } from "@project-serum/anchor";
+import { BN } from "@coral-xyz/anchor";
+import { Mint } from "@solana/spl-token";
 
 describe("#initVault", testInitVault);
 
@@ -24,8 +24,8 @@ export function testInitVault() {
   initLog();
 
   let vaultProtoConfigAccount: PublicKey;
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
   let treasuryTokenBAccount: PublicKey;
 
   beforeEach(async () => {
@@ -50,35 +50,36 @@ export function testInitVault() {
     ]);
     treasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      treasuryOwner.publicKey
+      treasuryOwner.publicKey,
+      treasuryOwner,
     );
   });
 
   it("initializes the vault account correctly", async () => {
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigAccount
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      undefined
+      undefined,
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
-      vaultPDA.publicKey
+      vaultPDA.publicKey,
     );
     const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
       TokenUtil.fetchTokenAccountInfo(vaultTokenA_ATA),
@@ -93,12 +94,8 @@ export function testInitVault() {
       .toString()
       .should.equal(vaultProtoConfigAccount.toString());
 
-    vaultAccount.tokenAMint
-      .toString()
-      .should.equal(tokenA.publicKey.toString());
-    vaultAccount.tokenBMint
-      .toString()
-      .should.equal(tokenB.publicKey.toString());
+    vaultAccount.tokenAMint.toString().should.equal(tokenA.address.toString());
+    vaultAccount.tokenBMint.toString().should.equal(tokenB.address.toString());
 
     vaultAccount.tokenAAccount
       .toString()
@@ -107,12 +104,8 @@ export function testInitVault() {
       .toString()
       .should.equal(vaultTokenB_ATA.toString());
 
-    vaultTokenAAccount.mint
-      .toString()
-      .should.equal(tokenA.publicKey.toString());
-    vaultTokenBAccount.mint
-      .toString()
-      .should.equal(tokenB.publicKey.toString());
+    vaultTokenAAccount.mint.toString().should.equal(tokenA.address.toString());
+    vaultTokenBAccount.mint.toString().should.equal(tokenB.address.toString());
 
     vaultTokenAAccount.owner
       .toString()
@@ -127,32 +120,32 @@ export function testInitVault() {
   it("initializes the vault account with 1 swap", async () => {
     const whitelistedSwaps = generatePairs(1).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigAccount
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
       {
         whitelistedSwaps,
         maxSlippageBps: 1000,
-      }
+      },
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
-      vaultPDA.publicKey
+      vaultPDA.publicKey,
     );
 
     whitelistedSwaps.forEach((swap) => {
@@ -165,32 +158,32 @@ export function testInitVault() {
   it("initializes the vault account with 5 whitelistedSwaps", async () => {
     const whitelistedSwaps = generatePairs(5).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigAccount
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
       {
         whitelistedSwaps,
         maxSlippageBps: 1000,
-      }
+      },
     );
 
     const vaultAccount = await AccountUtil.fetchVaultAccount(
-      vaultPDA.publicKey
+      vaultPDA.publicKey,
     );
 
     whitelistedSwaps.forEach((swap) => {
@@ -203,84 +196,80 @@ export function testInitVault() {
   it("should fail to initialize the vault account with 6 whitelistedSwaps", async () => {
     const whitelistedSwaps = generatePairs(6).map((pair) => pair.publicKey);
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigAccount
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
       {
         whitelistedSwaps,
-      }
+      },
     ).should.be.rejectedWith(/0x1779/);
   });
 
   it("should fail to initialize when vault PDA is generated with invalid seeds", async () => {
     // NOTE: swapped tokenA and tokenB
     const vaultPDA = await getVaultPDA(
-      tokenB.publicKey,
-      tokenA.publicKey,
-      vaultProtoConfigAccount
+      tokenB.address,
+      tokenA.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      undefined
-    ).should.rejectedWith(
-      /Cross-program invocation with unauthorized signer or writable account/
-    );
+      undefined,
+    ).should.rejectedWith(/0x7d6/);
   });
 
   it("should fail to initialize when vault PDA is on ed25519 curve", async () => {
     const vaultPDAPublicKey = generatePair().publicKey;
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDAPublicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDAPublicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDAPublicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDAPublicKey, tokenB.address),
     ]);
 
     await VaultUtil.initVault(
       vaultPDAPublicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      undefined
-    ).should.rejectedWith(
-      /Cross-program invocation with unauthorized signer or writable account/
-    );
+      undefined,
+    ).should.rejectedWith(/0x7d6/);
   });
 
   it("should fail to initialize when token accounts are not ATA's", async () => {
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigAccount
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigAccount,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
@@ -291,12 +280,12 @@ export function testInitVault() {
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigAccount,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      undefined
+      undefined,
     ).should.rejectedWith(/An account required by the instruction is missing/);
   });
 
@@ -309,7 +298,7 @@ export function testInitVault() {
     let treasuryTokenBAccount: PublicKey;
     let makeInitVaultTx: (creatorPubkey: PublicKey) => Promise<Transaction>;
     let makeInitVaultProtoConfigTx: (
-      adminPubkey: PublicKey
+      adminPubkey: PublicKey,
     ) => Promise<Transaction>;
 
     beforeEach(async () => {
@@ -318,21 +307,23 @@ export function testInitVault() {
       adminKeypair = generatePair();
       await SolUtil.fundAccount(
         adminKeypair.publicKey,
-        SolUtil.solToLamports(1)
+        SolUtil.solToLamports(1),
       );
       vaultPDA = await getVaultPDA(
-        tokenA.publicKey,
-        tokenB.publicKey,
-        vaultProtoConfigKeypair.publicKey
+        tokenA.address,
+        tokenB.address,
+        vaultProtoConfigKeypair.publicKey,
       );
       [vaultTokenAAta, vaultTokenBAta] = await Promise.all([
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
       ]);
-      treasuryTokenBAccount = await tokenB.createAccount(
-        adminKeypair.publicKey
-      );
 
+      treasuryTokenBAccount = await TokenUtil.createTokenAccount(
+        tokenB,
+        adminKeypair.publicKey,
+        adminKeypair,
+      );
       makeInitVaultTx = async (creatorPubkey: PublicKey) =>
         await ProgramUtil.dripProgram.methods
           .initVault({
@@ -342,8 +333,8 @@ export function testInitVault() {
           .accounts({
             vault: vaultPDA.publicKey.toBase58(),
             vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toBase58(),
-            tokenAMint: tokenA.publicKey.toBase58(),
-            tokenBMint: tokenB.publicKey.toBase58(),
+            tokenAMint: tokenA.address.toBase58(),
+            tokenBMint: tokenB.address.toBase58(),
             tokenAAccount: vaultTokenAAta.toBase58(),
             tokenBAccount: vaultTokenBAta.toBase58(),
             treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
@@ -357,7 +348,7 @@ export function testInitVault() {
           .transaction();
 
       makeInitVaultProtoConfigTx = async (
-        adminPubkey: PublicKey
+        adminPubkey: PublicKey,
       ): Promise<Transaction> => {
         return await ProgramUtil.dripProgram.methods
           .initVaultProtoConfig({
@@ -376,7 +367,7 @@ export function testInitVault() {
       };
 
       const initVaultProtoConfigTx = await makeInitVaultProtoConfigTx(
-        adminKeypair.publicKey
+        adminKeypair.publicKey,
       );
 
       await TestUtil.provider.sendAndConfirm(initVaultProtoConfigTx, [
@@ -386,7 +377,7 @@ export function testInitVault() {
 
     it("vault_proto_config.admin can initialize a vault", async () => {
       const vaultProtoConfig = await AccountUtil.fetchVaultProtoConfigAccount(
-        vaultProtoConfigKeypair.publicKey
+        vaultProtoConfigKeypair.publicKey,
       );
 
       vaultProtoConfig.admin
@@ -405,15 +396,15 @@ export function testInitVault() {
                 signature: tx,
                 ...blockhash,
               },
-              "finalized"
-            )
+              "finalized",
+            ),
           )
       ).should.not.throw();
     });
 
     it("non vault_proto_config.admin cannot initialize a vault", async () => {
       const vaultProtoConfig = await AccountUtil.fetchVaultProtoConfigAccount(
-        vaultProtoConfigKeypair.publicKey
+        vaultProtoConfigKeypair.publicKey,
       );
 
       vaultProtoConfig.admin
@@ -423,7 +414,7 @@ export function testInitVault() {
       const randoKeypair = generatePair();
       await SolUtil.fundAccount(
         randoKeypair.publicKey,
-        SolUtil.solToLamports(1)
+        SolUtil.solToLamports(1),
       );
 
       const initVaultTx = await makeInitVaultTx(randoKeypair.publicKey);
@@ -441,13 +432,13 @@ export function testInitVault() {
     // Values the same for all tests, no need for a beforeEach
     before(async () => {
       vaultPDA = await getVaultPDA(
-        tokenA.publicKey,
-        tokenB.publicKey,
-        vaultProtoConfigAccount
+        tokenA.address,
+        tokenB.address,
+        vaultProtoConfigAccount,
       );
       [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+        findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
       ]);
     });
 
@@ -455,13 +446,13 @@ export function testInitVault() {
       await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
+        tokenA.address,
+        tokenB.address,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
         undefined,
-        { systemProgram: generatePair().publicKey }
+        { systemProgram: generatePair().publicKey },
       ).should.be.rejectedWith(/0xbc0/);
     });
 
@@ -469,13 +460,13 @@ export function testInitVault() {
       await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
+        tokenA.address,
+        tokenB.address,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
         undefined,
-        { tokenProgram: generatePair().publicKey }
+        { tokenProgram: generatePair().publicKey },
       ).should.be.rejectedWith(/0xbc0/);
     });
 
@@ -483,13 +474,13 @@ export function testInitVault() {
       await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
+        tokenA.address,
+        tokenB.address,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
         undefined,
-        { associatedTokenProgram: generatePair().publicKey }
+        { associatedTokenProgram: generatePair().publicKey },
       ).should.be.rejectedWith(/0xbc0/);
     });
 
@@ -497,13 +488,13 @@ export function testInitVault() {
       await VaultUtil.initVault(
         vaultPDA.publicKey,
         vaultProtoConfigAccount,
-        tokenA.publicKey,
-        tokenB.publicKey,
+        tokenA.address,
+        tokenB.address,
         vaultTokenA_ATA,
         vaultTokenB_ATA,
         treasuryTokenBAccount,
         undefined,
-        { rent: generatePair().publicKey }
+        { rent: generatePair().publicKey },
       ).should.be.rejectedWith(/0xbc7/);
     });
   });

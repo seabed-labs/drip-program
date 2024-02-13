@@ -10,7 +10,6 @@ pub const MIN_TICK_INDEX: i32 = -443636;
 pub const TICK_ARRAY_SIZE: i32 = 88;
 pub const TICK_ARRAY_SIZE_USIZE: usize = 88;
 
-#[zero_copy]
 #[repr(packed)]
 #[derive(Default, Debug, PartialEq)]
 pub struct Tick {
@@ -38,7 +37,6 @@ pub struct TickUpdate {
     pub reward_growths_outside: [u128; NUM_REWARDS],
 }
 
-#[account(zero_copy)]
 #[repr(packed)]
 pub struct TickArray {
     pub start_tick_index: i32,

@@ -1,4 +1,4 @@
-import { BorshEventCoder } from "@project-serum/anchor";
+import { BorshEventCoder } from "@coral-xyz/anchor";
 import { IDL } from "../target/types/drip";
 
 // Call With: yarn run ts-node ./scripts/deserializeBorsh.ts YLjF84sCWpQFAAAAAAAAAAUAAABoZWxsbw==

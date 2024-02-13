@@ -6,7 +6,7 @@ async function main() {
 
   if (!input || !output) {
     console.error(
-      `Usage: node scripts/postProcessIdl <input IDL file path> <output IDL file path>`
+      `Usage: node scripts/postProcessIdl <input IDL file path> <output IDL file path>`,
     );
     process.exit(1);
   }
@@ -15,7 +15,7 @@ async function main() {
 
   const filteredTypes = inputIdlJson.types.filter(
     (type) =>
-      !type || !type.type || !type.type.kind || type.type.kind !== "enum"
+      !type || !type.type || !type.type.kind || type.type.kind !== "enum",
   );
 
   const outputIdlJson = {
@@ -36,7 +36,7 @@ async function main() {
   await fs.writeFile(
     path.resolve(`${output}.json`),
     JSON.stringify(outputIdlJson, null, 2),
-    "utf8"
+    "utf8",
   );
 
   await fs.writeFile(
@@ -44,7 +44,7 @@ async function main() {
     `export type Drip = ${JSON.stringify(outputIdlTsJson, null, 2)};
 
 export const IDL: Drip = ${JSON.stringify(outputIdlTsJson, null, 2)};`,
-    "utf8"
+    "utf8",
   );
 }
 

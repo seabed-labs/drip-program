@@ -6,7 +6,7 @@ import {
   Signer,
   TransactionSignature,
 } from "@solana/web3.js";
-import { Token, u64 } from "@solana/spl-token";
+import { Mint } from "@solana/spl-token";
 import {
   amount,
   Denom,
@@ -16,7 +16,7 @@ import {
   Granularity,
   PDA,
 } from "./common.util";
-import { BN } from "@project-serum/anchor";
+import { BN } from "@coral-xyz/anchor";
 import { TokenUtil } from "./token.util";
 import { deployVaultPeriod, depositToVault } from "./setup.util";
 import { SolUtil } from "./sol.util";
@@ -46,8 +46,8 @@ export interface DepositTxParams {
     userPositionNftMint: Signer;
   };
   params: {
-    tokenADepositAmount: u64;
-    numberOfSwaps: u64;
+    tokenADepositAmount: bigint;
+    numberOfSwaps: bigint;
   };
 }
 
@@ -69,8 +69,8 @@ export interface DepositWithMetadataTxParams {
     userPositionNftMint: Signer;
   };
   params: {
-    tokenADepositAmount: u64;
-    numberOfSwaps: u64;
+    tokenADepositAmount: bigint;
+    numberOfSwaps: bigint;
   };
 }
 
@@ -90,7 +90,7 @@ export type DeployVaultRes = {
 export class VaultUtil extends TestUtil {
   static async initVaultProtoConfig(
     vaultProtoConfigKeypair: Signer,
-    vaultProtoConfig: VaultProtoConfigParams
+    vaultProtoConfig: VaultProtoConfigParams,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVaultProtoConfig({
@@ -129,7 +129,7 @@ export class VaultUtil extends TestUtil {
       tokenProgram?: PublicKey;
       associatedTokenProgram?: PublicKey;
       rent?: PublicKey;
-    }
+    },
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVault({
@@ -170,7 +170,7 @@ export class VaultUtil extends TestUtil {
       whitelistedSwaps: PublicKey[] | null | undefined;
     } = {
       whitelistedSwaps: undefined,
-    }
+    },
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .setVaultSwapWhitelist({
@@ -194,7 +194,7 @@ export class VaultUtil extends TestUtil {
           signature: txId,
           ...blockhash,
         },
-        "confirmed"
+        "confirmed",
       );
       return txId;
     } else {
@@ -206,16 +206,15 @@ export class VaultUtil extends TestUtil {
     vault: PublicKey,
     vaultPeriod: PublicKey,
     vaultProtoConfig: PublicKey,
-    periodId: number
+    periodId: number,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVaultPeriod({
-        periodId: new u64(periodId),
+        periodId: new BN(periodId),
       })
       .accounts({
         vault: vault.toBase58(),
         vaultPeriod: vaultPeriod.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
         creator: this.provider.wallet.publicKey.toBase58(),
         systemProgram: ProgramUtil.systemProgram.programId.toBase58(),
       })
@@ -226,8 +225,8 @@ export class VaultUtil extends TestUtil {
   static async deposit(input: DepositTxParams): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .deposit({
-        tokenADepositAmount: input.params.tokenADepositAmount,
-        numberOfSwaps: input.params.numberOfSwaps,
+        tokenADepositAmount: new BN(input.params.tokenADepositAmount),
+        numberOfSwaps: new BN(input.params.numberOfSwaps),
       })
       .accounts({
         common: {
@@ -256,12 +255,12 @@ export class VaultUtil extends TestUtil {
   }
 
   static async depositWithMetadata(
-    input: DepositWithMetadataTxParams
+    input: DepositWithMetadataTxParams,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .depositWithMetadata({
-        tokenADepositAmount: input.params.tokenADepositAmount,
-        numberOfSwaps: input.params.numberOfSwaps,
+        tokenADepositAmount: new BN(input.params.tokenADepositAmount),
+        numberOfSwaps: new BN(input.params.numberOfSwaps),
       })
       .accounts({
         common: {
@@ -306,7 +305,7 @@ export class VaultUtil extends TestUtil {
     swapTokenBAccount: PublicKey,
     swapFeeAccount: PublicKey,
     swapAuthority: PublicKey,
-    swap: PublicKey
+    swap: PublicKey,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .dripSplTokenSwap()
@@ -331,7 +330,7 @@ export class VaultUtil extends TestUtil {
         tokenSwapProgram: ProgramUtil.tokenSwapProgram.programId.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, [user]);
+    return await this.provider.sendAndConfirm(tx, [user], {});
   }
 
   static async dripOrcaWhirlpool(params: {
@@ -389,7 +388,7 @@ export class VaultUtil extends TestUtil {
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     userTokenBAccount: PublicKey,
-    referrer?: PublicKey
+    referrer?: PublicKey,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawB()
@@ -412,7 +411,7 @@ export class VaultUtil extends TestUtil {
         },
       })
       .transaction();
-    return this.provider.sendAndConfirm(tx, [withdrawer]);
+    return this.provider.sendAndConfirm(tx, [withdrawer], {});
   }
 
   static async closePosition(
@@ -430,7 +429,7 @@ export class VaultUtil extends TestUtil {
     userTokenBAccount: PublicKey,
     userPositionNftAccount: PublicKey,
     userPositionNftMint: PublicKey,
-    referrer?: PublicKey
+    referrer?: PublicKey,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .closePosition()
@@ -466,7 +465,7 @@ export class VaultUtil extends TestUtil {
     adminTokenAAccount: PublicKey,
     vaultProtoConfig: PublicKey,
     tokenProgram: PublicKey,
-    admin?: Keypair | Signer
+    admin?: Keypair | Signer,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawA()
@@ -508,8 +507,8 @@ export class VaultUtil extends TestUtil {
     protoConfigAdmin,
     vaultPeriodIndex = 10,
   }: {
-    tokenA: Token;
-    tokenB: Token;
+    tokenA: Mint;
+    tokenB: Mint;
     tokenOwnerKeypair: Keypair;
     maxSlippageBps?: number;
     adminKeypair?: Keypair;
@@ -525,7 +524,7 @@ export class VaultUtil extends TestUtil {
       SolUtil.fundAccount(userKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       ),
       SolUtil.fundAccount(botKeypair.publicKey, SolUtil.solToLamports(0.1)),
     ]);
@@ -533,31 +532,44 @@ export class VaultUtil extends TestUtil {
     if (protoConfigAdmin) {
       await SolUtil.fundAccount(
         protoConfigAdmin.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       );
     }
 
     const mintAmount = await TokenUtil.scaleAmount(
       amount(2, Denom.Thousand),
-      tokenA
+      tokenA,
     );
-    const userTokenAAccount = await tokenA.createAssociatedTokenAccount(
-      userKeypair.publicKey
+
+    const userTokenAAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      userKeypair.publicKey,
+      userKeypair,
     );
-    await tokenA.mintTo(userTokenAAccount, tokenOwnerKeypair, [], mintAmount);
+    await TokenUtil.mintTo({
+      amount: mintAmount,
+      mintAuthority: tokenOwnerKeypair,
+      payer: userKeypair,
+      recipient: userTokenAAccount,
+      token: tokenA,
+    });
 
     const vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      adminKeypair.publicKey
+      adminKeypair.publicKey,
+      adminKeypair,
     );
-    const botTokenAAcount = await tokenA.createAssociatedTokenAccount(
-      botKeypair.publicKey
+
+    const botTokenAAcount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+      tokenA,
+      botKeypair.publicKey,
+      botKeypair,
     );
 
     if (!vaultProtoConfig) {
       const vaultProtoConfigKeypair = generatePair();
       await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-        granularity: 1,
+        granularity: Granularity.SECONDLY,
         tokenADripTriggerSpread: 10,
         tokenBWithdrawalSpread: 10,
         tokenBReferralSpread: 10,
@@ -568,27 +580,26 @@ export class VaultUtil extends TestUtil {
     }
 
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfig
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfig,
     );
     const [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
-
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfig,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenAAccount,
       vaultTokenBAccount,
       vaultTreasuryTokenBAccount,
       {
         whitelistedSwaps,
         maxSlippageBps,
-      }
+      },
     );
 
     const vaultPeriods = (
@@ -597,11 +608,11 @@ export class VaultUtil extends TestUtil {
           deployVaultPeriod(
             vaultProtoConfig,
             vaultPDA.publicKey,
-            tokenA.publicKey,
-            tokenB.publicKey,
-            i
-          )
-        )
+            tokenA.address,
+            tokenB.address,
+            i,
+          ),
+        ),
       )
     ).map((vaultPeriodPDA: PDA) => {
       return vaultPeriodPDA.publicKey;
@@ -609,18 +620,18 @@ export class VaultUtil extends TestUtil {
 
     const depositAmount = await TokenUtil.scaleAmount(
       amount(1, Denom.Thousand),
-      tokenA
+      tokenA,
     );
 
     await depositToVault(
       userKeypair,
       tokenA,
       depositAmount,
-      new u64(4),
+      BigInt(4),
       vaultPDA.publicKey,
       vaultPeriods[4],
       userTokenAAccount,
-      vaultTreasuryTokenBAccount
+      vaultTreasuryTokenBAccount,
     );
 
     return {

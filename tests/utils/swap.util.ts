@@ -15,7 +15,7 @@ export class SwapUtil extends TestUtil {
     swapTokenBAccount: PublicKey,
     poolTokenMint: PublicKey,
     poolTokenFeeAccount: PublicKey,
-    swapPoolTokenAccount: PublicKey
+    swapPoolTokenAccount: PublicKey,
   ): Promise<TokenSwap> {
     return await TokenSwap.createTokenSwap(
       this.provider.connection,
@@ -40,7 +40,7 @@ export class SwapUtil extends TestUtil {
       0,
       20, // must be non-zero
       100, // must be non-zero
-      CurveType.ConstantProduct
+      CurveType.ConstantProduct,
     );
   }
 }

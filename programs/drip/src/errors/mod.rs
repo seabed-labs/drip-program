@@ -6,6 +6,7 @@ pub enum DripError {
     CannotGetPositionBump,
     #[msg("Cannot get vault bump")]
     CannotGetVaultBump,
+    // unused error
     #[msg("Cannot get vault_period bump")]
     CannotGetVaultPeriodBump,
     #[msg("Drip already triggered for the current period")]

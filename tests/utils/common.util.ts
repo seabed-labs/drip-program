@@ -1,4 +1,3 @@
-import { u64 } from "@solana/spl-token";
 import { Keypair } from "@solana/web3.js";
 
 export enum Denom {
@@ -8,8 +7,10 @@ export enum Denom {
   Billion = 1_000_000_000,
 }
 
-export function amount(base: u64 | number | string, denom: Denom): u64 {
-  return new u64(new u64(base.toString()).mul(new u64(denom.toString())));
+export function amount(base: bigint | number | string, denom: Denom): bigint {
+  base = BigInt(base);
+  const denomBigInt = BigInt(denom.toString());
+  return BigInt(base * denomBigInt);
 }
 
 const SECONDS_IN_A_MINUTE = 60;
@@ -28,6 +29,7 @@ const SECONDS_IN_A_WEEK = SECONDS_IN_A_YEAR / WEEKS_IN_A_YEAR;
 const SECONDS_IN_A_MONTH = SECONDS_IN_A_YEAR / MONTHS_IN_A_YEAR;
 
 export enum Granularity {
+  SECONDLY = 1,
   HOURLY = SECONDS_IN_A_HOUR,
   DAILY = SECONDS_IN_A_DAY,
   WEEKLY = SECONDS_IN_A_WEEK,
@@ -39,8 +41,8 @@ export type AsyncReturnType<T extends (...args: any) => any> = T extends (
 ) => Promise<infer U>
   ? U
   : T extends (...args: any) => infer U
-  ? U
-  : any;
+    ? U
+    : any;
 
 export const generatePair = () => {
   return Keypair.generate();
@@ -52,6 +54,7 @@ export const generatePairs = (count: number) => {
 import { TestUtil } from "./config.util";
 import { ProgramUtil } from "./program.util";
 import { PublicKey } from "@solana/web3.js";
+import Decimal from "decimal.js";
 
 export type PDA = {
   publicKey: PublicKey;
@@ -69,11 +72,11 @@ export const CONSTANT_SEEDS = {
 // export class PDAUtil extends TestUtil {
 export const findPDA = async (
   programId: PublicKey,
-  seeds: (Uint8Array | Buffer)[]
+  seeds: (Uint8Array | Buffer)[],
 ) => {
   const [publicKey, bump] = await PublicKey.findProgramAddress(
     seeds,
-    programId
+    programId,
   );
   return {
     publicKey,
@@ -83,7 +86,7 @@ export const findPDA = async (
 
 export const findAssociatedTokenAddress = async (
   walletAddress: PublicKey,
-  tokenMintAddress: PublicKey
+  tokenMintAddress: PublicKey,
 ) => {
   return (
     await PublicKey.findProgramAddress(
@@ -92,7 +95,7 @@ export const findAssociatedTokenAddress = async (
         ProgramUtil.tokenProgram.programId.toBuffer(),
         tokenMintAddress.toBuffer(),
       ],
-      new PublicKey(ProgramUtil.associatedTokenProgram.programId)
+      new PublicKey(ProgramUtil.associatedTokenProgram.programId),
     )
   )[0];
 };
@@ -100,7 +103,7 @@ export const findAssociatedTokenAddress = async (
 export const getVaultPDA = async (
   tokenA: PublicKey,
   tokenB: PublicKey,
-  protoConfig: PublicKey
+  protoConfig: PublicKey,
 ) => {
   return findPDA(ProgramUtil.dripProgram.programId, [
     Buffer.from(CONSTANT_SEEDS.vault),

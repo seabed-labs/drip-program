@@ -1,4 +1,3 @@
-use crate::errors::DripError::CannotGetVaultBump;
 use crate::math::calculate_drip_activation_timestamp;
 use crate::state::traits::PDA;
 use crate::state::VaultPeriod;
@@ -50,8 +49,8 @@ impl Vault {
         whitelisted_swaps: Vec<Pubkey>,
         max_slippage_bps: u16,
         granularity: u64,
-        bump: Option<&u8>,
-    ) -> Result<()> {
+        bump: u8,
+    ) {
         self.proto_config = proto_config;
         self.token_a_mint = token_a_mint;
         self.token_b_mint = token_b_mint;
@@ -70,13 +69,7 @@ impl Vault {
 
         self.set_whitelisted_swaps(whitelisted_swaps);
 
-        match bump {
-            Some(val) => {
-                self.bump = *val;
-                Ok(())
-            }
-            None => Err(CannotGetVaultBump.into()),
-        }
+        self.bump = bump;
     }
 
     pub fn increase_drip_amount(&mut self, extra_drip: u64) {

@@ -6,3 +6,7 @@ build
 .anchor
 *.rs
 deps/
+**/idl/**/
+.yarn/
+*.cjs
+*.mjs

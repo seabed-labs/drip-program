@@ -9,10 +9,10 @@ import { SolUtil } from "../../utils/sol.util";
 import { VaultUtil } from "../../utils/vault.util";
 import { TokenUtil } from "../../utils/token.util";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { Token } from "@solana/spl-token";
 import { AccountUtil } from "../../utils/account.util";
 import { ProgramUtil } from "../../utils/program.util";
 import { TestUtil } from "../../utils/config.util";
+import { Mint } from "@solana/spl-token";
 
 describe("#setVaultSwapWhitelist", testSetVaultSwapWhitelist);
 
@@ -25,12 +25,12 @@ export function testSetVaultSwapWhitelist() {
   let vaultTokenAAccount: PublicKey;
   let vaultTokenBAccount: PublicKey;
 
-  let tokenA: Token;
-  let tokenB: Token;
+  let tokenA: Mint;
+  let tokenB: Mint;
 
   let makeInitVaultTx: (
     creatorPubkey: PublicKey,
-    whitelistedSwaps: PublicKey[]
+    whitelistedSwaps: PublicKey[],
   ) => Promise<Transaction>;
 
   beforeEach(async () => {
@@ -58,26 +58,27 @@ export function testSetVaultSwapWhitelist() {
 
     treasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      treasuryOwner.publicKey
+      treasuryOwner.publicKey,
+      adminKeypair,
     );
 
     const vaultPda = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfig
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfig,
     );
 
     vault = vaultPda.publicKey;
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
-      findAssociatedTokenAddress(vault, tokenA.publicKey),
-      findAssociatedTokenAddress(vault, tokenB.publicKey),
+      findAssociatedTokenAddress(vault, tokenA.address),
+      findAssociatedTokenAddress(vault, tokenB.address),
     ]);
 
     // TODO(Mocha): we should migrate our vault utils to this pattern
     makeInitVaultTx = async (
       creatorPubkey: PublicKey,
-      whitelistedSwaps: PublicKey[]
+      whitelistedSwaps: PublicKey[],
     ) =>
       await ProgramUtil.dripProgram.methods
         .initVault({
@@ -88,8 +89,8 @@ export function testSetVaultSwapWhitelist() {
           creator: creatorPubkey,
           vault: vault.toBase58(),
           vaultProtoConfig: vaultProtoConfigKeypair.publicKey.toBase58(),
-          tokenAMint: tokenA.publicKey.toBase58(),
-          tokenBMint: tokenB.publicKey.toBase58(),
+          tokenAMint: tokenA.address.toBase58(),
+          tokenBMint: tokenB.address.toBase58(),
           tokenAAccount: vaultTokenAAccount.toBase58(),
           tokenBAccount: vaultTokenBAccount.toBase58(),
           treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
@@ -106,14 +107,14 @@ export function testSetVaultSwapWhitelist() {
     const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
     const txId = await TestUtil.provider.connection.sendTransaction(
       await makeInitVaultTx(adminKeypair.publicKey, []),
-      [adminKeypair]
+      [adminKeypair],
     );
     await TestUtil.provider.connection.confirmTransaction(
       {
         signature: txId,
         ...blockhash,
       },
-      "confirmed"
+      "confirmed",
     );
     const vaultAccountBefore = await AccountUtil.fetchVaultAccount(vault);
     vaultAccountBefore.whitelistedSwaps.length.should.equal(5);
@@ -129,7 +130,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      }
+      },
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -175,7 +176,7 @@ export function testSetVaultSwapWhitelist() {
       .should.be.true();
     vaultAccountAfter.bump.should.equal(vaultAccountBefore.bump);
     vaultAccountAfter.maxSlippageBps.should.equal(
-      vaultAccountBefore.maxSlippageBps
+      vaultAccountBefore.maxSlippageBps,
     );
   });
 
@@ -185,14 +186,14 @@ export function testSetVaultSwapWhitelist() {
     const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
     const txId = await TestUtil.provider.connection.sendTransaction(
       await makeInitVaultTx(adminKeypair.publicKey, originalWhitelist),
-      [adminKeypair]
+      [adminKeypair],
     );
     await TestUtil.provider.connection.confirmTransaction(
       {
         signature: txId,
         ...blockhash,
       },
-      "confirmed"
+      "confirmed",
     );
 
     const vaultAccountBefore = await AccountUtil.fetchVaultAccount(vault);
@@ -212,7 +213,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      }
+      },
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -258,7 +259,7 @@ export function testSetVaultSwapWhitelist() {
       .should.be.true();
     vaultAccountAfter.bump.should.equal(vaultAccountBefore.bump);
     vaultAccountAfter.maxSlippageBps.should.equal(
-      vaultAccountBefore.maxSlippageBps
+      vaultAccountBefore.maxSlippageBps,
     );
   });
 
@@ -268,14 +269,14 @@ export function testSetVaultSwapWhitelist() {
     const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
     const txId = await TestUtil.provider.connection.sendTransaction(
       await makeInitVaultTx(adminKeypair.publicKey, originalWhitelist),
-      [adminKeypair]
+      [adminKeypair],
     );
     await TestUtil.provider.connection.confirmTransaction(
       {
         signature: txId,
         ...blockhash,
       },
-      "confirmed"
+      "confirmed",
     );
 
     const vaultAccountBefore = await AccountUtil.fetchVaultAccount(vault);
@@ -294,7 +295,7 @@ export function testSetVaultSwapWhitelist() {
       adminKeypair,
       {
         whitelistedSwaps: undefined,
-      }
+      },
     );
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);
@@ -333,7 +334,7 @@ export function testSetVaultSwapWhitelist() {
       .should.be.true();
     vaultAccountAfter.bump.should.equal(vaultAccountBefore.bump);
     vaultAccountAfter.maxSlippageBps.should.equal(
-      vaultAccountBefore.maxSlippageBps
+      vaultAccountBefore.maxSlippageBps,
     );
   });
 
@@ -341,14 +342,14 @@ export function testSetVaultSwapWhitelist() {
     const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
     const txId = await TestUtil.provider.connection.sendTransaction(
       await makeInitVaultTx(adminKeypair.publicKey, []),
-      [adminKeypair]
+      [adminKeypair],
     );
     await TestUtil.provider.connection.confirmTransaction(
       {
         signature: txId,
         ...blockhash,
       },
-      "confirmed"
+      "confirmed",
     );
     const vaultAccountBefore = await AccountUtil.fetchVaultAccount(vault);
     vaultAccountBefore.whitelistedSwaps.length.should.equal(5);
@@ -364,7 +365,7 @@ export function testSetVaultSwapWhitelist() {
       undefined,
       {
         whitelistedSwaps: newWhitelistedSwaps,
-      }
+      },
     ).should.be.rejectedWith(/0x1785/);
 
     const vaultAccountAfter = await AccountUtil.fetchVaultAccount(vault);

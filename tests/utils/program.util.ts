@@ -1,4 +1,4 @@
-import { Program } from "@project-serum/anchor";
+import { Program } from "@coral-xyz/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -6,7 +6,6 @@ import {
 import { Drip, IDL } from "./idl/drip";
 import { TestUtil } from "./config.util";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
-import { TOKEN_SWAP_PROGRAM_ID } from "@solana/spl-token-swap";
 
 export const DRIP_PROGRAM_ID = "dripTrkvSyQKvkyWg7oi4jmeEGMA5scSYowHArJ9Vwk";
 
@@ -32,8 +31,9 @@ export class ProgramUtil extends TestUtil {
   }
 
   static get tokenSwapProgram(): { programId: PublicKey } {
+    // https://github.com/solana-labs/solana-program-library/issues/3201
     return {
-      programId: TOKEN_SWAP_PROGRAM_ID,
+      programId: new PublicKey("SwapsVeCiPHMUAtzQWZw7RjsKjgCjhwU55QGu4U1Szw"),
     };
   }
 

@@ -1,5 +1,5 @@
 use crate::errors::DripError;
-use crate::instruction_accounts::WithdrawAAccounts;
+use crate::instruction_accounts::{InitializeVaultAccountsBumps, WithdrawAAccounts};
 use crate::interactions::executor::CpiExecutor;
 use crate::interactions::transfer_token::TransferToken;
 use crate::state::{
@@ -15,13 +15,12 @@ use crate::{
 };
 use anchor_lang::prelude::*;
 use spl_token::state::AccountState;
-use std::collections::BTreeMap;
 
 pub enum Admin<'a, 'info> {
     InitVault {
         accounts: &'a mut InitializeVaultAccounts<'info>,
         params: InitializeVaultParams,
-        bumps: BTreeMap<String, u8>,
+        bumps: InitializeVaultAccountsBumps,
     },
     SetVaultSwapWhitelist {
         accounts: &'a mut UpdateVaultWhitelistedSwapsAccounts<'info>,
@@ -147,8 +146,8 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     params.whitelisted_swaps,
                     params.max_slippage_bps,
                     accounts.vault_proto_config.granularity,
-                    bumps.get("vault"),
-                )?;
+                    bumps.vault,
+                );
             }
             Admin::SetVaultSwapWhitelist { accounts, params } => {
                 accounts

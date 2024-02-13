@@ -1,4 +1,3 @@
-use crate::errors::DripError;
 use crate::math::{calculate_new_twap_amount, compute_price};
 use crate::test_account_size;
 use anchor_lang::prelude::*;
@@ -27,20 +26,13 @@ impl VaultPeriod {
     // allocation needed: ceil( (73+8)/8 )*8 -> 88
     pub const ACCOUNT_SPACE: usize = 88;
 
-    pub fn init(&mut self, vault: Pubkey, period_id: u64, bump: Option<&u8>) -> Result<()> {
+    pub fn init(&mut self, vault: Pubkey, period_id: u64, bump: u8) {
         self.vault = vault;
         self.period_id = period_id;
         self.twap = 0;
         self.dar = 0;
         self.drip_timestamp = 0;
-
-        match bump {
-            Some(val) => {
-                self.bump = *val;
-                Ok(())
-            }
-            None => Err(DripError::CannotGetVaultPeriodBump.into()),
-        }
+        self.bump = bump;
     }
 
     pub fn increase_drip_amount_to_reduce(&mut self, extra_drip: u64) {

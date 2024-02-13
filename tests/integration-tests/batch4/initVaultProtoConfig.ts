@@ -21,7 +21,7 @@ export function testInitVaultProtoConfig() {
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
-        vaultProtoConfigKeypair.publicKey
+        vaultProtoConfigKeypair.publicKey,
       );
     // Make sure the granularity is actually 1 day (24 hours) in second
     vaultProtoConfigAccount.granularity.toString().should.equal("86400");
@@ -40,7 +40,7 @@ export function testInitVaultProtoConfig() {
   it("uses absolute value when granularity is negative", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: -10,
+      granularity: -10 as unknown as Granularity,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
       tokenBReferralSpread: 9,
@@ -48,7 +48,7 @@ export function testInitVaultProtoConfig() {
     });
     const vaultProtoConfigAccount =
       await AccountUtil.fetchVaultProtoConfigAccount(
-        vaultProtoConfigKeypair.publicKey
+        vaultProtoConfigKeypair.publicKey,
       );
     vaultProtoConfigAccount.granularity.toString().should.equal("10");
   });
@@ -76,7 +76,7 @@ export function testInitVaultProtoConfig() {
   it("errors when granularity is 0", async () => {
     const vaultProtoConfigKeypair = generatePair();
     await VaultUtil.initVaultProtoConfig(vaultProtoConfigKeypair, {
-      granularity: 0,
+      granularity: 0 as unknown as Granularity,
       tokenADripTriggerSpread: 5,
       tokenBWithdrawalSpread: 5,
       tokenBReferralSpread: 9,
@@ -104,7 +104,7 @@ export function testInitVaultProtoConfig() {
       tokenBReferralSpread: 9,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
-      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/
+      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/,
     );
   });
 
@@ -117,7 +117,7 @@ export function testInitVaultProtoConfig() {
       tokenBReferralSpread: 9,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
-      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/
+      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/,
     );
   });
 
@@ -130,7 +130,7 @@ export function testInitVaultProtoConfig() {
       tokenBReferralSpread: 70000,
       admin: generatePair().publicKey,
     }).should.rejectedWith(
-      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/
+      /The value of "value" is out of range. It must be >= 0 and <= 65535. Received 70000/,
     );
   });
 

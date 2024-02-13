@@ -1,4 +1,4 @@
-import { web3 } from "@project-serum/anchor";
+import { web3 } from "@coral-xyz/anchor";
 import { TestUtil } from "./config.util";
 import { ProgramUtil } from "./program.util";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
@@ -6,7 +6,7 @@ import { AsyncReturnType } from "./common.util";
 
 export class AccountUtil extends TestUtil {
   static async fetchAccountInfo(
-    pubkey: PublicKey
+    pubkey: PublicKey,
   ): Promise<AccountInfo<unknown>> {
     return await this.provider.connection.getAccountInfo(pubkey);
   }
@@ -17,7 +17,7 @@ export class AccountUtil extends TestUtil {
   }
 
   static async fetchVaultProtoConfigAccount(
-    pubkey: web3.PublicKey
+    pubkey: web3.PublicKey,
   ): Promise<
     Pick<
       AsyncReturnType<
@@ -34,7 +34,7 @@ export class AccountUtil extends TestUtil {
   }
 
   static async fetchVaultAccount(
-    pubkey: web3.PublicKey
+    pubkey: web3.PublicKey,
   ): Promise<
     Pick<
       AsyncReturnType<typeof ProgramUtil.dripProgram.account.vault.fetch>,
@@ -57,7 +57,7 @@ export class AccountUtil extends TestUtil {
   }
 
   static async fetchVaultPeriodAccount(
-    pubkey: web3.PublicKey
+    pubkey: web3.PublicKey,
   ): Promise<
     Pick<
       AsyncReturnType<typeof ProgramUtil.dripProgram.account.vaultPeriod.fetch>,
@@ -68,7 +68,7 @@ export class AccountUtil extends TestUtil {
   }
 
   static async fetchPositionAccount(
-    pubkey: web3.PublicKey
+    pubkey: web3.PublicKey,
   ): Promise<
     Pick<
       AsyncReturnType<typeof ProgramUtil.dripProgram.account.position.fetch>,

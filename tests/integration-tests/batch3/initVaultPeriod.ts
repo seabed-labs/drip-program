@@ -46,32 +46,33 @@ export function testInitVaultPeriod() {
       TokenUtil.createMockBTCMint(),
     ]);
 
-    [tokenAMint, tokenBMint] = [tokenA.publicKey, tokenB.publicKey];
+    [tokenAMint, tokenBMint] = [tokenA.address, tokenB.address];
 
     const vaultPDA = await getVaultPDA(
-      tokenA.publicKey,
-      tokenB.publicKey,
-      vaultProtoConfigPubkey
+      tokenA.address,
+      tokenB.address,
+      vaultProtoConfigPubkey,
     );
 
     const [vaultTokenA_ATA, vaultTokenB_ATA] = await Promise.all([
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.publicKey),
-      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.publicKey),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenA.address),
+      findAssociatedTokenAddress(vaultPDA.publicKey, tokenB.address),
     ]);
 
     treasuryTokenBAccount = await TokenUtil.createTokenAccount(
       tokenB,
-      treasuryOwner.publicKey
+      treasuryOwner.publicKey,
+      treasuryOwner,
     );
     await VaultUtil.initVault(
       vaultPDA.publicKey,
       vaultProtoConfigPubkey,
-      tokenA.publicKey,
-      tokenB.publicKey,
+      tokenA.address,
+      tokenB.address,
       vaultTokenA_ATA,
       vaultTokenB_ATA,
       treasuryTokenBAccount,
-      undefined
+      undefined,
     );
 
     vaultPubkey = vaultPDA.publicKey;
@@ -80,18 +81,17 @@ export function testInitVaultPeriod() {
   it("initializes the vault period account correctly", async () => {
     const { publicKey: vaultPeriodPubkey } = await getVaultPeriodPDA(
       vaultPubkey,
-      69
+      69,
     );
 
     await VaultUtil.initVaultPeriod(
       vaultPubkey,
       vaultPeriodPubkey,
       vaultProtoConfigPubkey,
-      69
+      69,
     );
-    const vaultPeriodAccount = await AccountUtil.fetchVaultPeriodAccount(
-      vaultPeriodPubkey
-    );
+    const vaultPeriodAccount =
+      await AccountUtil.fetchVaultPeriodAccount(vaultPeriodPubkey);
 
     vaultPeriodAccount.vault.toBase58().should.equal(vaultPubkey.toBase58());
     vaultPeriodAccount.periodId.toString().should.equal("69");

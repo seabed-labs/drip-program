@@ -1,11 +1,18 @@
 import {
+  Account,
   AccountLayout,
+  Mint,
   MintLayout,
-  Token,
   TOKEN_PROGRAM_ID,
-  u64,
+  approve,
+  createAccount,
+  createAssociatedTokenAccount,
+  createMint,
+  getAccount,
+  getMint,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
 } from "@solana/spl-token";
-import { AccountUtil } from "./account.util";
 import { TestUtil } from "./config.util";
 import { SolUtil } from "./sol.util";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
@@ -19,19 +26,20 @@ export const DECIMALS = {
 };
 
 export interface MintToParams {
-  token: Token;
+  payer: Signer;
+  token: Mint;
   mintAuthority: Signer;
   recipient: PublicKey;
-  amount: u64;
+  amount: bigint;
 }
 
 export class TokenUtil extends TestUtil {
-  static fetchMint(mint: PublicKey, payer: Keypair = generatePair()): Token {
-    return new Token(
-      this.provider.connection,
+  static fetchMint(mint: PublicKey): Promise<Mint> {
+    return getMint(
+      TokenUtil.provider.connection,
       mint,
+      undefined,
       ProgramUtil.tokenProgram.programId,
-      payer
     );
   }
 
@@ -39,63 +47,89 @@ export class TokenUtil extends TestUtil {
     mintAuthority: PublicKey,
     freezeAuthority: PublicKey = null,
     decimals: number = 6,
-    funderKeypair?: Keypair
-  ): Promise<Token> {
+    funderKeypair?: Keypair,
+  ): Promise<Mint> {
     if (!funderKeypair) {
       funderKeypair = generatePair();
       await SolUtil.fundAccount(
         funderKeypair.publicKey,
-        SolUtil.solToLamports(0.1)
+        SolUtil.solToLamports(0.1),
       );
     }
 
-    return await Token.createMint(
-      this.provider.connection,
+    const mintPubkey = await createMint(
+      TokenUtil.provider.connection,
       funderKeypair,
       mintAuthority,
       freezeAuthority,
       decimals,
-      TOKEN_PROGRAM_ID
+      undefined,
+      undefined,
+      TOKEN_PROGRAM_ID,
+    );
+    return getMint(
+      TokenUtil.provider.connection,
+      mintPubkey,
+      undefined,
+      TOKEN_PROGRAM_ID,
     );
   }
 
   static async createMints(
     mintAuthorities: PublicKey[],
-    decimalsArray: number[]
-  ): Promise<Token[]> {
+    decimalsArray: number[],
+  ): Promise<Mint[]> {
     return await Promise.all(
       mintAuthorities.map((authority, i) =>
-        TokenUtil.createMint(authority, authority, decimalsArray[i])
-      )
+        TokenUtil.createMint(authority, authority, decimalsArray[i]),
+      ),
     );
   }
 
   static async createTokenAccount(
-    token: Token,
-    owner: PublicKey
+    token: Mint,
+    owner: PublicKey,
+    payer: Signer,
   ): Promise<PublicKey> {
-    return await token.createAccount(owner);
+    return createAccount(
+      TokenUtil.provider.connection,
+      payer,
+      token.address,
+      owner,
+      new Keypair(),
+    );
   }
 
   static async getOrCreateAssociatedTokenAccount(
-    token: Token,
-    owner: PublicKey
+    token: Mint,
+    owner: PublicKey,
+    payer: Signer,
   ): Promise<PublicKey> {
-    const ataInfo = await token.getOrCreateAssociatedAccountInfo(owner);
-    return new PublicKey(ataInfo.address);
+    const ataInfo = await getOrCreateAssociatedTokenAccount(
+      TokenUtil.provider.connection,
+      payer,
+      token.address,
+      owner,
+      true,
+    );
+    return ataInfo.address;
+  }
+
+  static async getTokenAccount(tokenAccount: PublicKey): Promise<Account> {
+    return getAccount(TokenUtil.provider.connection, tokenAccount);
   }
 
   static async mintTo(params: MintToParams): Promise<PublicKey> {
-    const { token, recipient, mintAuthority, amount } = params;
-    const ata = await token.createAssociatedTokenAccount(recipient);
-    await token.mintTo(
-      ata,
-      mintAuthority.publicKey,
-      [mintAuthority],
-      new u64(amount.toString())
+    const { token, payer, recipient, mintAuthority, amount } = params;
+    await mintTo(
+      TokenUtil.provider.connection,
+      payer,
+      token.address,
+      recipient,
+      mintAuthority,
+      amount,
     );
-
-    return ata;
+    return recipient;
   }
 
   static async mintToBatch(batchParams: MintToParams[]): Promise<PublicKey[]> {
@@ -103,106 +137,37 @@ export class TokenUtil extends TestUtil {
   }
 
   static async createMockUSDCMint(
-    minter: PublicKey = this.provider.wallet.publicKey
-  ): Promise<Token> {
-    return await this.createMint(minter, minter, DECIMALS.USDC);
+    minter: PublicKey = TokenUtil.provider.wallet.publicKey,
+  ): Promise<Mint> {
+    return await TokenUtil.createMint(minter, minter, DECIMALS.USDC);
   }
 
   static async createMockBTCMint(
-    minter: PublicKey = this.provider.wallet.publicKey
-  ): Promise<Token> {
-    return await this.createMint(minter, minter, DECIMALS.BTC);
+    minter: PublicKey = TokenUtil.provider.wallet.publicKey,
+  ): Promise<Mint> {
+    return await TokenUtil.createMint(minter, minter, DECIMALS.BTC);
   }
 
-  static async fetchTokenAccountInfo(pubkey: PublicKey): Promise<{
-    address: PublicKey;
-    mint: PublicKey;
-    owner: PublicKey;
-    balance: u64;
-    delegate: null | PublicKey;
-    delegatedAmount: u64;
-    isInitialized: boolean;
-    isFrozen: boolean;
-    isNative: boolean;
-    rentExemptReserve: null | u64;
-    closeAuthority: null | PublicKey;
-  }> {
-    const accountData = await AccountUtil.fetchAccountData(pubkey);
-    // TODO(Mocha): define module for decode
-    const decodedData = AccountLayout.decode(accountData);
-
-    return {
-      address: new PublicKey(decodedData.address ?? pubkey.toBuffer()),
-      mint: new PublicKey(decodedData.mint),
-      owner: new PublicKey(decodedData.owner),
-      balance: u64.fromBuffer(decodedData.amount),
-      delegate:
-        decodedData.delegateOption === 1
-          ? new PublicKey(decodedData.delegate)
-          : null,
-      delegatedAmount: u64.fromBuffer(decodedData.delegatedAmount),
-      isInitialized: decodedData.isInitialized,
-      isFrozen: decodedData.isFrozen,
-      isNative: decodedData.isNative,
-      rentExemptReserve:
-        decodedData.rentExemptReserveOption === 1
-          ? u64.fromBuffer(decodedData.rentExemptReserve)
-          : null,
-      closeAuthority:
-        decodedData.closeAuthority === 1
-          ? new PublicKey(decodedData.closeAuthority)
-          : null,
-    };
+  static async fetchTokenAccountInfo(pubkey: PublicKey): Promise<Account> {
+    return getAccount(TokenUtil.provider.connection, pubkey);
   }
 
-  static async fetchTokenMintInfo(pubkey: PublicKey): Promise<{
-    mintAuthority: null | PublicKey;
-    supply: u64;
-    decimals: number;
-    isInitialized: boolean;
-    freezeAuthority: null | PublicKey;
-  }> {
-    const accountData = await AccountUtil.fetchAccountData(pubkey);
-    const decodedData = MintLayout.decode(accountData);
-
-    return {
-      mintAuthority:
-        decodedData.mintAuthorityOption === 1
-          ? new PublicKey(decodedData.mintAuthority)
-          : null,
-      supply: u64.fromBuffer(decodedData.supply),
-      decimals: decodedData.decimals,
-      isInitialized: decodedData.isInitialized,
-      freezeAuthority:
-        decodedData.freezeAuthorityOption === 1
-          ? new PublicKey(decodedData.freezeAuthority)
-          : null,
-    };
-  }
-
-  static async scaleAmount(
-    amount: u64 | number | string,
-    token: Token
-  ): Promise<u64> {
-    const mintInfo = await token.getMintInfo();
-    return new u64(
-      new u64(amount.toString())
-        .mul(new u64(10).pow(new u64(mintInfo.decimals)))
-        .toString()
-    );
+  static scaleAmount(amount: bigint | number | string, token: Mint): bigint {
+    amount = BigInt(amount);
+    return amount * BigInt(10 ** token.decimals);
   }
 
   /**
    * A function that scales a token amount to its raw representation, i.e. including decimals.
    * For example, 1 USDC is actually represented as 1_000_000 (assuming USDC has 6 decimals).
    * This function batches the async calls to scale each (amount, token) pair and awaits all of them at once.
-   * @param {[amount: u64 | number | string, token: Token][]} batchInput - An array of (amount, token) pairs to scale
+   * @param {[amount: bigint | number | string, token: Token][]} batchInput - An array of (amount, token) pairs to scale
    */
   static async scaleAmountBatch(
-    ...batchInput: [amount: u64 | number | string, token: Token][]
-  ): Promise<u64[]> {
+    ...batchInput: [amount: bigint | number | string, token: Mint][]
+  ): Promise<bigint[]> {
     return await Promise.all(
-      batchInput.map(([amount, token]) => TokenUtil.scaleAmount(amount, token))
+      batchInput.map(([amount, token]) => TokenUtil.scaleAmount(amount, token)),
     );
   }
 }
