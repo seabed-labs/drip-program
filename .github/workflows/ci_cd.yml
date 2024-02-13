@@ -71,7 +71,8 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           npm install -g typescript
-          npm install -g yarn
+          corepack enable
+          yarn set version 3.6.0
           npm install -g ts-mocha
           npm install -g @coral-xyz/anchor
           yarn
