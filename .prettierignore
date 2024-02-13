@@ -7,3 +7,6 @@ build
 *.rs
 deps/
 **/idl/**/
+.yarn/
+*.cjs
+*.mjs
