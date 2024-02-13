@@ -84,4 +84,8 @@ pub struct ClosePositionAccounts<'info> {
     // mut needed because we are burning the users NFT
     #[account(mut)]
     pub user_position_nft_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    /// CHECK: validated in validate
+    pub sol_destination: Option<UncheckedAccount<'info>>,
 }

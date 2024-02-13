@@ -27,6 +27,7 @@ import { findError } from "../../utils/error.util";
 import { initLog } from "../../utils/log.util";
 import { TestUtil } from "../../utils/config.util";
 import should from "should";
+import { Test } from "mocha";
 
 describe("#closePosition", testClosePosition);
 
@@ -42,6 +43,8 @@ export function testClosePosition() {
 
   let bot: Keypair;
   let botTokenAAccount: PublicKey;
+
+  let vaultAdminKeypair: Keypair;
 
   let userPositionNFTMint: PublicKey;
   let userPositionAccount: PublicKey;
@@ -64,7 +67,7 @@ export function testClosePosition() {
   let swapAuthority: PublicKey;
 
   let dripTrigger;
-  let closePosition;
+  let closePosition: ReturnType<typeof closePositionWrapper>;
   let withdraw;
   let depositWithNewUser;
 
@@ -72,13 +75,18 @@ export function testClosePosition() {
     // https://discord.com/channels/889577356681945098/889702325231427584/910244405443715092
     // sleep to progress to the next block
     await sleep(500);
-    [user, bot, tokenOwnerKeypair, payerKeypair] = generatePairs(4);
+    [user, bot, tokenOwnerKeypair, payerKeypair, vaultAdminKeypair] =
+      generatePairs(5);
     await Promise.all([
       SolUtil.fundAccount(user.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(bot.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(payerKeypair.publicKey, SolUtil.solToLamports(0.1)),
       SolUtil.fundAccount(
         tokenOwnerKeypair.publicKey,
+        SolUtil.solToLamports(0.1),
+      ),
+      SolUtil.fundAccount(
+        vaultAdminKeypair.publicKey,
         SolUtil.solToLamports(0.1),
       ),
     ]);
@@ -117,7 +125,7 @@ export function testClosePosition() {
       5,
       5,
       0,
-      TestUtil.provider.wallet.publicKey,
+      vaultAdminKeypair.publicKey,
     );
 
     vaultTreasuryTokenBAccount = await TokenUtil.createTokenAccount(
@@ -131,6 +139,8 @@ export function testClosePosition() {
       tokenB.address,
       vaultTreasuryTokenBAccount,
       vaultProtoConfig,
+      undefined,
+      vaultAdminKeypair,
     );
 
     [vaultTokenAAccount, vaultTokenBAccount] = await Promise.all([
@@ -516,5 +526,108 @@ export function testClosePosition() {
       vaultPeriods[j].publicKey,
       vaultPeriods[k].publicKey,
     ).should.be.rejectedWith(/0xbc4/);
+  });
+
+  it("should not allow non admin and non nft owner to close position", async () => {
+    let [i, j, k] = [0, 0, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey,
+      {
+        nftOwner: payerKeypair,
+      },
+    ).should.be.rejectedWith(/0x1787/);
+  });
+
+  it("should not allow admin to take user position rent", async () => {
+    let [i, j, k] = [0, 0, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey,
+      {
+        nftOwner: vaultAdminKeypair,
+        solDestination: vaultAdminKeypair.publicKey,
+      },
+    ).should.be.rejectedWith(/0x178c/);
+  });
+
+  it("should not allow admin to withdraw tokens", async () => {
+    let [i, j, k] = [0, 0, 4];
+    const [adminTokenAAccount, adminTokenBAccount] = await Promise.all([
+      TokenUtil.getOrCreateAssociatedTokenAccount(
+        tokenA,
+        vaultAdminKeypair.publicKey,
+        payerKeypair,
+      ),
+      TokenUtil.getOrCreateAssociatedTokenAccount(
+        tokenB,
+        vaultAdminKeypair.publicKey,
+        payerKeypair,
+      ),
+    ]);
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey,
+      {
+        nftOwner: vaultAdminKeypair,
+        solDestination: user.publicKey,
+        userTokenAAccount: adminTokenAAccount,
+        userTokenBAccount: adminTokenBAccount,
+      },
+    ).should.be.rejectedWith(/0x1787/);
+  });
+
+  it("should allow admin to close position for user", async () => {
+    const [
+      userAccountBefore,
+      userTokenAAccountBefore,
+      userTokenBAccountBefore,
+      vaultTokenAAccountBefore,
+      vaultTokenBAccountBefore,
+    ] = await Promise.all([
+      TestUtil.provider.connection.getAccountInfo(user.publicKey),
+      TokenUtil.getTokenAccount(userTokenAAccount),
+      TokenUtil.getTokenAccount(userTokenBAccount),
+      TokenUtil.getTokenAccount(vaultTokenAAccount),
+      TokenUtil.getTokenAccount(vaultTokenBAccount),
+    ]);
+
+    let [i, j, k] = [0, 0, 4];
+    await closePosition(
+      vaultPeriods[i].publicKey,
+      vaultPeriods[j].publicKey,
+      vaultPeriods[k].publicKey,
+      {
+        nftOwner: vaultAdminKeypair,
+        solDestination: user.publicKey,
+      },
+    );
+
+    const [
+      userAccountAfter,
+      userTokenAAccountAfter,
+      userTokenBAccountAfter,
+      vaultTokenAAccountAfter,
+      vaultTokenBAccountAfter,
+    ] = await Promise.all([
+      TestUtil.provider.connection.getAccountInfo(user.publicKey),
+      TokenUtil.getTokenAccount(userTokenAAccount),
+      TokenUtil.getTokenAccount(userTokenBAccount),
+      TokenUtil.getTokenAccount(vaultTokenAAccount),
+      TokenUtil.getTokenAccount(vaultTokenBAccount),
+    ]);
+
+    (userAccountAfter.lamports > userAccountBefore.lamports).should.be.true();
+    userTokenAAccountAfter.amount.should.equal(
+      userTokenAAccountBefore.amount + vaultTokenAAccountBefore.amount,
+    );
+    userTokenBAccountAfter.amount.should.equal(
+      userTokenBAccountBefore.amount + vaultTokenBAccountBefore.amount,
+    );
+    vaultTokenAAccountAfter.amount.should.equal(BigInt(0));
+    vaultTokenBAccountAfter.amount.should.equal(BigInt(0));
   });
 }

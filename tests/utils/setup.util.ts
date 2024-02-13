@@ -51,6 +51,7 @@ export const deployVault = async (
   vaultTreasuryTokenBAccount: PublicKey,
   vaultProtoConfigAccount: PublicKey,
   whitelistedSwaps?: PublicKey[],
+  adminKeypair?: Keypair,
 ): Promise<PDA> => {
   const vaultPDA = await getVaultPDA(
     tokenAMint,
@@ -73,6 +74,8 @@ export const deployVault = async (
       whitelistedSwaps,
       maxSlippageBps: 1000,
     },
+    undefined,
+    adminKeypair,
   );
   return vaultPDA;
 };
@@ -394,7 +397,7 @@ export const withdrawBWrapper = (
 };
 
 export const closePositionWrapper = (
-  withdrawer: Keypair,
+  nftOwner: Keypair,
   vault: PublicKey,
   vaultProtoConfig: PublicKey,
   userPosition: PublicKey,
@@ -410,22 +413,39 @@ export const closePositionWrapper = (
     vaultPeriodI: PublicKey,
     vaultPeriodJ: PublicKey,
     vaultPeriodUserExpiry: PublicKey,
+    overrides?: {
+      nftOwner?: Keypair;
+      vault?: PublicKey;
+      vaultProtoConfig?: PublicKey;
+      userPosition?: PublicKey;
+      vaultTokenAAccount?: PublicKey;
+      vaultTokenBAccount?: PublicKey;
+      vaultTreasuryTokenBAccount?: PublicKey;
+      userTokenAAccount?: PublicKey;
+      userTokenBAccount?: PublicKey;
+      userPositionNftAccount?: PublicKey;
+      userPositionNftMint?: PublicKey;
+      referrer?: PublicKey;
+      solDestination?: PublicKey;
+    },
   ) => {
     const txHash = await VaultUtil.closePosition(
-      withdrawer,
-      vault,
-      vaultProtoConfig,
-      userPosition,
+      overrides?.nftOwner ?? nftOwner,
+      overrides?.vault ?? vault,
+      overrides?.vaultProtoConfig ?? vaultProtoConfig,
+      overrides?.userPosition ?? userPosition,
       vaultPeriodI,
       vaultPeriodJ,
       vaultPeriodUserExpiry,
-      vaultTokenAAccount,
-      vaultTokenBAccount,
-      vaultTreasuryTokenBAccount,
-      userTokenAAccount,
-      userTokenBAccount,
-      userPositionNftAccount,
-      userPositionNftMint,
+      overrides?.vaultTokenAAccount ?? vaultTokenAAccount,
+      overrides?.vaultTokenBAccount ?? vaultTokenBAccount,
+      overrides?.vaultTreasuryTokenBAccount ?? vaultTreasuryTokenBAccount,
+      overrides?.userTokenAAccount ?? userTokenAAccount,
+      overrides?.userTokenBAccount ?? userTokenBAccount,
+      overrides?.userPositionNftAccount ?? userPositionNftAccount,
+      overrides?.userPositionNftMint ?? userPositionNftMint,
+      overrides?.referrer,
+      overrides?.solDestination,
     );
   };
 };

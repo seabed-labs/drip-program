@@ -584,6 +584,12 @@ export type Drip = {
           "name": "userPositionNftMint",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": []
@@ -1166,6 +1172,11 @@ export type Drip = {
       "code": 6027,
       "name": "VaultTokenAAccountIsEmpty",
       "msg": "Vault Token A Account is empty"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidSolDestination",
+      "msg": "Invalid sol_destination"
     }
   ]
 };
@@ -1756,6 +1767,12 @@ export const IDL: Drip = {
           "name": "userPositionNftMint",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": []
@@ -2338,6 +2355,11 @@ export const IDL: Drip = {
       "code": 6027,
       "name": "VaultTokenAAccountIsEmpty",
       "msg": "Vault Token A Account is empty"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidSolDestination",
+      "msg": "Invalid sol_destination"
     }
   ]
 };
