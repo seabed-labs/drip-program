@@ -2,10 +2,9 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@coral-xyz/anchor": "0.29.0",
+    "@metaplex-foundation/js": "^0.20.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.2.0",
     "@metaplex-foundation/umi": "^0.9.1",
-    "@orca-so/common-sdk": "^0.4.0",
-    "@orca-so/whirlpools-sdk": "^0.12.1",
     "@solana/spl-token": "0.4.0",
     "@solana/spl-token-swap": "0.1.2",
     "@solana/web3.js": "^1.90.0",

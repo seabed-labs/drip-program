@@ -515,6 +515,6 @@ export function testClosePosition() {
       vaultPeriods[i].publicKey,
       vaultPeriods[j].publicKey,
       vaultPeriods[k].publicKey,
-    ).should.be.rejectedWith(/0x177f/);
+    ).should.be.rejectedWith(/0xbc4/);
   });
 }

@@ -16,15 +16,17 @@ import {
   Granularity,
 } from "../../utils/common.util";
 import { initLog } from "../../utils/log.util";
-import { PDAUtil } from "@orca-so/whirlpools-sdk";
 import { TestUtil } from "../../utils/config.util";
 import { Mint } from "@solana/spl-token";
+import { getMetadataGpaBuilder } from "@metaplex-foundation/mpl-token-metadata";
+import { Metaplex } from "@metaplex-foundation/js";
 
 // TODO: Add tests to check validations later + Finish all embedded todos in code in this file
 describe("#depositWithMetadata", testDepositWithMetadata);
 
 export function testDepositWithMetadata() {
   initLog();
+  const metaplex = Metaplex.make(TestUtil.provider.connection);
 
   let vaultProtoConfigPubkey: PublicKey;
   let vaultPubkey: PublicKey;
@@ -144,7 +146,7 @@ export function testDepositWithMetadata() {
       amount(10, Denom.Thousand),
       tokenA,
     );
-
+    getMetadataGpaBuilder;
     await VaultUtil.depositWithMetadata({
       params: {
         tokenADepositAmount: depositAmount,
@@ -159,9 +161,10 @@ export function testDepositWithMetadata() {
         userTokenAAccount: userTokenAAccount,
         userPositionNftAccount: userPositionNft_ATA,
         depositor: user.publicKey,
-        positionMetadataAccount: PDAUtil.getPositionMetadata(
-          positionNftMintKeypair.publicKey,
-        ).publicKey,
+        positionMetadataAccount: metaplex
+          .nfts()
+          .pdas()
+          .metadata({ mint: positionNftMintKeypair.publicKey }),
         referrer: vaultTreasuryTokenBAccount,
       },
       signers: {
