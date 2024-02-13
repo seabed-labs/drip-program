@@ -4104,6 +4104,7 @@ __metadata:
     "@solana/web3.js": ^1.90.0
     "@types/mocha": 10.0.6
     buffer-layout: 1.2.2
+    debug: ^4.3.4
     decimal.js: ^10.4.3
     husky: ^8.0.0
     mocha: 10.3.0
