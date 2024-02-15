@@ -38,10 +38,49 @@ impl<'a, 'info> Validatable for Withdraw<'a, 'info> {
                     DripError::WithdrawableAmountIsZero
                 );
 
+                // only nft owner can withdrawB
+                validate!(
+                    accounts.common.user_position_nft_account.owner
+                        == accounts.common.withdrawer.key(),
+                    DripError::InvalidOwner
+                );
+
                 Ok(())
             }
             Withdraw::WithClosePosition { accounts } => {
                 validate_common(&accounts.common)?;
+
+                if accounts.common.user_position_nft_account.owner
+                    != accounts.common.withdrawer.key()
+                {
+                    // If the nft owner is not withdrawer, they must be an admin
+                    validate!(
+                        accounts.common.vault_proto_config.admin
+                            == accounts.common.withdrawer.key(),
+                        DripError::InvalidOwner
+                    );
+                    // validate the admin is refunding token a and b to the correct destination
+                    validate!(
+                        accounts.user_token_a_account.owner
+                            == accounts.common.user_position_nft_account.owner.key(),
+                        DripError::InvalidOwner
+                    );
+                    validate!(
+                        accounts.common.user_token_b_account.owner
+                            == accounts.common.user_position_nft_account.owner.key(),
+                        DripError::InvalidOwner
+                    );
+                    // validate the admin is refunding sol to the correct destination
+                    validate!(
+                        accounts.sol_destination.is_some(),
+                        DripError::InvalidSolDestination
+                    );
+                    validate!(
+                        accounts.common.user_position_nft_account.owner
+                            == accounts.sol_destination.as_ref().unwrap().key(),
+                        DripError::InvalidSolDestination
+                    );
+                }
 
                 validate!(
                     accounts.vault_period_user_expiry.vault == accounts.common.vault.key(),
@@ -141,10 +180,6 @@ fn validate_common(accounts: &WithdrawCommonAccounts) -> Result<()> {
         DripError::InvalidMint
     );
     validate!(
-        accounts.user_position_nft_account.owner == accounts.withdrawer.key(),
-        DripError::InvalidOwner
-    );
-    validate!(
         accounts.user_position_nft_account.amount == 1,
         DripError::PositionBalanceIsZero
     );
@@ -158,6 +193,11 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                 execute_withdraw_b(&mut accounts.common, cpi_executor)
             }
             Withdraw::WithClosePosition { accounts } => {
+                let sol_destination = match &accounts.sol_destination {
+                    Some(sol_destination) => sol_destination.to_account_info(),
+                    None => accounts.common.withdrawer.to_account_info(),
+                };
+
                 // withdrawB's execute is a subset of close position (they have slightly different validation)
                 execute_withdraw_b(&mut accounts.common, cpi_executor)?;
 
@@ -171,8 +211,7 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     &accounts.common.vault.to_account_info(),
                     withdrawable_amount_a,
                 );
-
-                let transfer_a_to_user_if_nonzero: Option<&dyn CPI> = if withdrawable_amount_a > 0 {
+                let transfer_a_to_user: Option<&dyn CPI> = if withdrawable_amount_a > 0 {
                     Some(&transfer_a_to_user)
                 } else {
                     None
@@ -185,13 +224,31 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                     &accounts.common.withdrawer.to_account_info(),
                     1,
                 );
+                // can only burn position if the user is signing this tx
+                let burn_position: Option<&dyn CPI> =
+                    if accounts.common.user_position_nft_account.owner
+                        == accounts.common.withdrawer.key()
+                    {
+                        Some(&burn_position)
+                    } else {
+                        None
+                    };
 
+                // If the withdrawer is the user (not admin close), then close the token account as well
                 let close_account = CloseAccount::new(
                     &accounts.common.token_program,
                     &accounts.common.user_position_nft_account,
                     &accounts.common.withdrawer,
                     &accounts.common.withdrawer,
                 );
+                let close_account: Option<&dyn CPI> =
+                    if accounts.common.user_position_nft_account.owner
+                        == accounts.common.withdrawer.key()
+                    {
+                        Some(&close_account)
+                    } else {
+                        None
+                    };
 
                 /* STATE UPDATES (EFFECTS) */
                 // Update the user's position state to reflect the newly withdrawn amount
@@ -213,18 +270,14 @@ impl<'a, 'info> Executable for Withdraw<'a, 'info> {
                 /* MANUAL CPI (INTERACTIONS) */
                 let signer: &Vault = &accounts.common.vault;
                 cpi_executor.execute_all(
-                    vec![
-                        &transfer_a_to_user_if_nonzero,
-                        &Some(&burn_position),
-                        &Some(&close_account),
-                    ],
+                    vec![&transfer_a_to_user, &burn_position, &close_account],
                     signer,
                 )?;
 
                 accounts
                     .common
                     .user_position
-                    .close(accounts.common.withdrawer.to_account_info())
+                    .close(sol_destination)
                     .unwrap();
 
                 Ok(())

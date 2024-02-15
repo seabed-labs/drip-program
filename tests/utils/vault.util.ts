@@ -130,6 +130,7 @@ export class VaultUtil extends TestUtil {
       associatedTokenProgram?: PublicKey;
       rent?: PublicKey;
     },
+    adminKeypair?: Keypair,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .initVault({
@@ -144,7 +145,9 @@ export class VaultUtil extends TestUtil {
         tokenAAccount: tokenA_ATA.toBase58(),
         tokenBAccount: tokenB_ATA.toBase58(),
         treasuryTokenBAccount: treasuryTokenBAccount.toBase58(),
-        creator: this.provider.wallet.publicKey.toBase58(),
+        creator: adminKeypair
+          ? adminKeypair.publicKey
+          : this.provider.wallet.publicKey.toBase58(),
         systemProgram:
           programs?.systemProgram?.toBase58() ??
           ProgramUtil.systemProgram.programId.toBase58(),
@@ -159,7 +162,10 @@ export class VaultUtil extends TestUtil {
           ProgramUtil.rentProgram.programId.toBase58(),
       })
       .transaction();
-    return await this.provider.sendAndConfirm(tx, undefined);
+    return await this.provider.sendAndConfirm(
+      tx,
+      adminKeypair ? [adminKeypair] : undefined,
+    );
   }
 
   static async updateVaultWhitelistedSwaps(
@@ -430,6 +436,7 @@ export class VaultUtil extends TestUtil {
     userPositionNftAccount: PublicKey,
     userPositionNftMint: PublicKey,
     referrer?: PublicKey,
+    solDestination?: PublicKey,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .closePosition()
@@ -454,6 +461,9 @@ export class VaultUtil extends TestUtil {
         vaultTokenAAccount: vaultTokenAAccount.toBase58(),
         userTokenAAccount: userTokenAAccount.toBase58(),
         userPositionNftMint: userPositionNftMint.toBase58(),
+        solDestination: solDestination
+          ? solDestination
+          : ProgramUtil.dripProgram.programId,
       })
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);

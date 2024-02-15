@@ -59,4 +59,6 @@ pub enum DripError {
     CannotWithdrawAWithNonZeroDripAmount,
     #[msg("Vault Token A Account is empty")]
     VaultTokenAAccountIsEmpty,
+    #[msg("Invalid sol_destination")]
+    InvalidSolDestination,
 }
