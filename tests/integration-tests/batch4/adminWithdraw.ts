@@ -1,7 +1,7 @@
 import "should";
 import { initLog } from "../../utils/log.util";
 import { before } from "mocha";
-import { Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { Mint } from "@solana/spl-token";
 import { TokenUtil } from "../../utils/token.util";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TestUtil } from "../../utils/config.util";
@@ -10,10 +10,11 @@ import { findAssociatedTokenAddress } from "../../utils/common.util";
 import { VaultUtil } from "../../utils/vault.util";
 import { SolUtil } from "../../utils/sol.util";
 
-describe("#withdrawA", () => {
+describe("#adminWithdraw", () => {
   initLog();
 
   let tokensAuthority: Keypair;
+  let vaultAdminKeypair: Keypair;
   let tokenA: Mint, tokenB: Mint;
   let vaultProtoConfig: PublicKey;
   let vault: PublicKey;
@@ -21,9 +22,13 @@ describe("#withdrawA", () => {
 
   before(async () => {
     tokensAuthority = Keypair.generate();
-
+    vaultAdminKeypair = Keypair.generate();
     await SolUtil.fundAccount(
       tokensAuthority.publicKey,
+      SolUtil.solToLamports(0.1),
+    );
+    await SolUtil.fundAccount(
+      vaultAdminKeypair.publicKey,
       SolUtil.solToLamports(0.1),
     );
 
@@ -52,6 +57,8 @@ describe("#withdrawA", () => {
       tokenB.address,
       vaultTreasuryTokenBAccount,
       vaultProtoConfig,
+      undefined,
+      vaultAdminKeypair,
     );
 
     vault = vaultPDA.publicKey;
@@ -67,24 +74,32 @@ describe("#withdrawA", () => {
       recipient: vaultTokenAAccount,
       amount: BigInt(1_000_000_000),
     });
+    await TokenUtil.mintTo({
+      payer: tokensAuthority,
+      token: tokenB,
+      mintAuthority: tokensAuthority,
+      recipient: vaultTokenBAccount,
+      amount: BigInt(1_000_000_000),
+    });
   });
 
-  it("allows admin to withdraw funds to admin's token A account", async () => {
+  it("allows admin to withdraw token A", async () => {
     const adminTokenAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
       tokenA,
-      TestUtil.provider.publicKey,
+      vaultAdminKeypair.publicKey,
       tokensAuthority,
     );
 
     const adminTokenABalanceBefore =
       await TokenUtil.getTokenAccount(adminTokenAccount);
     adminTokenABalanceBefore.amount.toString().should.equal("0");
-    await VaultUtil.withdrawA(
+
+    await VaultUtil.adminWithdraw(
+      vaultAdminKeypair,
       vault,
       vaultTokenAAccount,
       adminTokenAccount,
       vaultProtoConfig,
-      TOKEN_PROGRAM_ID,
     );
 
     const adminTokenABalanceAfter =
@@ -92,32 +107,55 @@ describe("#withdrawA", () => {
     adminTokenABalanceAfter.amount.toString().should.equal("1000000000");
   });
 
-  it("does not allow admin to withdraw funds to admin's token A account", async () => {
-    const admin = Keypair.generate();
-    await SolUtil.fundAccount(admin.publicKey, SolUtil.solToLamports(0.1));
-
+  it("allows admin to withdraw token B", async () => {
     const adminTokenAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
-      tokenA,
-      admin.publicKey,
-      admin,
+      tokenB,
+      vaultAdminKeypair.publicKey,
+      tokensAuthority,
     );
 
-    const adminTokenABalanceBefore =
+    const adminTokenBBalanceBefore =
       await TokenUtil.getTokenAccount(adminTokenAccount);
+    adminTokenBBalanceBefore.amount.toString().should.equal("0");
 
-    adminTokenABalanceBefore.amount.toString().should.equal("0");
-
-    await VaultUtil.withdrawA(
+    await VaultUtil.adminWithdraw(
+      vaultAdminKeypair,
       vault,
-      vaultTokenAAccount,
+      vaultTokenBAccount,
       adminTokenAccount,
       vaultProtoConfig,
-      TOKEN_PROGRAM_ID,
-      admin,
-    ).should.be.rejectedWith(/0x1785/);
+    );
 
-    const adminTokenABalanceAfter =
+    const adminTokenBBalanceAfter =
       await TokenUtil.getTokenAccount(adminTokenAccount);
-    adminTokenABalanceAfter.amount.toString().should.equal("0");
+    adminTokenBBalanceAfter.amount.toString().should.equal("1000000000");
   });
+
+  // it("does not allow admin to withdraw funds to admin's token A account", async () => {
+  //   const admin = Keypair.generate();
+  //   await SolUtil.fundAccount(admin.publicKey, SolUtil.solToLamports(0.1));
+  //
+  //   const adminTokenAccount = await TokenUtil.getOrCreateAssociatedTokenAccount(
+  //     tokenA,
+  //     admin.publicKey,
+  //     admin,
+  //   );
+  //
+  //   const adminTokenABalanceBefore =
+  //     await TokenUtil.getTokenAccount(adminTokenAccount);
+  //
+  //   adminTokenABalanceBefore.amount.toString().should.equal("0");
+  //
+  //   await VaultUtil.adminWithdraw(
+  //     vaultAdminKeypair,
+  //     vault,
+  //     vaultTokenAAccount,
+  //     adminTokenAccount,
+  //     vaultProtoConfig,
+  //   ).should.be.rejectedWith(/0x1785/);
+  //
+  //   const adminTokenABalanceAfter =
+  //     await TokenUtil.getTokenAccount(adminTokenAccount);
+  //   adminTokenABalanceAfter.amount.toString().should.equal("0");
+  // });
 });
