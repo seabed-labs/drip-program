@@ -36,7 +36,29 @@ export type Drip = {
         {
           "name": "vaultPeriod",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "vault_period"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Vault",
+                "path": "vault"
+              },
+              {
+                "kind": "arg",
+                "type": {
+                  "defined": "InitializeVaultPeriodParams"
+                },
+                "path": "params.period_id"
+              }
+            ]
+          }
         },
         {
           "name": "vault",
@@ -97,7 +119,22 @@ export type Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Mint",
+                    "path": "user_position_nft_mint"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftMint",
@@ -180,7 +217,22 @@ export type Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Mint",
+                    "path": "user_position_nft_mint"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftMint",
@@ -460,7 +512,22 @@ export type Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Position",
+                    "path": "user_position.position_authority"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftAccount",
@@ -531,7 +598,22 @@ export type Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Position",
+                    "path": "user_position.position_authority"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftAccount",
@@ -605,7 +687,34 @@ export type Drip = {
         {
           "name": "vault",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "drip-v1"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Mint",
+                "path": "token_a_mint"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Mint",
+                "path": "token_b_mint"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "VaultProtoConfig",
+                "path": "vault_proto_config"
+              }
+            ]
+          }
         },
         {
           "name": "vaultProtoConfig",
@@ -1219,7 +1328,29 @@ export const IDL: Drip = {
         {
           "name": "vaultPeriod",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "vault_period"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Vault",
+                "path": "vault"
+              },
+              {
+                "kind": "arg",
+                "type": {
+                  "defined": "InitializeVaultPeriodParams"
+                },
+                "path": "params.period_id"
+              }
+            ]
+          }
         },
         {
           "name": "vault",
@@ -1280,7 +1411,22 @@ export const IDL: Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Mint",
+                    "path": "user_position_nft_mint"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftMint",
@@ -1363,7 +1509,22 @@ export const IDL: Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Mint",
+                    "path": "user_position_nft_mint"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftMint",
@@ -1643,7 +1804,22 @@ export const IDL: Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Position",
+                    "path": "user_position.position_authority"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftAccount",
@@ -1714,7 +1890,22 @@ export const IDL: Drip = {
             {
               "name": "userPosition",
               "isMut": true,
-              "isSigner": false
+              "isSigner": false,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "type": "string",
+                    "value": "user_position"
+                  },
+                  {
+                    "kind": "account",
+                    "type": "publicKey",
+                    "account": "Position",
+                    "path": "user_position.position_authority"
+                  }
+                ]
+              }
             },
             {
               "name": "userPositionNftAccount",
@@ -1788,7 +1979,34 @@ export const IDL: Drip = {
         {
           "name": "vault",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "drip-v1"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Mint",
+                "path": "token_a_mint"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Mint",
+                "path": "token_b_mint"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "VaultProtoConfig",
+                "path": "vault_proto_config"
+              }
+            ]
+          }
         },
         {
           "name": "vaultProtoConfig",
