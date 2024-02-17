@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultProtoConfig};
+use crate::state::{Vault, VaultPeriod, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -103,4 +103,72 @@ pub struct WithdrawAAccounts<'info> {
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawAccounts<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub vault: Account<'info, Vault>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub destination_token_account: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct CloseCommonAccounts<'info> {
+    pub admin: Signer<'info>,
+
+    #[account(mut)]
+    /// CHECK: We don't care what this account is
+    pub sol_destination: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CloseVaultPeriodAccounts<'info> {
+    pub common: CloseCommonAccounts<'info>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub vault: Account<'info, Vault>,
+
+    #[account(mut)]
+    pub vault_period: Account<'info, VaultPeriod>,
+}
+
+#[derive(Accounts)]
+pub struct CloseVaultAccounts<'info> {
+    pub common: CloseCommonAccounts<'info>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    #[account(mut)]
+    pub vault: Account<'info, Vault>,
+
+    /* TOKEN ACCOUNTS */
+    #[account(mut)]
+    pub vault_token_a_account: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub vault_token_b_account: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct CloseVaultProtoConfigAccounts<'info> {
+    pub common: CloseCommonAccounts<'info>,
+
+    #[account(mut)]
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
 }

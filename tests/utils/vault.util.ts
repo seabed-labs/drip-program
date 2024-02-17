@@ -468,42 +468,119 @@ export class VaultUtil extends TestUtil {
       .transaction();
     return this.provider.sendAndConfirm(tx, [withdrawer]);
   }
+  static async adminWithdraw(
+    admin: Keypair | Signer,
+    vault: PublicKey,
+    vaultTokenAccount: PublicKey,
+    destinationTokenAccount: PublicKey,
+    vaultProtoConfig: PublicKey,
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .adminWithdraw()
+      .accounts({
+        admin: admin.publicKey,
+        vault,
+        vaultTokenAccount,
+        destinationTokenAccount,
+        vaultProtoConfig,
+        tokenProgram: ProgramUtil.tokenProgram,
+      })
+      .transaction();
+    return this.provider.connection.sendTransaction(tx, [admin]);
+  }
 
   static async withdrawA(
+    admin: Keypair | Signer,
     vault: PublicKey,
     vaultTokenAAccount: PublicKey,
     adminTokenAAccount: PublicKey,
     vaultProtoConfig: PublicKey,
-    tokenProgram: PublicKey,
-    admin?: Keypair | Signer,
   ): Promise<TransactionSignature> {
     const tx = await ProgramUtil.dripProgram.methods
       .withdrawA()
       .accounts({
-        admin:
-          admin?.publicKey.toBase58() ?? this.provider.publicKey.toBase58(),
-        vault: vault.toBase58(),
-        vaultTokenAAccount: vaultTokenAAccount.toBase58(),
-        adminTokenAAccount: adminTokenAAccount.toBase58(),
-        vaultProtoConfig: vaultProtoConfig.toBase58(),
-        tokenProgram: tokenProgram.toBase58(),
+        admin: admin.publicKey,
+        vault,
+        vaultTokenAAccount,
+        adminTokenAAccount,
+        vaultProtoConfig,
+        tokenProgram: ProgramUtil.tokenProgram,
       })
       .transaction();
-
-    if (admin) {
-      return this.provider.connection.sendTransaction(tx, [admin]);
-    }
-
-    return this.provider.sendAndConfirm(tx);
+    return this.provider.connection.sendTransaction(tx, [admin]);
   }
 
+  static async closeVaultPeriod(
+    admin: Keypair | Signer,
+    vault: PublicKey,
+    vaultProtoConfig: PublicKey,
+    vaultPeriod: PublicKey,
+    solDestination: PublicKey,
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .closeVaultPeriod()
+      .accounts({
+        common: {
+          admin: admin.publicKey,
+          solDestination: solDestination,
+        },
+        vaultProtoConfig: vaultProtoConfig.toBase58(),
+        vault: vault.toBase58(),
+        vaultPeriod: vaultPeriod.toBase58(),
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [admin]);
+  }
+
+  static async closeVault(
+    admin: Keypair | Signer,
+    vault: PublicKey,
+    vaultProtoConfig: PublicKey,
+    vaultTokenAAccount: PublicKey,
+    vaultTokenBAccount: PublicKey,
+    solDestination: PublicKey,
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .closeVault()
+      .accounts({
+        common: {
+          admin: admin.publicKey,
+          solDestination: solDestination,
+        },
+        vaultTokenAAccount,
+        vaultTokenBAccount,
+        vaultProtoConfig,
+        vault,
+        tokenProgram: ProgramUtil.tokenProgram,
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [admin]);
+  }
+
+  static async closeVaultProtoConfig(
+    admin: Keypair | Signer,
+    vaultProtoConfig: PublicKey,
+    solDestination: PublicKey,
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .closeVaultProtoConfig()
+      .accounts({
+        common: {
+          admin: admin.publicKey,
+          solDestination: solDestination,
+        },
+        vaultProtoConfig: vaultProtoConfig.toBase58(),
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [admin]);
+  }
   /*
-    Deploy Vault Proto Config if not provided
-    Create token accounts
-    Deploy Vault
-    Deposit into vault
-    Create Vault Periods
-   */
+      Deploy Vault Proto Config if not provided
+      Create token accounts
+      Deploy Vault
+      Deposit into vault
+      Create Vault Periods
+     */
   static async deployVault({
     tokenA,
     tokenB,

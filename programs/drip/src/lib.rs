@@ -113,6 +113,30 @@ pub mod drip {
             accounts: ctx.accounts,
         })
     }
+
+    pub fn admin_withdraw(ctx: Context<WithdrawAccounts>) -> Result<()> {
+        handle_action(Admin::Withdraw {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn close_vault_period(ctx: Context<CloseVaultPeriodAccounts>) -> Result<()> {
+        handle_action(Admin::CloseVaultPeriod {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn close_vault(ctx: Context<CloseVaultAccounts>) -> Result<()> {
+        handle_action(Admin::CloseVault {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn close_vault_proto_config(ctx: Context<CloseVaultProtoConfigAccounts>) -> Result<()> {
+        handle_action(Admin::CloseVaultProtoConfig {
+            accounts: ctx.accounts,
+        })
+    }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {

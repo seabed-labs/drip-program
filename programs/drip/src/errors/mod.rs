@@ -61,4 +61,10 @@ pub enum DripError {
     VaultTokenAAccountIsEmpty,
     #[msg("Invalid sol_destination")]
     InvalidSolDestination,
+    #[msg("Vault Period DAR is not 0")]
+    VaultPeriodDarNotEmpty,
+    #[msg("Vault drip_amount is not 0")]
+    VaultDripAmountNotZero,
+    #[msg("Withdraw_a is deprecated, use admin_withdraw instead")]
+    WithdrawADeprecated,
 }

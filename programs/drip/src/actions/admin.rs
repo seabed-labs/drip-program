@@ -1,5 +1,9 @@
 use crate::errors::DripError;
-use crate::instruction_accounts::{InitializeVaultAccountsBumps, WithdrawAAccounts};
+use crate::instruction_accounts::{
+    CloseVaultAccounts, CloseVaultPeriodAccounts, CloseVaultProtoConfigAccounts,
+    InitializeVaultAccountsBumps, WithdrawAAccounts, WithdrawAccounts,
+};
+use crate::interactions::close_account::CloseAccount;
 use crate::interactions::executor::CpiExecutor;
 use crate::interactions::transfer_token::TransferToken;
 use crate::state::{
@@ -28,6 +32,18 @@ pub enum Admin<'a, 'info> {
     },
     WithdrawA {
         accounts: &'a mut WithdrawAAccounts<'info>,
+    },
+    Withdraw {
+        accounts: &'a mut WithdrawAccounts<'info>,
+    },
+    CloseVaultPeriod {
+        accounts: &'a mut CloseVaultPeriodAccounts<'info>,
+    },
+    CloseVault {
+        accounts: &'a mut CloseVaultAccounts<'info>,
+    },
+    CloseVaultProtoConfig {
+        accounts: &'a mut CloseVaultProtoConfigAccounts<'info>,
     },
 }
 
@@ -91,7 +107,10 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::InvalidNumSwaps
                 );
             }
-            Admin::WithdrawA { accounts } => {
+            Admin::WithdrawA { .. } => {
+                return Err(DripError::WithdrawADeprecated.into());
+            }
+            Admin::Withdraw { accounts } => {
                 validate!(
                     accounts.admin.key() == accounts.vault_proto_config.admin,
                     DripError::SignerIsNotAdmin
@@ -101,25 +120,43 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     accounts.vault_proto_config.key() == accounts.vault.proto_config,
                     DripError::InvalidVaultProtoConfigReference
                 );
-
+            }
+            Admin::CloseVaultPeriod { accounts } => {
                 validate!(
-                    accounts.vault_token_a_account.key() == accounts.vault.token_a_account,
-                    DripError::IncorrectVaultTokenAccount
+                    accounts.vault_proto_config.admin == accounts.common.admin.key(),
+                    DripError::InvalidVaultProtoConfigReference
                 );
-
                 validate!(
-                    accounts.admin_token_a_account.owner == accounts.admin.key(),
-                    DripError::InvalidOwner
+                    accounts.vault_period.dar.eq(&0),
+                    DripError::VaultPeriodDarNotEmpty
                 );
-
                 validate!(
-                    accounts.vault.drip_amount == 0,
-                    DripError::CannotWithdrawAWithNonZeroDripAmount
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config.key(),
+                    DripError::InvalidVaultReference
                 );
-
                 validate!(
-                    accounts.vault_token_a_account.amount > 0,
-                    DripError::VaultTokenAAccountIsEmpty
+                    accounts.vault.drip_amount.eq(&0),
+                    DripError::VaultDripAmountNotZero
+                );
+            }
+            Admin::CloseVault { accounts } => {
+                validate!(
+                    accounts.vault.proto_config.key() == accounts.vault_proto_config.key(),
+                    DripError::InvalidVaultProtoConfigReference
+                );
+                validate!(
+                    accounts.vault_proto_config.admin == accounts.common.admin.key(),
+                    DripError::InvalidVaultProtoConfigReference
+                );
+                validate!(
+                    accounts.vault.drip_amount.eq(&0),
+                    DripError::VaultDripAmountNotZero
+                );
+            }
+            Admin::CloseVaultProtoConfig { accounts } => {
+                validate!(
+                    accounts.vault_proto_config.admin == accounts.common.admin.key(),
+                    DripError::InvalidVaultProtoConfigReference
                 );
             }
         }
@@ -154,19 +191,62 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
                     .vault
                     .set_whitelisted_swaps(params.whitelisted_swaps);
             }
-            Admin::WithdrawA { accounts } => {
-                let withdrawable_amount_a = accounts.vault_token_a_account.amount;
+            Admin::Withdraw { accounts } => {
+                let withdrawable_amount = accounts.vault_token_account.amount;
 
-                let transfer_a_to_admin = TransferToken::new(
+                let transfer_token_from_vault = TransferToken::new(
                     &accounts.token_program,
-                    &accounts.vault_token_a_account,
-                    &accounts.admin_token_a_account,
+                    &accounts.vault_token_account,
+                    &accounts.destination_token_account,
                     &accounts.vault.to_account_info(),
-                    withdrawable_amount_a,
+                    withdrawable_amount,
                 );
 
                 let signer: &Vault = &accounts.vault;
-                cpi_executor.execute_all(vec![&Some(&transfer_a_to_admin)], signer)?;
+                cpi_executor.execute_all(vec![&Some(&transfer_token_from_vault)], signer)?;
+            }
+            Admin::CloseVaultPeriod { accounts } => {
+                accounts
+                    .vault_period
+                    .close(accounts.common.sol_destination.to_account_info())?;
+            }
+            Admin::CloseVault { accounts } => {
+                /* STATE UPDATES (EFFECTS) */
+                let close_vault_token_a_account = CloseAccount::new(
+                    &accounts.token_program,
+                    &accounts.vault_token_a_account,
+                    &accounts.common.sol_destination,
+                    &accounts.vault.to_account_info(),
+                );
+
+                let close_vault_token_b_account = CloseAccount::new(
+                    &accounts.token_program,
+                    &accounts.vault_token_b_account,
+                    &accounts.common.sol_destination,
+                    &accounts.vault.to_account_info(),
+                );
+
+                // /* MANUAL CPI (INTERACTIONS) */
+                let signer: &Vault = &accounts.vault;
+                cpi_executor.execute_all(
+                    vec![
+                        &Some(&close_vault_token_a_account),
+                        &Some(&close_vault_token_b_account),
+                    ],
+                    signer,
+                )?;
+
+                accounts
+                    .vault
+                    .close(accounts.common.sol_destination.to_account_info())?;
+            }
+            Admin::CloseVaultProtoConfig { accounts } => {
+                accounts
+                    .vault_proto_config
+                    .close(accounts.common.sol_destination.to_account_info())?;
+            }
+            Admin::WithdrawA { .. } => {
+                return Err(DripError::WithdrawADeprecated.into());
             }
         }
 

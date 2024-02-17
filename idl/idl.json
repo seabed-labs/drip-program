@@ -839,6 +839,150 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "adminWithdraw",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destinationTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeVaultPeriod",
+      "accounts": [
+        {
+          "name": "common",
+          "accounts": [
+            {
+              "name": "admin",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "solDestination",
+              "isMut": true,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPeriod",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeVault",
+      "accounts": [
+        {
+          "name": "common",
+          "accounts": [
+            {
+              "name": "admin",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "solDestination",
+              "isMut": true,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenBAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "closeVaultProtoConfig",
+      "accounts": [
+        {
+          "name": "common",
+          "accounts": [
+            {
+              "name": "admin",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "solDestination",
+              "isMut": true,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1286,6 +1430,21 @@
       "code": 6028,
       "name": "InvalidSolDestination",
       "msg": "Invalid sol_destination"
+    },
+    {
+      "code": 6029,
+      "name": "VaultPeriodDarNotEmpty",
+      "msg": "Vault Period DAR is not 0"
+    },
+    {
+      "code": 6030,
+      "name": "VaultDripAmountNotZero",
+      "msg": "Vault drip_amount is not 0"
+    },
+    {
+      "code": 6031,
+      "name": "WithdrawADeprecated",
+      "msg": "Withdraw_a is deprecated, use admin_withdraw instead"
     }
   ]
 }
