@@ -11,3 +11,8 @@ upgrade-authority.json
 scratchpad.md
 drip-keypair.json
 rustc-ice-*.txt
+
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
