@@ -1,4 +1,4 @@
-use crate::state::{Vault, VaultProtoConfig};
+use crate::state::{Position, Vault, VaultProtoConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -103,4 +103,20 @@ pub struct WithdrawAAccounts<'info> {
     pub vault_proto_config: Account<'info, VaultProtoConfig>,
 
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct ClosePositionAccountAccounts<'info> {
+    pub admin: Signer<'info>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub vault: Account<'info, Vault>,
+
+    #[account(mut)]
+    pub position: Account<'info, Position>,
+
+    #[account(mut)]
+    /// CHECK: We don't care what this account is
+    pub sol_destination: AccountInfo<'info>,
 }

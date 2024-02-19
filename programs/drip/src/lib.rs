@@ -113,6 +113,12 @@ pub mod drip {
             accounts: ctx.accounts,
         })
     }
+
+    pub fn admin_close_position_account(ctx: Context<ClosePositionAccountAccounts>) -> Result<()> {
+        handle_action(Admin::ClosePositionAccount {
+            accounts: ctx.accounts,
+        })
+    }
 }
 
 fn handle_action(action: impl Validatable + Executable) -> Result<()> {

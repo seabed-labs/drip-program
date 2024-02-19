@@ -839,6 +839,37 @@ export type Drip = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "adminClosePositionAccount",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "position",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1286,6 +1317,11 @@ export type Drip = {
       "code": 6028,
       "name": "InvalidSolDestination",
       "msg": "Invalid sol_destination"
+    },
+    {
+      "code": 6029,
+      "name": "PositionIsNotClosed",
+      "msg": "Position is not closed"
     }
   ]
 };
@@ -2131,6 +2167,37 @@ export const IDL: Drip = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "adminClosePositionAccount",
+      "accounts": [
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vaultProtoConfig",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "position",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solDestination",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -2578,6 +2645,11 @@ export const IDL: Drip = {
       "code": 6028,
       "name": "InvalidSolDestination",
       "msg": "Invalid sol_destination"
+    },
+    {
+      "code": 6029,
+      "name": "PositionIsNotClosed",
+      "msg": "Position is not closed"
     }
   ]
 };
