@@ -21,8 +21,9 @@ pub struct Position {
     pub number_of_swaps: u64, // 8
     // deposit_amount_token_a / number_of_swaps
     pub periodic_drip_amount: u64, // 8
-    pub is_closed: bool,           // 1
-    pub bump: u8,                  // 1
+    // DEPRECATED FIELD: Position accounts are closed now instead of being marked closed
+    pub is_closed: bool, // 1
+    pub bump: u8,        // 1
 }
 
 impl Position {
@@ -62,10 +63,6 @@ impl Position {
 
     pub fn increase_withdrawn_amount(&mut self, amount: u64) {
         self.withdrawn_token_b_amount = self.withdrawn_token_b_amount.checked_add(amount).unwrap();
-    }
-
-    pub fn close(&mut self) {
-        self.is_closed = true;
     }
 }
 
