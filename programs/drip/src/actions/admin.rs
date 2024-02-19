@@ -1,5 +1,7 @@
 use crate::errors::DripError;
-use crate::instruction_accounts::{InitializeVaultAccountsBumps, WithdrawAAccounts};
+use crate::instruction_accounts::{
+    ClosePositionAccountAccounts, InitializeVaultAccountsBumps, WithdrawAAccounts,
+};
 use crate::interactions::executor::CpiExecutor;
 use crate::interactions::transfer_token::TransferToken;
 use crate::state::{
@@ -28,6 +30,9 @@ pub enum Admin<'a, 'info> {
     },
     WithdrawA {
         accounts: &'a mut WithdrawAAccounts<'info>,
+    },
+    ClosePositionAccount {
+        accounts: &'a mut ClosePositionAccountAccounts<'info>,
     },
 }
 
@@ -122,6 +127,24 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::VaultTokenAAccountIsEmpty
                 );
             }
+            Admin::ClosePositionAccount { accounts } => {
+                validate!(
+                    accounts.admin.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
+
+                validate!(
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
+                    DripError::InvalidVaultProtoConfigReference
+                );
+
+                validate!(
+                    accounts.position.key() == accounts.position.vault.key(),
+                    DripError::InvalidVaultReference
+                );
+
+                validate!(accounts.position.is_closed, DripError::PositionIsNotClosed);
+            }
         }
 
         Ok(())
@@ -167,6 +190,11 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
 
                 let signer: &Vault = &accounts.vault;
                 cpi_executor.execute_all(vec![&Some(&transfer_a_to_admin)], signer)?;
+            }
+            Admin::ClosePositionAccount { accounts } => {
+                accounts
+                    .position
+                    .close(accounts.sol_destination.to_account_info())?;
             }
         }
 

@@ -61,4 +61,6 @@ pub enum DripError {
     VaultTokenAAccountIsEmpty,
     #[msg("Invalid sol_destination")]
     InvalidSolDestination,
+    #[msg("Position is not closed")]
+    PositionIsNotClosed,
 }
