@@ -16,7 +16,7 @@ import {
   Granularity,
   PDA,
 } from "./common.util";
-import { BN } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { TokenUtil } from "./token.util";
 import { deployVaultPeriod, depositToVault } from "./setup.util";
 import { SolUtil } from "./sol.util";
@@ -192,9 +192,7 @@ export class VaultUtil extends TestUtil {
       .transaction();
     if (admin) {
       const blockhash = await TestUtil.provider.connection.getLatestBlockhash();
-      const txId = await TestUtil.provider.connection.sendTransaction(tx, [
-        admin,
-      ]);
+      const txId = await TestUtil.provider.sendAndConfirm(tx, [admin]);
       await TestUtil.provider.connection.confirmTransaction(
         {
           signature: txId,
@@ -469,6 +467,27 @@ export class VaultUtil extends TestUtil {
     return this.provider.sendAndConfirm(tx, [withdrawer]);
   }
 
+  static async adminWithdraw(
+    vault: PublicKey,
+    vaultTokenAccount: PublicKey,
+    destinationTokenAccount: PublicKey,
+    vaultProtoConfig: PublicKey,
+    admin: Keypair | Signer,
+  ): Promise<TransactionSignature> {
+    const tx = await ProgramUtil.dripProgram.methods
+      .adminWithdraw()
+      .accounts({
+        admin: admin.publicKey,
+        vaultProtoConfig,
+        vault,
+        vaultTokenAccount,
+        destinationTokenAccount,
+        tokenProgram: ProgramUtil.tokenProgram.programId,
+      })
+      .transaction();
+    return this.provider.sendAndConfirm(tx, [admin]);
+  }
+
   static async withdrawA(
     vault: PublicKey,
     vaultTokenAAccount: PublicKey,
@@ -491,7 +510,7 @@ export class VaultUtil extends TestUtil {
       .transaction();
 
     if (admin) {
-      return this.provider.connection.sendTransaction(tx, [admin]);
+      return this.provider.sendAndConfirm(tx, [admin]);
     }
 
     return this.provider.sendAndConfirm(tx);

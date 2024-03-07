@@ -1,6 +1,7 @@
 use crate::errors::DripError;
 use crate::instruction_accounts::{
-    ClosePositionAccountAccounts, InitializeVaultAccountsBumps, WithdrawAAccounts,
+    AdminWithdrawAccounts, ClosePositionAccountAccounts, InitializeVaultAccountsBumps,
+    WithdrawAAccounts,
 };
 use crate::interactions::executor::CpiExecutor;
 use crate::interactions::transfer_token::TransferToken;
@@ -30,6 +31,9 @@ pub enum Admin<'a, 'info> {
     },
     WithdrawA {
         accounts: &'a mut WithdrawAAccounts<'info>,
+    },
+    AdminWithdraw {
+        accounts: &'a mut AdminWithdrawAccounts<'info>,
     },
     ClosePositionAccount {
         accounts: &'a mut ClosePositionAccountAccounts<'info>,
@@ -127,6 +131,32 @@ impl<'a, 'info> Validatable for Admin<'a, 'info> {
                     DripError::VaultTokenAAccountIsEmpty
                 );
             }
+            Admin::AdminWithdraw { accounts } => {
+                validate!(
+                    accounts.admin.key() == accounts.vault_proto_config.admin,
+                    DripError::SignerIsNotAdmin
+                );
+
+                validate!(
+                    accounts.vault_proto_config.key() == accounts.vault.proto_config,
+                    DripError::InvalidVaultProtoConfigReference
+                );
+
+                validate!(
+                    accounts.vault_token_account.owner.key() == accounts.vault.key(),
+                    DripError::IncorrectVaultTokenAccount
+                );
+
+                validate!(
+                    accounts.vault.drip_amount == 0,
+                    DripError::CannotWithdrawAWithNonZeroDripAmount
+                );
+
+                validate!(
+                    accounts.vault_token_account.amount > 0,
+                    DripError::VaultTokenAAccountIsEmpty
+                );
+            }
             Admin::ClosePositionAccount { accounts } => {
                 validate!(
                     accounts.admin.key() == accounts.vault_proto_config.admin,
@@ -190,6 +220,18 @@ impl<'a, 'info> Executable for Admin<'a, 'info> {
 
                 let signer: &Vault = &accounts.vault;
                 cpi_executor.execute_all(vec![&Some(&transfer_a_to_admin)], signer)?;
+            }
+            Admin::AdminWithdraw { accounts } => {
+                let withdrawal_amount = accounts.vault_token_account.amount;
+                let transfer = TransferToken::new(
+                    &accounts.token_program,
+                    &accounts.vault_token_account,
+                    &accounts.destination_token_account,
+                    &accounts.vault.to_account_info(),
+                    withdrawal_amount,
+                );
+                let signer: &Vault = &accounts.vault;
+                cpi_executor.execute_all(vec![&Some(&transfer)], signer)?;
             }
             Admin::ClosePositionAccount { accounts } => {
                 accounts

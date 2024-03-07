@@ -106,6 +106,25 @@ pub struct WithdrawAAccounts<'info> {
 }
 
 #[derive(Accounts)]
+pub struct AdminWithdrawAccounts<'info> {
+    pub admin: Signer<'info>,
+
+    pub vault_proto_config: Account<'info, VaultProtoConfig>,
+
+    pub vault: Account<'info, Vault>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
+    // mut needed because we are changing state
+    #[account(mut)]
+    pub destination_token_account: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
 pub struct ClosePositionAccountAccounts<'info> {
     pub admin: Signer<'info>,
 
