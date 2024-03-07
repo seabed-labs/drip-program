@@ -108,8 +108,17 @@ pub mod drip {
         })
     }
 
+    /*
+       DEPRECATED: USE admin_withdraw
+    */
     pub fn withdraw_a(ctx: Context<WithdrawAAccounts>) -> Result<()> {
         handle_action(Admin::WithdrawA {
+            accounts: ctx.accounts,
+        })
+    }
+
+    pub fn admin_withdraw(ctx: Context<AdminWithdrawAccounts>) -> Result<()> {
+        handle_action(Admin::AdminWithdraw {
             accounts: ctx.accounts,
         })
     }
